@@ -19,20 +19,20 @@
   right: 2rem;
   z-index: 1000;
   pointer-events: none;
-  animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: toastSlideUp 0.3s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .arena-toast {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background-color: var(--surface);
-  color: var(--ink);
+  background-color: var(--color-ink);
+  color: #ffffff;
   border: 1px solid var(--border-strong);
   padding: 0.75rem 1.25rem;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  font-size: 0.88rem;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-hover);
+  font-size: 0.85rem;
   font-weight: 600;
 }
 
@@ -47,39 +47,89 @@
   }
 }
 
-/* Footer */
-.arena-footer {
+/* Two19 Labs Footer */
+.t19-footer {
   background-color: var(--surface);
   border-top: 1px solid var(--border);
-  padding: 1.75rem 1.5rem;
+  padding: 3rem 1.5rem;
   margin-top: auto;
 }
 
-.arena-footer-inner {
-  max-width: 1400px;
+.t19-footer-inner {
+  max-width: 1240px;
   margin: 0 auto;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  align-items: flex-start;
+  gap: 3rem;
   flex-wrap: wrap;
-  font-size: 0.82rem;
-  color: var(--ink-dim);
 }
 
-.footer-left strong {
+.t19-footer-brand {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.t19-footer-logo {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
   color: var(--ink);
-  font-weight: 800;
-  letter-spacing: 0.05em;
 }
 
-.footer-right {
-  max-width: 600px;
+.t19-footer-tagline {
+  font-size: 0.86rem;
+  color: var(--ink-dim);
+  line-height: 1.5;
+}
+
+.t19-footer-stamp {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--color-lab-blue);
+  text-transform: uppercase;
+}
+
+.t19-footer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+  max-width: 440px;
   text-align: right;
 }
 
+.t19-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.t19-footer-links a {
+  color: var(--ink);
+  transition: color var(--transition-fast);
+}
+
+.t19-footer-links a:hover {
+  color: var(--color-lab-blue);
+}
+
+.t19-footer-disclaimer {
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+  line-height: 1.45;
+}
+
 @media (max-width: 768px) {
-  .footer-right {
+  .t19-footer-meta {
+    align-items: flex-start;
     text-align: left;
   }
   .arena-toast-container {

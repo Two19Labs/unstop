@@ -232,9 +232,15 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     <div className="case-comps-container">
       {/* Editorial Header */}
       <div className="cc-editorial-hero">
-        <h1 className="cc-hero-headline">Collegiate Competitions Hub</h1>
+        <div className="cc-brand-badge">
+          <span className="label-mono">TWO19 LABS // ARENA</span>
+          <span className="cc-meta-stamp">UNDERGRAD OPPORTUNITY ENGINE</span>
+        </div>
+        <h1 className="cc-hero-headline">
+          COLLEGIATE COMPETITIONS<span className="blue-dot">.</span>
+        </h1>
         <p className="cc-hero-sub">
-          Aggregating active undergraduate opportunities directly from Unstop. MBA restrictions purged. Clean editorial tracking across DU, Premier B-Schools, and Global circuits.
+          Aggregating active undergraduate opportunities directly from Unstop. MBA restrictions purged. Clean, engineered tracking across DU, IITs, IIMs, and Global circuits. <span className="serif-accent">ready to be unstoppable?</span>
         </p>
       </div>
 

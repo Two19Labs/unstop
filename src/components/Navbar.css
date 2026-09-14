@@ -1,248 +1,277 @@
 /* src/components/Navbar.css */
-.arena-header {
+
+.t19-navbar {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: var(--surface);
+  background-color: var(--bg);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
-.arena-header-inner {
-  max-width: 1160px;
+.t19-navbar-inner {
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0.75rem 1.25rem;
+  padding: 0.85rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
 }
 
-.arena-brand-group {
+/* Brand block */
+.t19-brand-block {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  gap: 0.85rem;
 }
 
-.arena-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.arena-logo-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: #1c4980;
+.t19-logo-badge {
+  background: var(--color-ink);
+  color: #ffffff;
+  height: 2.2rem;
+  padding: 0 0.85rem;
+  border-radius: 0.55rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(28, 73, 128, 0.25);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  text-decoration: none;
 }
 
-.arena-brand-text {
-  display: flex;
-  flex-direction: column;
+.t19-logo-badge:hover {
+  transform: translateY(-1px);
 }
 
-.arena-brand-name {
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+.t19-logo-text {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 
-.arena-brand-tag {
-  font-size: 0.65rem;
-  font-weight: 800;
-  background-color: var(--accent-tint);
-  color: var(--accent);
-  padding: 0.15rem 0.4rem;
-  border-radius: var(--radius-sm);
-  letter-spacing: 0.05em;
-  border: 1px solid rgba(113, 34, 44, 0.2);
+.blue-dot {
+  color: var(--color-lab-blue) !important;
 }
 
-.arena-brand-sub {
-  font-size: 0.75rem;
-  color: var(--ink-dim);
-  font-weight: 500;
+.t19-brand-divider {
+  color: var(--border-strong);
+  font-size: 1rem;
+  font-weight: 300;
 }
 
-.arena-sync-status {
+.t19-product-tag {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(11, 122, 84, 0.08);
-  border: 1px solid rgba(11, 122, 84, 0.2);
-  padding: 0.25rem 0.65rem;
+  cursor: pointer;
+}
+
+.t19-product-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.t19-subdomain-pill {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink-dim);
+}
+
+.t19-live-sync {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.22rem 0.6rem;
+  background-color: rgba(15, 63, 254, 0.06);
+  border: 1px solid rgba(15, 63, 254, 0.2);
   border-radius: var(--radius-full);
 }
 
-.arena-live-dot {
-  width: 7px;
-  height: 7px;
+.t19-sync-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background-color: var(--success);
-  animation: beaconPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  background-color: var(--color-lab-blue);
+  animation: bluePulse 2s infinite ease-in-out;
 }
 
-.arena-sync-text {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--success);
+.t19-sync-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-lab-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* Nav Tabs */
-.arena-nav-tabs {
+.t19-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background-color: var(--bg);
-  padding: 0.3rem;
+  gap: 0.35rem;
+  background-color: var(--surface);
+  padding: 0.25rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }
 
-.arena-tab-btn {
+.t19-nav-tab {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   padding: 0.45rem 1rem;
-  font-size: 0.84rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
   color: var(--ink-dim);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.arena-tab-btn:hover {
+.t19-nav-tab:hover {
   color: var(--ink);
   background-color: var(--surface-hover);
 }
 
-.arena-tab-btn.active {
-  color: var(--ink);
-  background-color: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  font-weight: 700;
+.t19-nav-tab.active {
+  color: #ffffff;
+  background-color: var(--color-ink);
+  box-shadow: 0 2px 4px rgba(14, 14, 14, 0.15);
 }
 
-.arena-pill-count {
-  font-size: 0.7rem;
-  font-weight: 700;
-  background-color: rgba(28, 73, 128, 0.1);
-  color: #1c4980;
+.t19-tab-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background-color: var(--color-lab-blue);
+  color: #ffffff;
   padding: 0.1rem 0.45rem;
   border-radius: var(--radius-full);
 }
 
-.arena-pill-highlight {
-  font-size: 0.68rem;
-  font-weight: 700;
+.t19-nav-tab.active .t19-tab-badge {
+  background-color: #ffffff;
+  color: var(--color-ink);
+}
+
+.t19-tab-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
   background-color: var(--accent-tint);
-  color: var(--accent);
+  color: var(--color-lab-blue);
   padding: 0.1rem 0.45rem;
   border-radius: var(--radius-full);
 }
 
 /* Actions Group */
-.arena-actions-group {
+.t19-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.arena-bookmark-shortcut {
+.t19-saved-btn {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.82rem;
-  font-weight: 600;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
   color: var(--ink);
   background-color: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.arena-bookmark-shortcut:hover,
-.arena-bookmark-shortcut.active {
-  border-color: var(--ink-dim);
+.t19-saved-btn:hover,
+.t19-saved-btn.active {
+  border-color: var(--color-lab-blue);
   background-color: var(--surface-hover);
 }
 
-.arena-bookmark-shortcut.active {
-  border-color: #d97706;
-  color: #b45309;
+.t19-saved-btn.active {
+  color: var(--color-lab-blue);
 }
 
-.arena-badge-count {
+.t19-saved-count {
   font-size: 0.68rem;
   font-weight: 800;
-  background-color: #b45309;
+  background-color: var(--color-lab-blue);
   color: #ffffff;
-  padding: 0.1rem 0.38rem;
+  padding: 0.1rem 0.4rem;
   border-radius: var(--radius-full);
 }
 
-.arena-theme-toggle {
+.t19-theme-btn {
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   color: var(--ink-dim);
   background-color: var(--surface);
   transition: all var(--transition-fast);
 }
 
-.arena-theme-toggle:hover {
+.t19-theme-btn:hover {
   color: var(--ink);
   border-color: var(--ink);
-  background-color: var(--surface-hover);
 }
 
-.arena-user-pill {
-  display: flex;
+.t19-studio-link {
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.75rem;
-  background-color: var(--surface-hover);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
+  gap: 0.35rem;
+  font-family: var(--font-sans);
   font-size: 0.75rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
   color: var(--ink-dim);
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
 }
 
-@media (max-width: 900px) {
-  .arena-sync-status,
-  .arena-user-pill,
-  .arena-brand-sub {
+.t19-studio-link:hover {
+  color: var(--color-lab-blue);
+  border-color: var(--border);
+  background-color: var(--surface);
+}
+
+@media (max-width: 960px) {
+  .t19-live-sync,
+  .t19-studio-link {
     display: none;
   }
 }
 
-@media (max-width: 640px) {
-  .arena-header-inner {
+@media (max-width: 680px) {
+  .t19-navbar-inner {
     padding: 0.6rem 1rem;
     flex-wrap: wrap;
   }
-  .arena-actions-group {
-    gap: 0.5rem;
+  .t19-action-text {
+    display: none;
   }
-  .arena-action-label {
+  .t19-subdomain-pill {
     display: none;
   }
 }

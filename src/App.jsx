@@ -65,15 +65,28 @@ function MainApp() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="arena-footer">
-        <div className="arena-footer-inner">
-          <div className="footer-left">
-            <strong>ARENA</strong>
-            <span>— The Collegiate Competitions & Squad Formation Engine.</span>
+      {/* Two19 Labs Subdomain Footer */}
+      <footer className="t19-footer">
+        <div className="t19-footer-inner">
+          <div className="t19-footer-brand">
+            <div className="t19-footer-logo">
+              Two19 Labs<span className="blue-dot">.</span>
+            </div>
+            <p className="t19-footer-tagline">
+              Build smarter. Scale faster. — A technology studio building custom software, web platforms, and the automation layer that connects them.
+            </p>
+            <span className="t19-footer-stamp">NO TEMPLATES. EVER.</span>
           </div>
-          <div className="footer-right">
-            <span>Aggregating active undergraduate opportunities across Delhi University, IITs, IIMs, and corporate flagships.</span>
+
+          <div className="t19-footer-meta">
+            <div className="t19-footer-links">
+              <a href="https://two19labs.in" target="_blank" rel="noopener noreferrer">Studio (two19labs.in)</a>
+              <span>·</span>
+              <a href="mailto:connect@two19labs.in">connect@two19labs.in</a>
+            </div>
+            <p className="t19-footer-disclaimer">
+              Arena is an engineering project by Two19 Labs aggregating real-time undergraduate opportunities from Unstop across Indian and global collegiate circuits.
+            </p>
           </div>
         </div>
       </footer>
