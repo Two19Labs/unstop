@@ -10,9 +10,9 @@
 }
 
 .arena-header-inner {
-  max-width: 1400px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -37,11 +37,11 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: #1c4980;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 2px 8px rgba(28, 73, 128, 0.25);
 }
 
 .arena-brand-text {
@@ -62,12 +62,12 @@
 .arena-brand-tag {
   font-size: 0.65rem;
   font-weight: 800;
-  background-color: var(--primary-tint);
-  color: var(--primary);
+  background-color: var(--accent-tint);
+  color: var(--accent);
   padding: 0.15rem 0.4rem;
   border-radius: var(--radius-sm);
   letter-spacing: 0.05em;
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(113, 34, 44, 0.2);
 }
 
 .arena-brand-sub {
@@ -80,8 +80,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--success-tint);
-  border: 1px solid rgba(22, 163, 74, 0.2);
+  background: rgba(11, 122, 84, 0.08);
+  border: 1px solid rgba(11, 122, 84, 0.2);
   padding: 0.25rem 0.65rem;
   border-radius: var(--radius-full);
 }
@@ -116,7 +116,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 1rem;
-  font-size: 0.875rem;
+  font-size: 0.84rem;
   font-weight: 600;
   color: var(--ink-dim);
   border-radius: var(--radius-sm);
@@ -129,16 +129,17 @@
 }
 
 .arena-tab-btn.active {
-  color: var(--primary);
+  color: var(--ink);
   background-color: var(--surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  font-weight: 700;
 }
 
 .arena-pill-count {
   font-size: 0.7rem;
   font-weight: 700;
-  background-color: var(--primary-tint);
-  color: var(--primary);
+  background-color: rgba(28, 73, 128, 0.1);
+  color: #1c4980;
   padding: 0.1rem 0.45rem;
   border-radius: var(--radius-full);
 }
@@ -146,8 +147,8 @@
 .arena-pill-highlight {
   font-size: 0.68rem;
   font-weight: 700;
-  background-color: var(--warning-tint);
-  color: var(--warning);
+  background-color: var(--accent-tint);
+  color: var(--accent);
   padding: 0.1rem 0.45rem;
   border-radius: var(--radius-full);
 }
@@ -175,19 +176,19 @@
 
 .arena-bookmark-shortcut:hover,
 .arena-bookmark-shortcut.active {
-  border-color: var(--border-strong);
+  border-color: var(--ink-dim);
   background-color: var(--surface-hover);
 }
 
 .arena-bookmark-shortcut.active {
-  border-color: var(--warning);
-  color: var(--warning);
+  border-color: #d97706;
+  color: #b45309;
 }
 
 .arena-badge-count {
   font-size: 0.68rem;
   font-weight: 800;
-  background-color: var(--warning);
+  background-color: #b45309;
   color: #ffffff;
   padding: 0.1rem 0.38rem;
   border-radius: var(--radius-full);
@@ -208,7 +209,7 @@
 
 .arena-theme-toggle:hover {
   color: var(--ink);
-  border-color: var(--border-strong);
+  border-color: var(--ink);
   background-color: var(--surface-hover);
 }
 

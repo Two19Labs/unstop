@@ -1,83 +1,68 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
-  font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.5;
-  font-weight: 400;
   color-scheme: light;
 
-  --bg: #f8fafc;
-  --surface: #ffffff;
-  --surface-hover: #f1f5f9;
+  /* Core SSCBS OS Editorial Palette */
+  --bg: #f7f3ec;
+  --surface: #fffdf9;
+  --surface-hover: #f1ebd8;
   --surface-raised: #ffffff;
-  --ink: #0f172a;
-  --ink-dim: #475569;
-  --ink-faint: #94a3b8;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --ink: #241a14;
+  --ink-dim: #7a6d5f;
+  --ink-faint: #a89a90;
+  --maroon: #71222c;
+  --gold: #b08d3e;
+  --success: #0b7a54;
+  --danger: #b91c1c;
+  --border: rgba(36, 26, 20, 0.1);
+  --border-strong: rgba(36, 26, 20, 0.14);
+  --accent: #71222c;
+  --accent-tint: rgba(113, 34, 44, 0.08);
+  --accent-tint-hover: rgba(113, 34, 44, 0.14);
 
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-tint: rgba(37, 99, 235, 0.08);
-
-  --accent-gold: #d97706;
-  --accent-gold-tint: rgba(217, 119, 6, 0.1);
-
-  --success: #16a34a;
-  --success-tint: rgba(22, 163, 74, 0.08);
-
-  --warning: #d97706;
-  --warning-tint: rgba(217, 119, 6, 0.1);
-
-  --danger: #dc2626;
-  --danger-tint: rgba(220, 38, 38, 0.1);
+  /* Helper brand variables */
+  --primary: #1c4980;
+  --primary-hover: #143760;
+  --primary-tint: rgba(28, 73, 128, 0.08);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 2px 8px -2px rgba(15, 23, 42, 0.06), 0 1px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 2px 0 rgba(36, 26, 20, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(36, 26, 20, 0.07), 0 2px 4px -2px rgba(36, 26, 20, 0.05);
+  --shadow-lg: 0 12px 28px -6px rgba(36, 26, 20, 0.08);
 
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
-  --bg: #090d16;
-  --surface: #111827;
-  --surface-hover: #1a2234;
-  --surface-raised: #182235;
-  --ink: #f8fafc;
-  --ink-dim: #94a3b8;
-  --ink-faint: #64748b;
-  --border: #1f2937;
-  --border-strong: #374151;
+  --bg: #0e0a08;
+  --surface: #191410;
+  --surface-hover: #261e18;
+  --surface-raised: #211a15;
+  --ink: #f7f3ec;
+  --ink-dim: #a89a90;
+  --ink-faint: #7a6d5f;
+  --border: rgba(247, 243, 236, 0.12);
+  --border-strong: rgba(247, 243, 236, 0.18);
+  --accent: #b08d3e;
+  --accent-tint: rgba(176, 141, 62, 0.12);
+  --accent-tint-hover: rgba(176, 141, 62, 0.2);
 
-  --primary: #3b82f6;
-  --primary-hover: #60a5fa;
-  --primary-tint: rgba(59, 130, 246, 0.15);
-
-  --accent-gold: #f59e0b;
-  --accent-gold-tint: rgba(245, 158, 11, 0.15);
-
-  --success: #22c55e;
-  --success-tint: rgba(34, 197, 94, 0.15);
-
-  --warning: #f59e0b;
-  --warning-tint: rgba(245, 158, 11, 0.15);
-
-  --danger: #ef4444;
-  --danger-tint: rgba(239, 68, 68, 0.15);
+  --primary: #4678b8;
+  --primary-hover: #5a8ecf;
+  --primary-tint: rgba(70, 120, 184, 0.18);
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
-  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 28px -6px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -124,32 +109,20 @@ input, textarea, select {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-faint);
-}
-
-/* Pulse animation for urgency */
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.04);
-  }
+  background: var(--ink-dim);
 }
 
 @keyframes beaconPing {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    box-shadow: 0 0 0 0 rgba(11, 122, 84, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 8px rgba(11, 122, 84, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 0 rgba(11, 122, 84, 0);
   }
 }

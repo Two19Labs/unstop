@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   SearchIcon,
-  FilterIcon,
   TrophyIcon,
   UsersIcon,
   BookmarkIcon,
@@ -11,28 +10,10 @@ import {
   CalendarIcon,
   FlameIcon,
   ExternalLinkIcon,
-  ShareIcon,
-  CheckIcon,
-  ShieldCheckIcon
+  CopyIcon,
+  CheckIcon
 } from './icons';
 import './CompetitionsPage.css';
-
-const CIRCUITS = [
-  { id: 'all', label: 'All Circuits' },
-  { id: 'du', label: 'DU Circuit 🏛️' },
-  { id: 'premier', label: 'IIM / IIT & Premier 🎓' },
-  { id: 'corporate', label: 'Corporate & Global 🌐' },
-];
-
-const TRACKS = [
-  { id: 'all', label: 'All Disciplines', emoji: '🎯' },
-  { id: 'case', label: 'Case Comps', emoji: '📊' },
-  { id: 'hackathon', label: 'Hackathons', emoji: '💻' },
-  { id: 'simulation', label: 'Simulations & Auctions', emoji: '📈' },
-  { id: 'writing', label: 'Writing & Research', emoji: '✍️' },
-  { id: 'quiz', label: 'Quizzes & Trivia', emoji: '🧠' },
-  { id: 'debate', label: 'Debates & MUN', emoji: '🗣️' },
-];
 
 export default function CompetitionsPage({ onFindTeammates, showToast, bookmarkedOnly, setBookmarkedOnly, onCountUpdate }) {
   const { bookmarks, toggleBookmark, isBookmarked } = useAuth();
@@ -40,18 +21,17 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   const [competitions, setCompetitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCircuit, setSelectedCircuit] = useState('all');
-  const [selectedTrack, setSelectedTrack] = useState('all');
-  const [teamSizeFilter, setTeamSizeFilter] = useState('all'); // all | solo | team
+  const [selectedCircuits, setSelectedCircuits] = useState([]); // [] means all
+  const [selectedTracks, setSelectedTracks] = useState([]); // [] means all
+  const [teamFilter, setTeamFilter] = useState('all'); // all | solo | team
   const [feeFilter, setFeeFilter] = useState('all'); // all | free | paid
-  const [sortBy, setSortBy] = useState('closing-soon');
+  const [sortBy, setSortBy] = useState('closing-soonest');
   const [copiedId, setCopiedId] = useState(null);
 
-  // Fetch competitions from /api/competitions
+  // Fetch real competitions from /api/competitions
   const loadCompetitions = async () => {
     setLoading(true);
     setError(null);
@@ -62,9 +42,8 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       if (json.data && Array.isArray(json.data)) {
         setCompetitions(json.data);
         if (onCountUpdate) onCountUpdate(json.data.length);
-        setLastUpdated(json.updatedAt ? new Date(json.updatedAt) : new Date());
       } else {
-        throw new Error('Invalid response structure');
+        throw new Error('Invalid response structure from server');
       }
     } catch (err) {
       console.error('Error loading competitions:', err);
@@ -78,29 +57,81 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     loadCompetitions();
   }, []);
 
-  // Format end date nicely (e.g. "Ends 24 Mar 2026")
-  const formatEndDate = (dateStr) => {
-    if (!dateStr) return 'Ongoing';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return 'Ongoing';
-      return `Ends ${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-    } catch {
-      return 'Ongoing';
+  // Compute live metrics across circuits and tracks
+  const metrics = useMemo(() => {
+    return {
+      total: competitions.length,
+      du: competitions.filter(c => c.isDU).length,
+      iimIitPremier: competitions.filter(c => c.isPremier).length,
+      corporateGlobal: competitions.filter(c => c.isCorporate).length,
+      cases: competitions.filter(c => c.category === 'case').length,
+      hackathons: competitions.filter(c => c.category === 'hackathon').length,
+      simulations: competitions.filter(c => c.category === 'simulation').length,
+      writing: competitions.filter(c => c.category === 'writing').length,
+      quizzes: competitions.filter(c => c.category === 'quiz').length,
+      debates: competitions.filter(c => c.category === 'debate').length,
+    };
+  }, [competitions]);
+
+  // Circuit toggling
+  const toggleCircuit = (circuitId) => {
+    if (circuitId === 'all') {
+      setSelectedCircuits([]);
+      if (bookmarkedOnly) setBookmarkedOnly(false);
+      return;
     }
+    if (bookmarkedOnly) setBookmarkedOnly(false);
+    setSelectedCircuits(prev =>
+      prev.includes(circuitId) ? prev.filter(c => c !== circuitId) : [...prev, circuitId]
+    );
   };
+
+  // Track toggling
+  const toggleTrack = (trackId) => {
+    if (trackId === 'all') {
+      setSelectedTracks([]);
+      return;
+    }
+    setSelectedTracks(prev =>
+      prev.includes(trackId) ? prev.filter(t => t !== trackId) : [...prev, trackId]
+    );
+  };
+
+  const toggleBookmarkedOnly = () => {
+    setBookmarkedOnly(!bookmarkedOnly);
+  };
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCircuits([]);
+    setSelectedTracks([]);
+    setTeamFilter('all');
+    setFeeFilter('all');
+    setSortBy('closing-soonest');
+    setBookmarkedOnly(false);
+  };
+
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+    selectedCircuits.length > 0 ||
+    selectedTracks.length > 0 ||
+    teamFilter !== 'all' ||
+    feeFilter !== 'all' ||
+    bookmarkedOnly
+  );
 
   // 1-Click Share functionality
   const handleShare = async (comp, e) => {
-    e.stopPropagation();
-    const shareText = `🏆 ${comp.title}\n🏛️ Organized by: ${comp.orgName}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: ${formatEndDate(comp.deadline)}\n🔗 Apply on Unstop: ${comp.unstopUrl}\n\nVia Arena (Collegiate Competition Hub)`;
+    if (e && e.stopPropagation) e.stopPropagation();
+    const deadlineFormatted = comp.deadline
+      ? new Date(comp.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : 'Ongoing';
+
+    const shareText = `🏆 ${comp.title}\n🏛️ Organized by: ${comp.orgName}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: Ends ${deadlineFormatted}\n🔗 Apply on Unstop: ${comp.unstopUrl}\n\nVia Arena (SSCBS Collegiate Hub)`;
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareText);
-        setCopiedId(comp.id);
-        if (showToast) showToast('Competition details copied to clipboard!');
-        setTimeout(() => setCopiedId(null), 2500);
       } else {
         const textarea = document.createElement('textarea');
         textarea.value = shareText;
@@ -108,17 +139,18 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        setCopiedId(comp.id);
-        if (showToast) showToast('Competition details copied to clipboard!');
-        setTimeout(() => setCopiedId(null), 2500);
       }
+      setCopiedId(comp.id);
+      if (showToast) showToast('Competition details copied to clipboard!');
+      setTimeout(() => setCopiedId(null), 2500);
     } catch (err) {
       console.warn('Share copy failed:', err);
     }
   };
 
-  // Find Teammates handler with pre-fill handshake
-  const handleFindTeammates = (comp) => {
+  // Pre-fill Squad Finder Handshake
+  const handleFindTeammates = (comp, e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     const prefill = {
       competition_name: comp.title,
       organizer: comp.orgName,
@@ -129,36 +161,30 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     if (onFindTeammates) onFindTeammates(prefill);
   };
 
-  // Reset filters
-  const resetFilters = () => {
-    setSearchQuery('');
-    setSelectedCircuit('all');
-    setSelectedTrack('all');
-    setTeamSizeFilter('all');
-    setFeeFilter('all');
-    setSortBy('closing-soon');
-    setBookmarkedOnly(false);
-  };
-
   // Filter and Sort Pipeline
   const filteredCompetitions = useMemo(() => {
     return competitions.filter((item) => {
-      // Bookmarked filter
       if (bookmarkedOnly && !isBookmarked(item.id)) return false;
 
-      // Circuit filter
-      if (selectedCircuit === 'du' && !item.isDU) return false;
-      if (selectedCircuit === 'premier' && !item.isPremier) return false;
-      if (selectedCircuit === 'corporate' && !item.isCorporate) return false;
+      // Circuit Filter
+      if (selectedCircuits.length > 0) {
+        const matchesAnyCircuit =
+          (selectedCircuits.includes('du') && item.isDU) ||
+          (selectedCircuits.includes('iim-iit-premier') && item.isPremier) ||
+          (selectedCircuits.includes('corporate-global') && item.isCorporate);
+        if (!matchesAnyCircuit) return false;
+      }
 
-      // Discipline Track filter
-      if (selectedTrack !== 'all' && item.category !== selectedTrack) return false;
+      // Track Filter
+      if (selectedTracks.length > 0) {
+        if (!selectedTracks.includes(item.category)) return false;
+      }
 
-      // Team size filter
-      if (teamSizeFilter === 'solo' && item.maxTeam > 1) return false;
-      if (teamSizeFilter === 'team' && item.maxTeam <= 1) return false;
+      // Team Format Filter
+      if (teamFilter === 'solo' && item.maxTeam > 1) return false;
+      if (teamFilter === 'team' && item.maxTeam <= 1) return false;
 
-      // Fee filter
+      // Fee Filter
       if (feeFilter === 'free' && !item.isFree) return false;
       if (feeFilter === 'paid' && item.isFree) return false;
 
@@ -174,7 +200,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
 
       return true;
     }).sort((a, b) => {
-      if (sortBy === 'closing-soon') {
+      if (sortBy === 'closing-soonest') {
         const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
         const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
         return (isNaN(timeA) ? Infinity : timeA) - (isNaN(timeB) ? Infinity : timeB);
@@ -187,7 +213,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       if (sortBy === 'popular') {
         return (b.registeredCount || 0) - (a.registeredCount || 0);
       }
-      if (sortBy === 'prize-high') {
+      if (sortBy === 'prize-highest') {
         const extractNum = (str) => {
           if (!str) return 0;
           const match = str.replace(/,/g, '').match(/₹(\d+)/);
@@ -195,332 +221,286 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
         };
         return extractNum(b.prizes) - extractNum(a.prizes);
       }
-      if (sortBy === 'alpha') {
+      if (sortBy === 'title-asc') {
         return (a.title || '').localeCompare(b.title || '');
       }
       return 0;
     });
-  }, [competitions, bookmarkedOnly, selectedCircuit, selectedTrack, teamSizeFilter, feeFilter, searchQuery, sortBy, bookmarks]);
+  }, [competitions, bookmarkedOnly, selectedCircuits, selectedTracks, teamFilter, feeFilter, searchQuery, sortBy, bookmarks]);
 
   return (
-    <div className="competitions-view">
-      {/* Editorial Hero Section */}
-      <section className="competitions-hero">
-        <div className="hero-content">
-          <div className="hero-badge-row">
-            <div className="hero-live-pill">
-              <span className="pulse-dot"></span>
-              <strong>{competitions.length}</strong> Active Undergraduate Competitions
-            </div>
-            <div className="hero-filter-pill">
-              <ShieldCheckIcon size={14} color="var(--primary)" />
-              <span>Strict Undergrad Eligibility Enforced</span>
-            </div>
-          </div>
-          <h1 className="hero-title">Discover collegiate competitions, filter the noise, assemble your squad.</h1>
-          <p className="hero-sub">
-            Real-time opportunities synced from Unstop. MBA-restricted programs and dead listings stripped out. Handcrafted for DU, IITs, BITS, and undergraduate circuits across India.
-          </p>
+    <div className="case-comps-container">
+      {/* Editorial Header */}
+      <div className="cc-editorial-hero">
+        <h1 className="cc-hero-headline">Collegiate Competitions Hub</h1>
+        <p className="cc-hero-sub">
+          Aggregating active undergraduate opportunities directly from Unstop. MBA restrictions purged. Clean editorial tracking across DU, Premier B-Schools, and Global circuits.
+        </p>
+      </div>
+
+      {/* ── Filter Bar & Search ── */}
+      <div className="cc-filter-section">
+        {/* Search Row */}
+        <div className="cc-search-wrapper">
+          <SearchIcon size={16} className="cc-search-icon" />
+          <input
+            type="text"
+            className="cc-search-input"
+            placeholder="Search by competition name, IIM, IIT, SRCC, L'Oréal, prize..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="cc-clear-search" onClick={() => setSearchQuery('')}>✕</button>
+          )}
         </div>
 
-        {/* Search & Master Filters */}
-        <div className="filters-card">
-          <div className="search-row">
-            <div className="search-input-wrapper">
-              <SearchIcon size={18} className="search-icon" />
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search by competition title, college (e.g. SRCC, IITB), firm (Bain, L'Oréal), or prize..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button className="search-clear-btn" onClick={() => setSearchQuery('')}>
-                  ✕
-                </button>
-              )}
+        {/* Row 1: Circuit Tabs + Right-Aligned Bookmarks */}
+        <div className="cc-tabs">
+          <div className="cc-circuit-tabs-group">
+            <button
+              type="button"
+              className={`cc-tab-btn ${selectedCircuits.length === 0 && !bookmarkedOnly ? 'active' : ''}`}
+              onClick={() => toggleCircuit('all')}
+            >
+              All Circuits ({metrics.total})
+            </button>
+            <button
+              type="button"
+              className={`cc-tab-btn ${selectedCircuits.includes('du') ? 'active' : ''}`}
+              onClick={() => toggleCircuit('du')}
+            >
+              🎓 DU Circuit ({metrics.du})
+            </button>
+            <button
+              type="button"
+              className={`cc-tab-btn ${selectedCircuits.includes('iim-iit-premier') ? 'active' : ''}`}
+              onClick={() => toggleCircuit('iim-iit-premier')}
+            >
+              🏛️ IIMs, IITs & Premier ({metrics.iimIitPremier})
+            </button>
+            <button
+              type="button"
+              className={`cc-tab-btn ${selectedCircuits.includes('corporate-global') ? 'active' : ''}`}
+              onClick={() => toggleCircuit('corporate-global')}
+            >
+              🏢 Corporate & Global ({metrics.corporateGlobal})
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className={`cc-tab-btn cc-tab-bookmarked ${bookmarkedOnly ? 'active' : ''}`}
+            onClick={toggleBookmarkedOnly}
+          >
+            🔖 Bookmarked ({bookmarks.length})
+          </button>
+        </div>
+
+        {/* Row 2: Discipline Track Chips */}
+        <div className="cc-category-bar">
+          <button className={`cc-cat-pill ${selectedTracks.length === 0 ? 'active' : ''}`} onClick={() => toggleTrack('all')}>
+            All Tracks ({metrics.total})
+          </button>
+          <button className={`cc-cat-pill ${selectedTracks.includes('case') ? 'active' : ''}`} onClick={() => toggleTrack('case')}>
+            📊 Case Comps ({metrics.cases})
+          </button>
+          <button className={`cc-cat-pill ${selectedTracks.includes('hackathon') ? 'active' : ''}`} onClick={() => toggleTrack('hackathon')}>
+            💻 Hackathons ({metrics.hackathons})
+          </button>
+          <button className={`cc-cat-pill ${selectedTracks.includes('simulation') ? 'active' : ''}`} onClick={() => toggleTrack('simulation')}>
+            📈 Simulations ({metrics.simulations})
+          </button>
+          <button className={`cc-cat-pill ${selectedTracks.includes('writing') ? 'active' : ''}`} onClick={() => toggleTrack('writing')}>
+            ✍️ Writing & Research ({metrics.writing})
+          </button>
+          <button className={`cc-cat-pill ${selectedTracks.includes('quiz') ? 'active' : ''}`} onClick={() => toggleTrack('quiz')}>
+            🧠 Quizzes ({metrics.quizzes})
+          </button>
+          <button className={`cc-cat-pill ${selectedTracks.includes('debate') ? 'active' : ''}`} onClick={() => toggleTrack('debate')}>
+            🗣️ Debates ({metrics.debates})
+          </button>
+        </div>
+
+        {/* Row 3: Segmented Controls + Sort */}
+        <div className="cc-controls-bar">
+          <div className="cc-controls-left">
+            <div className="cc-filter-pill-group">
+              <button className={`cc-filter-pill-btn ${teamFilter === 'all' ? 'active' : ''}`} onClick={() => setTeamFilter('all')}>All Formats</button>
+              <button className={`cc-filter-pill-btn ${teamFilter === 'solo' ? 'active' : ''}`} onClick={() => setTeamFilter('solo')}>Solo</button>
+              <button className={`cc-filter-pill-btn ${teamFilter === 'team' ? 'active' : ''}`} onClick={() => setTeamFilter('team')}>Teams</button>
             </div>
 
-            <div className="sort-wrapper">
-              <span className="sort-label">Sort by:</span>
-              <select
-                className="sort-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="closing-soon">Closing Soonest ⏰</option>
+            <div className="cc-filter-pill-group">
+              <button className={`cc-filter-pill-btn ${feeFilter === 'all' ? 'active' : ''}`} onClick={() => setFeeFilter('all')}>All Fees</button>
+              <button className={`cc-filter-pill-btn ${feeFilter === 'free' ? 'active' : ''}`} onClick={() => setFeeFilter('free')}>Free Entry</button>
+              <button className={`cc-filter-pill-btn ${feeFilter === 'paid' ? 'active' : ''}`} onClick={() => setFeeFilter('paid')}>Paid</button>
+            </div>
+
+            {hasActiveFilters && (
+              <button className="cc-reset-btn" onClick={handleResetFilters}>Reset Filters</button>
+            )}
+          </div>
+
+          <div className="cc-controls-right">
+            <span className="cc-results-count">Showing <strong>{filteredCompetitions.length}</strong> opportunities</span>
+            <div className="cc-sort-box">
+              <span className="cc-sort-label">Sort:</span>
+              <select className="cc-sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="closing-soonest">Closing Soonest ⏰</option>
                 <option value="closing-latest">Closing Latest 📅</option>
+                <option value="prize-highest">Highest Prize Pool 🏆</option>
                 <option value="popular">Most Popular 🔥</option>
-                <option value="prize-high">Highest Prize Pool 🏆</option>
-                <option value="alpha">Title (A → Z)</option>
+                <option value="title-asc">Title (A → Z)</option>
               </select>
             </div>
           </div>
-
-          {/* Circuit Pills */}
-          <div className="filter-group">
-            <span className="filter-group-label">Circuit:</span>
-            <div className="pill-row">
-              {CIRCUITS.map((circuit) => (
-                <button
-                  key={circuit.id}
-                  className={`circuit-pill ${selectedCircuit === circuit.id ? 'active' : ''}`}
-                  onClick={() => setSelectedCircuit(circuit.id)}
-                >
-                  {circuit.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Track Chips */}
-          <div className="filter-group">
-            <span className="filter-group-label">Discipline:</span>
-            <div className="chip-row">
-              {TRACKS.map((track) => (
-                <button
-                  key={track.id}
-                  className={`track-chip ${selectedTrack === track.id ? 'active' : ''}`}
-                  onClick={() => setSelectedTrack(track.id)}
-                >
-                  <span className="chip-emoji">{track.emoji}</span>
-                  <span>{track.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Secondary Controls Bar */}
-          <div className="secondary-controls-row">
-            <div className="sub-filter-group">
-              <span className="sub-label">Team Size:</span>
-              <div className="toggle-btn-group">
-                <button
-                  className={`toggle-btn ${teamSizeFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setTeamSizeFilter('all')}
-                >
-                  All
-                </button>
-                <button
-                  className={`toggle-btn ${teamSizeFilter === 'solo' ? 'active' : ''}`}
-                  onClick={() => setTeamSizeFilter('solo')}
-                >
-                  Solo
-                </button>
-                <button
-                  className={`toggle-btn ${teamSizeFilter === 'team' ? 'active' : ''}`}
-                  onClick={() => setTeamSizeFilter('team')}
-                >
-                  Team
-                </button>
-              </div>
-            </div>
-
-            <div className="sub-filter-group">
-              <span className="sub-label">Fee:</span>
-              <div className="toggle-btn-group">
-                <button
-                  className={`toggle-btn ${feeFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setFeeFilter('all')}
-                >
-                  All
-                </button>
-                <button
-                  className={`toggle-btn ${feeFilter === 'free' ? 'active' : ''}`}
-                  onClick={() => setFeeFilter('free')}
-                >
-                  Free Entry
-                </button>
-                <button
-                  className={`toggle-btn ${feeFilter === 'paid' ? 'active' : ''}`}
-                  onClick={() => setFeeFilter('paid')}
-                >
-                  Paid
-                </button>
-              </div>
-            </div>
-
-            {(searchQuery || selectedCircuit !== 'all' || selectedTrack !== 'all' || teamSizeFilter !== 'all' || feeFilter !== 'all' || bookmarkedOnly) && (
-              <button className="reset-filters-btn" onClick={resetFilters}>
-                Reset Filters
-              </button>
-            )}
-
-            <div className="results-counter">
-              Showing <strong>{filteredCompetitions.length}</strong> matching opportunities
-            </div>
-          </div>
         </div>
-      </section>
+      </div>
 
-      {/* Grid Content */}
-      <main className="competitions-main">
+      {/* ── Competitions Grid ── */}
+      <main>
         {loading ? (
-          <div className="loading-grid">
+          <div className="cc-loading-grid">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="comp-card-skeleton">
-                <div className="skeleton-header">
-                  <div className="skeleton-avatar"></div>
-                  <div className="skeleton-lines">
-                    <div className="skeleton-line short"></div>
-                    <div className="skeleton-line"></div>
-                  </div>
-                </div>
-                <div className="skeleton-line medium" style={{ margin: '1rem 0' }}></div>
-                <div className="skeleton-banner"></div>
-                <div className="skeleton-footer"></div>
+              <div key={i} className="cc-skeleton-card">
+                <div className="cc-skeleton-bar" style={{ width: '40%' }}></div>
+                <div className="cc-skeleton-bar title"></div>
+                <div className="cc-skeleton-bar prize"></div>
+                <div className="cc-skeleton-bar" style={{ width: '60%' }}></div>
+                <div className="cc-skeleton-bar btn"></div>
               </div>
             ))}
           </div>
         ) : error && competitions.length === 0 ? (
-          <div className="error-state">
+          <div className="cc-empty-state">
+            <div className="cc-empty-icon">⚠️</div>
             <h3>Unable to fetch live listings</h3>
             <p>{error}</p>
-            <button className="btn-primary" onClick={loadCompetitions}>
+            <button className="cc-action-btn cc-btn-apply" style={{ margin: '0 auto' }} onClick={loadCompetitions}>
               Retry Ingestion
             </button>
           </div>
         ) : filteredCompetitions.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🔍</div>
+          <div className="cc-empty-state">
+            <div className="cc-empty-icon">🔍</div>
             <h3>No matching opportunities found</h3>
-            <p>Try clearing some filters or searching for broader terms like "case", "hackathon", or "SRCC".</p>
-            <button className="btn-secondary" onClick={resetFilters}>
-              Clear All Filters
+            <p>Try clearing your active filters or searching for another keyword.</p>
+            <button className="cc-action-btn cc-btn-team" style={{ margin: '0 auto' }} onClick={handleResetFilters}>
+              Clear Filters
             </button>
           </div>
         ) : (
-          <div className="competitions-grid">
+          <div className="cc-grid">
             {filteredCompetitions.map((comp) => {
               const bookmarked = isBookmarked(comp.id);
-              const isClosingFast = comp.urgency === 'high';
 
               return (
-                <article key={comp.id} className={`comp-card ${isClosingFast ? 'card-urgent' : ''}`}>
-                  {/* Top Bar: Org Info & Bookmark */}
-                  <div className="card-top-row">
-                    <div className="org-info-group">
-                      {comp.orgLogo ? (
-                        <img
-                          src={comp.orgLogo}
-                          alt={comp.orgName}
-                          className="org-logo-img"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div className="org-fallback-avatar" style={{ display: comp.orgLogo ? 'none' : 'flex' }}>
-                        {(comp.orgName || 'A').charAt(0).toUpperCase()}
-                      </div>
-
-                      <div className="org-text-meta">
-                        <span className="org-name" title={comp.orgName}>
-                          {comp.orgName}
-                        </span>
-                        <div className="badge-row-small">
-                          {comp.isDU && <span className="circuit-tag du">DU Circuit</span>}
-                          {comp.isPremier && <span className="circuit-tag premier">IIM / IIT Tier-1</span>}
-                          {comp.isCorporate && <span className="circuit-tag corporate">Corporate / Global</span>}
-                          <span className="category-tag-small">
-                            {comp.categoryEmoji} {comp.categoryLabel}
+                <article key={comp.id} className="cc-card">
+                  <div className="cc-card-inner">
+                    {/* Host Identity + Bookmark */}
+                    <div className="cc-card-top-bar">
+                      <div className="cc-host-identity">
+                        {comp.orgLogo ? (
+                          <img
+                            src={comp.orgLogo}
+                            alt=""
+                            className="cc-host-logo"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className="cc-host-avatar" style={{ display: comp.orgLogo ? 'none' : 'flex' }}>
+                          {(comp.orgName || 'A').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="cc-host-meta">
+                          <span className="cc-host-name" title={comp.orgName}>
+                            {comp.orgName || 'Academic Host'}
                           </span>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        className={`cc-card-bookmark-btn ${bookmarked ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleBookmark(comp.id);
+                        }}
+                        title={bookmarked ? "Remove Bookmark" : "Save Opportunity"}
+                      >
+                        <BookmarkIcon size={16} filled={bookmarked} />
+                      </button>
                     </div>
 
-                    <button
-                      className={`bookmark-btn ${bookmarked ? 'bookmarked' : ''}`}
-                      onClick={() => toggleBookmark(comp.id)}
-                      title={bookmarked ? "Remove Bookmark" : "Save Competition"}
-                      aria-label="Bookmark"
-                    >
-                      <BookmarkIcon size={18} filled={bookmarked} color={bookmarked ? "var(--warning)" : "var(--ink-dim)"} />
-                    </button>
-                  </div>
-
-                  {/* Title */}
-                  <h2 className="comp-title" title={comp.title}>
-                    <a href={comp.unstopUrl} target="_blank" rel="noopener noreferrer">
+                    {/* Clamped Title (Strict Vertical Alignment) */}
+                    <h2 className="cc-card-title" title={comp.title}>
                       {comp.title}
-                    </a>
-                  </h2>
+                    </h2>
 
-                  {/* Prize Banner */}
-                  <div className="prize-pool-banner">
-                    <div className="prize-main">
-                      <TrophyIcon size={18} color="var(--accent-gold)" />
-                      <span className="prize-text">{comp.prizes}</span>
-                    </div>
-                    <span className={`fee-pill ${comp.isFree ? 'free' : 'paid'}`}>
-                      {comp.isFree ? 'Free Entry' : 'Paid'}
-                    </span>
-                  </div>
-
-                  {/* Specifications Row */}
-                  <div className="specs-row">
-                    <div className="spec-item">
-                      <UsersIcon size={15} color="var(--ink-dim)" />
-                      <span>{comp.teamSizeDisplay}</span>
-                    </div>
-                    <div className="spec-item">
-                      <CalendarIcon size={15} color="var(--ink-dim)" />
-                      <span>{formatEndDate(comp.deadline)}</span>
-                    </div>
-                  </div>
-
-                  {/* Urgency & Social Proof Row */}
-                  <div className="social-proof-row">
-                    <div className="registration-proof">
-                      <FlameIcon size={15} color="#ea580c" />
-                      <span>{Number(comp.registeredCount || 0).toLocaleString('en-IN')} registered</span>
-                    </div>
-
-                    {comp.urgency === 'high' ? (
-                      <span className="urgency-chip high">
-                        ⚡ {comp.remainDaysText}
+                    {/* Mint Green Prize Bar */}
+                    <div className="cc-prize-bar">
+                      <div className="cc-prize-left">
+                        <TrophyIcon size={14} className="cc-prize-trophy" />
+                        <span className="cc-prize-text">{comp.prizes || 'Certificates & Recognition'}</span>
+                      </div>
+                      <span className={`cc-entry-tag ${comp.isFree ? 'free' : 'paid'}`}>
+                        {comp.isFree ? 'Free Entry' : 'Paid'}
                       </span>
-                    ) : comp.urgency === 'medium' ? (
-                      <span className="urgency-chip medium">
-                        ⏰ {comp.remainDaysText}
+                    </div>
+
+                    {/* Specs Row */}
+                    <div className="cc-specs-row">
+                      <div className="cc-spec-item">
+                        <UsersIcon size={13} />
+                        <span>{comp.teamSizeDisplay || 'Solo / Team'}</span>
+                      </div>
+                      <div className="cc-spec-dot" />
+                      <div className="cc-spec-item">
+                        <CalendarIcon size={13} />
+                        <span>
+                          Ends {comp.deadline ? new Date(comp.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Ongoing'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Footer Metric: Social Proof + Live Urgency Countdown */}
+                    <div className="cc-card-footer-metric">
+                      <span className="cc-reg-count">
+                        <FlameIcon size={12} className="cc-reg-icon" />
+                        <strong>{Number(comp.registeredCount || 0).toLocaleString()}</strong> registrations
                       </span>
-                    ) : (
-                      <span className="urgency-chip normal">
-                        ⏱️ {comp.remainDaysText}
+                      <span className={`cc-countdown-chip ${comp.urgency === 'high' ? 'red' : comp.urgency === 'medium' ? 'yellow' : 'green'}`}>
+                        <span className="cc-status-dot" />
+                        <ClockIcon size={12} />
+                        <span>{comp.remainDaysText || 'Active'}</span>
                       </span>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Action Buttons */}
-                  <div className="card-actions-row">
-                    <a
-                      href={comp.unstopUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-apply"
-                    >
-                      <span>Apply on Unstop</span>
-                      <ExternalLinkIcon size={14} />
-                    </a>
+                    {/* Actions: Signature Navy Unstop Button + Tinted Squad Up */}
+                    <div className="cc-card-actions">
+                      <a href={comp.unstopUrl} target="_blank" rel="noopener noreferrer" className="cc-action-btn cc-btn-apply">
+                        <span>Apply on Unstop</span>
+                        <ExternalLinkIcon size={12} />
+                      </a>
 
-                    <button
-                      className="btn-find-team"
-                      onClick={() => handleFindTeammates(comp)}
-                      title="Find batchmates and teammates for this competition"
-                    >
-                      <UsersIcon size={14} />
-                      <span>Squad Up</span>
-                    </button>
+                      {comp.maxTeam > 1 && (
+                        <button type="button" className="cc-action-btn cc-btn-team" onClick={(e) => handleFindTeammates(comp, e)}>
+                          <UsersIcon size={13} />
+                          <span>Squad Up</span>
+                        </button>
+                      )}
 
-                    <button
-                      className={`btn-share ${copiedId === comp.id ? 'copied' : ''}`}
-                      onClick={(e) => handleShare(comp, e)}
-                      title="Copy pre-formatted share snippet"
-                    >
-                      {copiedId === comp.id ? <CheckIcon size={14} color="var(--success)" /> : <ShareIcon size={14} />}
-                    </button>
+                      <button
+                        type="button"
+                        className={`cc-share-icon-btn ${copiedId === comp.id ? 'copied' : ''}`}
+                        onClick={(e) => handleShare(comp, e)}
+                        title="Copy share snippet"
+                      >
+                        {copiedId === comp.id ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
