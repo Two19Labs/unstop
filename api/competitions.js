@@ -271,12 +271,16 @@ export async function fetchCompetitionsFromUnstop() {
     };
   });
 
-  // Sort by closing soonest first
+  // Sort by closing soonest first (exact deadline timestamp)
   formatted.sort((a, b) => {
-    if (a.daysRemainingNum !== b.daysRemainingNum) {
-      return a.daysRemainingNum - b.daysRemainingNum;
+    const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+    const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+    const validA = !isNaN(timeA) ? timeA : Infinity;
+    const validB = !isNaN(timeB) ? timeB : Infinity;
+    if (validA !== validB) {
+      return validA - validB;
     }
-    return b.registeredCount - a.registeredCount;
+    return (b.registeredCount || 0) - (a.registeredCount || 0);
   });
 
   return formatted;

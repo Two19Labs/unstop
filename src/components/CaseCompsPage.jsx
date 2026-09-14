@@ -136,6 +136,12 @@ function getCountdownDetails(deadlineStr, fallbackRemainText, nowMs) {
   }
 }
 
+function getDeadlineTimestamp(comp) {
+  if (!comp || !comp.deadline) return Infinity;
+  const t = new Date(comp.deadline).getTime();
+  return isNaN(t) ? Infinity : t;
+}
+
 function getCardCircuit(comp) {
   if (comp.isDU) return { type: 'du', label: 'DU Circuit' };
   if (isIIMorIITComp(comp)) return { type: 'iim-iit', label: 'IIMs & IITs' };
@@ -271,11 +277,21 @@ export default function CaseCompsPage({ onBack }) {
           return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
         case 'title-desc':
           return (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' });
-        case 'closing-soonest':
-          if (a.daysRemainingNum !== b.daysRemainingNum) return a.daysRemainingNum - b.daysRemainingNum;
+        case 'closing-soonest': {
+          const timeA = getDeadlineTimestamp(a);
+          const timeB = getDeadlineTimestamp(b);
+          if (timeA !== timeB) return timeA - timeB;
           return (b.registeredCount || 0) - (a.registeredCount || 0);
-        case 'closing-latest':
-          return b.daysRemainingNum - a.daysRemainingNum;
+        }
+        case 'closing-latest': {
+          const timeA = getDeadlineTimestamp(a);
+          const timeB = getDeadlineTimestamp(b);
+          if (timeA === Infinity && timeB === Infinity) return 0;
+          if (timeA === Infinity) return 1;
+          if (timeB === Infinity) return -1;
+          if (timeA !== timeB) return timeB - timeA;
+          return (b.registeredCount || 0) - (a.registeredCount || 0);
+        }
         case 'prize-highest': {
           const prizeA = parsePrizeAmount(a.prizes);
           const prizeB = parsePrizeAmount(b.prizes);
