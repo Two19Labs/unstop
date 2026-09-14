@@ -1,0 +1,94 @@
+/* src/App.css */
+
+.arena-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--ink);
+}
+
+.arena-main-content {
+  flex: 1;
+}
+
+/* Floating Toast */
+.arena-toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  pointer-events: none;
+  animation: toastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.arena-toast {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Footer */
+.arena-footer {
+  background-color: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 1.75rem 1.5rem;
+  margin-top: auto;
+}
+
+.arena-footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--ink-dim);
+}
+
+.footer-left strong {
+  color: var(--ink);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.footer-right {
+  max-width: 600px;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .footer-right {
+    text-align: left;
+  }
+  .arena-toast-container {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+  .arena-toast {
+    width: 100%;
+    justify-content: center;
+  }
+}

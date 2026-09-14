@@ -1,0 +1,247 @@
+/* src/components/Navbar.css */
+.arena-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.arena-header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.arena-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.arena-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.arena-logo-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.arena-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.arena-brand-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.arena-brand-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  background-color: var(--primary-tint);
+  color: var(--primary);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.arena-brand-sub {
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  font-weight: 500;
+}
+
+.arena-sync-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--success-tint);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+}
+
+.arena-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--success);
+  animation: beaconPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.arena-sync-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--success);
+}
+
+/* Nav Tabs */
+.arena-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--bg);
+  padding: 0.3rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.arena-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.arena-tab-btn:hover {
+  color: var(--ink);
+  background-color: var(--surface-hover);
+}
+
+.arena-tab-btn.active {
+  color: var(--primary);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.arena-pill-count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background-color: var(--primary-tint);
+  color: var(--primary);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+}
+
+.arena-pill-highlight {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background-color: var(--warning-tint);
+  color: var(--warning);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+}
+
+/* Actions Group */
+.arena-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.arena-bookmark-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.arena-bookmark-shortcut:hover,
+.arena-bookmark-shortcut.active {
+  border-color: var(--border-strong);
+  background-color: var(--surface-hover);
+}
+
+.arena-bookmark-shortcut.active {
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.arena-badge-count {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background-color: var(--warning);
+  color: #ffffff;
+  padding: 0.1rem 0.38rem;
+  border-radius: var(--radius-full);
+}
+
+.arena-theme-toggle {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  color: var(--ink-dim);
+  background-color: var(--surface);
+  transition: all var(--transition-fast);
+}
+
+.arena-theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--border-strong);
+  background-color: var(--surface-hover);
+}
+
+.arena-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  background-color: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-dim);
+}
+
+@media (max-width: 900px) {
+  .arena-sync-status,
+  .arena-user-pill,
+  .arena-brand-sub {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .arena-header-inner {
+    padding: 0.6rem 1rem;
+    flex-wrap: wrap;
+  }
+  .arena-actions-group {
+    gap: 0.5rem;
+  }
+  .arena-action-label {
+    display: none;
+  }
+}
