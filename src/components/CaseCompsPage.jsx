@@ -143,7 +143,7 @@ function getCardCircuit(comp) {
   return { type: 'general', label: 'National Circuit' };
 }
 
-export default function CaseCompsPage({ onBack, onNavigate }) {
+export default function CaseCompsPage({ onBack }) {
   const [competitions, setCompetitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
@@ -219,29 +219,6 @@ export default function CaseCompsPage({ onBack, onNavigate }) {
       navigator.clipboard.writeText(details);
       setCopiedId(comp.id);
       setTimeout(() => setCopiedId(null), 2000);
-    }
-  };
-
-  const handleFindTeammates = (comp, e) => {
-    if (e?.stopPropagation) e.stopPropagation();
-    const teamSize = Math.max(2, Math.min(5, comp.maxTeam || 4));
-    const prefill = {
-      competition_name: comp.title || '',
-      organizer: comp.orgName || '',
-      competition_link: comp.unstopUrl || '',
-      title: `Team for ${comp.title || 'Case Competition'}`,
-      description: `Building a squad for ${comp.title || 'Case Competition'}`,
-      total_members: teamSize,
-      spots_left: Math.max(1, teamSize - 1),
-    };
-    try {
-      sessionStorage.setItem('team_finder_prefill', JSON.stringify(prefill));
-    } catch (err) {}
-
-    if (onNavigate) {
-      onNavigate('team-finder', prefill);
-    } else {
-      alert(`Teammate Finder Triggered for: ${comp.title}`);
     }
   };
 
@@ -542,17 +519,7 @@ export default function CaseCompsPage({ onBack, onNavigate }) {
                       <span>Apply on Unstop</span>
                       <ExternalLinkIcon size={12} />
                     </a>
-                    {!isSolo && (
-                      <button
-                        type="button"
-                        className="cc-action-btn cc-btn-team"
-                        onClick={(e) => handleFindTeammates(comp, e)}
-                        title="Find teammates"
-                      >
-                        <UsersIcon size={13} />
-                        <span>Find Teammates</span>
-                      </button>
-                    )}
+
                     <button
                       type="button"
                       className={`cc-share-icon-btn ${copiedId === comp.id ? 'copied' : ''}`}

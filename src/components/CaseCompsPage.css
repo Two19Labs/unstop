@@ -560,20 +560,13 @@
 }
 
 .cc-btn-apply {
-  flex: 1.25;
+  flex: 1;
   background: #1c4980;
   color: #ffffff;
   border: 1px solid #1c4980;
 }
 
 .cc-btn-apply:hover { background: #143760; }
-
-.cc-btn-team {
-  flex: 1;
-  background: var(--accent-tint);
-  color: var(--accent);
-  border: 1px solid rgba(113, 34, 44, 0.22);
-}
 
 .cc-share-icon-btn {
   width: 36px;
