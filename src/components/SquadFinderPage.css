@@ -1,7 +1,7 @@
 /* src/components/SquadFinderPage.css */
 
 .squad-finder-view {
-  max-width: 1160px;
+  max-width: var(--max-content-width, 1240px);
   margin: 0 auto;
   padding: 24px 20px 60px;
   width: 100%;
@@ -19,7 +19,7 @@
 
 .squad-hero-content {
   flex: 1;
-  min-width: 320px;
+  min-width: 0;
 }
 
 .squad-badge {
@@ -202,7 +202,7 @@
 /* Squad Posts Grid */
 .squad-posts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
   gap: 1.5rem;
 }
 
@@ -894,20 +894,244 @@
   background-color: #143760;
 }
 
-@media (max-width: 900px) {
-  .management-grid {
-    grid-template-columns: 1fr;
+/* ═══════════════════════════════════════════════════════════
+   Responsive Breakpoints for Squad Finder
+   ═══════════════════════════════════════════════════════════ */
+
+/* PC & Large Displays (min-width: 1024px) */
+@media (min-width: 1024px) {
+  .squad-posts-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 768px) {
-  .squad-posts-grid {
-    grid-template-columns: 1fr;
-  }
-  .form-grid-2, .form-grid-3 {
-    grid-template-columns: 1fr;
+/* Tablet & Smaller Laptops (min-width: 641px) and (max-width: 1023px) */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .squad-finder-view {
+    padding: 20px 16px 50px;
   }
   .squad-title {
-    font-size: 1.6rem;
+    font-size: 1.85rem;
+  }
+  .squad-posts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+  .management-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .form-grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .squad-skills-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .squad-skills-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Mobile Devices (<= 640px) */
+@media (max-width: 640px) {
+  .squad-finder-view {
+    padding: 14px 12px 40px;
+  }
+
+  /* Hero: Compact & Stacked */
+  .squad-hero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .squad-title {
+    font-size: 1.55rem;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+
+  .squad-sub {
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .btn-create-squad {
+    width: 100%;
+    justify-content: center;
+    height: 42px;
+    font-size: 0.85rem;
+  }
+
+  /* Subtabs: Segmented mobile bar */
+  .squad-tab-controls {
+    margin-bottom: 1.25rem;
+  }
+
+  .squad-subtabs {
+    width: 100%;
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .subtab-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.78rem;
+    min-height: 38px;
+  }
+
+  /* Search & Filter Bar */
+  .squad-filter-bar {
+    margin-bottom: 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .squad-search-wrap {
+    max-width: 100%;
+  }
+
+  .squad-search-input {
+    font-size: 1rem; /* 16px prevents iOS Safari auto-zoom */
+    padding: 10px 14px 10px 38px;
+    border-radius: 8px;
+  }
+
+  .squad-skills-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .squad-skills-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .skill-pill {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  /* Cards Grid: Single clean column */
+  .squad-posts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .squad-card {
+    padding: 1.15rem;
+    gap: 0.85rem;
+  }
+
+  .squad-post-title {
+    font-size: 0.98rem;
+  }
+
+  .squad-post-desc {
+    font-size: 0.82rem;
+  }
+
+  .squad-author-row {
+    gap: 0.6rem;
+  }
+
+  .btn-apply-squad {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.76rem;
+    min-height: 34px;
+  }
+
+  /* Management Column View */
+  .management-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .management-post-card {
+    padding: 1rem;
+  }
+
+  .applicant-top {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .applicant-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .btn-action-accept, .btn-action-reject {
+    flex: 1;
+    text-align: center;
+    height: 36px;
+  }
+
+  /* Modals: Mobile sheet style */
+  .modal-backdrop {
+    padding: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .modal-dialog {
+    padding: 1.25rem 1rem;
+    border-radius: 14px 14px 0 0;
+    max-height: 92vh;
+    gap: 1rem;
+  }
+
+  .modal-header {
+    padding-bottom: 0.6rem;
+  }
+
+  .modal-title-group h2 {
+    font-size: 1.1rem;
+  }
+
+  .form-grid-2, .form-grid-3 {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-size: 1rem; /* 16px prevents iOS Safari auto-zoom */
+    padding: 0.6rem 0.75rem;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+  }
+
+  .btn-cancel, .btn-submit {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    height: 42px;
+  }
+}
+
+/* Ultra Compact Mobile (<= 380px) */
+@media (max-width: 380px) {
+  .squad-title {
+    font-size: 1.35rem;
+  }
+
+  .subtab-btn {
+    font-size: 0.74rem;
+    padding: 0.4rem 0.35rem;
+    gap: 0.3rem;
+  }
+
+  .spots-num {
+    font-size: 0.8rem;
   }
 }

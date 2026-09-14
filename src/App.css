@@ -51,22 +51,23 @@
 .t19-footer {
   background-color: var(--surface);
   border-top: 1px solid var(--border);
-  padding: 3rem 1.5rem;
+  padding: 3rem 1.5rem calc(3rem + env(safe-area-inset-bottom, 0px));
   margin-top: auto;
+  width: 100%;
 }
 
 .t19-footer-inner {
-  max-width: 1240px;
+  max-width: var(--max-content-width);
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 3rem;
+  gap: 2.5rem;
   flex-wrap: wrap;
 }
 
 .t19-footer-brand {
-  max-width: 460px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -100,7 +101,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 0.75rem;
-  max-width: 440px;
+  max-width: 460px;
   text-align: right;
 }
 
@@ -110,11 +111,13 @@
   gap: 0.75rem;
   font-size: 0.82rem;
   font-weight: 700;
+  flex-wrap: wrap;
 }
 
 .t19-footer-links a {
   color: var(--ink);
   transition: color var(--transition-fast);
+  padding: 4px 0;
 }
 
 .t19-footer-links a:hover {
@@ -127,18 +130,51 @@
   line-height: 1.45;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+  .t19-footer {
+    padding: 2.5rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  .t19-footer-inner {
+    gap: 2rem;
+  }
   .t19-footer-meta {
     align-items: flex-start;
     text-align: left;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .t19-footer {
+    padding: 2rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+  .t19-footer-brand {
+    gap: 0.5rem;
+  }
+  .t19-footer-logo {
+    font-size: 1.2rem;
+  }
+  .t19-footer-tagline {
+    font-size: 0.82rem;
+  }
+  .t19-footer-links {
+    gap: 0.6rem;
+    font-size: 0.8rem;
+  }
+  .t19-footer-disclaimer {
+    font-size: 0.72rem;
   }
   .arena-toast-container {
-    bottom: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     right: 1rem;
     left: 1rem;
+    max-width: calc(100% - 2rem);
+    margin: 0 auto;
   }
   .arena-toast {
     width: 100%;
     justify-content: center;
+    padding: 0.65rem 1rem;
+    font-size: 0.82rem;
   }
 }

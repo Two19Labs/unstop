@@ -256,22 +256,131 @@
   background-color: var(--surface);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Responsive Navigation Breakpoints
+   ═══════════════════════════════════════════════════════════ */
+
+/* Tablet & Smaller Laptops (<= 960px) */
 @media (max-width: 960px) {
+  .t19-navbar-inner {
+    padding: 0.75rem 1.25rem;
+    gap: 1rem;
+  }
   .t19-live-sync,
   .t19-studio-link {
     display: none;
   }
+  .t19-nav-tab {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.78rem;
+  }
 }
 
-@media (max-width: 680px) {
+/* Mobile & Small Tablets (<= 640px) */
+@media (max-width: 640px) {
   .t19-navbar-inner {
     padding: 0.6rem 1rem;
     flex-wrap: wrap;
+    row-gap: 0.55rem;
+    column-gap: 0.75rem;
   }
+
+  /* Row 1: Brand block on left */
+  .t19-brand-block {
+    order: 1;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .t19-subdomain-pill {
+    display: none;
+  }
+
+  .t19-logo-badge {
+    height: 2rem;
+    padding: 0 0.65rem;
+  }
+
+  .t19-logo-text {
+    font-size: 0.88rem;
+  }
+
+  .t19-product-name {
+    font-size: 1.05rem;
+  }
+
+  .t19-brand-divider {
+    font-size: 0.85rem;
+  }
+
+  /* Row 1: Actions on right */
+  .t19-actions {
+    order: 2;
+    gap: 0.45rem;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
   .t19-action-text {
     display: none;
   }
-  .t19-subdomain-pill {
+
+  .t19-saved-btn {
+    padding: 0.4rem 0.65rem;
+    min-height: 34px;
+  }
+
+  .t19-theme-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Row 2: Full-width Segmented Tabs */
+  .t19-nav {
+    order: 3;
+    width: 100%;
+    display: flex;
+    padding: 0.2rem;
+    gap: 0.25rem;
+  }
+
+  .t19-nav-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    min-height: 36px;
+  }
+
+  .t19-tab-pill {
     display: none;
+  }
+}
+
+/* Compact Mobile (<= 380px) */
+@media (max-width: 380px) {
+  .t19-navbar-inner {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .t19-logo-badge {
+    height: 1.85rem;
+    padding: 0 0.5rem;
+  }
+
+  .t19-logo-text {
+    font-size: 0.82rem;
+  }
+
+  .t19-product-name {
+    font-size: 0.95rem;
+  }
+
+  .t19-nav-tab {
+    font-size: 0.72rem;
+    padding: 0.45rem 0.4rem;
+    gap: 0.35rem;
   }
 }

@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 1160px;
+  max-width: var(--max-content-width, 1240px);
   margin: 0 auto;
   padding: 24px 20px 60px;
   width: 100%;
@@ -295,7 +295,7 @@
 /* ── Competitions Grid ── */
 .cc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
   gap: 20px;
 }
 
@@ -629,7 +629,7 @@
 /* ── Skeletons & Empty States ── */
 .cc-loading-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
   gap: 20px;
 }
 
@@ -692,22 +692,197 @@
   margin-bottom: 16px;
 }
 
-@media (max-width: 768px) {
+/* ═══════════════════════════════════════════════════════════
+   Responsive Breakpoints for Competitions Hub
+   ═══════════════════════════════════════════════════════════ */
+
+/* PC & Large Displays (min-width: 1024px) */
+@media (min-width: 1024px) {
+  .cc-grid, .cc-loading-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Laptop & Tablet (min-width: 601px) and (max-width: 1023px) */
+@media (min-width: 601px) and (max-width: 1023px) {
   .case-comps-container {
-    padding: 16px 14px 40px;
+    padding: 20px 16px 50px;
   }
   .cc-hero-headline {
-    font-size: 1.6rem;
+    font-size: 2rem;
   }
-  .cc-grid {
-    grid-template-columns: 1fr;
+  .cc-grid, .cc-loading-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
+  .cc-category-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .cc-category-bar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Mobile Devices (<= 600px) */
+@media (max-width: 600px) {
+  .case-comps-container {
+    padding: 14px 12px 40px;
+    gap: 16px;
+  }
+
+  .cc-hero-headline {
+    font-size: 1.55rem;
+    line-height: 1.1;
+  }
+
+  .cc-hero-sub {
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .cc-search-input {
+    font-size: 1rem; /* 16px prevents iOS Safari auto-zoom */
+    padding: 10px 36px 10px 38px;
+    border-radius: 8px;
+  }
+
+  /* Circuit Tabs: Clean horizontal scroll on mobile */
+  .cc-tabs {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .cc-circuit-tabs-group {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .cc-circuit-tabs-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cc-tab-btn {
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+
+  .cc-tab-btn.cc-tab-bookmarked {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Discipline/Category Bar: Native-feeling horizontal swipe */
+  .cc-category-bar {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .cc-category-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cc-cat-pill {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  /* Controls Bar: Stacked neatly */
   .cc-controls-bar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 10px;
   }
+
+  .cc-controls-left {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .cc-filter-pill-group {
+    flex: 1;
+    justify-content: space-around;
+  }
+
+  .cc-filter-pill-btn {
+    flex: 1;
+    text-align: center;
+    padding: 5px 4px;
+    font-size: 0.72rem;
+  }
+
   .cc-controls-right {
     width: 100%;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
+  }
+
+  .cc-sort-box {
+    height: 34px;
+    padding: 0 8px;
+  }
+
+  /* Cards Grid: Clean single column */
+  .cc-grid, .cc-loading-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .cc-card-inner {
+    padding: 14px 14px;
+    gap: 10px;
+  }
+
+  .cc-card-title {
+    font-size: 0.98rem;
+    min-height: auto;
+    max-height: 2.7rem;
+  }
+
+  .cc-action-btn {
+    height: 38px;
+    font-size: 0.76rem;
+  }
+}
+
+/* Ultra Compact Mobile (<= 380px) */
+@media (max-width: 380px) {
+  .cc-hero-headline {
+    font-size: 1.35rem;
+  }
+
+  .cc-card-actions {
+    gap: 6px;
+  }
+
+  .cc-btn-apply {
+    padding: 0 10px;
+    font-size: 0.72rem;
+  }
+
+  .cc-btn-team {
+    padding: 0 8px;
+    font-size: 0.72rem;
+  }
+
+  .cc-share-icon-btn {
+    width: 36px;
+    height: 36px;
   }
 }
