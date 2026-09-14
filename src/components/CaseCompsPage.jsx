@@ -155,6 +155,7 @@ export default function CaseCompsPage({ onBack }) {
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [teamFilter, setTeamFilter] = useState('all');
   const [feeFilter, setFeeFilter] = useState('all');
   const [sortBy, setSortBy] = useState('closing-soonest');
@@ -213,7 +214,8 @@ export default function CaseCompsPage({ onBack }) {
   const handleShare = (comp, e) => {
     e.stopPropagation();
     const details = [
-      `🏆 ${comp.title || 'Case Competition'}`,
+      `${comp.categoryEmoji || '🏆'} ${comp.title || 'Competition'}`,
+      comp.categoryLabel ? `📌 Category: ${comp.categoryLabel}` : null,
       comp.orgName ? `🏛️ Organized by: ${comp.orgName}` : null,
       comp.prizes ? `💰 Prizes: ${comp.prizes}` : null,
       comp.teamSizeDisplay ? `👥 Format: ${comp.teamSizeDisplay}` : null,
@@ -234,14 +236,21 @@ export default function CaseCompsPage({ onBack }) {
     const iimIit = competitions.filter((c) => isIIMorIITComp(c)).length;
     const otherMbaCorp = competitions.filter((c) => isOtherMbaOrCorporateComp(c)).length;
     const bookmarked = competitions.filter((c) => bookmarkedIds.includes(c.id)).length;
-    return { total, du, iimIit, otherMbaCorp, bookmarked };
+    const cases = competitions.filter((c) => c.category === 'case').length;
+    const hackathons = competitions.filter((c) => c.category === 'hackathon').length;
+    const writing = competitions.filter((c) => c.category === 'writing').length;
+    const quizzes = competitions.filter((c) => c.category === 'quiz').length;
+    const simulations = competitions.filter((c) => c.category === 'simulation').length;
+    const debates = competitions.filter((c) => c.category === 'debate').length;
+    return { total, du, iimIit, otherMbaCorp, bookmarked, cases, hackathons, writing, quizzes, simulations, debates };
   }, [competitions, bookmarkedIds]);
 
-  const hasActiveFilters = searchQuery.trim() !== '' || activeFilter !== 'all' || teamFilter !== 'all' || feeFilter !== 'all' || sortBy !== 'closing-soonest';
+  const hasActiveFilters = searchQuery.trim() !== '' || activeFilter !== 'all' || categoryFilter !== 'all' || teamFilter !== 'all' || feeFilter !== 'all' || sortBy !== 'closing-soonest';
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setActiveFilter('all');
+    setCategoryFilter('all');
     setTeamFilter('all');
     setFeeFilter('all');
     setSortBy('closing-soonest');
@@ -254,7 +263,8 @@ export default function CaseCompsPage({ onBack }) {
         const matchesTitle = comp.title?.toLowerCase().includes(q);
         const matchesOrg = comp.orgName?.toLowerCase().includes(q);
         const matchesPrize = comp.prizes?.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesOrg && !matchesPrize) return false;
+        const matchesCat = comp.categoryLabel?.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesOrg && !matchesPrize && !matchesCat) return false;
       }
       if (activeFilter === 'bookmarked') {
         if (!bookmarkedIds.includes(comp.id)) return false;
@@ -263,6 +273,7 @@ export default function CaseCompsPage({ onBack }) {
         if (activeFilter === 'iim-iit' && !isIIMorIITComp(comp)) return false;
         if (activeFilter === 'other-mba-corp' && !isOtherMbaOrCorporateComp(comp)) return false;
       }
+      if (categoryFilter !== 'all' && comp.category !== categoryFilter) return false;
       if (teamFilter === 'solo' && comp.maxTeam > 1) return false;
       if (teamFilter === 'team' && comp.maxTeam <= 1) return false;
       if (feeFilter === 'free' && !comp.isFree) return false;
@@ -306,7 +317,7 @@ export default function CaseCompsPage({ onBack }) {
     });
 
     return result;
-  }, [competitions, searchQuery, activeFilter, teamFilter, feeFilter, sortBy, bookmarkedIds]);
+  }, [competitions, searchQuery, activeFilter, categoryFilter, teamFilter, feeFilter, sortBy, bookmarkedIds]);
 
   return (
     <div className="case-comps-container">
@@ -366,6 +377,34 @@ export default function CaseCompsPage({ onBack }) {
           <button className={`cc-tab-btn cc-tab-bookmarked ${activeFilter === 'bookmarked' ? 'active' : ''}`} onClick={() => setActiveFilter('bookmarked')}>
             🔖 Bookmarked ({metrics.bookmarked})
           </button>
+        </div>
+
+        <div className="cc-category-bar">
+          <button className={`cc-cat-pill ${categoryFilter === 'all' ? 'active' : ''}`} onClick={() => setCategoryFilter('all')}>
+            All Tracks ({metrics.total})
+          </button>
+          <button className={`cc-cat-pill ${categoryFilter === 'case' ? 'active' : ''}`} onClick={() => setCategoryFilter('case')}>
+            📊 Case Comps ({metrics.cases})
+          </button>
+          <button className={`cc-cat-pill ${categoryFilter === 'hackathon' ? 'active' : ''}`} onClick={() => setCategoryFilter('hackathon')}>
+            💻 Hackathons ({metrics.hackathons})
+          </button>
+          <button className={`cc-cat-pill ${categoryFilter === 'writing' ? 'active' : ''}`} onClick={() => setCategoryFilter('writing')}>
+            ✍️ Writing & Research ({metrics.writing})
+          </button>
+          <button className={`cc-cat-pill ${categoryFilter === 'quiz' ? 'active' : ''}`} onClick={() => setCategoryFilter('quiz')}>
+            🧠 Quizzes ({metrics.quizzes})
+          </button>
+          {metrics.simulations > 0 && (
+            <button className={`cc-cat-pill ${categoryFilter === 'simulation' ? 'active' : ''}`} onClick={() => setCategoryFilter('simulation')}>
+              📈 Simulations ({metrics.simulations})
+            </button>
+          )}
+          {metrics.debates > 0 && (
+            <button className={`cc-cat-pill ${categoryFilter === 'debate' ? 'active' : ''}`} onClick={() => setCategoryFilter('debate')}>
+              🗣️ Debates ({metrics.debates})
+            </button>
+          )}
         </div>
 
         <div className="cc-controls-bar">
@@ -469,14 +508,19 @@ export default function CaseCompsPage({ onBack }) {
                         </span>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className={`cc-card-bookmark-btn ${isBookmarked ? 'active' : ''}`}
-                      onClick={(e) => toggleBookmark(comp.id, e)}
-                      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this case comp'}
-                    >
-                      <BookmarkIcon size={16} filled={isBookmarked} />
-                    </button>
+                    <div className="cc-top-right-actions">
+                      <span className={`cc-category-badge ${comp.category || 'general'}`}>
+                        {comp.categoryEmoji || '🎯'} {comp.categoryLabel || 'Comp'}
+                      </span>
+                      <button
+                        type="button"
+                        className={`cc-card-bookmark-btn ${isBookmarked ? 'active' : ''}`}
+                        onClick={(e) => toggleBookmark(comp.id, e)}
+                        title={isBookmarked ? 'Remove bookmark' : 'Bookmark this competition'}
+                      >
+                        <BookmarkIcon size={16} filled={isBookmarked} />
+                      </button>
+                    </div>
                   </div>
 
                   <h2 className="cc-card-title" title={comp.title || 'Case Competition'}>

@@ -8,17 +8,21 @@ Curated specifically for **Undergraduate Eligibility**, eliminating MBA-only, PG
 
 ## ⚡ Key Features
 
-- **Direct Live Unstop Sync:** Reverse-engineers Unstop's public search endpoint across 29 batch queries (DU Circuit, IIMs, IITs, top B-schools, and corporate challenges).
-- **Strict Undergrad Eligibility Gate:** Automatically discards MBA-only, PG-only, and school-only competitions using tag detection and nested eligibility JSON parsing.
+- **Direct Live Unstop Sync:** Reverse-engineers Unstop's public search endpoint across 37 batch queries (DU Circuit, IIMs, IITs, top B-schools, hackathons, and corporate challenges).
+- **Multi-Track Category Engine:** Automatically classifies opportunities with dedicated filter pills and card badges:
+  - 📊 **Case Competitions & Consulting:** Strategy, B-Plans, Pitch Decks, Valuation
+  - 💻 **Hackathons & Coding:** Hackathons, App/Web Dev, AI/ML, Algorithm Contests
+  - ✍️ **Writing, Essays & Research:** Article Writing, Essays, Case Writing, Paper Presentations
+  - 🧠 **Quizzes & Trivia:** Business Quizzes, Tech Trivia, Brand Trivia, Knowledge Bowls
+  - 📈 **Simulations & Auctions:** IPL Auctions, Mock Stocks, Trading Games, Portfolio Management
+  - 🗣️ **Debates & MUNs:** Parliamentary Debates, Turncoat, Model United Nations
 - **Circuit Intelligence:** Automatically categorizes competitions into:
   - 🎓 **DU Circuit:** SRCC, SSCBS, St. Stephen's, Hindu, Hansraj, LSR, etc.
   - 🏛️ **IIMs & IITs:** All 21 IIMs and 23 IITs.
   - 🏢 **Colleges & Corporates:** XLRI, MDI, ISB, FMS, L'Oréal Brandstorm, Tata Crucible, HUL L.I.M.E, etc.
+- **Strict Undergrad Eligibility Gate:** Automatically discards MBA-only, PG-only, and school-only competitions using tag detection and nested eligibility JSON parsing.
 - **Cumulative Prize Calculator:** Accurately sums prize tiers into verified cash pools (e.g. `₹50,000 Cash Pool`).
-- **Real-Time Urgency Chips:** Live 30-second countdown with visual urgency tags:
-  - 🔴 **High Urgency:** Closes in < 48 hours.
-  - 🟡 **Medium Urgency:** Closes in 3–6 days.
-  - 🟢 **Normal Urgency:** Closes in 7+ days.
+- **Real-Time Urgency Chips:** Live 30-second countdown with visual urgency tags (🔴 <48h, 🟡 3–6d, 🟢 7+d) with exact millisecond sorting.
 - **1-Click Share:** Copies clean, formatted competition details and direct application link with emojis to clipboard.
 - **Zero External Icon Dependencies:** 100% inline SVGs to guarantee zero bundler chunk collisions.
 - **Zero Database Required:** Runs entirely client-side with `localStorage` for bookmarks and a high-speed API proxy.

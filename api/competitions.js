@@ -1,5 +1,5 @@
 // api/competitions.js
-// High-speed API proxy to fetch, sanitize, filter, and categorize active case competitions from Unstop
+// High-speed API proxy to fetch, sanitize, filter, and categorize active competitions, hackathons, and challenges from Unstop
 
 const FLAGSHIP_KEYWORDS = [
   'iim', 'iit', 'srcc', 'sscbs', 'shri ram', 'bits', 'xlri', 'fms',
@@ -109,17 +109,112 @@ function isUndergradEligible(item) {
   return true;
 }
 
+// Multi-Track Category Classifier
+function classifyOpportunity(item) {
+  const type = (item.type || '').toLowerCase();
+  const subtype = (item.subtype || '').toLowerCase();
+  const title = (item.title || '').toLowerCase();
+  const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase());
+
+  // 1. Hackathons & Coding Contests
+  if (
+    type === 'hackathons' ||
+    subtype === 'online_coding_challenge' ||
+    filterNames.some(f => f.includes('programming') || f.includes('hackathon') || f.includes('coding')) ||
+    /\b(hackathon|codefest|coding|hack\b|devfest|web dev|app dev|fullstack|machine learning|ai\/ml|data science|datathon|cybersecurity|blockchain|dapp|algorithmic|kaggle)\b/i.test(title)
+  ) {
+    return { category: 'hackathon', categoryLabel: 'Hackathon', categoryEmoji: '💻' };
+  }
+
+  // 2. Quizzes & Trivia
+  if (
+    type === 'quizzes' ||
+    filterNames.some(f => f.includes('quiz') || f.includes('quizzing')) ||
+    /\b(quiz\b|trivia\b|quizzing|brain teaser|inquisitive|inquizire|knowledge bowl)\b/i.test(title)
+  ) {
+    return { category: 'quiz', categoryLabel: 'Quiz & Trivia', categoryEmoji: '🧠' };
+  }
+
+  // 3. Writing, Essays & Research Papers
+  if (
+    filterNames.some(f => f.includes('writing') || f.includes('essay') || f.includes('paper presentation')) ||
+    /\b(article writing|essay writing|essay\b|paper presentation|research paper|editorial|journalism|case writing|call for papers|article\b|blog writing|white paper)\b/i.test(title)
+  ) {
+    return { category: 'writing', categoryLabel: 'Writing & Essay', categoryEmoji: '✍️' };
+  }
+
+  // 4. Simulations & Auctions
+  if (
+    filterNames.some(f => f.includes('simulation')) ||
+    /\b(auction\b|ipl auction|football auction|cricket auction|mock stock|stock trading|trading simulation|simulation game|deal room|portfolio management|bidding)\b/i.test(title)
+  ) {
+    return { category: 'simulation', categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' };
+  }
+
+  // 5. Debates & Model UN
+  if (
+    filterNames.some(f => f.includes('debate')) ||
+    /\b(debate\b|debating|parliamentary debate|asian pd|turncoat|mun\b|model united nations|youth parliament|oratory)\b/i.test(title)
+  ) {
+    return { category: 'debate', categoryLabel: 'Debate & MUN', categoryEmoji: '🗣️' };
+  }
+
+  // 6. Case Competitions & Consulting (Default core for business circuit)
+  if (
+    subtype === 'case_competition' ||
+    filterNames.some(f => f.includes('case') || f.includes('strategy') || f.includes('business plan') || f.includes('marketing') || f.includes('entrepreneurship')) ||
+    /\b(case\b|case study|case competition|consulting|strategy|b-plan|business plan|pitch deck|pitch\b|valuation|shark tank|ideathon|venture|entrepreneurship|consultant)\b/i.test(title)
+  ) {
+    return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
+  }
+
+  return { category: 'general', categoryLabel: 'General Comp', categoryEmoji: '🎯' };
+}
+
+// Academic Domain Tagging
+function detectAcademicDomains(item) {
+  const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase());
+  const domains = [];
+  if (filterNames.some(f => f.includes('engineering') || f.includes('programming'))) domains.push('engineering');
+  if (filterNames.some(f => f.includes('management') || f.includes('commerce') || f.includes('finance'))) domains.push('management');
+  if (filterNames.some(f => f.includes('law'))) domains.push('law');
+  if (filterNames.some(f => f.includes('arts') || f.includes('sciences'))) domains.push('arts');
+  if (domains.length === 0 || filterNames.includes('all')) domains.push('all');
+  return domains;
+}
+
 export async function fetchCompetitionsFromUnstop() {
   const queryEndpoints = [
     // Core Case Competitions & Strategy Themes
     'opportunity=competitions&subType=case-competitions&per_page=50',
     'opportunity=competitions&searchTerm=case competitions&per_page=50',
     'opportunity=competitions&searchTerm=case study&per_page=50',
-    'opportunity=competitions&searchTerm=case&per_page=50',
     'opportunity=competitions&searchTerm=consulting&per_page=50',
     'opportunity=competitions&searchTerm=strategy&per_page=50',
     'opportunity=competitions&searchTerm=b-plan&per_page=50',
     'opportunity=competitions&searchTerm=challenge&per_page=50',
+
+    // Hackathons & Tech Competitions
+    'opportunity=hackathons&per_page=50',
+    'opportunity=competitions&searchTerm=hackathon&per_page=50',
+    'opportunity=competitions&searchTerm=coding&per_page=50',
+
+    // Quizzes & Trivia
+    'opportunity=quizzes&per_page=50',
+    'opportunity=competitions&searchTerm=quiz&per_page=50',
+
+    // Writing & Editorial
+    'opportunity=competitions&searchTerm=article writing&per_page=50',
+    'opportunity=competitions&searchTerm=essay&per_page=50',
+    'opportunity=competitions&searchTerm=paper presentation&per_page=50',
+
+    // Simulations, Trading & Auctions
+    'opportunity=competitions&searchTerm=auction&per_page=50',
+    'opportunity=competitions&searchTerm=mock stock&per_page=50',
+
+    // Debates & Public Speaking
+    'opportunity=competitions&searchTerm=debate&per_page=50',
+
     // Delhi University Circuit
     'opportunity=competitions&searchTerm=delhi university&per_page=50',
     'opportunity=competitions&searchTerm=du&per_page=50',
@@ -135,12 +230,14 @@ export async function fetchCompetitionsFromUnstop() {
     'opportunity=competitions&searchTerm=sggscc&per_page=50',
     'opportunity=competitions&searchTerm=venky&per_page=50',
     'opportunity=competitions&searchTerm=gargi&per_page=50',
+
     // Premier National B-Schools & IITs
     'opportunity=competitions&searchTerm=iim&per_page=50',
     'opportunity=competitions&searchTerm=iit&per_page=50',
     'opportunity=competitions&searchTerm=xlri&per_page=50',
     'opportunity=competitions&searchTerm=isb&per_page=50',
     'opportunity=competitions&searchTerm=mdi&per_page=50',
+
     // Corporate Challenges
     'opportunity=competitions&searchTerm=corporate&per_page=50',
     'opportunity=competitions&searchTerm=loreal&per_page=50'
@@ -164,11 +261,17 @@ export async function fetchCompetitionsFromUnstop() {
       )
     );
 
-  // Execute in batches to prevent socket drops
-  const chunk1 = queryEndpoints.slice(0, 15);
-  const chunk2 = queryEndpoints.slice(15);
-  const [res1, res2] = await Promise.all([fetchChunk(chunk1), fetchChunk(chunk2)]);
-  const batches = [...res1, ...res2];
+  // Execute in throttled batches of ~13 requests to prevent socket exhaustion
+  const chunk1 = queryEndpoints.slice(0, 13);
+  const chunk2 = queryEndpoints.slice(13, 26);
+  const chunk3 = queryEndpoints.slice(26);
+
+  const [res1, res2, res3] = await Promise.all([
+    fetchChunk(chunk1),
+    fetchChunk(chunk2),
+    fetchChunk(chunk3),
+  ]);
+  const batches = [...res1, ...res2, ...res3];
 
   const now = Date.now();
   const map = new Map();
@@ -216,6 +319,10 @@ export async function fetchCompetitionsFromUnstop() {
     const minTeam = item.regnRequirements?.min_team_size || 1;
     const maxTeam = item.regnRequirements?.max_team_size || 4;
     const isFree = !item.isPaid;
+
+    // Classification & Domain
+    const { category, categoryLabel, categoryEmoji } = classifyOpportunity(item);
+    const academicDomains = detectAcademicDomains(item);
 
     // Cumulative cash calculation across all positions
     let prizeDisplay = 'Certificates & Recognition';
@@ -268,6 +375,10 @@ export async function fetchCompetitionsFromUnstop() {
       registeredCount: item.registerCount || 0,
       viewsCount: item.viewsCount || 0,
       isUndergradEligible: true,
+      category,
+      categoryLabel,
+      categoryEmoji,
+      academicDomains,
     };
   });
 
