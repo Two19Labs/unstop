@@ -18,53 +18,6 @@ export function formatWhatsAppUrl(phone, textMessage = '') {
   return `https://wa.me/91${cleanPhone}${textMessage ? `?text=${encodeURIComponent(textMessage)}` : ''}`;
 }
 
-const INITIAL_DEMO_POSTS = [
-  {
-    id: "squad-post-demo-1",
-    competition_name: "National Consulting Case Competition 2026",
-    organizer: "Shaheed Sukhdev College of Business Studies (SSCBS)",
-    competition_link: "https://unstop.com",
-    phone_number: "9876543210",
-    title: "Need 1 Valuation & DCF Specialist to complete 4-member squad",
-    description: "We are a team of 3 (2 from SRCC + 1 from Hansraj) with prior finals experience in consulting comps. Looking for an undergrad who can own the financial feasibility and valuation slides.",
-    skills_have: ["Slide Deck & UI Design", "Market Research & Strategy", "Public Speaking & Pitching"],
-    skills_looking_for: ["Valuation & DCF", "Financial Modeling"],
-    total_members: 4,
-    spots_left: 1,
-    initial_open_spots: 1,
-    accepted_emails: [],
-    college: "SRCC / DU",
-    course: "B.Com (Hons)",
-    year: "3rd Year",
-    is_open: true,
-    created_by_email: "lead@srcc.du.ac.in",
-    created_by_name: "Aarav Sharma",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: "squad-post-demo-2",
-    competition_name: "HackCBS 8.0 — Student Hackathon",
-    organizer: "Delhi University",
-    competition_link: "https://unstop.com",
-    phone_number: "9812345678",
-    title: "Fullstack + AI Engineer needed for Fintech Agent track",
-    description: "Building an automated portfolio balancing AI agent using Next.js, FastAPI, and LangChain. Looking for someone strong in backend/Python or frontend UI.",
-    skills_have: ["Fullstack Dev / Tech", "Slide Deck & UI Design"],
-    skills_looking_for: ["Python & Data Analytics", "Fullstack Dev / Tech"],
-    total_members: 4,
-    spots_left: 2,
-    initial_open_spots: 2,
-    accepted_emails: [],
-    college: "DTU",
-    course: "B.Tech CSE",
-    year: "2nd Year",
-    is_open: true,
-    created_by_email: "dev@dtu.ac.in",
-    created_by_name: "Rohan Verma",
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-  }
-];
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     return {
@@ -91,9 +44,9 @@ export function AuthProvider({ children }) {
     try {
       const saved = localStorage.getItem('arena_squad_posts');
       if (saved) return JSON.parse(saved);
-      return INITIAL_DEMO_POSTS;
+      return [];
     } catch {
-      return INITIAL_DEMO_POSTS;
+      return [];
     }
   });
 

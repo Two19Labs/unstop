@@ -190,172 +190,6 @@ let cachedData = null;
 let lastFetchTime = 0;
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-// Static seed data guaranteeing 100% initial render resilience if Unstop throttles
-const SEED_FALLBACK_COMPETITIONS = [
-  {
-    id: "arena-seed-1",
-    title: "National Consulting Case Competition 2026",
-    orgName: "Shaheed Sukhdev College of Business Studies (SSCBS), DU",
-    orgLogo: "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6215eb3d1587d_sscbs.png",
-    bannerUrl: null,
-    unstopUrl: "https://unstop.com",
-    deadline: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
-    remainDaysText: "4 days left",
-    daysRemainingNum: 4,
-    urgency: "medium",
-    category: "case",
-    categoryLabel: "Case Competitions",
-    categoryEmoji: "📊",
-    minTeam: 2,
-    maxTeam: 4,
-    teamSizeDisplay: "2 - 4 Members",
-    prizes: "₹1,50,000 Cash Pool",
-    isFree: true,
-    isFlagship: true,
-    isDU: true,
-    isPremier: false,
-    isCorporate: false,
-    registeredCount: 2340,
-    viewsCount: 15400,
-    isUndergradEligible: true
-  },
-  {
-    id: "arena-seed-2",
-    title: "HackCBS 8.0 — India's Premier Student Hackathon",
-    orgName: "Delhi University Computer Science Society",
-    orgLogo: null,
-    bannerUrl: null,
-    unstopUrl: "https://unstop.com",
-    deadline: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    remainDaysText: "Closes Tomorrow",
-    daysRemainingNum: 1,
-    urgency: "high",
-    category: "hackathon",
-    categoryLabel: "Hackathons & Dev",
-    categoryEmoji: "💻",
-    minTeam: 1,
-    maxTeam: 4,
-    teamSizeDisplay: "1 - 4 Members",
-    prizes: "₹3,00,000 Cash Pool",
-    isFree: true,
-    isFlagship: true,
-    isDU: true,
-    isPremier: false,
-    isCorporate: false,
-    registeredCount: 4890,
-    viewsCount: 28900,
-    isUndergradEligible: true
-  },
-  {
-    id: "arena-seed-3",
-    title: "The Bain & Company Global Strategy Challenge",
-    orgName: "Bain & Company",
-    orgLogo: "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6415eb3d1587d_bain.png",
-    bannerUrl: null,
-    unstopUrl: "https://unstop.com",
-    deadline: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
-    remainDaysText: "8 days left",
-    daysRemainingNum: 8,
-    urgency: "normal",
-    category: "case",
-    categoryLabel: "Case Competitions",
-    categoryEmoji: "📊",
-    minTeam: 3,
-    maxTeam: 4,
-    teamSizeDisplay: "3 - 4 Members",
-    prizes: "₹5,00,000 Cash Pool",
-    isFree: true,
-    isFlagship: true,
-    isDU: false,
-    isPremier: false,
-    isCorporate: true,
-    registeredCount: 8420,
-    viewsCount: 52100,
-    isUndergradEligible: true
-  },
-  {
-    id: "arena-seed-4",
-    title: "SRCC National Mock Stock & Investment Simulation",
-    orgName: "Shri Ram College of Commerce (SRCC), DU",
-    orgLogo: null,
-    bannerUrl: null,
-    unstopUrl: "https://unstop.com",
-    deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    remainDaysText: "2 days left",
-    daysRemainingNum: 2,
-    urgency: "high",
-    category: "simulation",
-    categoryLabel: "Simulations & Auctions",
-    categoryEmoji: "📈",
-    minTeam: 1,
-    maxTeam: 2,
-    teamSizeDisplay: "1 - 2 Members",
-    prizes: "₹75,000 Cash Pool",
-    isFree: true,
-    isFlagship: true,
-    isDU: true,
-    isPremier: false,
-    isCorporate: false,
-    registeredCount: 1980,
-    viewsCount: 11200,
-    isUndergradEligible: true
-  },
-  {
-    id: "arena-seed-5",
-    title: "IIT Bombay Techfest Algorithmic Coding Cup",
-    orgName: "IIT Bombay",
-    orgLogo: null,
-    bannerUrl: null,
-    unstopUrl: "https://unstop.com",
-    deadline: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000).toISOString(),
-    remainDaysText: "11 days left",
-    daysRemainingNum: 11,
-    urgency: "normal",
-    category: "hackathon",
-    categoryLabel: "Hackathons & Dev",
-    categoryEmoji: "💻",
-    minTeam: 1,
-    maxTeam: 1,
-    teamSizeDisplay: "Solo / Individual",
-    prizes: "₹2,00,000 Cash Pool",
-    isFree: true,
-    isFlagship: true,
-    isDU: false,
-    isPremier: true,
-    isCorporate: false,
-    registeredCount: 3120,
-    viewsCount: 18400,
-    isUndergradEligible: true
-  },
-  {
-    id: "arena-seed-6",
-    title: "L'Oréal Brandstorm 2026 Undergraduate Track",
-    orgName: "L'Oréal",
-    orgLogo: null,
-    bannerUrl: null,
-    unstopUrl: "https://unstop.com",
-    deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-    remainDaysText: "15 days left",
-    daysRemainingNum: 15,
-    urgency: "normal",
-    category: "case",
-    categoryLabel: "Case Competitions",
-    categoryEmoji: "📊",
-    minTeam: 3,
-    maxTeam: 3,
-    teamSizeDisplay: "3 Members",
-    prizes: "Intrapreneurship Mission in Paris",
-    isFree: true,
-    isFlagship: true,
-    isDU: false,
-    isPremier: false,
-    isCorporate: true,
-    registeredCount: 12400,
-    viewsCount: 78000,
-    isUndergradEligible: true
-  }
-];
-
 export async function fetchCompetitionsFromUnstop() {
   const now = Date.now();
   if (cachedData && (now - lastFetchTime) < CACHE_TTL_MS && cachedData.length > 0) {
@@ -466,8 +300,8 @@ export async function fetchCompetitionsFromUnstop() {
     }
 
     if (rawList.length === 0) {
-      console.warn('No live Unstop listings returned (rate-limit or offline). Returning verified fallback dataset.');
-      return SEED_FALLBACK_COMPETITIONS;
+      console.warn('No live Unstop listings returned.');
+      return [];
     }
 
     const formatted = rawList.map(item => {
@@ -555,7 +389,7 @@ export async function fetchCompetitionsFromUnstop() {
     return formatted;
   } catch (err) {
     console.error('Fatal fetch error from Unstop:', err);
-    return cachedData || SEED_FALLBACK_COMPETITIONS;
+    return cachedData || [];
   }
 }
 
