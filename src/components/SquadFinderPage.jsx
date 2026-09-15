@@ -13,7 +13,8 @@ import {
   TrophyIcon,
   ExternalLinkIcon,
   LockIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  SettingsIcon
 } from './icons';
 import './SquadFinderPage.css';
 
@@ -60,6 +61,7 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
     applyToSquad,
     updateApplicationStatus,
     openAuthModal,
+    openProfileModal,
     signInWithGoogle
   } = useAuth();
 
@@ -406,6 +408,16 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
         </div>
 
         <div className="squad-header-actions">
+          <button
+            type="button"
+            className="btn-profile-settings-action"
+            onClick={openProfileModal}
+            title="Update your collegiate profile details"
+          >
+            <SettingsIcon size={16} />
+            <span>Profile Settings</span>
+          </button>
+
           <button className="btn-create-squad" onClick={() => setShowCreateModal(true)}>
             <PlusIcon size={18} />
             <span>Post Squad Opening</span>

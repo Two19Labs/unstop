@@ -34,6 +34,11 @@ export function AuthProvider({ children }) {
     postLoginAction: null,
   });
 
+  // Profile Settings Modal State
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const openProfileModal = () => setProfileModalOpen(true);
+  const closeProfileModal = () => setProfileModalOpen(false);
+
   // UI / Theme State
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('arena_theme') || 'light';
@@ -91,8 +96,27 @@ export function AuthProvider({ children }) {
         .eq('id', userId)
         .maybeSingle();
 
+      const { data: authData } = await supabase.auth.getUser();
+      const meta = authData?.user?.user_metadata || {};
+
       if (!error && data) {
-        setProfile(data);
+        setProfile({
+          ...data,
+          course: data.course || meta.course || '',
+          year: data.year || meta.year || '2nd Year',
+          bio: data.bio || meta.bio || '',
+        });
+      } else if (meta.full_name) {
+        setProfile({
+          id: userId,
+          email: authData?.user?.email,
+          full_name: meta.full_name,
+          college: meta.college || '',
+          phone: meta.phone || '',
+          course: meta.course || '',
+          year: meta.year || '2nd Year',
+          bio: meta.bio || '',
+        });
       }
     } catch (err) {
       console.warn('Profile fetch warning:', err.message);
@@ -308,6 +332,68 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  // Profile Update (Database & Auth Metadata)
+  const updateProfile = async ({ fullName, college, course, year, phone, bio }) => {
+    if (!user || !supabase) {
+      throw new Error('You must be signed in to update your profile.');
+    }
+
+    const cleanPhone = sanitizeIndianPhone(phone);
+
+    // 1. Update Supabase Auth user metadata
+    const { error: authErr } = await supabase.auth.updateUser({
+      data: {
+        full_name: fullName,
+        college: college || '',
+        course: course || '',
+        year: year || '2nd Year',
+        phone: cleanPhone || '',
+        bio: bio || '',
+      },
+    });
+
+    if (authErr) throw authErr;
+
+    // 2. Update PostgreSQL profiles table
+    const basePayload = {
+      full_name: fullName,
+      college: college || '',
+      phone: cleanPhone || '',
+      updated_at: new Date().toISOString(),
+    };
+
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          ...basePayload,
+          course: course || '',
+          year: year || '2nd Year',
+          bio: bio || '',
+        })
+        .eq('id', user.id);
+    } catch {
+      await supabase
+        .from('profiles')
+        .update(basePayload)
+        .eq('id', user.id);
+    }
+
+    const merged = {
+      ...(profile || {}),
+      id: user.id,
+      email: user.email,
+      full_name: fullName,
+      college: college || '',
+      course: course || '',
+      year: year || '2nd Year',
+      phone: cleanPhone || '',
+      bio: bio || '',
+    };
+    setProfile(merged);
+    return merged;
+  };
+
   // Bookmark Toggle with Live Database Sync
   const toggleBookmark = async (compId) => {
     const isCurrentlySaved = bookmarks.includes(compId);
@@ -511,6 +597,10 @@ export function AuthProvider({ children }) {
         authModalConfig,
         openAuthModal,
         closeAuthModal,
+        profileModalOpen,
+        openProfileModal,
+        closeProfileModal,
+        updateProfile,
         signInWithGoogle,
         signInWithPassword,
         signUpWithPassword,

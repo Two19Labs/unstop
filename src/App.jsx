@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import CompetitionsPage from './components/CompetitionsPage';
 import SquadFinderPage from './components/SquadFinderPage';
 import AuthModal from './components/AuthModal';
+import ProfileSettingsModal from './components/ProfileSettingsModal';
 import { CheckIcon } from './components/icons';
 import './App.css';
 
@@ -71,6 +72,9 @@ function MainApp() {
 
       {/* Global Two19 Labs Auth Modal */}
       <AuthModal />
+
+      {/* Profile & Account Settings Modal */}
+      <ProfileSettingsModal />
 
       {/* Floating Toast Notification */}
       {toastMessage && (

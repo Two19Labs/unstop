@@ -74,6 +74,29 @@
   box-shadow: 0 6px 16px rgba(28, 73, 128, 0.3);
 }
 
+.btn-profile-settings-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.1rem;
+  background-color: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-profile-settings-action:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--color-lab-blue, #1A44C2);
+  color: var(--color-lab-blue, #1A44C2);
+  transform: translateY(-1px);
+}
+
 /* SubTabs Switcher */
 .squad-tab-controls {
   margin-bottom: 1.5rem;

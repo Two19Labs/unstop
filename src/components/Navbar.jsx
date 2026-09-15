@@ -10,7 +10,8 @@ import {
   ExternalLinkIcon,
   UserIcon,
   LogOutIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  SettingsIcon
 } from './icons';
 import './Navbar.css';
 
@@ -20,6 +21,7 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
     profile,
     signOut,
     openAuthModal,
+    openProfileModal,
     theme,
     toggleTheme,
     bookmarks
@@ -158,6 +160,17 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
                   </div>
 
                   <div className="t19-dropdown-divider"></div>
+
+                  <button
+                    className="t19-dropdown-item"
+                    onClick={() => {
+                      openProfileModal();
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <SettingsIcon size={15} />
+                    <span>Profile &amp; Account Settings</span>
+                  </button>
 
                   <button
                     className="t19-dropdown-item"
