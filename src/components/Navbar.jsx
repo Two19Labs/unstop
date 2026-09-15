@@ -81,9 +81,9 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             <span className="t19-subdomain-pill">undergrad hub</span>
           </div>
 
-          <div className="t19-live-sync" title="Real-time multi-source ingestion active across Unstop, Devfolio, Devpost & Codeforces">
+          <div className="t19-live-sync" title="Real-time ingestion active from unstop.com">
             <span className="t19-sync-dot"></span>
-            <span className="t19-sync-label">Multi-Source Live</span>
+            <span className="t19-sync-label">Unstop Live</span>
           </div>
         </div>
 

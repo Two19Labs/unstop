@@ -102,7 +102,7 @@ function MainApp() {
               <a href="mailto:connect@two19labs.in">connect@two19labs.in</a>
             </div>
             <p className="t19-footer-disclaimer">
-              OneStop is an engineering project by Two19 Labs aggregating real-time undergraduate opportunities from Unstop, Devfolio, Devpost, Codeforces, and global collegiate circuits.
+              OneStop is an engineering project by Two19 Labs aggregating real-time undergraduate opportunities from Unstop across Indian and global collegiate circuits.
             </p>
           </div>
         </div>

@@ -23,7 +23,6 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   const [error, setError] = useState(null);
 
   // Filters State
-  const [selectedPlatform, setSelectedPlatform] = useState('all'); // all | unstop | devfolio | devpost | codeforces
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCircuits, setSelectedCircuits] = useState([]); // [] means all
   const [selectedTracks, setSelectedTracks] = useState([]); // [] means all
@@ -58,14 +57,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     loadCompetitions();
   }, []);
 
-  // Compute live metrics across platforms, circuits and tracks
+  // Compute live metrics across circuits and tracks
   const metrics = useMemo(() => {
     return {
       total: competitions.length,
-      unstop: competitions.filter(c => (c.source || 'unstop') === 'unstop').length,
-      devfolio: competitions.filter(c => c.source === 'devfolio').length,
-      devpost: competitions.filter(c => c.source === 'devpost').length,
-      codeforces: competitions.filter(c => c.source === 'codeforces').length,
       du: competitions.filter(c => c.isDU).length,
       iimIitPremier: competitions.filter(c => c.isPremier).length,
       corporateGlobal: competitions.filter(c => c.isCorporate).length,
@@ -102,16 +97,11 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     );
   };
 
-  const togglePlatform = (plat) => {
-    setSelectedPlatform(prev => (prev === plat ? 'all' : plat));
-  };
-
   const toggleBookmarkedOnly = () => {
     setBookmarkedOnly(!bookmarkedOnly);
   };
 
   const handleResetFilters = () => {
-    setSelectedPlatform('all');
     setSearchQuery('');
     setSelectedCircuits([]);
     setSelectedTracks([]);
@@ -122,7 +112,6 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   };
 
   const hasActiveFilters = Boolean(
-    selectedPlatform !== 'all' ||
     searchQuery ||
     selectedCircuits.length > 0 ||
     selectedTracks.length > 0 ||
@@ -138,10 +127,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       ? new Date(comp.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
       : 'Ongoing';
 
-    const applyLink = comp.applyUrl || comp.unstopUrl;
-    const platform = comp.sourceName || 'Unstop';
-
-    const shareText = `🏆 ${comp.title}\n🏛️ Host: ${comp.orgName}\n🌐 Platform: ${platform}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: Ends ${deadlineFormatted}\n🔗 Apply: ${applyLink}\n\nVia OneStop (Undergrad Opportunity Engine)`;
+    const shareText = `🏆 ${comp.title}\n🏛️ Organized by: ${comp.orgName}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: Ends ${deadlineFormatted}\n🔗 Apply on Unstop: ${comp.unstopUrl}\n\nVia OneStop (SSCBS Collegiate Hub)`;
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -168,7 +154,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     const prefill = {
       competition_name: comp.title,
       organizer: comp.orgName,
-      competition_link: comp.applyUrl || comp.unstopUrl,
+      competition_link: comp.unstopUrl,
       total_members: comp.maxTeam || 4,
     };
     sessionStorage.setItem('comp_team_prefill', JSON.stringify(prefill));
@@ -179,9 +165,6 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   const filteredCompetitions = useMemo(() => {
     return competitions.filter((item) => {
       if (bookmarkedOnly && !isBookmarked(item.id)) return false;
-
-      // Platform Filter
-      if (selectedPlatform !== 'all' && (item.source || 'unstop') !== selectedPlatform) return false;
 
       // Circuit Filter
       if (selectedCircuits.length > 0) {
@@ -243,7 +226,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       }
       return 0;
     });
-  }, [competitions, selectedPlatform, bookmarkedOnly, selectedCircuits, selectedTracks, teamFilter, feeFilter, searchQuery, sortBy, bookmarks]);
+  }, [competitions, bookmarkedOnly, selectedCircuits, selectedTracks, teamFilter, feeFilter, searchQuery, sortBy, bookmarks]);
 
   return (
     <div className="case-comps-container">
@@ -254,10 +237,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
           <span className="cc-meta-stamp">UNDERGRAD OPPORTUNITY ENGINE</span>
         </div>
         <h1 className="cc-hero-headline">
-          COLLEGIATE OPPORTUNITIES<span className="blue-dot">.</span>
+          COLLEGIATE COMPETITIONS<span className="blue-dot">.</span>
         </h1>
         <p className="cc-hero-sub">
-          Aggregating active undergraduate opportunities in real-time across Unstop, Devfolio, Devpost, and Codeforces. MBA restrictions purged. Clean, engineered tracking across DU, IITs, IIMs, and Global circuits. <span className="serif-accent">ready to explore?</span>
+          Aggregating active undergraduate opportunities directly from Unstop. MBA restrictions purged. Clean, engineered tracking across DU, IITs, IIMs, and Global circuits. <span className="serif-accent">ready to be unstoppable?</span>
         </p>
       </div>
 
@@ -276,52 +259,6 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
           {searchQuery && (
             <button className="cc-clear-search" onClick={() => setSearchQuery('')}>✕</button>
           )}
-        </div>
-
-        {/* Row 0: Multi-Platform Sources */}
-        <div className="cc-source-filter-row">
-          <span className="cc-source-label">Source:</span>
-          <div className="cc-source-pills">
-            <button
-              type="button"
-              className={`cc-source-pill ${selectedPlatform === 'all' ? 'active' : ''}`}
-              onClick={() => setSelectedPlatform('all')}
-            >
-              All Platforms ({metrics.total})
-            </button>
-            <button
-              type="button"
-              className={`cc-source-pill source-unstop ${selectedPlatform === 'unstop' ? 'active' : ''}`}
-              onClick={() => togglePlatform('unstop')}
-            >
-              <span className="source-dot dot-unstop" />
-              Unstop ({metrics.unstop})
-            </button>
-            <button
-              type="button"
-              className={`cc-source-pill source-devfolio ${selectedPlatform === 'devfolio' ? 'active' : ''}`}
-              onClick={() => togglePlatform('devfolio')}
-            >
-              <span className="source-dot dot-devfolio" />
-              Devfolio ({metrics.devfolio})
-            </button>
-            <button
-              type="button"
-              className={`cc-source-pill source-devpost ${selectedPlatform === 'devpost' ? 'active' : ''}`}
-              onClick={() => togglePlatform('devpost')}
-            >
-              <span className="source-dot dot-devpost" />
-              Devpost ({metrics.devpost})
-            </button>
-            <button
-              type="button"
-              className={`cc-source-pill source-codeforces ${selectedPlatform === 'codeforces' ? 'active' : ''}`}
-              onClick={() => togglePlatform('codeforces')}
-            >
-              <span className="source-dot dot-codeforces" />
-              Codeforces ({metrics.codeforces})
-            </button>
-          </div>
         </div>
 
         {/* Row 1: Circuit Tabs + Right-Aligned Bookmarks */}
@@ -550,15 +487,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                       </span>
                     </div>
 
-                    {/* Actions: Platform Apply Button + Tinted Squad Up */}
+                    {/* Actions: Signature Navy Unstop Button + Tinted Squad Up */}
                     <div className="cc-card-actions">
-                      <a
-                        href={comp.applyUrl || comp.unstopUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`cc-action-btn cc-btn-apply btn-${comp.source || 'unstop'}`}
-                      >
-                        <span>Apply on {comp.sourceName || 'Unstop'}</span>
+                      <a href={comp.unstopUrl} target="_blank" rel="noopener noreferrer" className="cc-action-btn cc-btn-apply">
+                        <span>Apply on Unstop</span>
                         <ExternalLinkIcon size={12} />
                       </a>
 

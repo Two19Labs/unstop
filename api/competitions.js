@@ -190,8 +190,11 @@ let cachedData = null;
 let lastFetchTime = 0;
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
-async function fetchRawUnstopCompetitions() {
+export async function fetchCompetitionsFromUnstop() {
   const now = Date.now();
+  if (cachedData && (now - lastFetchTime) < CACHE_TTL_MS && cachedData.length > 0) {
+    return cachedData;
+  }
 
   const queryEndpoints = [
     'opportunity=competitions&subType=case-competitions&per_page=50',
@@ -344,16 +347,12 @@ async function fetchRawUnstopCompetitions() {
       const applyUrl = item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`;
 
       return {
-        id: `unstop-${item.id || item.short_id}`,
+        id: item.id || item.short_id,
         title: item.title || 'Untitled Opportunity',
         orgName,
         orgLogo: item.organisation?.logoUrl2 || item.organisation?.logoUrl || null,
         bannerUrl: item.logoUrl2 || null,
-        source: 'unstop',
-        sourceName: 'Unstop',
-        sourceColor: '#0F3FFE',
-        applyUrl,
-        unstopUrl: applyUrl,
+        unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
         deadline: item.regnRequirements?.end_regn_dt || item.end_date,
         remainDaysText,
         daysRemainingNum,
@@ -378,293 +377,23 @@ async function fetchRawUnstopCompetitions() {
       };
     });
 
+    formatted.sort((a, b) => {
+      const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      const validA = !isNaN(timeA) ? timeA : Infinity;
+      const validB = !isNaN(timeB) ? timeB : Infinity;
+      if (validA !== validB) return validA - validB;
+      return (b.registeredCount || 0) - (a.registeredCount || 0);
+    });
+
+    cachedData = formatted;
+    lastFetchTime = now;
     return formatted;
   } catch (err) {
     console.error('Fatal fetch error from Unstop:', err);
-    return [];
+    return cachedData || [];
   }
 }
-
-export async function fetchDevfolioHackathons() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch('https://api.devfolio.co/api/hackathons?filter=all&page=1&limit=50', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*'
-      },
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) return [];
-    const json = await res.json();
-    const list = json?.result || [];
-    const now = Date.now();
-
-    return list
-      .filter(item => item && (item.slug || item.name))
-      .map(item => {
-        const title = item.name || 'Untitled Hackathon';
-        const lowerTitle = title.toLowerCase();
-        const city = item.city || '';
-        const isOnline = Boolean(item.is_online);
-        const orgName = city ? `${city} · Devfolio` : (isOnline ? 'Virtual · Devfolio' : 'Devfolio Community');
-
-        let daysRemainingNum = 999;
-        let remainDaysText = 'Upcoming';
-        const targetDate = item.ends_at || item.starts_at;
-        if (targetDate) {
-          const diffMs = new Date(targetDate).getTime() - now;
-          daysRemainingNum = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-          if (diffMs > 0) {
-            remainDaysText = `${daysRemainingNum}d left`;
-          } else {
-            remainDaysText = 'Ongoing';
-          }
-        }
-
-        const urgency = daysRemainingNum <= 3 ? 'high' : daysRemainingNum <= 7 ? 'medium' : 'normal';
-        const isDU = DU_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw));
-        const isPremier = !isDU && (IIM_IIT_PREMIER_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)) || true);
-        const isCorporate = CORPORATE_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw));
-
-        const slug = item.slug || item.uuid;
-        const applyUrl = `https://${slug}.devfolio.co/`;
-
-        return {
-          id: `devfolio-${slug}`,
-          title,
-          orgName,
-          orgLogo: null,
-          bannerUrl: item.cover_img || null,
-          source: 'devfolio',
-          sourceName: 'Devfolio',
-          sourceColor: '#3770FF',
-          applyUrl,
-          unstopUrl: applyUrl,
-          deadline: targetDate,
-          remainDaysText,
-          daysRemainingNum,
-          urgency,
-          category: 'hackathon',
-          categoryLabel: 'Hackathons & Dev',
-          categoryEmoji: '💻',
-          minTeam: 1,
-          maxTeam: 4,
-          teamSizeDisplay: '1 - 4 Members',
-          prizes: 'Cash Prizes & Bounties',
-          isFree: true,
-          isFlagship: true,
-          isDU,
-          isPremier,
-          isCorporate,
-          registeredCount: item.hackers_count || 150,
-          viewsCount: (item.hackers_count || 150) * 4,
-          isUndergradEligible: true,
-        };
-      });
-  } catch (err) {
-    console.warn('Devfolio fetch error (graceful fallback):', err.message);
-    return [];
-  }
-}
-
-export async function fetchDevpostHackathons() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch('https://devpost.com/api/hackathons?page=1', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*'
-      },
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) return [];
-    const json = await res.json();
-    const list = json?.hackathons || [];
-
-    return list
-      .filter(item => item && item.title)
-      .map(item => {
-        const title = item.title || 'Untitled Hackathon';
-        const locationStr = item.displayed_location?.location || 'Online';
-        const orgName = `${locationStr} · Devpost`;
-        let bannerUrl = item.thumbnail_url || null;
-        if (bannerUrl && bannerUrl.startsWith('//')) {
-          bannerUrl = 'https:' + bannerUrl;
-        }
-
-        const applyUrl = item.url || `https://devpost.com/hackathons`;
-        const prizeStr = item.prize_amount ? `${item.prize_amount} Pool` : 'Cash & Swag';
-        const isOpen = item.open_state === 'open';
-
-        return {
-          id: `devpost-${item.id || Math.random().toString(36).slice(2, 8)}`,
-          title,
-          orgName,
-          orgLogo: null,
-          bannerUrl,
-          source: 'devpost',
-          sourceName: 'Devpost',
-          sourceColor: '#003E54',
-          applyUrl,
-          unstopUrl: applyUrl,
-          deadline: null,
-          remainDaysText: isOpen ? 'Open Now' : 'Upcoming',
-          daysRemainingNum: 20,
-          urgency: 'normal',
-          category: 'hackathon',
-          categoryLabel: 'Hackathons & Dev',
-          categoryEmoji: '💻',
-          minTeam: 1,
-          maxTeam: 4,
-          teamSizeDisplay: 'Solo / Team',
-          prizes: prizeStr,
-          isFree: true,
-          isFlagship: true,
-          isDU: false,
-          isPremier: false,
-          isCorporate: true,
-          registeredCount: item.registrations_count || 120,
-          viewsCount: (item.registrations_count || 120) * 3,
-          isUndergradEligible: true,
-        };
-      });
-  } catch (err) {
-    console.warn('Devpost fetch error (graceful fallback):', err.message);
-    return [];
-  }
-}
-
-export async function fetchCodeforcesContests() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch('https://codeforces.com/api/contest.list?gym=false', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json'
-      },
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) return [];
-    const json = await res.json();
-    if (json.status !== 'OK' || !Array.isArray(json.result)) return [];
-
-    const now = Date.now();
-    const upcoming = json.result
-      .filter(c => c && c.phase === 'BEFORE')
-      .slice(0, 6);
-
-    return upcoming.map(c => {
-      const startTime = c.startTimeSeconds ? new Date(c.startTimeSeconds * 1000).toISOString() : null;
-      let daysRemainingNum = 999;
-      let remainDaysText = 'Upcoming';
-      if (c.startTimeSeconds) {
-        const diffMs = (c.startTimeSeconds * 1000) - now;
-        daysRemainingNum = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-        const diffHours = Math.max(0, Math.round(diffMs / (1000 * 60 * 60)));
-        if (diffHours < 24) {
-          remainDaysText = `Starts in ${diffHours}h`;
-        } else {
-          remainDaysText = `Starts in ${daysRemainingNum}d`;
-        }
-      }
-
-      const urgency = daysRemainingNum <= 2 ? 'high' : daysRemainingNum <= 5 ? 'medium' : 'normal';
-      const applyUrl = `https://codeforces.com/contest/${c.id}`;
-
-      return {
-        id: `codeforces-${c.id}`,
-        title: c.name,
-        orgName: 'Codeforces Global Contests',
-        orgLogo: null,
-        bannerUrl: null,
-        source: 'codeforces',
-        sourceName: 'Codeforces',
-        sourceColor: '#D35400',
-        applyUrl,
-        unstopUrl: applyUrl,
-        deadline: startTime,
-        remainDaysText,
-        daysRemainingNum,
-        urgency,
-        category: 'hackathon',
-        categoryLabel: 'Competitive Programming',
-        categoryEmoji: '⚡',
-        minTeam: 1,
-        maxTeam: 1,
-        teamSizeDisplay: 'Solo / Individual',
-        prizes: 'Global Rating & Badges',
-        isFree: true,
-        isFlagship: true,
-        isDU: false,
-        isPremier: true,
-        isCorporate: false,
-        registeredCount: 3500,
-        viewsCount: 12000,
-        isUndergradEligible: true,
-      };
-    });
-  } catch (err) {
-    console.warn('Codeforces fetch error (graceful fallback):', err.message);
-    return [];
-  }
-}
-
-export async function fetchAllCompetitions() {
-  const now = Date.now();
-  if (cachedData && (now - lastFetchTime) < CACHE_TTL_MS && cachedData.length > 0) {
-    return cachedData;
-  }
-
-  const [unstopRes, devfolioRes, devpostRes, cfRes] = await Promise.allSettled([
-    fetchRawUnstopCompetitions(),
-    fetchDevfolioHackathons(),
-    fetchDevpostHackathons(),
-    fetchCodeforcesContests()
-  ]);
-
-  const unstopList = unstopRes.status === 'fulfilled' ? unstopRes.value : [];
-  const devfolioList = devfolioRes.status === 'fulfilled' ? devfolioRes.value : [];
-  const devpostList = devpostRes.status === 'fulfilled' ? devpostRes.value : [];
-  const cfList = cfRes.status === 'fulfilled' ? cfRes.value : [];
-
-  const combined = [...unstopList, ...devfolioList, ...devpostList, ...cfList];
-
-  // Deduplicate by normalized title
-  const seenTitles = new Set();
-  const deduplicated = [];
-  for (const item of combined) {
-    const norm = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (!norm || seenTitles.has(norm)) continue;
-    seenTitles.add(norm);
-    deduplicated.push(item);
-  }
-
-  deduplicated.sort((a, b) => {
-    const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
-    const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-    const validA = !isNaN(timeA) ? timeA : Infinity;
-    const validB = !isNaN(timeB) ? timeB : Infinity;
-    if (validA !== validB) return validA - validB;
-    return (b.registeredCount || 0) - (a.registeredCount || 0);
-  });
-
-  if (deduplicated.length > 0) {
-    cachedData = deduplicated;
-    lastFetchTime = now;
-  }
-
-  return cachedData || deduplicated;
-}
-
-// Alias for backwards compatibility with vite.config.js and imports
-export const fetchCompetitionsFromUnstop = fetchAllCompetitions;
 
 export default async function handler(req, res) {
   try {
