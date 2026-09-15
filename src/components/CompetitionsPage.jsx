@@ -102,6 +102,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     );
   };
 
+  const togglePlatform = (plat) => {
+    setSelectedPlatform(prev => (prev === plat ? 'all' : plat));
+  };
+
   const toggleBookmarkedOnly = () => {
     setBookmarkedOnly(!bookmarkedOnly);
   };
@@ -239,7 +243,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       }
       return 0;
     });
-  }, [competitions, bookmarkedOnly, selectedCircuits, selectedTracks, teamFilter, feeFilter, searchQuery, sortBy, bookmarks]);
+  }, [competitions, selectedPlatform, bookmarkedOnly, selectedCircuits, selectedTracks, teamFilter, feeFilter, searchQuery, sortBy, bookmarks]);
 
   return (
     <div className="case-comps-container">
@@ -288,7 +292,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
             <button
               type="button"
               className={`cc-source-pill source-unstop ${selectedPlatform === 'unstop' ? 'active' : ''}`}
-              onClick={() => setSelectedPlatform('unstop')}
+              onClick={() => togglePlatform('unstop')}
             >
               <span className="source-dot dot-unstop" />
               Unstop ({metrics.unstop})
@@ -296,7 +300,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
             <button
               type="button"
               className={`cc-source-pill source-devfolio ${selectedPlatform === 'devfolio' ? 'active' : ''}`}
-              onClick={() => setSelectedPlatform('devfolio')}
+              onClick={() => togglePlatform('devfolio')}
             >
               <span className="source-dot dot-devfolio" />
               Devfolio ({metrics.devfolio})
@@ -304,7 +308,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
             <button
               type="button"
               className={`cc-source-pill source-devpost ${selectedPlatform === 'devpost' ? 'active' : ''}`}
-              onClick={() => setSelectedPlatform('devpost')}
+              onClick={() => togglePlatform('devpost')}
             >
               <span className="source-dot dot-devpost" />
               Devpost ({metrics.devpost})
@@ -312,7 +316,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
             <button
               type="button"
               className={`cc-source-pill source-codeforces ${selectedPlatform === 'codeforces' ? 'active' : ''}`}
-              onClick={() => setSelectedPlatform('codeforces')}
+              onClick={() => togglePlatform('codeforces')}
             >
               <span className="source-dot dot-codeforces" />
               Codeforces ({metrics.codeforces})
