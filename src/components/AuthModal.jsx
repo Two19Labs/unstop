@@ -167,15 +167,6 @@ export default function AuthModal() {
           </p>
         </div>
 
-        {/* Notice if Supabase not configured */}
-        {!hasSupabase && (
-          <div className="arena-auth-demo-notice">
-            <AlertCircleIcon size={14} color="#B45309" />
-            <div>
-              <strong>Setup Note:</strong> Add <code>VITE_SUPABASE_URL</code> &amp; <code>VITE_SUPABASE_ANON_KEY</code> to <code>.env</code>.
-            </div>
-          </div>
-        )}
 
         {/* Error / Success Notifications */}
         {errorMsg && (

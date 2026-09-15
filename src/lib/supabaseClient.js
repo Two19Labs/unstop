@@ -1,8 +1,13 @@
 // src/lib/supabaseClient.js
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl =
+  import.meta.env?.VITE_SUPABASE_URL ||
+  'https://ncnkzlugelkhafjtupbf.supabase.co';
+
+const supabaseAnonKey =
+  import.meta.env?.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbmt6bHVnZWxraGFmanR1cGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTcxNDYsImV4cCI6MjEwNDk3MzE0Nn0.DERn_Nf62VX0ScFXF9Jyokm9cLJZsdr_RcttHsoi8lU';
 
 export const hasValidCredentials = Boolean(
   supabaseUrl &&

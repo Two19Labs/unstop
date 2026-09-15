@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // 2. Fetch Profile from Supabase
+  // 2. Fetch Profile and Bookmarks from Supabase
   const fetchUserProfile = useCallback(async (userId) => {
     if (!supabase || !userId) return;
     try {
@@ -96,6 +96,24 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.warn('Profile fetch warning:', err.message);
+    }
+  }, []);
+
+  const fetchUserBookmarks = useCallback(async (userId) => {
+    if (!supabase || !userId) return;
+    try {
+      const { data, error } = await supabase
+        .from('bookmarks')
+        .select('comp_id')
+        .eq('user_id', userId);
+
+      if (!error && Array.isArray(data)) {
+        const ids = data.map(b => b.comp_id);
+        setBookmarks(ids);
+        localStorage.setItem('arena_bookmarks', JSON.stringify(ids));
+      }
+    } catch (err) {
+      console.warn('Bookmarks fetch warning:', err.message);
     }
   }, []);
 
@@ -153,6 +171,7 @@ export function AuthProvider({ children }) {
       setUser(currentUser);
       if (currentUser) {
         fetchUserProfile(currentUser.id);
+        fetchUserBookmarks(currentUser.id);
       }
       setAuthLoading(false);
     }).catch((err) => {
@@ -170,6 +189,7 @@ export function AuthProvider({ children }) {
 
         if (currentUser) {
           await fetchUserProfile(currentUser.id);
+          await fetchUserBookmarks(currentUser.id);
           refreshSquadData();
         } else {
           setProfile(null);
@@ -182,7 +202,7 @@ export function AuthProvider({ children }) {
       isMounted = false;
       subscription?.unsubscribe();
     };
-  }, [fetchUserProfile, refreshSquadData]);
+  }, [fetchUserProfile, fetchUserBookmarks, refreshSquadData]);
 
   // 5. Initial Squad Data Fetch
   useEffect(() => {
@@ -252,6 +272,7 @@ export function AuthProvider({ children }) {
       email,
       password,
       options: {
+        emailRedirectTo: window.location.origin,
         data: {
           full_name: fullName,
           college: college || '',
@@ -287,28 +308,55 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  // Bookmark Toggle
-  const toggleBookmark = (compId) => {
-    setBookmarks(prev => {
-      if (prev.includes(compId)) {
-        return prev.filter(id => id !== compId);
-      } else {
-        return [...prev, compId];
+  // Bookmark Toggle with Live Database Sync
+  const toggleBookmark = async (compId) => {
+    const isCurrentlySaved = bookmarks.includes(compId);
+    const nextBookmarks = isCurrentlySaved
+      ? bookmarks.filter(id => id !== compId)
+      : [...bookmarks, compId];
+
+    // Optimistic UI update
+    setBookmarks(nextBookmarks);
+    localStorage.setItem('arena_bookmarks', JSON.stringify(nextBookmarks));
+
+    // Persist to Supabase if authenticated
+    if (supabase && user) {
+      try {
+        if (isCurrentlySaved) {
+          await supabase
+            .from('bookmarks')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('comp_id', compId);
+        } else {
+          await supabase
+            .from('bookmarks')
+            .insert([{ user_id: user.id, comp_id: compId }]);
+        }
+      } catch (err) {
+        console.warn('Could not sync bookmark to Supabase:', err.message);
       }
-    });
+    }
   };
 
   const isBookmarked = (compId) => bookmarks.includes(compId);
 
-  // Squad Post Creator
+  // Squad Post Creator (Strict Authentication Required)
   const createSquadPost = async (postData) => {
-    const creatorName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'OneStop Competitor';
-    const creatorEmail = user?.email || 'competitor@two19labs.in';
-    const userId = user?.id || `anon-${Date.now()}`;
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Post a Squad',
+        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
+        initialTab: 'signin',
+      });
+      throw new Error('Please sign in to post a squad opening.');
+    }
 
-    const newPost = {
-      id: `post-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      user_id: userId,
+    const creatorName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Competitor';
+    const creatorEmail = user.email;
+
+    const payload = {
+      user_id: user.id,
       created_by_email: creatorEmail,
       created_by_name: creatorName,
       competition_name: postData.competition_name,
@@ -323,100 +371,76 @@ export function AuthProvider({ children }) {
       spots_left: Number(postData.spots_left || 1),
       initial_open_spots: Number(postData.spots_left || 1),
       is_open: true,
-      college: postData.college || '',
+      college: postData.college || profile?.college || '',
       course: postData.course || '',
       year: postData.year || '2nd Year',
       accepted_emails: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
 
-    // Optimistically add to local state
-    setSquadPosts(prev => [newPost, ...prev]);
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('squad_posts')
+        .insert([payload])
+        .select()
+        .single();
 
-    // Save to Supabase if connected
-    if (supabase && user) {
-      try {
-        const { data, error } = await supabase.from('squad_posts').insert([{
-          user_id: user.id,
-          created_by_email: creatorEmail,
-          created_by_name: creatorName,
-          competition_name: postData.competition_name,
-          organizer: postData.organizer || '',
-          competition_link: postData.competition_link || '',
-          phone_number: postData.phone_number || '',
-          title: postData.title,
-          description: postData.description || '',
-          skills_have: postData.skills_have || [],
-          skills_looking_for: postData.skills_looking_for || [],
-          total_members: Number(postData.total_members || 4),
-          spots_left: Number(postData.spots_left || 1),
-          initial_open_spots: Number(postData.spots_left || 1),
-          is_open: true,
-          college: postData.college || '',
-          course: postData.course || '',
-          year: postData.year || '2nd Year',
-        }]).select().single();
-
-        if (!error && data) {
-          // Replace optimistic ID with DB record
-          setSquadPosts(prev => prev.map(p => p.id === newPost.id ? data : p));
-          return data;
-        }
-      } catch (err) {
-        console.warn('Could not persist squad post to Supabase:', err.message);
+      if (error) {
+        console.error('Error inserting squad post to Supabase:', error);
+        throw error;
       }
+
+      setSquadPosts(prev => [data, ...prev]);
+      localStorage.setItem('arena_squad_posts', JSON.stringify([data, ...squadPosts]));
+      return data;
     }
 
-    return newPost;
+    throw new Error('Backend database not connected.');
   };
 
-  // Submit Application
+  // Submit Application (Strict Authentication Required)
   const applyToSquad = async (appData) => {
-    const applicantId = user?.id || `anon-${Date.now()}`;
-    const applicantEmail = user?.email || 'applicant@two19labs.in';
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Apply',
+        subtitle: 'You must be signed in to apply to join a squad.',
+        initialTab: 'signin',
+      });
+      throw new Error('Please sign in to apply to this squad.');
+    }
 
-    const newApp = {
-      id: `app-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    const applicantName = appData.applicant_name || profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0];
+    const applicantEmail = user.email;
+
+    const payload = {
       post_id: appData.post_id,
-      applicant_id: applicantId,
+      applicant_id: user.id,
+      applicant_name: applicantName,
       applicant_email: applicantEmail,
-      applicant_name: appData.applicant_name,
-      applicant_phone: appData.applicant_phone || '',
-      applicant_college: appData.applicant_college || '',
+      applicant_phone: appData.applicant_phone || profile?.phone || '',
+      applicant_college: appData.applicant_college || profile?.college || '',
       pitch_note: appData.pitch_note || '',
       highlighted_skills: appData.highlighted_skills || [],
       status: 'pending',
-      created_at: new Date().toISOString(),
     };
 
-    setSquadApps(prev => [newApp, ...prev]);
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('squad_applications')
+        .insert([payload])
+        .select()
+        .single();
 
-    // Persist to Supabase if connected
-    if (supabase && user) {
-      try {
-        const { data, error } = await supabase.from('squad_applications').insert([{
-          post_id: appData.post_id,
-          applicant_id: user.id,
-          applicant_name: appData.applicant_name,
-          applicant_email: applicantEmail,
-          applicant_phone: appData.applicant_phone || '',
-          applicant_college: appData.applicant_college || '',
-          pitch_note: appData.pitch_note || '',
-          highlighted_skills: appData.highlighted_skills || [],
-          status: 'pending',
-        }]).select().single();
-
-        if (!error && data) {
-          setSquadApps(prev => prev.map(a => a.id === newApp.id ? data : a));
-          return data;
-        }
-      } catch (err) {
-        console.warn('Could not persist squad app to Supabase:', err.message);
+      if (error) {
+        console.error('Error submitting application to Supabase:', error);
+        throw error;
       }
+
+      setSquadApps(prev => [data, ...prev]);
+      localStorage.setItem('arena_squad_apps', JSON.stringify([data, ...squadApps]));
+      return data;
     }
 
-    return newApp;
+    throw new Error('Backend database not connected.');
   };
 
   // Review Application (Accept / Reject)

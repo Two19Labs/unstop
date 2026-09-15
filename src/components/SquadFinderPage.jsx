@@ -40,36 +40,6 @@ function GoogleIcon({ size = 18 }) {
   );
 }
 
-const SAMPLE_TEASERS = [
-  {
-    title: 'Seeking Financial Modeling Lead for BCG Strategy Case',
-    competition_name: 'BCG Strategy Case Challenge 2026',
-    organizer: 'Boston Consulting Group',
-    college: 'SRCC, Delhi University',
-    skills_looking_for: ['Financial Modeling', 'Valuation & DCF', 'Slide Deck & UI Design'],
-    spots_left: 1,
-    total_members: 3,
-  },
-  {
-    title: 'Fullstack Dev & ML Specialist for Flipkart GRiD 6.0',
-    competition_name: 'Flipkart GRiD 6.0 - National Tech Challenge',
-    organizer: 'Flipkart',
-    college: 'IIT Delhi',
-    skills_looking_for: ['Fullstack Dev / Tech', 'Python & Data Analytics'],
-    spots_left: 2,
-    total_members: 4,
-  },
-  {
-    title: 'Need 2 Orators & Policy Researchers for National Youth Parliament',
-    competition_name: 'National Youth Parliament & Parliamentary Debate',
-    organizer: "St. Stephen's College",
-    college: "St. Stephen's College, DU",
-    skills_looking_for: ['Public Speaking & Pitching', 'Market Research & Strategy'],
-    spots_left: 1,
-    total_members: 2,
-  },
-];
-
 const PRESET_SKILLS = [
   'Financial Modeling',
   'Valuation & DCF',
@@ -368,39 +338,53 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
             </p>
           </div>
 
-          <div className="squad-gate-teaser-grid">
-            {(squadPosts.length > 0 ? squadPosts.slice(0, 3) : SAMPLE_TEASERS).map((item, idx) => (
-              <div key={item.id || idx} className="squad-gate-teaser-card">
-                <div className="squad-gate-card-overlay">
-                  <button
-                    className="squad-gate-overlay-badge"
-                    onClick={() => openAuthModal({ title: 'Sign In to Connect', initialTab: 'signin' })}
-                  >
-                    <LockIcon size={14} />
-                    <span>Sign In to Unlock & Contact</span>
-                  </button>
-                </div>
+          {squadPosts.length > 0 ? (
+            <div className="squad-gate-teaser-grid">
+              {squadPosts.slice(0, 3).map((item, idx) => (
+                <div key={item.id || idx} className="squad-gate-teaser-card">
+                  <div className="squad-gate-card-overlay">
+                    <button
+                      className="squad-gate-overlay-badge"
+                      onClick={() => openAuthModal({ title: 'Sign In to Connect', initialTab: 'signin' })}
+                    >
+                      <LockIcon size={14} />
+                      <span>Sign In to Unlock & Contact</span>
+                    </button>
+                  </div>
 
-                <div className="squad-gate-card-content">
-                  <div className="squad-gate-card-comp">
-                    <TrophyIcon size={14} color="var(--color-lab-blue)" />
-                    <span>{item.competition_name || item.comp}</span>
-                  </div>
-                  <h4 className="squad-gate-card-title">{item.title}</h4>
-                  <div className="squad-gate-card-meta">
-                    <span>{item.college || 'DU / Premier Circuit'}</span>
-                    <span>·</span>
-                    <span>{item.spots_left || item.spots || 1} spots open</span>
-                  </div>
-                  <div className="squad-gate-card-skills">
-                    {(item.skills_looking_for || item.skills || []).slice(0, 3).map((s, i) => (
-                      <span key={i} className="squad-gate-skill-tag">{s}</span>
-                    ))}
+                  <div className="squad-gate-card-content">
+                    <div className="squad-gate-card-comp">
+                      <TrophyIcon size={14} color="var(--color-lab-blue)" />
+                      <span>{item.competition_name || item.comp}</span>
+                    </div>
+                    <h4 className="squad-gate-card-title">{item.title}</h4>
+                    <div className="squad-gate-card-meta">
+                      <span>{item.college || 'Collegiate Circuit'}</span>
+                      <span>·</span>
+                      <span>{item.spots_left || 1} spots open</span>
+                    </div>
+                    <div className="squad-gate-card-skills">
+                      {(item.skills_looking_for || []).slice(0, 3).map((s, i) => (
+                        <span key={i} className="squad-gate-skill-tag">{s}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="squad-gate-empty-state" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
+              <p style={{ fontSize: '15px', fontWeight: 500, marginBottom: '16px' }}>No squad openings have been posted yet in the database.</p>
+              <button
+                type="button"
+                className="btn-create-squad"
+                onClick={() => openAuthModal({ title: 'Sign In to Post a Squad', initialTab: 'signin' })}
+              >
+                <PlusIcon size={16} />
+                <span>Sign In &amp; Post the First Opening</span>
+              </button>
+            </div>
+          )}
         </section>
       </div>
     );
