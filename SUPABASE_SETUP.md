@@ -44,7 +44,7 @@ Supabase's default email service has a strict rate limit of only 3 emails/hour. 
 3. Toggle **Enable Custom SMTP** to `ON`.
 4. Enter the Brevo SMTP parameters:
    - **Sender email**: Your verified Brevo sender email (e.g. `connect@two19labs.in` or your verified email)
-   - **Sender name**: `Arena by Two19 Labs`
+   - **Sender name**: `OneStop by Two19 Labs`
    - **Host**: `smtp-relay.brevo.com`
    - **Port**: `587`
    - **Minimum interval between emails**: `60` (or default)
@@ -53,7 +53,7 @@ Supabase's default email service has a strict rate limit of only 3 emails/hour. 
 5. Click **Save Changes**.
 6. (Optional): Under **Authentication > URL Configuration**, ensure the **Site URL** is set to:
    - Local development: `http://localhost:5173`
-   - Production: `https://arena.two19labs.in` (or your Vercel deployment URL)
+   - Production: `https://onestop.two19labs.in` (or your Vercel deployment URL)
 
 ---
 
@@ -63,10 +63,10 @@ To enable one-click "Continue with Google" authentication:
 
 ### A. Create Google OAuth Credentials:
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a new project or select an existing one (e.g., `Arena - Two19 Labs`).
+2. Create a new project or select an existing one (e.g., `OneStop - Two19 Labs`).
 3. In the left navigation, go to **APIs & Services > OAuth consent screen**:
    - User Type: **External**
-   - App Name: `Arena`
+   - App Name: `OneStop`
    - User support email: your email
    - Developer contact information: your email
    - Scopes: standard `.../auth/userinfo.email`, `.../auth/userinfo.profile`, `openid`
@@ -74,15 +74,15 @@ To enable one-click "Continue with Google" authentication:
 4. In the left navigation, go to **APIs & Services > Credentials**:
    - Click **+ CREATE CREDENTIALS** > **OAuth client ID**.
    - Application type: **Web application**.
-   - Name: `Arena Web Client`.
+   - Name: `OneStop Web Client`.
 5. Under **Authorized JavaScript origins**, add:
    - `http://localhost:5173`
    - `http://localhost:3000`
    - `https://<your-supabase-project-id>.supabase.co`
-   - Production domain (e.g. `https://your-domain.vercel.app` or `https://arena.two19labs.in`)
+   - Production domain (e.g. `https://your-domain.vercel.app` or `https://onestop.two19labs.in`)
 6. Under **Authorized redirect URIs**, add your Supabase Auth callback URL:
    ```text
-   https://<your-supabase-project-id>.supabase.co/auth/v1/callback
+   https://ncnkzlugelkhafjtupbf.supabase.co/auth/v1/callback
    ```
    *(Find your exact callback URL in Supabase Dashboard > Authentication > Providers > Google)*
 7. Click **Create**. Copy the **Client ID** and **Client Secret**.

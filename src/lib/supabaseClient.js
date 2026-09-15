@@ -12,6 +12,12 @@ export const hasValidCredentials = Boolean(
   !supabaseUrl.includes('your-project')
 );
 
+if (hasValidCredentials) {
+  console.log('✅ Supabase initialized successfully:', supabaseUrl);
+} else {
+  console.warn('⚠️ Supabase credentials not detected yet. If you just created .env, restart Vite with: npm run dev');
+}
+
 export const supabase = hasValidCredentials
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {

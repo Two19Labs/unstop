@@ -132,44 +132,47 @@ export default function AuthModal() {
         aria-modal="true"
         aria-labelledby="auth-modal-title"
       >
-        {/* Header Close */}
-        <button
-          className="arena-auth-close"
-          onClick={closeAuthModal}
-          aria-label="Close modal"
-        >
-          <CloseIcon size={18} />
-        </button>
-
-        {/* Brand Stamp & Badge */}
-        <div className="arena-auth-header">
+        {/* Top Bar with Brand Pill & Close Button */}
+        <div className="arena-auth-top-bar">
           <div className="arena-auth-brand-pill">
             <span className="arena-auth-t19">Two19 Labs</span>
             <span className="arena-auth-divider">/</span>
-            <span className="arena-auth-badge">ARENA AUTH</span>
+            <span className="arena-auth-badge">ONESTOP AUTH</span>
           </div>
 
+          <button
+            className="arena-auth-close"
+            onClick={closeAuthModal}
+            aria-label="Close modal"
+            type="button"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+
+        {/* Brand Header */}
+        <div className="arena-auth-header">
           <h2 id="auth-modal-title" className="arena-auth-title">
             {mode === 'forgot'
-              ? 'Reset Your Password'
+              ? 'Reset Password'
               : mode === 'signup'
-              ? 'Create Your Arena Account'
-              : authModalConfig?.title || 'Sign In to Arena'}
+              ? 'Create Account'
+              : authModalConfig?.title || 'Sign In to OneStop'}
           </h2>
 
           <p className="arena-auth-subtitle">
             {mode === 'forgot'
-              ? 'Enter your registered email address to receive a secure recovery link.'
-              : authModalConfig?.subtitle || 'Looking for teammates requires an Arena account to coordinate via WhatsApp.'}
+              ? 'Enter your email address to receive a secure recovery link.'
+              : authModalConfig?.subtitle || 'Access teammate matching, squad recruitment, and WhatsApp coordination.'}
           </p>
         </div>
 
         {/* Notice if Supabase not configured */}
         {!hasSupabase && (
           <div className="arena-auth-demo-notice">
-            <AlertCircleIcon size={16} color="#B45309" />
+            <AlertCircleIcon size={14} color="#B45309" />
             <div>
-              <strong>Setup Note:</strong> Add your <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> to <code>.env</code>. See <code>SUPABASE_SETUP.md</code> for Google OAuth and Brevo SMTP guide.
+              <strong>Setup Note:</strong> Add <code>VITE_SUPABASE_URL</code> &amp; <code>VITE_SUPABASE_ANON_KEY</code> to <code>.env</code>.
             </div>
           </div>
         )}

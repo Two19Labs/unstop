@@ -81,9 +81,9 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             <span className="t19-subdomain-pill">undergrad hub</span>
           </div>
 
-          <div className="t19-live-sync" title="Real-time ingestion active from unstop.com">
+          <div className="t19-live-sync" title="Real-time opportunity ingestion active">
             <span className="t19-sync-dot"></span>
-            <span className="t19-sync-label">Unstop Live</span>
+            <span className="t19-sync-label">Live Sync</span>
           </div>
         </div>
 
@@ -188,7 +188,7 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
           ) : (
             <button
               className="t19-auth-btn"
-              onClick={() => openAuthModal({ title: 'Sign In to Arena', initialTab: 'signin' })}
+              onClick={() => openAuthModal({ title: 'Sign In to OneStop', initialTab: 'signin' })}
             >
               <UserIcon size={14} />
               <span>Sign In</span>

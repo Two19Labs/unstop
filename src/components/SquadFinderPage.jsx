@@ -800,7 +800,7 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
                   <label>Registration Link (Optional)</label>
                   <input
                     type="url"
-                    placeholder="https://unstop.com/..."
+                    placeholder="https://..."
                     value={formData.competition_link}
                     onChange={(e) => setFormData({ ...formData, competition_link: e.target.value })}
                   />

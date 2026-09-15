@@ -127,7 +127,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       ? new Date(comp.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
       : 'Ongoing';
 
-    const shareText = `🏆 ${comp.title}\n🏛️ Organized by: ${comp.orgName}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: Ends ${deadlineFormatted}\n🔗 Apply on Unstop: ${comp.unstopUrl}\n\nVia OneStop (SSCBS Collegiate Hub)`;
+    const shareText = `🏆 ${comp.title}\n🏛️ Organized by: ${comp.orgName}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: Ends ${deadlineFormatted}\n🔗 Apply: ${comp.unstopUrl}\n\nVia OneStop (SSCBS Collegiate Hub)`;
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -240,7 +240,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
           COLLEGIATE COMPETITIONS<span className="blue-dot">.</span>
         </h1>
         <p className="cc-hero-sub">
-          Aggregating active undergraduate opportunities directly from Unstop. MBA restrictions purged. Clean, engineered tracking across DU, IITs, IIMs, and Global circuits. <span className="serif-accent">ready to be unstoppable?</span>
+          Aggregating active undergraduate opportunities. MBA restrictions purged. Clean, engineered tracking across DU, IITs, IIMs, and Global circuits. <span className="serif-accent">ready to compete?</span>
         </p>
       </div>
 
@@ -425,9 +425,6 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                           <span className="cc-host-name" title={comp.orgName}>
                             {comp.orgName || 'Academic Host'}
                           </span>
-                          <span className={`cc-source-badge badge-${comp.source || 'unstop'}`}>
-                            {comp.sourceName || 'Unstop'}
-                          </span>
                         </div>
                       </div>
                       <button
@@ -487,10 +484,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                       </span>
                     </div>
 
-                    {/* Actions: Signature Navy Unstop Button + Tinted Squad Up */}
+                    {/* Actions: Primary Apply Button + Tinted Squad Up */}
                     <div className="cc-card-actions">
                       <a href={comp.unstopUrl} target="_blank" rel="noopener noreferrer" className="cc-action-btn cc-btn-apply">
-                        <span>Apply on Unstop</span>
+                        <span>Apply Now</span>
                         <ExternalLinkIcon size={12} />
                       </a>
 
