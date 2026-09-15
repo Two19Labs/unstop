@@ -11,9 +11,64 @@ import {
   ClockIcon,
   CalendarIcon,
   TrophyIcon,
-  ExternalLinkIcon
+  ExternalLinkIcon,
+  LockIcon,
+  ShieldCheckIcon
 } from './icons';
 import './SquadFinderPage.css';
+
+function GoogleIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.94H1.27v3.15C3.25 21.27 7.31 24 12 24z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.27C.46 8.21 0 10.05 0 12s.46 3.79 1.27 5.41l4.01-3.15z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.73 1.27 6.59l4.01 3.15c.95-2.84 3.6-4.99 6.72-4.99z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
+const SAMPLE_TEASERS = [
+  {
+    title: 'Seeking Financial Modeling Lead for BCG Strategy Case',
+    competition_name: 'BCG Strategy Case Challenge 2026',
+    organizer: 'Boston Consulting Group',
+    college: 'SRCC, Delhi University',
+    skills_looking_for: ['Financial Modeling', 'Valuation & DCF', 'Slide Deck & UI Design'],
+    spots_left: 1,
+    total_members: 3,
+  },
+  {
+    title: 'Fullstack Dev & ML Specialist for Flipkart GRiD 6.0',
+    competition_name: 'Flipkart GRiD 6.0 - National Tech Challenge',
+    organizer: 'Flipkart',
+    college: 'IIT Delhi',
+    skills_looking_for: ['Fullstack Dev / Tech', 'Python & Data Analytics'],
+    spots_left: 2,
+    total_members: 4,
+  },
+  {
+    title: 'Need 2 Orators & Policy Researchers for National Youth Parliament',
+    competition_name: 'National Youth Parliament & Parliamentary Debate',
+    organizer: "St. Stephen's College",
+    college: "St. Stephen's College, DU",
+    skills_looking_for: ['Public Speaking & Pitching', 'Market Research & Strategy'],
+    spots_left: 1,
+    total_members: 2,
+  },
+];
 
 const PRESET_SKILLS = [
   'Financial Modeling',
@@ -28,11 +83,14 @@ const PRESET_SKILLS = [
 export default function SquadFinderPage({ prefillData, onClearPrefill, showToast }) {
   const {
     user,
+    profile,
     squadPosts,
     squadApps,
     createSquadPost,
     applyToSquad,
-    updateApplicationStatus
+    updateApplicationStatus,
+    openAuthModal,
+    signInWithGoogle
   } = useAuth();
 
   const [activeSubTab, setActiveSubTab] = useState('explore'); // 'explore' | 'my-squads'
@@ -160,9 +218,9 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
   const openApplyModal = (post) => {
     setTargetPostForApply(post);
     setApplyForm({
-      applicant_name: user?.user_metadata?.full_name || '',
-      applicant_phone: '',
-      applicant_college: '',
+      applicant_name: profile?.full_name || user?.user_metadata?.full_name || '',
+      applicant_phone: profile?.phone || user?.user_metadata?.phone || '',
+      applicant_college: profile?.college || user?.user_metadata?.college || '',
       pitch_note: '',
       highlighted_skills: []
     });
@@ -178,8 +236,8 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
     }
 
     const clean = sanitizeIndianPhone(applyForm.applicant_phone);
-    if (clean.length !== 10) {
-      alert('Please enter a valid 10-digit Indian phone number for WhatsApp connection.');
+    if (!clean || clean.length !== 10) {
+      alert('Please provide a valid 10-digit Indian phone number for WhatsApp verification.');
       return;
     }
 
@@ -217,6 +275,136 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
   // User's own posts and applications
   const myPosts = squadPosts.filter(p => p.created_by_email === user?.email || p.user_id === user?.id);
   const myApps = squadApps.filter(a => a.applicant_email === user?.email || a.applicant_id === user?.id);
+
+  // If user is not authenticated, show locked Teammate Match Gate
+  if (!user) {
+    return (
+      <div className="squad-finder-view squad-finder-gated">
+        <section className="squad-gate-hero">
+          <div className="squad-gate-card">
+            <div className="squad-gate-top">
+              <div className="squad-gate-lock-badge">
+                <LockIcon size={16} color="var(--color-lab-blue)" />
+                <span>MEMBERSHIP REQUIRED</span>
+              </div>
+              <span className="squad-gate-brand">TWO19 LABS / SQUAD GATEWAY</span>
+            </div>
+
+            <h1 className="squad-gate-title">
+              Sign in to unlock Squad Finder & teammate matching
+            </h1>
+
+            <p className="squad-gate-sub">
+              Looking up and filtering competitions is 100% free for all. But recruiting teammates, viewing verified collegiate profiles, and coordinating over WhatsApp requires a OneStop account.
+            </p>
+
+            {prefillData && prefillData.competition_name && (
+              <div className="squad-gate-comp-banner">
+                <TrophyIcon size={16} color="var(--color-lab-blue)" />
+                <span>
+                  Ready to recruit a squad for: <strong>{prefillData.competition_name}</strong>
+                </span>
+              </div>
+            )}
+
+            <div className="squad-gate-cta-group">
+              <button
+                className="squad-gate-google-btn"
+                onClick={() => signInWithGoogle().catch(err => alert(err.message))}
+              >
+                <GoogleIcon size={18} />
+                <span>Continue with Google</span>
+              </button>
+
+              <button
+                className="squad-gate-email-btn"
+                onClick={() => openAuthModal({
+                  title: 'Sign In to Squad Finder',
+                  initialTab: 'signin',
+                  postLoginAction: prefillData ? () => setShowCreateModal(true) : null
+                })}
+              >
+                Sign in with Email
+              </button>
+
+              <button
+                className="squad-gate-signup-btn"
+                onClick={() => openAuthModal({
+                  title: 'Join OneStop Squad Network',
+                  initialTab: 'signup',
+                  postLoginAction: prefillData ? () => setShowCreateModal(true) : null
+                })}
+              >
+                Create Free Account
+              </button>
+            </div>
+
+            <div className="squad-gate-features">
+              <div className="squad-gate-feature-item">
+                <ShieldCheckIcon size={16} color="var(--color-lab-blue)" />
+                <span>Verified student network (DU, IITs, IIMs, Premier colleges)</span>
+              </div>
+              <div className="squad-gate-feature-item">
+                <WhatsAppIcon size={16} />
+                <span>1-Click WhatsApp direct chat with squad leaders</span>
+              </div>
+              <div className="squad-gate-feature-item">
+                <CheckIcon size={16} color="var(--color-lab-blue)" />
+                <span>Skill matching (DCF, Valuation, UI/Pitch, Python)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Locked Preview / Teaser Feed */}
+        <section className="squad-gate-teaser-section">
+          <div className="squad-gate-teaser-header">
+            <div className="squad-gate-teaser-title-row">
+              <h2 className="squad-gate-teaser-title">Active Collegiate Squad Openings</h2>
+              <span className="squad-gate-teaser-pill">LOCKED PREVIEW</span>
+            </div>
+            <p className="squad-gate-teaser-subtitle">
+              Sign in or create an account to view contact details, message leads on WhatsApp, or post your own opening.
+            </p>
+          </div>
+
+          <div className="squad-gate-teaser-grid">
+            {(squadPosts.length > 0 ? squadPosts.slice(0, 3) : SAMPLE_TEASERS).map((item, idx) => (
+              <div key={item.id || idx} className="squad-gate-teaser-card">
+                <div className="squad-gate-card-overlay">
+                  <button
+                    className="squad-gate-overlay-badge"
+                    onClick={() => openAuthModal({ title: 'Sign In to Connect', initialTab: 'signin' })}
+                  >
+                    <LockIcon size={14} />
+                    <span>Sign In to Unlock & Contact</span>
+                  </button>
+                </div>
+
+                <div className="squad-gate-card-content">
+                  <div className="squad-gate-card-comp">
+                    <TrophyIcon size={14} color="var(--color-lab-blue)" />
+                    <span>{item.competition_name || item.comp}</span>
+                  </div>
+                  <h4 className="squad-gate-card-title">{item.title}</h4>
+                  <div className="squad-gate-card-meta">
+                    <span>{item.college || 'DU / Premier Circuit'}</span>
+                    <span>·</span>
+                    <span>{item.spots_left || item.spots || 1} spots open</span>
+                  </div>
+                  <div className="squad-gate-card-skills">
+                    {(item.skills_looking_for || item.skills || []).slice(0, 3).map((s, i) => (
+                      <span key={i} className="squad-gate-skill-tag">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="squad-finder-view">

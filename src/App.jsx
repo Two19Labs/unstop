@@ -1,13 +1,15 @@
 // src/App.jsx
 import React, { useState } from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import CompetitionsPage from './components/CompetitionsPage';
 import SquadFinderPage from './components/SquadFinderPage';
+import AuthModal from './components/AuthModal';
 import { CheckIcon } from './components/icons';
 import './App.css';
 
 function MainApp() {
+  const { user, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState('competitions'); // 'competitions' | 'squad-finder'
   const [prefillData, setPrefillData] = useState(null);
   const [liveCount, setLiveCount] = useState(0);
@@ -23,8 +25,20 @@ function MainApp() {
 
   const handleFindTeammates = (prefill) => {
     setPrefillData(prefill);
-    setActiveTab('squad-finder');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Find Teammates',
+        subtitle: `Sign in or join OneStop to build a winning squad for "${prefill.competition_name}".`,
+        initialTab: 'signin',
+        postLoginAction: () => {
+          setActiveTab('squad-finder');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    } else {
+      setActiveTab('squad-finder');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -54,6 +68,9 @@ function MainApp() {
           />
         )}
       </div>
+
+      {/* Global Two19 Labs Auth Modal */}
+      <AuthModal />
 
       {/* Floating Toast Notification */}
       {toastMessage && (
@@ -85,7 +102,7 @@ function MainApp() {
               <a href="mailto:connect@two19labs.in">connect@two19labs.in</a>
             </div>
             <p className="t19-footer-disclaimer">
-              Arena is an engineering project by Two19 Labs aggregating real-time undergraduate opportunities from Unstop across Indian and global collegiate circuits.
+              OneStop is an engineering project by Two19 Labs aggregating real-time undergraduate opportunities from Unstop, Devfolio, Devpost, Codeforces, and global collegiate circuits.
             </p>
           </div>
         </div>

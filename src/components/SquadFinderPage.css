@@ -1135,3 +1135,303 @@
     font-size: 0.8rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Teammate Matching Locked Gate Styles
+   ═══════════════════════════════════════════════════════════ */
+
+.squad-finder-gated {
+  padding-top: 1.5rem;
+}
+
+.squad-gate-hero {
+  margin-bottom: 3rem;
+}
+
+.squad-gate-card {
+  background: var(--surface-card, #FFFFFF);
+  border: 1px solid var(--border, #D9D5CD);
+  border-radius: var(--radius-lg, 14px);
+  padding: 2.75rem 2.5rem;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.squad-gate-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.squad-gate-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--accent-tint, rgba(15, 63, 254, 0.08));
+  color: var(--color-lab-blue, #0F3FFE);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(15, 63, 254, 0.2);
+}
+
+.squad-gate-brand {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink-faint, #A8A49C);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.squad-gate-title {
+  font-size: 2.15rem;
+  font-weight: 800;
+  color: var(--ink, #0E0E0E);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  margin: 0 0 0.85rem;
+  max-width: 780px;
+}
+
+.squad-gate-sub {
+  font-size: 1.05rem;
+  color: var(--ink-dim, #6B6862);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+  max-width: 760px;
+}
+
+.squad-gate-comp-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: rgba(15, 63, 254, 0.06);
+  border: 1px solid rgba(15, 63, 254, 0.25);
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.88rem;
+  color: var(--ink, #0E0E0E);
+  margin-bottom: 1.75rem;
+}
+
+.squad-gate-cta-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.squad-gate-google-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background-color: #FFFFFF;
+  color: #0E0E0E;
+  border: 1px solid var(--border-strong, #BFB9AC);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms);
+  box-shadow: var(--shadow-sm);
+}
+
+.squad-gate-google-btn:hover {
+  background-color: var(--surface-hover, #ECE8E0);
+  border-color: #0E0E0E;
+  transform: translateY(-1px);
+}
+
+.squad-gate-email-btn {
+  background-color: var(--color-lab-blue, #0F3FFE);
+  color: #FFFFFF;
+  border: 1px solid var(--color-lab-blue, #0F3FFE);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms);
+}
+
+.squad-gate-email-btn:hover {
+  background-color: #0A2FD4;
+  transform: translateY(-1px);
+}
+
+.squad-gate-signup-btn {
+  background: transparent;
+  color: var(--ink, #0E0E0E);
+  border: 1px solid var(--border, #D9D5CD);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms);
+}
+
+.squad-gate-signup-btn:hover {
+  background-color: var(--surface-hover, #ECE8E0);
+  border-color: var(--border-strong, #BFB9AC);
+}
+
+.squad-gate-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border, #D9D5CD);
+}
+
+.squad-gate-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink, #0E0E0E);
+}
+
+/* Teaser / Blurred Feed */
+.squad-gate-teaser-section {
+  position: relative;
+}
+
+.squad-gate-teaser-header {
+  margin-bottom: 1.25rem;
+}
+
+.squad-gate-teaser-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.squad-gate-teaser-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--ink, #0E0E0E);
+  margin: 0;
+}
+
+.squad-gate-teaser-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--color-lab-blue, #0F3FFE);
+  background-color: var(--accent-tint, rgba(15, 63, 254, 0.08));
+  border: 1px solid rgba(15, 63, 254, 0.2);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-full, 9999px);
+  letter-spacing: 0.05em;
+}
+
+.squad-gate-teaser-subtitle {
+  font-size: 0.88rem;
+  color: var(--ink-dim, #6B6862);
+  margin: 0;
+}
+
+.squad-gate-teaser-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.squad-gate-teaser-card {
+  position: relative;
+  background: var(--surface-card, #FFFFFF);
+  border: 1px solid var(--border, #D9D5CD);
+  border-radius: var(--radius-md, 10px);
+  padding: 1.25rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.squad-gate-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(242, 239, 234, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  padding: 1rem;
+}
+
+.squad-gate-overlay-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--color-ink, #0E0E0E);
+  color: #FFFFFF;
+  border: 1px solid var(--color-ink, #0E0E0E);
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast, 150ms);
+  box-shadow: 0 4px 12px rgba(14, 14, 14, 0.18);
+}
+
+.squad-gate-overlay-badge:hover {
+  background: var(--color-lab-blue, #0F3FFE);
+  border-color: var(--color-lab-blue, #0F3FFE);
+  transform: scale(1.03);
+}
+
+.squad-gate-card-comp {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-lab-blue, #0F3FFE);
+  margin-bottom: 0.5rem;
+}
+
+.squad-gate-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink, #0E0E0E);
+  margin: 0 0 0.5rem;
+  line-height: 1.35;
+}
+
+.squad-gate-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--ink-dim, #6B6862);
+  margin-bottom: 0.75rem;
+}
+
+.squad-gate-card-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.squad-gate-skill-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--surface, #F7F5F1);
+  border: 1px solid var(--border, #D9D5CD);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--ink, #0E0E0E);
+}
+

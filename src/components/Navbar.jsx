@@ -1,5 +1,5 @@
 // src/components/Navbar.jsx
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   TrophyIcon,
@@ -7,12 +7,52 @@ import {
   BookmarkIcon,
   SunIcon,
   MoonIcon,
-  ExternalLinkIcon
+  ExternalLinkIcon,
+  UserIcon,
+  LogOutIcon,
+  ChevronDownIcon
 } from './icons';
 import './Navbar.css';
 
 export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedOnly, setBookmarkedOnly }) {
-  const { theme, toggleTheme, bookmarks } = useAuth();
+  const {
+    user,
+    profile,
+    signOut,
+    openAuthModal,
+    theme,
+    toggleTheme,
+    bookmarks
+  } = useAuth();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayCollege = profile?.college || user?.user_metadata?.college || '';
+
+  const getInitials = (name, email) => {
+    if (name) {
+      const parts = name.trim().split(' ');
+      if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+      return name.slice(0, 2).toUpperCase();
+    }
+    if (email) return email.slice(0, 2).toUpperCase();
+    return 'OS';
+  };
+
+  const initials = getInitials(displayName, user?.email);
 
   return (
     <header className="t19-navbar">
@@ -37,13 +77,13 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             role="button"
             tabIndex={0}
           >
-            <span className="t19-product-name">ARENA</span>
+            <span className="t19-product-name">ONESTOP</span>
             <span className="t19-subdomain-pill">undergrad hub</span>
           </div>
 
-          <div className="t19-live-sync" title="Real-time ingestion active from unstop.com">
+          <div className="t19-live-sync" title="Real-time multi-source ingestion active across Unstop, Devfolio, Devpost & Codeforces">
             <span className="t19-sync-dot"></span>
-            <span className="t19-sync-label">Unstop Live</span>
+            <span className="t19-sync-label">Multi-Source Live</span>
           </div>
         </div>
 
@@ -68,8 +108,9 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
           </button>
         </nav>
 
-        {/* Right: Actions, Saved & Theme Toggle */}
+        {/* Right: Actions, Auth & Theme Toggle */}
         <div className="t19-actions">
+          {/* Saved Bookmarks Button */}
           <button
             className={`t19-saved-btn ${bookmarkedOnly ? 'active' : ''}`}
             onClick={() => {
@@ -83,6 +124,7 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             {bookmarks.length > 0 && <span className="t19-saved-count">{bookmarks.length}</span>}
           </button>
 
+          {/* Theme Toggle Button */}
           <button
             className="t19-theme-btn"
             onClick={toggleTheme}
@@ -92,6 +134,68 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             {theme === 'light' ? <MoonIcon size={16} /> : <SunIcon size={16} />}
           </button>
 
+          {/* Authentication State Button */}
+          {user ? (
+            <div className="t19-user-menu-container" ref={menuRef}>
+              <button
+                className="t19-user-pill"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-expanded={menuOpen}
+              >
+                <span className="t19-user-avatar">{initials}</span>
+                <span className="t19-user-name">{displayName}</span>
+                <ChevronDownIcon size={14} className={`t19-chevron ${menuOpen ? 'rotated' : ''}`} />
+              </button>
+
+              {menuOpen && (
+                <div className="t19-user-dropdown">
+                  <div className="t19-dropdown-header">
+                    <div className="t19-dropdown-name">{displayName}</div>
+                    <div className="t19-dropdown-email">{user.email}</div>
+                    {displayCollege && (
+                      <span className="t19-dropdown-college">{displayCollege}</span>
+                    )}
+                  </div>
+
+                  <div className="t19-dropdown-divider"></div>
+
+                  <button
+                    className="t19-dropdown-item"
+                    onClick={() => {
+                      setActiveTab('squad-finder');
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <UsersIcon size={15} />
+                    <span>My Squads & Applications</span>
+                  </button>
+
+                  <div className="t19-dropdown-divider"></div>
+
+                  <button
+                    className="t19-dropdown-item t19-dropdown-item-danger"
+                    onClick={() => {
+                      signOut();
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <LogOutIcon size={15} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              className="t19-auth-btn"
+              onClick={() => openAuthModal({ title: 'Sign In to Arena', initialTab: 'signin' })}
+            >
+              <UserIcon size={14} />
+              <span>Sign In</span>
+            </button>
+          )}
+
+          {/* Studio Link */}
           <a
             href="https://two19labs.in"
             target="_blank"

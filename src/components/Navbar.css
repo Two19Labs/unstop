@@ -256,6 +256,165 @@
   background-color: var(--surface);
 }
 
+/* Auth Button */
+.t19-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background-color: var(--color-lab-blue);
+  color: #ffffff;
+  border: 1px solid var(--color-lab-blue);
+  padding: 0.42rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.t19-auth-btn:hover {
+  background-color: #0A2FD4;
+  box-shadow: 0 2px 8px rgba(15, 63, 254, 0.25);
+  transform: translateY(-1px);
+}
+
+/* User Menu & Dropdown */
+.t19-user-menu-container {
+  position: relative;
+}
+
+.t19-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.65rem 0.25rem 0.35rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.t19-user-pill:hover {
+  border-color: var(--border-strong);
+  background-color: var(--surface-hover);
+}
+
+.t19-user-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--color-lab-blue);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+
+.t19-user-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.t19-chevron {
+  color: var(--ink-dim);
+  transition: transform var(--transition-fast);
+}
+
+.t19-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.t19-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  background-color: var(--surface-card, #ffffff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hover);
+  padding: 0.6rem;
+  z-index: 200;
+  animation: arenaSlideUp 0.15s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.t19-dropdown-header {
+  padding: 0.5rem 0.5rem 0.35rem;
+}
+
+.t19-dropdown-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.t19-dropdown-email {
+  font-size: 0.76rem;
+  color: var(--ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.t19-dropdown-college {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-lab-blue);
+  background-color: var(--accent-tint);
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  margin-top: 0.4rem;
+}
+
+.t19-dropdown-divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: 0.4rem 0;
+}
+
+.t19-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.t19-dropdown-item:hover {
+  background-color: var(--surface-hover);
+  color: var(--color-lab-blue);
+}
+
+.t19-dropdown-item-danger {
+  color: var(--danger);
+}
+
+.t19-dropdown-item-danger:hover {
+  background-color: var(--danger-tint);
+  color: var(--danger);
+}
+
 /* ═══════════════════════════════════════════════════════════
    Responsive Navigation Breakpoints
    ═══════════════════════════════════════════════════════════ */
