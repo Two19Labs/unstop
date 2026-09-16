@@ -232,9 +232,32 @@ export function AuthProvider({ children }) {
     };
   }, [fetchUserProfile, fetchUserBookmarks, refreshSquadData]);
 
-  // 5. Initial Squad Data Fetch
+  // 5. Initial Squad Data Fetch + Realtime Subscription & Polling Fallback
   useEffect(() => {
     refreshSquadData();
+
+    if (!supabase) return;
+
+    // Realtime Postgres changes subscription
+    const channel = supabase
+      .channel('public:squad_realtime_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, () => {
+        refreshSquadData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, () => {
+        refreshSquadData();
+      })
+      .subscribe();
+
+    // 30-second interval polling fallback
+    const pollInterval = setInterval(() => {
+      refreshSquadData();
+    }, 30000);
+
+    return () => {
+      clearInterval(pollInterval);
+      supabase.removeChannel(channel);
+    };
   }, [refreshSquadData]);
 
   // 6. Local Storage Sync Fallback
@@ -543,32 +566,51 @@ export function AuthProvider({ children }) {
     throw new Error('Backend database not connected.');
   };
 
-  // Review Application (Accept / Reject)
+  // Review Application (Accept / Decline / Remove / Re-apply)
   const updateApplicationStatus = async (appId, newStatus) => {
-    let targetApp = null;
+    let targetApp = squadApps.find(a => a.id === appId) || null;
     const prevApps = squadApps;
     const prevPosts = squadPosts;
 
+    const applicantEmail = targetApp?.applicant_email;
+    const targetPostId = targetApp?.post_id;
+    const targetPost = squadPosts.find(p => p.id === targetPostId);
+
+    // Optimistically update applications
     setSquadApps(prev =>
-      prev.map(app => {
-        if (app.id === appId) {
-          targetApp = { ...app, status: newStatus };
-          return targetApp;
-        }
-        return app;
-      })
+      prev.map(app => (app.id === appId ? { ...app, status: newStatus } : app))
     );
 
-    if (newStatus === 'accepted') {
-      setSquadPosts(prevPosts =>
-        prevPosts.map(post => {
-          if (targetApp && post.id === targetApp.post_id) {
-            const nextSpots = Math.max(0, post.spots_left - 1);
+    // Optimistically update squad_posts if accepting or removing a member
+    if (newStatus === 'accepted' && targetPost && applicantEmail) {
+      setSquadPosts(prev =>
+        prev.map(post => {
+          if (post.id === targetPostId) {
+            const currentAccepted = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
+            const nextAccepted = currentAccepted.includes(applicantEmail) ? currentAccepted : [...currentAccepted, applicantEmail];
+            const nextSpots = Math.max(0, (post.spots_left !== undefined ? post.spots_left : 1) - 1);
             return {
               ...post,
               spots_left: nextSpots,
               is_open: nextSpots > 0,
-              accepted_emails: [...(post.accepted_emails || []), targetApp.applicant_email],
+              accepted_emails: nextAccepted,
+            };
+          }
+          return post;
+        })
+      );
+    } else if (newStatus === 'removed' && targetPost && applicantEmail) {
+      setSquadPosts(prev =>
+        prev.map(post => {
+          if (post.id === targetPostId) {
+            const currentAccepted = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
+            const nextAccepted = currentAccepted.filter(e => e !== applicantEmail);
+            const nextSpots = Math.min(post.total_members || 4, (post.spots_left || 0) + 1);
+            return {
+              ...post,
+              spots_left: nextSpots,
+              is_open: true,
+              accepted_emails: nextAccepted,
             };
           }
           return post;
@@ -585,27 +627,107 @@ export function AuthProvider({ children }) {
 
         if (appErr) throw appErr;
 
-        if (newStatus === 'accepted' && targetApp) {
-          const post = squadPosts.find(p => p.id === targetApp.post_id);
-          if (post) {
-            const nextSpots = Math.max(0, post.spots_left - 1);
-            const { error: postErr } = await supabase
-              .from('squad_posts')
-              .update({
-                spots_left: nextSpots,
-                is_open: nextSpots > 0,
-                accepted_emails: [...(post.accepted_emails || []), targetApp.applicant_email],
-              })
-              .eq('id', targetApp.post_id);
-
-            if (postErr) throw postErr;
-          }
+        if (newStatus === 'accepted' && targetPost && applicantEmail) {
+          const currentAccepted = Array.isArray(targetPost.accepted_emails) ? targetPost.accepted_emails : [];
+          const nextAccepted = currentAccepted.includes(applicantEmail) ? currentAccepted : [...currentAccepted, applicantEmail];
+          const nextSpots = Math.max(0, (targetPost.spots_left || 1) - 1);
+          await supabase
+            .from('squad_posts')
+            .update({
+              spots_left: nextSpots,
+              is_open: nextSpots > 0,
+              accepted_emails: nextAccepted,
+            })
+            .eq('id', targetPostId);
+        } else if (newStatus === 'removed' && targetPost && applicantEmail) {
+          const currentAccepted = Array.isArray(targetPost.accepted_emails) ? targetPost.accepted_emails : [];
+          const nextAccepted = currentAccepted.filter(e => e !== applicantEmail);
+          const nextSpots = Math.min(targetPost.total_members || 4, (targetPost.spots_left || 0) + 1);
+          await supabase
+            .from('squad_posts')
+            .update({
+              spots_left: nextSpots,
+              is_open: true,
+              accepted_emails: nextAccepted,
+            })
+            .eq('id', targetPostId);
         }
       } catch (err) {
         console.error('Could not update status in Supabase, rolling back optimistic state:', err.message);
         setSquadApps(prevApps);
         setSquadPosts(prevPosts);
         throw err;
+      }
+    }
+  };
+
+  // Re-apply to a squad (resets status to pending)
+  const reapplyToSquad = async (appId, updatePayload = {}) => {
+    if (!user) throw new Error('Please sign in to re-apply.');
+    const prevApps = squadApps;
+
+    setSquadApps(prev =>
+      prev.map(app =>
+        app.id === appId
+          ? { ...app, status: 'pending', ...updatePayload }
+          : app
+      )
+    );
+
+    if (supabase) {
+      try {
+        const { error } = await supabase
+          .from('squad_applications')
+          .update({
+            status: 'pending',
+            ...updatePayload,
+          })
+          .eq('id', appId);
+
+        if (error) throw error;
+      } catch (err) {
+        setSquadApps(prevApps);
+        throw err;
+      }
+    }
+  };
+
+  // Toggle open/closed status of a squad post
+  const togglePostOpen = async (postId, currentIsOpen) => {
+    const nextIsOpen = !currentIsOpen;
+    setSquadPosts(prev =>
+      prev.map(post => (post.id === postId ? { ...post, is_open: nextIsOpen } : post))
+    );
+
+    if (supabase && user) {
+      try {
+        const { error } = await supabase
+          .from('squad_posts')
+          .update({ is_open: nextIsOpen })
+          .eq('id', postId);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Could not toggle post open status:', err);
+        refreshSquadData();
+      }
+    }
+  };
+
+  // Delete a squad post
+  const deleteSquadPost = async (postId) => {
+    setSquadPosts(prev => prev.filter(p => p.id !== postId));
+    setSquadApps(prev => prev.filter(a => a.post_id !== postId));
+
+    if (supabase && user) {
+      try {
+        const { error } = await supabase
+          .from('squad_posts')
+          .delete()
+          .eq('id', postId);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Could not delete squad post:', err);
+        refreshSquadData();
       }
     }
   };
@@ -640,6 +762,9 @@ export function AuthProvider({ children }) {
         createSquadPost,
         applyToSquad,
         updateApplicationStatus,
+        reapplyToSquad,
+        togglePostOpen,
+        deleteSquadPost,
         refreshSquadData,
         hasSupabase: hasValidCredentials,
       }}

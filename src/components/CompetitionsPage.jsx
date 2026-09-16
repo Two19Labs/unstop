@@ -173,11 +173,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   // 1-Click Share functionality
   const handleShare = async (comp, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    const deadlineFormatted = comp.deadline
-      ? new Date(comp.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-      : 'Ongoing';
-
-    const shareText = `🏆 ${comp.title}\n🏛️ Organized by: ${comp.orgName}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: Ends ${deadlineFormatted}\n🔗 Apply: ${comp.unstopUrl}\n\nVia OneStop (SSCBS Collegiate Hub)`;
+    const shareText = `🏆 ${comp.title}\n🏛️ Organized by: ${comp.orgName}\n💰 Prizes: ${comp.prizes}\n👥 Format: ${comp.teamSizeDisplay}\n⏰ Deadline: Ends ${deadlineFormatted}\n🔗 Apply: ${comp.unstopUrl}\n\nVia OneStop by Two19 Labs`;
 
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
