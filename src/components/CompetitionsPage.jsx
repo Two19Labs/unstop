@@ -20,6 +20,9 @@ import {
 import { INITIAL_COMPETITIONS } from '../data/competitionsData';
 import './CompetitionsPage.css';
 
+const ALL_CIRCUITS = ['du', 'iim-iit-premier', 'corporate-global', 'others'];
+const ALL_TRACKS = ['case', 'hackathon', 'writing', 'quiz', 'simulation', 'debate'];
+
 export default function CompetitionsPage({ onFindTeammates, showToast, bookmarkedOnly, setBookmarkedOnly, onCountUpdate }) {
   const { bookmarks, toggleBookmark, isBookmarked } = useAuth();
 
@@ -28,12 +31,12 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Filters State - default to screenshot reference view (DU + Premier, Case Comps, Free Entry), fully toggleable & reset-able
+  // Filters State - default to ALL (matching SSCBS OS full visibility), fully toggleable & reset-able
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCircuits, setSelectedCircuits] = useState(['du', 'iim-iit-premier']);
-  const [selectedTracks, setSelectedTracks] = useState(['case']);
+  const [selectedCircuits, setSelectedCircuits] = useState([]);
+  const [selectedTracks, setSelectedTracks] = useState([]);
   const [teamFilter, setTeamFilter] = useState('all'); // all | solo | team
-  const [feeFilter, setFeeFilter] = useState('free'); // all | free | paid
+  const [feeFilter, setFeeFilter] = useState('all'); // all | free | paid
   const [sortBy, setSortBy] = useState('closing-soonest');
   const [copiedId, setCopiedId] = useState(null);
   const shareTimeoutRef = useRef(null);
@@ -123,11 +126,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   };
 
   const toggleAllCircuits = () => {
-    const all = ['du', 'iim-iit-premier', 'corporate-global', 'others'];
-    if (selectedCircuits.length === all.length) {
+    if (selectedCircuits.length === ALL_CIRCUITS.length) {
       setSelectedCircuits([]);
     } else {
-      setSelectedCircuits(all);
+      setSelectedCircuits([...ALL_CIRCUITS]);
     }
   };
 
@@ -139,11 +141,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   };
 
   const toggleAllTracks = () => {
-    const all = ['case', 'hackathon', 'writing', 'quiz', 'simulation', 'debate'];
-    if (selectedTracks.length === all.length) {
+    if (selectedTracks.length === ALL_TRACKS.length) {
       setSelectedTracks([]);
     } else {
-      setSelectedTracks(all);
+      setSelectedTracks([...ALL_TRACKS]);
     }
   };
 
@@ -162,12 +163,13 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   };
 
   const hasActiveFilters = Boolean(
-    searchQuery ||
-    selectedCircuits.length > 0 ||
-    selectedTracks.length > 0 ||
+    searchQuery.trim() ||
+    (selectedCircuits.length > 0 && selectedCircuits.length < ALL_CIRCUITS.length) ||
+    (selectedTracks.length > 0 && selectedTracks.length < ALL_TRACKS.length) ||
     teamFilter !== 'all' ||
     feeFilter !== 'all' ||
-    bookmarkedOnly
+    bookmarkedOnly ||
+    sortBy !== 'closing-soonest'
   );
 
   // 1-Click Share functionality
@@ -216,8 +218,8 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
     return competitions.filter((item) => {
       if (bookmarkedOnly && !isBookmarked(item.id)) return false;
 
-      // Circuit Filter
-      if (selectedCircuits.length > 0) {
+      // Circuit Filter: Only filter if a subset of circuits is chosen
+      if (selectedCircuits.length > 0 && selectedCircuits.length < ALL_CIRCUITS.length) {
         const matchesCircuit =
           (selectedCircuits.includes('du') && item.isDU) ||
           (selectedCircuits.includes('iim-iit-premier') && item.isPremier) ||
@@ -226,8 +228,8 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
         if (!matchesCircuit) return false;
       }
 
-      // Track Filter
-      if (selectedTracks.length > 0) {
+      // Track Filter: Only filter if a subset of categories is chosen
+      if (selectedTracks.length > 0 && selectedTracks.length < ALL_TRACKS.length) {
         if (!selectedTracks.includes(item.category)) return false;
       }
 
@@ -385,7 +387,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                 <ChevronDownIcon size={14} className={`cbs-chevron ${circuitsOpen ? 'open' : ''}`} />
                 <span className="cbs-card-heading">Circuits</span>
               </div>
-              {selectedCircuits.length > 0 && (
+              {selectedCircuits.length > 0 && selectedCircuits.length < ALL_CIRCUITS.length && (
                 <span className="cbs-filter-count-pill">{selectedCircuits.length}</span>
               )}
             </div>
@@ -395,11 +397,11 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                 <label className="cbs-check-row">
                   <input
                     type="checkbox"
-                    checked={selectedCircuits.length === 4}
+                    checked={selectedCircuits.length === ALL_CIRCUITS.length}
                     onChange={toggleAllCircuits}
                   />
                   <span className="cbs-custom-checkbox" />
-                  <span className="cbs-check-label">Select All</span>
+                  <span className="cbs-check-label">{selectedCircuits.length === ALL_CIRCUITS.length ? 'Clear All' : 'Select All'}</span>
                 </label>
 
                 <label className="cbs-check-row">
@@ -482,7 +484,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                   <ChevronDownIcon size={14} className={`cbs-chevron ${categoriesOpen ? 'open' : ''}`} />
                   <span className="cbs-subgroup-title">Categories</span>
                 </div>
-                {selectedTracks.length > 0 && (
+                {selectedTracks.length > 0 && selectedTracks.length < ALL_TRACKS.length && (
                   <span className="cbs-filter-count-pill">{selectedTracks.length}</span>
                 )}
               </div>
@@ -492,11 +494,11 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                   <label className="cbs-check-row">
                     <input
                       type="checkbox"
-                      checked={selectedTracks.length === 6}
+                      checked={selectedTracks.length === ALL_TRACKS.length}
                       onChange={toggleAllTracks}
                     />
                     <span className="cbs-custom-checkbox" />
-                    <span className="cbs-check-label">Select All</span>
+                    <span className="cbs-check-label">{selectedTracks.length === ALL_TRACKS.length ? 'Clear All' : 'Select All'}</span>
                   </label>
 
                   <label className="cbs-check-row">
@@ -740,68 +742,76 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
             </div>
 
             <div className="cbs-tag-chips-list">
-              {/* Circuit Chips */}
-              {selectedCircuits.includes('du') && (
-                <span className="cbs-filter-chip chip-purple">
-                  DU Circuit
-                  <button type="button" onClick={() => toggleCircuit('du')}>✕</button>
-                </span>
-              )}
-              {selectedCircuits.includes('iim-iit-premier') && (
-                <span className="cbs-filter-chip chip-purple">
-                  IIMs, IITs & Premier
-                  <button type="button" onClick={() => toggleCircuit('iim-iit-premier')}>✕</button>
-                </span>
-              )}
-              {selectedCircuits.includes('corporate-global') && (
-                <span className="cbs-filter-chip chip-purple">
-                  Corporate & Global
-                  <button type="button" onClick={() => toggleCircuit('corporate-global')}>✕</button>
-                </span>
-              )}
-              {selectedCircuits.includes('others') && (
-                <span className="cbs-filter-chip chip-purple">
-                  Others
-                  <button type="button" onClick={() => toggleCircuit('others')}>✕</button>
-                </span>
+              {/* Circuit Chips (only when a subset is selected) */}
+              {selectedCircuits.length > 0 && selectedCircuits.length < ALL_CIRCUITS.length && (
+                <>
+                  {selectedCircuits.includes('du') && (
+                    <span className="cbs-filter-chip chip-purple">
+                      DU Circuit
+                      <button type="button" onClick={() => toggleCircuit('du')}>✕</button>
+                    </span>
+                  )}
+                  {selectedCircuits.includes('iim-iit-premier') && (
+                    <span className="cbs-filter-chip chip-purple">
+                      IIMs, IITs & Premier
+                      <button type="button" onClick={() => toggleCircuit('iim-iit-premier')}>✕</button>
+                    </span>
+                  )}
+                  {selectedCircuits.includes('corporate-global') && (
+                    <span className="cbs-filter-chip chip-purple">
+                      Corporate & Global
+                      <button type="button" onClick={() => toggleCircuit('corporate-global')}>✕</button>
+                    </span>
+                  )}
+                  {selectedCircuits.includes('others') && (
+                    <span className="cbs-filter-chip chip-purple">
+                      Others
+                      <button type="button" onClick={() => toggleCircuit('others')}>✕</button>
+                    </span>
+                  )}
+                </>
               )}
 
-              {/* Track Chips */}
-              {selectedTracks.includes('case') && (
-                <span className="cbs-filter-chip chip-cyan">
-                  Case Comps
-                  <button type="button" onClick={() => toggleTrack('case')}>✕</button>
-                </span>
-              )}
-              {selectedTracks.includes('hackathon') && (
-                <span className="cbs-filter-chip chip-cyan">
-                  Hackathons
-                  <button type="button" onClick={() => toggleTrack('hackathon')}>✕</button>
-                </span>
-              )}
-              {selectedTracks.includes('writing') && (
-                <span className="cbs-filter-chip chip-cyan">
-                  Writing & Research
-                  <button type="button" onClick={() => toggleTrack('writing')}>✕</button>
-                </span>
-              )}
-              {selectedTracks.includes('quiz') && (
-                <span className="cbs-filter-chip chip-cyan">
-                  Quizzes
-                  <button type="button" onClick={() => toggleTrack('quiz')}>✕</button>
-                </span>
-              )}
-              {selectedTracks.includes('simulation') && (
-                <span className="cbs-filter-chip chip-cyan">
-                  Simulations
-                  <button type="button" onClick={() => toggleTrack('simulation')}>✕</button>
-                </span>
-              )}
-              {selectedTracks.includes('debate') && (
-                <span className="cbs-filter-chip chip-cyan">
-                  Debates
-                  <button type="button" onClick={() => toggleTrack('debate')}>✕</button>
-                </span>
+              {/* Track Chips (only when a subset is selected) */}
+              {selectedTracks.length > 0 && selectedTracks.length < ALL_TRACKS.length && (
+                <>
+                  {selectedTracks.includes('case') && (
+                    <span className="cbs-filter-chip chip-cyan">
+                      Case Comps
+                      <button type="button" onClick={() => toggleTrack('case')}>✕</button>
+                    </span>
+                  )}
+                  {selectedTracks.includes('hackathon') && (
+                    <span className="cbs-filter-chip chip-cyan">
+                      Hackathons
+                      <button type="button" onClick={() => toggleTrack('hackathon')}>✕</button>
+                    </span>
+                  )}
+                  {selectedTracks.includes('writing') && (
+                    <span className="cbs-filter-chip chip-cyan">
+                      Writing & Research
+                      <button type="button" onClick={() => toggleTrack('writing')}>✕</button>
+                    </span>
+                  )}
+                  {selectedTracks.includes('quiz') && (
+                    <span className="cbs-filter-chip chip-cyan">
+                      Quizzes
+                      <button type="button" onClick={() => toggleTrack('quiz')}>✕</button>
+                    </span>
+                  )}
+                  {selectedTracks.includes('simulation') && (
+                    <span className="cbs-filter-chip chip-cyan">
+                      Simulations
+                      <button type="button" onClick={() => toggleTrack('simulation')}>✕</button>
+                    </span>
+                  )}
+                  {selectedTracks.includes('debate') && (
+                    <span className="cbs-filter-chip chip-cyan">
+                      Debates
+                      <button type="button" onClick={() => toggleTrack('debate')}>✕</button>
+                    </span>
+                  )}
+                </>
               )}
 
               {/* Fee Chips */}

@@ -1,58 +1,5 @@
 export const INITIAL_COMPETITIONS = [
   {
-    "id": 1754172,
-    "title": "InQuiZire Domain Wars: Finance Frenzy",
-    "orgName": "Indian Institute of Management (IIM), Rohtak",
-    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d08e336c6a1e_Indian_Institute_of_Management_Rohtak_logo.jpg",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa3cea4d36da_Indian_Institute_of_Management_Rohtak_logo.jpg",
-    "unstopUrl": "https://unstop.com/quiz/inquizire-domain-wars-finance-frenzy-iim-rohtak-1754172",
-    "deadline": "2026-09-16T18:00:00+05:30",
-    "remainDaysText": "4 hours left",
-    "daysRemainingNum": 1,
-    "urgency": "high",
-    "category": "quiz",
-    "categoryLabel": "Quizzes & Trivia",
-    "categoryEmoji": "🧠",
-    "minTeam": 1,
-    "maxTeam": 1,
-    "teamSizeDisplay": "Solo / Individual",
-    "prizes": "Certificates & Recognition",
-    "isFree": true,
-    "isFlagship": true,
-    "isDU": false,
-    "isPremier": true,
-    "isCorporate": false,
-    "registeredCount": 580,
-    "viewsCount": 32073,
-    "isUndergradEligible": true
-  },
-  {
-    "id": 1698744,
-    "title": "Null Origin - 24 Hour CTF Challenge",
-    "orgName": "Cyber HX",
-    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-vHqMMWvcS01306461118GdmVaZwICa.png",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a2c4666939a8_mainlogo.jpeg",
-    "unstopUrl": "https://unstop.com/hackathons/null-origin-24-hour-ctf-challenge-cyber-hx-1698744",
-    "deadline": "2026-09-16T18:30:00+05:30",
-    "remainDaysText": "4 hours left",
-    "daysRemainingNum": 1,
-    "urgency": "high",
-    "category": "hackathon",
-    "categoryLabel": "Hackathons & Dev",
-    "categoryEmoji": "💻",
-    "minTeam": 1,
-    "maxTeam": 4,
-    "teamSizeDisplay": "1 - 4 Members",
-    "prizes": "Certificates & Recognition",
-    "isFree": true,
-    "isFlagship": false,
-    "isDU": false,
-    "isPremier": false,
-    "registeredCount": 4102,
-    "viewsCount": 295781,
-    "isUndergradEligible": true
-  },
-  {
     "id": 1755377,
     "title": "Category King: Quiz 8: Tap To Pay",
     "orgName": "Indian Institute of Management (IIM), Rohtak",
@@ -60,7 +7,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6981e594c0497_logo.png",
     "unstopUrl": "https://unstop.com/quiz/category-king-quiz-8-tap-to-pay-iim-rohtak-1755377",
     "deadline": "2026-09-16T19:59:36+05:30",
-    "remainDaysText": "6 hours left",
+    "remainDaysText": "54 minutes left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "quiz",
@@ -75,8 +22,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 461,
-    "viewsCount": 30176,
+    "registeredCount": 517,
+    "viewsCount": 31911,
     "isUndergradEligible": true
   },
   {
@@ -87,7 +34,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa6ff489f375_socio_net_quiz_1.png",
     "unstopUrl": "https://unstop.com/quiz/socio-net-iim-rohtak-1755409",
     "deadline": "2026-09-16T20:30:56+05:30",
-    "remainDaysText": "6 hours left",
+    "remainDaysText": "1 hour left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "quiz",
@@ -102,8 +49,34 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 79,
-    "viewsCount": 3924,
+    "registeredCount": 93,
+    "viewsCount": 4268,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1749324,
+    "title": "National Level Quiz",
+    "orgName": "Christ College",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-cvAx1KVmpw2108579563ePmhdN18q1.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a9aa3138af78_1c5c647b29faee0dce076116f632e527.png",
+    "unstopUrl": "https://unstop.com/quiz/national-level-quiz-christ-college-1749324",
+    "deadline": "2026-09-16T21:00:00+05:30",
+    "remainDaysText": "1 hour left",
+    "daysRemainingNum": 1,
+    "urgency": "high",
+    "category": "quiz",
+    "categoryLabel": "Quizzes & Trivia",
+    "categoryEmoji": "🧠",
+    "minTeam": 2,
+    "maxTeam": 2,
+    "teamSizeDisplay": "2 Members",
+    "prizes": "₹1,57,500 Cash Pool",
+    "isFree": false,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 2,
+    "viewsCount": 3486,
     "isUndergradEligible": true
   },
   {
@@ -114,7 +87,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a99c18bbe0a8_htf_3_0_logo_1.png",
     "unstopUrl": "https://unstop.com/hackathons/hack-the-future-3o-tulas-university-1748989",
     "deadline": "2026-09-16T22:59:00+05:30",
-    "remainDaysText": "9 hours left",
+    "remainDaysText": "3 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "hackathon",
@@ -128,8 +101,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 1094,
-    "viewsCount": 126501,
+    "registeredCount": 1145,
+    "viewsCount": 127816,
     "isUndergradEligible": true
   },
   {
@@ -140,7 +113,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa00df212087_lst.png",
     "unstopUrl": "https://unstop.com/competitions/brandstorm-think-build-break-the-brand-lady-shri-ram-college-for-women-lsr-du-new-delhi-1749232",
     "deadline": "2026-09-17T00:00:00+05:30",
-    "remainDaysText": "10 hours left",
+    "remainDaysText": "4 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "case",
@@ -155,8 +128,35 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 899,
-    "viewsCount": 48456,
+    "registeredCount": 918,
+    "viewsCount": 48813,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1747101,
+    "title": "VisionQuest",
+    "orgName": "National Institute of Technology (NIT), Agartala",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d32f03084ed2_NIT_agartala.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a981d283bed7_visionquest_poster_instagram_1.png",
+    "unstopUrl": "https://unstop.com/quiz/visionquest-national-institute-of-technology-nit-agartala-1747101",
+    "deadline": "2026-09-17T00:00:00+05:30",
+    "remainDaysText": "4 hours left",
+    "daysRemainingNum": 1,
+    "urgency": "high",
+    "category": "quiz",
+    "categoryLabel": "Quizzes & Trivia",
+    "categoryEmoji": "🧠",
+    "minTeam": 1,
+    "maxTeam": 1,
+    "teamSizeDisplay": "Solo / Individual",
+    "prizes": "PARTICIPANTS · TOP 10",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 333,
+    "viewsCount": 10247,
     "isUndergradEligible": true
   },
   {
@@ -167,7 +167,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8fff5883097_6439a3c060b21_amalgam_no_bg_red-6b57be54.png",
     "unstopUrl": "https://unstop.com/hackathons/ml-hackathon-polymer-property-prediction-amalgam-2026-iit-madras-1745060",
     "deadline": "2026-09-17T00:00:00+05:30",
-    "remainDaysText": "10 hours left",
+    "remainDaysText": "4 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "hackathon",
@@ -183,7 +183,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 207,
-    "viewsCount": 118711,
+    "viewsCount": 119916,
     "isUndergradEligible": true
   },
   {
@@ -194,7 +194,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8446c472f39_race_reva_university.jpeg",
     "unstopUrl": "https://unstop.com/hackathons/ec-council-hackai-challenge-racex360-reva-academy-for-corporate-excellence-bangalore-karnataka-1739884",
     "deadline": "2026-09-17T00:00:00+05:30",
-    "remainDaysText": "10 hours left",
+    "remainDaysText": "4 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "hackathon",
@@ -209,7 +209,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 80,
-    "viewsCount": 123906,
+    "viewsCount": 124461,
     "isUndergradEligible": true
   },
   {
@@ -220,7 +220,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9d68e8c6785_bits-management.png",
     "unstopUrl": "https://unstop.com/competitions/the-chro-challenge-department-of-management-dom-birla-institute-of-technology-and-science-bits-pilani-1750127",
     "deadline": "2026-09-17T00:00:00+05:30",
-    "remainDaysText": "10 hours left",
+    "remainDaysText": "4 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "general",
@@ -235,8 +235,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 67,
-    "viewsCount": 9285,
+    "registeredCount": 79,
+    "viewsCount": 9574,
     "isUndergradEligible": true
   },
   {
@@ -247,7 +247,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a993b587d464_Sant_Longowal_Institute_of_Engineering_and_Technology_Logo.png",
     "unstopUrl": "https://unstop.com/competitions/cad-design-challenge-sant-longowal-institute-of-engineering-and-technology-longowal-punjab-1748651",
     "deadline": "2026-09-17T00:00:00+05:30",
-    "remainDaysText": "10 hours left",
+    "remainDaysText": "4 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "general",
@@ -262,7 +262,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 50,
-    "viewsCount": 37667,
+    "viewsCount": 37949,
     "isUndergradEligible": true
   },
   {
@@ -273,7 +273,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9a9e0243e2d_BITS-LOGO-1.jpg",
     "unstopUrl": "https://unstop.com/competitions/24-months-keep-it-alive-startup-survival-simulation-bits-1747626",
     "deadline": "2026-09-17T12:00:00+05:30",
-    "remainDaysText": "22 hours left",
+    "remainDaysText": "16 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "case",
@@ -288,8 +288,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 183,
-    "viewsCount": 13775,
+    "registeredCount": 185,
+    "viewsCount": 14076,
     "isUndergradEligible": true
   },
   {
@@ -300,7 +300,7 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa6cf1dc209d_68865574_494468474684234_5988420085599961088_n.jpg",
     "unstopUrl": "https://unstop.com/competitions/the-attention-deck-case-competition-baithak-2026-kamala-nehru-college-knc-du-delhi-1755250",
     "deadline": "2026-09-17T12:00:00+05:30",
-    "remainDaysText": "22 hours left",
+    "remainDaysText": "16 hours left",
     "daysRemainingNum": 1,
     "urgency": "high",
     "category": "case",
@@ -315,8 +315,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 142,
-    "viewsCount": 4276,
+    "registeredCount": 171,
+    "viewsCount": 4776,
     "isUndergradEligible": true
   },
   {
@@ -327,8 +327,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8d73e01102b_5.png",
     "unstopUrl": "https://unstop.com/competitions/global-economic-council-ecofest-40-faculty-of-business-administration-glsbba-gls-university-1743980",
     "deadline": "2026-09-17T14:59:00+05:30",
-    "remainDaysText": "1 days left",
-    "daysRemainingNum": 2,
+    "remainDaysText": "19 hours left",
+    "daysRemainingNum": 1,
     "urgency": "high",
     "category": "general",
     "categoryLabel": "General Opportunities",
@@ -342,7 +342,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 180,
-    "viewsCount": 74168,
+    "viewsCount": 74260,
     "isUndergradEligible": true
   },
   {
@@ -353,8 +353,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9c28817437c_lst.png",
     "unstopUrl": "https://unstop.com/competitions/business-unplugged-lady-shri-ram-college-for-women-lsr-du-new-delhi-1749178",
     "deadline": "2026-09-17T16:00:00+05:30",
-    "remainDaysText": "1 days left",
-    "daysRemainingNum": 2,
+    "remainDaysText": "20 hours left",
+    "daysRemainingNum": 1,
     "urgency": "high",
     "category": "case",
     "categoryLabel": "Case Competitions",
@@ -368,8 +368,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 221,
-    "viewsCount": 11161,
+    "registeredCount": 223,
+    "viewsCount": 11231,
     "isUndergradEligible": true
   },
   {
@@ -380,8 +380,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa44f050796c_side_logo_jpg.jpeg",
     "unstopUrl": "https://unstop.com/competitions/start-up-pitch-iim-bangalore-1752783",
     "deadline": "2026-09-17T17:00:00+05:30",
-    "remainDaysText": "1 days left",
-    "daysRemainingNum": 2,
+    "remainDaysText": "21 hours left",
+    "daysRemainingNum": 1,
     "urgency": "high",
     "category": "case",
     "categoryLabel": "Case Competitions",
@@ -395,8 +395,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 82,
-    "viewsCount": 6521,
+    "registeredCount": 88,
+    "viewsCount": 6940,
     "isUndergradEligible": true
   },
   {
@@ -407,8 +407,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa40eb706159_Indian_Institute_of_Management_Rohtak_logo.jpg",
     "unstopUrl": "https://unstop.com/quiz/inquizire-domain-wars-strategic-showdown-iim-rohtak-1754291",
     "deadline": "2026-09-17T18:00:00+05:30",
-    "remainDaysText": "1 days left",
-    "daysRemainingNum": 2,
+    "remainDaysText": "22 hours left",
+    "daysRemainingNum": 1,
     "urgency": "high",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -422,8 +422,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 92,
-    "viewsCount": 4295,
+    "registeredCount": 95,
+    "viewsCount": 4506,
     "isUndergradEligible": true
   },
   {
@@ -449,8 +449,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "isCorporate": true,
-    "registeredCount": 267307,
-    "viewsCount": 8707026,
+    "registeredCount": 270022,
+    "viewsCount": 8852724,
     "isUndergradEligible": true
   },
   {
@@ -476,8 +476,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 4204,
-    "viewsCount": 49585,
+    "registeredCount": 4248,
+    "viewsCount": 50443,
     "isUndergradEligible": true
   },
   {
@@ -503,8 +503,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 683,
-    "viewsCount": 22796,
+    "registeredCount": 825,
+    "viewsCount": 23653,
     "isUndergradEligible": true
   },
   {
@@ -530,8 +530,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 245,
-    "viewsCount": 8827,
+    "registeredCount": 251,
+    "viewsCount": 8979,
     "isUndergradEligible": true
   },
   {
@@ -557,8 +557,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 183,
-    "viewsCount": 37783,
+    "registeredCount": 186,
+    "viewsCount": 38302,
     "isUndergradEligible": true
   },
   {
@@ -583,8 +583,35 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 55,
-    "viewsCount": 6445,
+    "registeredCount": 58,
+    "viewsCount": 6554,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1754522,
+    "title": "Incubate X Robotech X IEEE RAS - Prosthetic Challenge",
+    "orgName": "National Institute of Technology Karnataka (NITK), Surathkal",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d1c910300138_NIT-SURATHKAL-LOGO.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa6d2e54554b_rtnxieee.jpg",
+    "unstopUrl": "https://unstop.com/competitions/incubate-x-robotech-x-ieee-ras-prosthetic-challenge-nitk-surathkal-1754522",
+    "deadline": "2026-09-18T05:30:57+05:30",
+    "remainDaysText": "1 days left",
+    "daysRemainingNum": 2,
+    "urgency": "high",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 2,
+    "maxTeam": 5,
+    "teamSizeDisplay": "2 - 5 Members",
+    "prizes": "₹60,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 26,
+    "viewsCount": 4694,
     "isUndergradEligible": true
   },
   {
@@ -611,7 +638,33 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 378,
-    "viewsCount": 19543,
+    "viewsCount": 19612,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1744202,
+    "title": "HackIndore 4.0 – 24‑Hour National Hackathon",
+    "orgName": "Shri G. S. Institute of Technology & Science, Indore",
+    "orgLogo": null,
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8eed9dd7bb3_logo_banner.png",
+    "unstopUrl": "https://unstop.com/hackathons/hackindore-40-24hour-national-hackathon-shri-g-s-institute-of-technology-science-indore-1744202",
+    "deadline": "2026-09-18T12:00:00+05:30",
+    "remainDaysText": "1 days left",
+    "daysRemainingNum": 2,
+    "urgency": "high",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 2,
+    "maxTeam": 4,
+    "teamSizeDisplay": "2 - 4 Members",
+    "prizes": "₹1,00,000 Cash Pool",
+    "isFree": false,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 314,
+    "viewsCount": 19930,
     "isUndergradEligible": true
   },
   {
@@ -636,8 +689,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 137,
-    "viewsCount": 42289,
+    "isCorporate": true,
+    "registeredCount": 138,
+    "viewsCount": 42653,
     "isUndergradEligible": true
   },
   {
@@ -648,9 +702,9 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa52f09ae754_IIT_Delhi.jpg",
     "unstopUrl": "https://unstop.com/competitions/startup-expo-case-competition-iit-delhi-1740065",
     "deadline": "2026-09-18T15:58:02+05:30",
-    "remainDaysText": "2 days left",
-    "daysRemainingNum": 3,
-    "urgency": "medium",
+    "remainDaysText": "1 days left",
+    "daysRemainingNum": 2,
+    "urgency": "high",
     "category": "case",
     "categoryLabel": "Case Competitions",
     "categoryEmoji": "📊",
@@ -663,8 +717,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 2503,
-    "viewsCount": 88562,
+    "registeredCount": 2532,
+    "viewsCount": 89366,
     "isUndergradEligible": true
   },
   {
@@ -675,9 +729,9 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9a68d847e73_BITS-LOGO-1.jpg",
     "unstopUrl": "https://unstop.com/competitions/the-desk-bits-1747144",
     "deadline": "2026-09-18T16:00:00+05:30",
-    "remainDaysText": "2 days left",
-    "daysRemainingNum": 3,
-    "urgency": "medium",
+    "remainDaysText": "1 days left",
+    "daysRemainingNum": 2,
+    "urgency": "high",
     "category": "general",
     "categoryLabel": "General Opportunities",
     "categoryEmoji": "🎯",
@@ -691,7 +745,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 119,
-    "viewsCount": 15290,
+    "viewsCount": 15623,
     "isUndergradEligible": true
   },
   {
@@ -702,9 +756,9 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa52dc884f3e_Indian_Institute_of_Management_Rohtak_logo.jpg",
     "unstopUrl": "https://unstop.com/quiz/inquizire-domain-wars-tech-titans-iim-rohtak-1754714",
     "deadline": "2026-09-18T18:00:00+05:30",
-    "remainDaysText": "2 days left",
-    "daysRemainingNum": 3,
-    "urgency": "medium",
+    "remainDaysText": "1 days left",
+    "daysRemainingNum": 2,
+    "urgency": "high",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
     "categoryEmoji": "🧠",
@@ -717,8 +771,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 356,
-    "viewsCount": 31040,
+    "registeredCount": 370,
+    "viewsCount": 31977,
     "isUndergradEligible": true
   },
   {
@@ -744,8 +798,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 2552,
-    "viewsCount": 235121,
+    "registeredCount": 2565,
+    "viewsCount": 235796,
     "isUndergradEligible": true
   },
   {
@@ -771,8 +825,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 1284,
-    "viewsCount": 102290,
+    "registeredCount": 1292,
+    "viewsCount": 102501,
     "isUndergradEligible": true
   },
   {
@@ -798,8 +852,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "isCorporate": true,
-    "registeredCount": 978,
-    "viewsCount": 5798814,
+    "registeredCount": 999,
+    "viewsCount": 5804093,
     "isUndergradEligible": true
   },
   {
@@ -825,8 +879,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 408,
-    "viewsCount": 9300,
+    "registeredCount": 417,
+    "viewsCount": 9447,
     "isUndergradEligible": true
   },
   {
@@ -852,8 +906,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 260,
-    "viewsCount": 23905,
+    "registeredCount": 273,
+    "viewsCount": 24297,
     "isUndergradEligible": true
   },
   {
@@ -879,7 +933,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 4,
-    "viewsCount": 21677,
+    "viewsCount": 22599,
     "isUndergradEligible": true
   },
   {
@@ -905,8 +959,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 2519,
-    "viewsCount": 143578,
+    "registeredCount": 2549,
+    "viewsCount": 144669,
     "isUndergradEligible": true
   },
   {
@@ -932,8 +986,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "isCorporate": true,
-    "registeredCount": 313,
-    "viewsCount": 32121,
+    "registeredCount": 334,
+    "viewsCount": 33642,
     "isUndergradEligible": true
   },
   {
@@ -959,8 +1013,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 238,
-    "viewsCount": 24608,
+    "registeredCount": 265,
+    "viewsCount": 25952,
     "isUndergradEligible": true
   },
   {
@@ -986,8 +1040,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 196,
-    "viewsCount": 9126,
+    "registeredCount": 207,
+    "viewsCount": 9740,
     "isUndergradEligible": true
   },
   {
@@ -1012,8 +1066,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
+    "isCorporate": true,
     "registeredCount": 123,
-    "viewsCount": 25981,
+    "viewsCount": 26333,
     "isUndergradEligible": true
   },
   {
@@ -1038,8 +1093,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 92,
-    "viewsCount": 6613,
+    "isCorporate": true,
+    "registeredCount": 93,
+    "viewsCount": 6822,
     "isUndergradEligible": true
   },
   {
@@ -1065,8 +1121,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "isCorporate": true,
-    "registeredCount": 230,
-    "viewsCount": 34048,
+    "registeredCount": 259,
+    "viewsCount": 44061,
     "isUndergradEligible": true
   },
   {
@@ -1091,8 +1147,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 2558,
-    "viewsCount": 149827,
+    "isCorporate": true,
+    "registeredCount": 2617,
+    "viewsCount": 151492,
     "isUndergradEligible": true
   },
   {
@@ -1118,8 +1175,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 138,
-    "viewsCount": 8770,
+    "registeredCount": 147,
+    "viewsCount": 8878,
     "isUndergradEligible": true
   },
   {
@@ -1130,8 +1187,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9c11a0691c8_organisation_image-pPdsDkWCaX1275655425a1EQZIk3Du.png",
     "unstopUrl": "https://unstop.com/quiz/campusorbit-ai-challenge-2026-campusorbit-1749794",
     "deadline": "2026-09-19T16:30:00+05:30",
-    "remainDaysText": "3 days left",
-    "daysRemainingNum": 4,
+    "remainDaysText": "2 days left",
+    "daysRemainingNum": 3,
     "urgency": "medium",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -1144,8 +1201,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
+    "isCorporate": true,
     "registeredCount": 981,
-    "viewsCount": 68721,
+    "viewsCount": 69035,
     "isUndergradEligible": true
   },
   {
@@ -1156,8 +1214,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a5a57c2f348e_chatgpt_image_jul_17,_2026,_09_54_50_pm__1_.png",
     "unstopUrl": "https://unstop.com/competitions/software-innovation-challenge-iii-panimalar-engineering-college-pec-chennai-1748978",
     "deadline": "2026-09-19T17:31:13+05:30",
-    "remainDaysText": "3 days left",
-    "daysRemainingNum": 4,
+    "remainDaysText": "2 days left",
+    "daysRemainingNum": 3,
     "urgency": "medium",
     "category": "general",
     "categoryLabel": "General Opportunities",
@@ -1171,8 +1229,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 224,
-    "viewsCount": 32361,
+    "registeredCount": 228,
+    "viewsCount": 32543,
     "isUndergradEligible": true
   },
   {
@@ -1183,8 +1241,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa555e632faf_Indian_Institute_of_Management_Rohtak_logo.jpg",
     "unstopUrl": "https://unstop.com/quiz/inquizire-domain-wars-economind-iim-rohtak-1754857",
     "deadline": "2026-09-19T18:00:00+05:30",
-    "remainDaysText": "3 days left",
-    "daysRemainingNum": 4,
+    "remainDaysText": "2 days left",
+    "daysRemainingNum": 3,
     "urgency": "medium",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -1198,8 +1256,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 86,
-    "viewsCount": 4168,
+    "registeredCount": 92,
+    "viewsCount": 4452,
     "isUndergradEligible": true
   },
   {
@@ -1224,8 +1282,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 49,
-    "viewsCount": 10164,
+    "registeredCount": 51,
+    "viewsCount": 10543,
     "isUndergradEligible": true
   },
   {
@@ -1250,8 +1308,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 54,
-    "viewsCount": 2755,
+    "registeredCount": 56,
+    "viewsCount": 2919,
     "isUndergradEligible": true
   },
   {
@@ -1276,8 +1334,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 646,
-    "viewsCount": 29650,
+    "registeredCount": 657,
+    "viewsCount": 29936,
     "isUndergradEligible": true
   },
   {
@@ -1303,7 +1361,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 355,
-    "viewsCount": 31576,
+    "viewsCount": 31706,
     "isUndergradEligible": true
   },
   {
@@ -1329,8 +1387,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 341,
-    "viewsCount": 23217,
+    "registeredCount": 347,
+    "viewsCount": 23353,
     "isUndergradEligible": true
   },
   {
@@ -1355,8 +1413,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 307,
-    "viewsCount": 29091,
+    "isCorporate": true,
+    "registeredCount": 310,
+    "viewsCount": 29231,
     "isUndergradEligible": true
   },
   {
@@ -1382,8 +1441,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 105,
-    "viewsCount": 15867,
+    "registeredCount": 107,
+    "viewsCount": 16173,
     "isUndergradEligible": true
   },
   {
@@ -1408,8 +1467,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 49,
-    "viewsCount": 1640,
+    "registeredCount": 51,
+    "viewsCount": 1730,
     "isUndergradEligible": true
   },
   {
@@ -1435,8 +1494,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 313,
-    "viewsCount": 32370,
+    "registeredCount": 324,
+    "viewsCount": 33295,
     "isUndergradEligible": true
   },
   {
@@ -1447,8 +1506,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-688623749ec74_black_full_white_text.png",
     "unstopUrl": "https://unstop.com/competitions/case-ette-70-case-study-competition-sri-guru-gobind-singh-college-of-commerce-sggscc-new-delhi-1732629",
     "deadline": "2026-09-20T16:00:06+05:30",
-    "remainDaysText": "4 days left",
-    "daysRemainingNum": 5,
+    "remainDaysText": "3 days left",
+    "daysRemainingNum": 4,
     "urgency": "medium",
     "category": "case",
     "categoryLabel": "Case Competitions",
@@ -1462,8 +1521,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 1518,
-    "viewsCount": 51136,
+    "registeredCount": 1526,
+    "viewsCount": 51497,
     "isUndergradEligible": true
   },
   {
@@ -1474,8 +1533,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa6a84ea434e_Indian_Institute_of_Management_Rohtak_logo.jpg",
     "unstopUrl": "https://unstop.com/quiz/inquizire-domain-wars-business-beyond-iim-rohtak-1755228",
     "deadline": "2026-09-20T18:00:00+05:30",
-    "remainDaysText": "4 days left",
-    "daysRemainingNum": 5,
+    "remainDaysText": "3 days left",
+    "daysRemainingNum": 4,
     "urgency": "medium",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -1489,8 +1548,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 65,
-    "viewsCount": 4581,
+    "registeredCount": 74,
+    "viewsCount": 4888,
     "isUndergradEligible": true
   },
   {
@@ -1498,11 +1557,11 @@ export const INITIAL_COMPETITIONS = [
     "title": "Pitch It. Risk It. | Social Media Ideation Challenge",
     "orgName": "The Ideation Lab RGIT",
     "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-9Tn2Jwt2mF928088004mw6yTzhadM.png",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa918c351aa3_organisation_image-9Tn2Jwt2mF928088004mw6yTzhadM.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aaa81b9a4eec_organisation_image-9Tn2Jwt2mF928088004mw6yTzhadM.png",
     "unstopUrl": "https://unstop.com/competitions/pitch-it-risk-it-social-media-ideation-challenge-the-ideation-lab-rgit-1755771",
     "deadline": "2026-09-20T18:00:00+05:30",
-    "remainDaysText": "4 days left",
-    "daysRemainingNum": 5,
+    "remainDaysText": "3 days left",
+    "daysRemainingNum": 4,
     "urgency": "medium",
     "category": "case",
     "categoryLabel": "Case Competitions",
@@ -1515,8 +1574,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 27,
-    "viewsCount": 25453,
+    "registeredCount": 28,
+    "viewsCount": 29055,
     "isUndergradEligible": true
   },
   {
@@ -1527,8 +1586,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-68184fd80b535_image_1.jpeg",
     "unstopUrl": "https://unstop.com/competitions/vitta-2026-call-for-articles-shri-ram-college-of-commerce-srcc-1694433",
     "deadline": "2026-09-20T18:29:11+05:30",
-    "remainDaysText": "4 days left",
-    "daysRemainingNum": 5,
+    "remainDaysText": "3 days left",
+    "daysRemainingNum": 4,
     "urgency": "medium",
     "category": "writing",
     "categoryLabel": "Writing & Research",
@@ -1542,8 +1601,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 2227,
-    "viewsCount": 170340,
+    "registeredCount": 2233,
+    "viewsCount": 170455,
     "isUndergradEligible": true
   },
   {
@@ -1569,8 +1628,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 1810,
-    "viewsCount": 115921,
+    "registeredCount": 1824,
+    "viewsCount": 116825,
     "isUndergradEligible": true
   },
   {
@@ -1596,8 +1655,35 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 1218,
-    "viewsCount": 35550,
+    "registeredCount": 1219,
+    "viewsCount": 35859,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1744885,
+    "title": "ET AI Hackathon: Agentic Edition | Presented by Accenture",
+    "orgName": "Economic Times",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5aad1c28d0e01_et.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9fadff660d8_et.png",
+    "unstopUrl": "https://unstop.com/hackathons/crp-et-ai-hackathon-agentic-edition-presented-by-accenture-economic-times-1744885",
+    "deadline": "2026-09-20T23:59:00+05:30",
+    "remainDaysText": "4 days left",
+    "daysRemainingNum": 5,
+    "urgency": "medium",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 1,
+    "maxTeam": 4,
+    "teamSizeDisplay": "1 - 4 Members",
+    "prizes": "₹2,00,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": true,
+    "isDU": false,
+    "isPremier": false,
+    "isCorporate": true,
+    "registeredCount": 1215,
+    "viewsCount": 5040240,
     "isUndergradEligible": true
   },
   {
@@ -1622,8 +1708,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 733,
-    "viewsCount": 28429,
+    "registeredCount": 753,
+    "viewsCount": 28896,
     "isUndergradEligible": true
   },
   {
@@ -1649,8 +1735,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 350,
-    "viewsCount": 13843,
+    "registeredCount": 353,
+    "viewsCount": 14119,
     "isUndergradEligible": true
   },
   {
@@ -1675,8 +1761,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 188,
-    "viewsCount": 20381,
+    "registeredCount": 195,
+    "viewsCount": 20698,
     "isUndergradEligible": true
   },
   {
@@ -1703,7 +1789,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": false,
     "isCorporate": true,
     "registeredCount": 97,
-    "viewsCount": 12813,
+    "viewsCount": 12929,
     "isUndergradEligible": true
   },
   {
@@ -1728,8 +1814,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 65,
-    "viewsCount": 30494,
+    "isCorporate": true,
+    "registeredCount": 66,
+    "viewsCount": 30634,
     "isUndergradEligible": true
   },
   {
@@ -1756,7 +1843,34 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": false,
     "isCorporate": false,
     "registeredCount": 7,
-    "viewsCount": 1906,
+    "viewsCount": 2009,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1735221,
+    "title": "MOSIP Decode 2026",
+    "orgName": "International Institute of Information Technology (IIIT), Bangalore",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d32b2ae793e4_IIIT-B_logo.jpg",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-68627123a11a7_updated_decode_logo.png",
+    "unstopUrl": "https://unstop.com/hackathons/mosip-decode-2026-synergy-26-international-institute-of-information-technology-iiit-bangalore-1735221",
+    "deadline": "2026-09-20T23:59:15+05:30",
+    "remainDaysText": "4 days left",
+    "daysRemainingNum": 5,
+    "urgency": "medium",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 1,
+    "maxTeam": 5,
+    "teamSizeDisplay": "1 - 5 Members",
+    "prizes": "₹5,00,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 1655,
+    "viewsCount": 49137,
     "isUndergradEligible": true
   },
   {
@@ -1773,17 +1887,17 @@ export const INITIAL_COMPETITIONS = [
     "category": "hackathon",
     "categoryLabel": "Hackathons & Dev",
     "categoryEmoji": "💻",
-    "minTeam": 3,
+    "minTeam": 2,
     "maxTeam": 4,
-    "teamSizeDisplay": "3 - 4 Members",
+    "teamSizeDisplay": "2 - 4 Members",
     "prizes": "₹2,25,000 Cash Pool",
     "isFree": true,
     "isFlagship": true,
     "isDU": false,
     "isPremier": false,
     "isCorporate": true,
-    "registeredCount": 26644,
-    "viewsCount": 577605,
+    "registeredCount": 27727,
+    "viewsCount": 597473,
     "isUndergradEligible": true
   },
   {
@@ -1808,8 +1922,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 334,
-    "viewsCount": 50817,
+    "registeredCount": 337,
+    "viewsCount": 50969,
     "isUndergradEligible": true
   },
   {
@@ -1834,8 +1948,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 76,
-    "viewsCount": 39377,
+    "isCorporate": true,
+    "registeredCount": 77,
+    "viewsCount": 39519,
     "isUndergradEligible": true
   },
   {
@@ -1861,7 +1976,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 19,
-    "viewsCount": 39963,
+    "viewsCount": 40116,
     "isUndergradEligible": true
   },
   {
@@ -1886,8 +2001,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 159,
-    "viewsCount": 71657,
+    "registeredCount": 166,
+    "viewsCount": 72467,
     "isUndergradEligible": true
   },
   {
@@ -1913,7 +2028,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 109,
-    "viewsCount": 29399,
+    "viewsCount": 29576,
     "isUndergradEligible": true
   },
   {
@@ -1924,9 +2039,9 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa8429344613_",
     "unstopUrl": "https://unstop.com/competitions/strategy-wiz-renaissance-100-motilal-nehru-national-institute-of-technology-1755423",
     "deadline": "2026-09-21T17:00:00+05:30",
-    "remainDaysText": "5 days left",
-    "daysRemainingNum": 6,
-    "urgency": "normal",
+    "remainDaysText": "4 days left",
+    "daysRemainingNum": 5,
+    "urgency": "medium",
     "category": "case",
     "categoryLabel": "Case Competitions",
     "categoryEmoji": "📊",
@@ -1939,8 +2054,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 45,
-    "viewsCount": 4515,
+    "registeredCount": 48,
+    "viewsCount": 4955,
     "isUndergradEligible": true
   },
   {
@@ -1967,7 +2082,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 228,
-    "viewsCount": 136756,
+    "viewsCount": 138428,
     "isUndergradEligible": true
   },
   {
@@ -1993,8 +2108,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 451,
-    "viewsCount": 67678,
+    "registeredCount": 495,
+    "viewsCount": 74659,
     "isUndergradEligible": true
   },
   {
@@ -2020,8 +2135,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 23,
-    "viewsCount": 3570,
+    "registeredCount": 53,
+    "viewsCount": 4062,
     "isUndergradEligible": true
   },
   {
@@ -2047,8 +2162,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 1071,
-    "viewsCount": 60241,
+    "registeredCount": 1081,
+    "viewsCount": 60452,
     "isUndergradEligible": true
   },
   {
@@ -2073,8 +2188,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 461,
-    "viewsCount": 51423,
+    "registeredCount": 467,
+    "viewsCount": 51997,
     "isUndergradEligible": true
   },
   {
@@ -2099,8 +2214,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 333,
-    "viewsCount": 50026,
+    "isCorporate": true,
+    "registeredCount": 334,
+    "viewsCount": 50297,
     "isUndergradEligible": true
   },
   {
@@ -2125,8 +2241,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 577,
-    "viewsCount": 34023,
+    "isCorporate": true,
+    "registeredCount": 581,
+    "viewsCount": 34114,
     "isUndergradEligible": true
   },
   {
@@ -2137,8 +2254,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a984513b27e7_fincell_logo_1.png",
     "unstopUrl": "https://unstop.com/competitions/tradeverse-st-xaviers-college-sxc-mumbai-1747792",
     "deadline": "2026-09-22T15:00:57+05:30",
-    "remainDaysText": "6 days left",
-    "daysRemainingNum": 7,
+    "remainDaysText": "5 days left",
+    "daysRemainingNum": 6,
     "urgency": "normal",
     "category": "case",
     "categoryLabel": "Case Competitions",
@@ -2152,8 +2269,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 486,
-    "viewsCount": 34096,
+    "registeredCount": 492,
+    "viewsCount": 34210,
     "isUndergradEligible": true
   },
   {
@@ -2178,8 +2295,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 717,
-    "viewsCount": 41578,
+    "registeredCount": 801,
+    "viewsCount": 49935,
     "isUndergradEligible": true
   },
   {
@@ -2206,7 +2323,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 75,
-    "viewsCount": 5674,
+    "viewsCount": 5706,
     "isUndergradEligible": true
   },
   {
@@ -2232,8 +2349,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 233,
-    "viewsCount": 28710,
+    "registeredCount": 234,
+    "viewsCount": 29203,
     "isUndergradEligible": true
   },
   {
@@ -2259,8 +2376,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 140,
-    "viewsCount": 120399,
+    "registeredCount": 149,
+    "viewsCount": 121220,
     "isUndergradEligible": true
   },
   {
@@ -2285,8 +2402,35 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 377,
-    "viewsCount": 46882,
+    "isCorporate": true,
+    "registeredCount": 380,
+    "viewsCount": 47573,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1739267,
+    "title": "The Fluorescent Quiz ",
+    "orgName": "Mohamed Sathak Engineering College",
+    "orgLogo": null,
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa55f4daf685_1000022305.jpg",
+    "unstopUrl": "https://unstop.com/quiz/the-fluorescent-quiz-hakitxmrdu-mohamed-sathak-engineering-college-1739267",
+    "deadline": "2026-09-23T18:15:06+05:30",
+    "remainDaysText": "6 days left",
+    "daysRemainingNum": 7,
+    "urgency": "normal",
+    "category": "quiz",
+    "categoryLabel": "Quizzes & Trivia",
+    "categoryEmoji": "🧠",
+    "minTeam": 1,
+    "maxTeam": 2,
+    "teamSizeDisplay": "1 - 2 Members",
+    "prizes": "₹100 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 19,
+    "viewsCount": 2893,
     "isUndergradEligible": true
   },
   {
@@ -2313,7 +2457,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 34,
-    "viewsCount": 5013,
+    "viewsCount": 5048,
     "isUndergradEligible": true
   },
   {
@@ -2338,8 +2482,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 699,
-    "viewsCount": 119821,
+    "registeredCount": 721,
+    "viewsCount": 121168,
     "isUndergradEligible": true
   },
   {
@@ -2366,7 +2510,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": false,
     "isCorporate": false,
     "registeredCount": 16,
-    "viewsCount": 1320,
+    "viewsCount": 1380,
     "isUndergradEligible": true
   },
   {
@@ -2393,7 +2537,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": false,
     "isCorporate": false,
     "registeredCount": 6,
-    "viewsCount": 1243,
+    "viewsCount": 1291,
     "isUndergradEligible": true
   },
   {
@@ -2418,8 +2562,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 4,
-    "viewsCount": 2780,
+    "registeredCount": 6,
+    "viewsCount": 2928,
     "isUndergradEligible": true
   },
   {
@@ -2445,7 +2589,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 8,
-    "viewsCount": 15605,
+    "viewsCount": 15847,
     "isUndergradEligible": true
   },
   {
@@ -2471,7 +2615,60 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 18,
-    "viewsCount": 4020,
+    "viewsCount": 4044,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1717354,
+    "title": "Digital Smart Challenge",
+    "orgName": "Fibmesh",
+    "orgLogo": null,
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a5470c949aad_organisation_image-tsyO5FQ93r1097720984JKFqtQADMO.png",
+    "unstopUrl": "https://unstop.com/quiz/digital-smart-challenge-fibmesh-1717354",
+    "deadline": "2026-09-24T23:00:00+05:30",
+    "remainDaysText": "8 days left",
+    "daysRemainingNum": 9,
+    "urgency": "normal",
+    "category": "quiz",
+    "categoryLabel": "Quizzes & Trivia",
+    "categoryEmoji": "🧠",
+    "minTeam": 1,
+    "maxTeam": 1,
+    "teamSizeDisplay": "Solo / Individual",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 27,
+    "viewsCount": 2726,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1754386,
+    "title": "Build for Billions",
+    "orgName": "National Institute of Technology Karnataka (NITK), Surathkal",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d1c910300138_NIT-SURATHKAL-LOGO.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa437e9ae9db_whatsapp_image_2026-09-11_at_22_24_48.jpeg",
+    "unstopUrl": "https://unstop.com/hackathons/build-for-billions-nitk-surathkal-1754386",
+    "deadline": "2026-09-24T23:59:00+05:30",
+    "remainDaysText": "8 days left",
+    "daysRemainingNum": 9,
+    "urgency": "normal",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 3,
+    "maxTeam": 6,
+    "teamSizeDisplay": "3 - 6 Members",
+    "prizes": "₹1,00,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 154,
+    "viewsCount": 11696,
     "isUndergradEligible": true
   },
   {
@@ -2496,8 +2693,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 760,
-    "viewsCount": 82533,
+    "registeredCount": 770,
+    "viewsCount": 82871,
     "isUndergradEligible": true
   },
   {
@@ -2522,8 +2719,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 306,
-    "viewsCount": 42218,
+    "registeredCount": 352,
+    "viewsCount": 49769,
     "isUndergradEligible": true
   },
   {
@@ -2548,8 +2745,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 267,
-    "viewsCount": 215962,
+    "registeredCount": 269,
+    "viewsCount": 216397,
     "isUndergradEligible": true
   },
   {
@@ -2574,8 +2771,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 221,
-    "viewsCount": 29198,
+    "isCorporate": true,
+    "registeredCount": 222,
+    "viewsCount": 30040,
     "isUndergradEligible": true
   },
   {
@@ -2600,8 +2798,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 171,
-    "viewsCount": 96480,
+    "registeredCount": 184,
+    "viewsCount": 97732,
     "isUndergradEligible": true
   },
   {
@@ -2626,8 +2824,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 137,
-    "viewsCount": 27996,
+    "isCorporate": true,
+    "registeredCount": 139,
+    "viewsCount": 28786,
     "isUndergradEligible": true
   },
   {
@@ -2653,7 +2852,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 103,
-    "viewsCount": 7058,
+    "viewsCount": 7139,
     "isUndergradEligible": true
   },
   {
@@ -2679,7 +2878,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 33,
-    "viewsCount": 20413,
+    "viewsCount": 20886,
     "isUndergradEligible": true
   },
   {
@@ -2705,7 +2904,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 12,
-    "viewsCount": 30595,
+    "viewsCount": 30664,
     "isUndergradEligible": true
   },
   {
@@ -2730,8 +2929,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 597,
-    "viewsCount": 24196,
+    "registeredCount": 629,
+    "viewsCount": 24736,
     "isUndergradEligible": true
   },
   {
@@ -2756,8 +2955,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 127,
-    "viewsCount": 41137,
+    "isCorporate": true,
+    "registeredCount": 128,
+    "viewsCount": 41446,
     "isUndergradEligible": true
   },
   {
@@ -2782,35 +2982,36 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 2494,
-    "viewsCount": 171337,
+    "isCorporate": true,
+    "registeredCount": 2512,
+    "viewsCount": 172359,
     "isUndergradEligible": true
   },
   {
-    "id": 1751785,
-    "title": "Kaizen September: Call for Articles",
-    "orgName": "Indian Institute of Management (IIM), Rohtak",
-    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d08e336c6a1e_Indian_Institute_of_Management_Rohtak_logo.jpg",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa138ee4cccd_opscentix_logo.png",
-    "unstopUrl": "https://unstop.com/competitions/kaizen-september-call-for-articles-iim-rohtak-1751785",
+    "id": 1746239,
+    "title": "CodeRumble 4.0",
+    "orgName": "Indian Institute of Information Technology, Design and Manufacturing (IIITDM), Jabalpur",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d35733f01125_IIITDM_logo.jpg",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a95bd5b5ea35_unstop_profile.png",
+    "unstopUrl": "https://unstop.com/hackathons/coderumble-40-indian-institute-of-information-technology-design-and-manufacturing-iiitdm-jabalpur-1746239",
     "deadline": "2026-09-25T23:59:00+05:30",
     "remainDaysText": "9 days left",
     "daysRemainingNum": 10,
     "urgency": "normal",
-    "category": "general",
-    "categoryLabel": "General Opportunities",
-    "categoryEmoji": "🎯",
-    "minTeam": 1,
-    "maxTeam": 2,
-    "teamSizeDisplay": "1 - 2 Members",
-    "prizes": "Winner · 1st Runner Up",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 2,
+    "maxTeam": 3,
+    "teamSizeDisplay": "2 - 3 Members",
+    "prizes": "₹20,000 Cash Pool",
     "isFree": true,
-    "isFlagship": true,
+    "isFlagship": false,
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 116,
-    "viewsCount": 19603,
+    "registeredCount": 353,
+    "viewsCount": 31070,
     "isUndergradEligible": true
   },
   {
@@ -2836,8 +3037,61 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 110,
-    "viewsCount": 3516,
+    "registeredCount": 129,
+    "viewsCount": 3789,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1751785,
+    "title": "Kaizen September: Call for Articles",
+    "orgName": "Indian Institute of Management (IIM), Rohtak",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d08e336c6a1e_Indian_Institute_of_Management_Rohtak_logo.jpg",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa138ee4cccd_opscentix_logo.png",
+    "unstopUrl": "https://unstop.com/competitions/kaizen-september-call-for-articles-iim-rohtak-1751785",
+    "deadline": "2026-09-25T23:59:00+05:30",
+    "remainDaysText": "9 days left",
+    "daysRemainingNum": 10,
+    "urgency": "normal",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 1,
+    "maxTeam": 2,
+    "teamSizeDisplay": "1 - 2 Members",
+    "prizes": "Winner · 1st Runner Up",
+    "isFree": true,
+    "isFlagship": true,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 119,
+    "viewsCount": 19804,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1749638,
+    "title": "ITCODERA’26 – International Symposium on Emerging Technologies & Human-Centric Innovation",
+    "orgName": "EGS Pillay Engineering College",
+    "orgLogo": null,
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a9e35f8a5f0a_college_logo_322x322.png",
+    "unstopUrl": "https://unstop.com/competitions/itcodera26-international-symposium-on-emerging-technologies-human-centric-innovation-egs-pillay-engineering-1749638",
+    "deadline": "2026-09-25T23:59:03+05:30",
+    "remainDaysText": "9 days left",
+    "daysRemainingNum": 10,
+    "urgency": "normal",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 1,
+    "maxTeam": 2,
+    "teamSizeDisplay": "1 - 2 Members",
+    "prizes": "₹9,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 63,
+    "viewsCount": 7213,
     "isUndergradEligible": true
   },
   {
@@ -2862,8 +3116,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 1460,
-    "viewsCount": 93638,
+    "isCorporate": true,
+    "registeredCount": 1497,
+    "viewsCount": 96243,
     "isUndergradEligible": true
   },
   {
@@ -2889,8 +3144,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 309,
-    "viewsCount": 33172,
+    "registeredCount": 334,
+    "viewsCount": 33717,
     "isUndergradEligible": true
   },
   {
@@ -2916,35 +3171,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 136,
-    "viewsCount": 47731,
-    "isUndergradEligible": true
-  },
-  {
-    "id": 1754811,
-    "title": "Policy Dilemma- 2026",
-    "orgName": "Lady Shri Ram College for Women (LSR) University of Delhi (DU)",
-    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/63e9ea9455838_lst.png",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa6dae2aa26a_logo.png",
-    "unstopUrl": "https://unstop.com/competitions/policy-dilemma-2026-econvista26-lady-shri-ram-college-for-women-lsr-du-new-delhi-1754811",
-    "deadline": "2026-09-26T00:00:00+05:30",
-    "remainDaysText": "9 days left",
-    "daysRemainingNum": 10,
-    "urgency": "normal",
-    "category": "case",
-    "categoryLabel": "Case Competitions",
-    "categoryEmoji": "📊",
-    "minTeam": 1,
-    "maxTeam": 3,
-    "teamSizeDisplay": "1 - 3 Members",
-    "prizes": "Certificates & Recognition",
-    "isFree": true,
-    "isFlagship": true,
-    "isDU": true,
-    "isPremier": false,
-    "isCorporate": false,
-    "registeredCount": 99,
-    "viewsCount": 4363,
+    "registeredCount": 141,
+    "viewsCount": 48365,
     "isUndergradEligible": true
   },
   {
@@ -2955,8 +3183,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8b36b8a9113_kaizen_logo.png",
     "unstopUrl": "https://unstop.com/quiz/kaizen-v80-the-business-quizzing-event-netaji-subhas-university-of-technology-nsut-delhi-1743316",
     "deadline": "2026-09-26T15:30:07+05:30",
-    "remainDaysText": "10 days left",
-    "daysRemainingNum": 11,
+    "remainDaysText": "9 days left",
+    "daysRemainingNum": 10,
     "urgency": "normal",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -2971,7 +3199,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 1210,
-    "viewsCount": 102874,
+    "viewsCount": 103236,
     "isUndergradEligible": true
   },
   {
@@ -2996,8 +3224,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 390,
-    "viewsCount": 35502,
+    "isCorporate": true,
+    "registeredCount": 410,
+    "viewsCount": 36363,
     "isUndergradEligible": true
   },
   {
@@ -3023,8 +3252,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 233,
-    "viewsCount": 25033,
+    "registeredCount": 258,
+    "viewsCount": 25675,
     "isUndergradEligible": true
   },
   {
@@ -3035,8 +3264,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8b41c591de5_maudrik_1920_x_1920_px.jpg",
     "unstopUrl": "https://unstop.com/competitions/maudrik-v70-the-policy-case-event-netaji-subhas-university-of-technology-nsut-delhi-1743329",
     "deadline": "2026-09-27T18:29:00+05:30",
-    "remainDaysText": "11 days left",
-    "daysRemainingNum": 12,
+    "remainDaysText": "10 days left",
+    "daysRemainingNum": 11,
     "urgency": "normal",
     "category": "case",
     "categoryLabel": "Case Competitions",
@@ -3050,8 +3279,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 1427,
-    "viewsCount": 101291,
+    "registeredCount": 1429,
+    "viewsCount": 101609,
     "isUndergradEligible": true
   },
   {
@@ -3076,8 +3305,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 2310,
-    "viewsCount": 313244,
+    "registeredCount": 2319,
+    "viewsCount": 317799,
     "isUndergradEligible": true
   },
   {
@@ -3103,8 +3332,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 620,
-    "viewsCount": 51959,
+    "registeredCount": 623,
+    "viewsCount": 52211,
     "isUndergradEligible": true
   },
   {
@@ -3130,8 +3359,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 389,
-    "viewsCount": 9251,
+    "registeredCount": 400,
+    "viewsCount": 9384,
     "isUndergradEligible": true
   },
   {
@@ -3157,8 +3386,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 194,
-    "viewsCount": 53714,
+    "registeredCount": 195,
+    "viewsCount": 53992,
     "isUndergradEligible": true
   },
   {
@@ -3184,8 +3413,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 94,
-    "viewsCount": 35718,
+    "registeredCount": 101,
+    "viewsCount": 36128,
     "isUndergradEligible": true
   },
   {
@@ -3211,8 +3440,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 75,
-    "viewsCount": 24340,
+    "registeredCount": 78,
+    "viewsCount": 24944,
     "isUndergradEligible": true
   },
   {
@@ -3237,8 +3466,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
+    "isCorporate": true,
     "registeredCount": 768,
-    "viewsCount": 83844,
+    "viewsCount": 83883,
     "isUndergradEligible": true
   },
   {
@@ -3264,8 +3494,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 601,
-    "viewsCount": 105727,
+    "registeredCount": 602,
+    "viewsCount": 106350,
     "isUndergradEligible": true
   },
   {
@@ -3291,8 +3521,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 210,
-    "viewsCount": 19823,
+    "registeredCount": 224,
+    "viewsCount": 20386,
     "isUndergradEligible": true
   },
   {
@@ -3318,8 +3548,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 176,
-    "viewsCount": 14007,
+    "registeredCount": 178,
+    "viewsCount": 14091,
     "isUndergradEligible": true
   },
   {
@@ -3345,8 +3575,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 641,
-    "viewsCount": 117654,
+    "registeredCount": 675,
+    "viewsCount": 124722,
     "isUndergradEligible": true
   },
   {
@@ -3372,8 +3602,34 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 250,
-    "viewsCount": 90037,
+    "registeredCount": 251,
+    "viewsCount": 90119,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1744287,
+    "title": "Quant-A-Maze 3.0",
+    "orgName": "Nitte Meenakshi Institute of Technology (NMIT), Yelahanka",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/925718011s-59a50892aa11b1503987858.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8e3cbbd84f6_whatsapp_image_2026-08-22_at_11_38_47_am.jpeg",
+    "unstopUrl": "https://unstop.com/hackathons/quant-a-maze-30-nitte-meenakshi-institute-of-technology-nmit-yelahanka-1744287",
+    "deadline": "2026-09-28T23:59:00+05:30",
+    "remainDaysText": "12 days left",
+    "daysRemainingNum": 13,
+    "urgency": "normal",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 3,
+    "maxTeam": 4,
+    "teamSizeDisplay": "3 - 4 Members",
+    "prizes": "₹1,00,000 Cash Pool",
+    "isFree": false,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 244,
+    "viewsCount": 19105,
     "isUndergradEligible": true
   },
   {
@@ -3398,8 +3654,61 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 107,
-    "viewsCount": 27312,
+    "registeredCount": 116,
+    "viewsCount": 27487,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1749660,
+    "title": "Spectra 2k26 – International Student Symposium on Humanizing Technology (ISSHT 2026)",
+    "orgName": "E.G.S Pillay Engineering College",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5ebb881e9378f_images__5_.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9f8ae056695_images__5_.png",
+    "unstopUrl": "https://unstop.com/competitions/international-student-symposium-on-humanizing-technology-issht-2026-egs-pillay-engineering-college-1749660",
+    "deadline": "2026-09-28T23:59:00+05:30",
+    "remainDaysText": "12 days left",
+    "daysRemainingNum": 13,
+    "urgency": "normal",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 2,
+    "maxTeam": 3,
+    "teamSizeDisplay": "2 - 3 Members",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 36,
+    "viewsCount": 9536,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1743965,
+    "title": "CodeSlayer 2.0 2k26",
+    "orgName": "National Institute of Technology (NIT), Delhi",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/NIT-Delhi--59957c7d3d4aa1502968957.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8d5da4c095a_codeslayer_2_0_logo_1.png",
+    "unstopUrl": "https://unstop.com/hackathons/codeslayer-20-2k26-national-institute-of-technology-nit-delhi-1743965",
+    "deadline": "2026-09-29T00:00:00+05:30",
+    "remainDaysText": "12 days left",
+    "daysRemainingNum": 13,
+    "urgency": "normal",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 3,
+    "maxTeam": 4,
+    "teamSizeDisplay": "3 - 4 Members",
+    "prizes": "₹65,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 3569,
+    "viewsCount": 75668,
     "isUndergradEligible": true
   },
   {
@@ -3426,7 +3735,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 115,
-    "viewsCount": 57672,
+    "viewsCount": 58289,
     "isUndergradEligible": true
   },
   {
@@ -3437,8 +3746,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a7c699b916a9_1000076380.png",
     "unstopUrl": "https://unstop.com/competitions/maxim-code-challenges-saveetha-engineering-college-1735971",
     "deadline": "2026-09-29T14:36:50+05:30",
-    "remainDaysText": "13 days left",
-    "daysRemainingNum": 14,
+    "remainDaysText": "12 days left",
+    "daysRemainingNum": 13,
     "urgency": "normal",
     "category": "general",
     "categoryLabel": "General Opportunities",
@@ -3451,35 +3760,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 273,
-    "viewsCount": 75068,
-    "isUndergradEligible": true
-  },
-  {
-    "id": 1748402,
-    "title": "Navonmesh 26 - A National Level Hackathon (In Collaboration with Qualcomm)",
-    "orgName": "Shri Shankaracharya Institute of Professional Management and Technology, Raipur",
-    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5e58cd3256322_download_-_2020-02-28T134953.437.jpg",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa421bee27a3_download_-_2020-02-28T134953.437.jpg",
-    "unstopUrl": "https://unstop.com/hackathons/navonmesh-26-a-national-level-hackathon-shri-shankaracharya-institute-of-professional-management-and-technolo-1748402",
-    "deadline": "2026-09-29T18:30:00+05:30",
-    "remainDaysText": "13 days left",
-    "daysRemainingNum": 14,
-    "urgency": "normal",
-    "category": "hackathon",
-    "categoryLabel": "Hackathons & Dev",
-    "categoryEmoji": "💻",
-    "minTeam": 3,
-    "maxTeam": 5,
-    "teamSizeDisplay": "3 - 5 Members",
-    "prizes": "₹2,75,000 Cash Pool",
-    "isFree": false,
-    "isFlagship": false,
-    "isDU": false,
-    "isPremier": false,
-    "isCorporate": true,
-    "registeredCount": 93,
-    "viewsCount": 91343,
+    "registeredCount": 274,
+    "viewsCount": 75324,
     "isUndergradEligible": true
   },
   {
@@ -3505,8 +3787,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 24,
-    "viewsCount": 4126,
+    "registeredCount": 38,
+    "viewsCount": 5933,
     "isUndergradEligible": true
   },
   {
@@ -3532,8 +3814,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 73,
-    "viewsCount": 5078,
+    "registeredCount": 77,
+    "viewsCount": 5222,
     "isUndergradEligible": true
   },
   {
@@ -3558,17 +3840,18 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 2431,
-    "viewsCount": 172296,
+    "isCorporate": true,
+    "registeredCount": 2433,
+    "viewsCount": 172828,
     "isUndergradEligible": true
   },
   {
-    "id": 1677311,
-    "title": "Tech Horizon 2.0 - National Level Hackathon",
-    "orgName": "Guru Nanak Institutions Technical Campus (GNITC), Hyderabad",
-    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/Guru-Nanak-59a510e7859091503989991.jpg",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-69e4c35dd9720_screenshot_2026-04-19_172807.png",
-    "unstopUrl": "https://unstop.com/hackathons/tech-horizon-20-national-level-hackathon-guru-nanak-institutions-technical-campus-gnitc-hyderabad-1677311",
+    "id": 1749452,
+    "title": "IndustrySolve Idea-Thon & Product-a-Thon 2026",
+    "orgName": "Indraprastha Institute of Information Technology (IIIT), Delhi",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/5d31763067ef6_IIIT_Delhi_logo.jpg",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa7dc7fb142e_IIIT_Delhi_logo.jpg",
+    "unstopUrl": "https://unstop.com/hackathons/industrysolve-idea-thon-product-a-thon-2026-indraprastha-institute-of-information-technology-iiit-delhi-1749452",
     "deadline": "2026-09-30T00:00:00+05:30",
     "remainDaysText": "13 days left",
     "daysRemainingNum": 14,
@@ -3576,16 +3859,17 @@ export const INITIAL_COMPETITIONS = [
     "category": "hackathon",
     "categoryLabel": "Hackathons & Dev",
     "categoryEmoji": "💻",
-    "minTeam": 3,
-    "maxTeam": 6,
-    "teamSizeDisplay": "3 - 6 Members",
-    "prizes": "₹2,13,000 Cash Pool",
-    "isFree": false,
+    "minTeam": 2,
+    "maxTeam": 4,
+    "teamSizeDisplay": "2 - 4 Members",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
     "isFlagship": false,
     "isDU": false,
-    "isPremier": false,
-    "registeredCount": 2253,
-    "viewsCount": 972579,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 2396,
+    "viewsCount": 129767,
     "isUndergradEligible": true
   },
   {
@@ -3610,8 +3894,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 1189,
-    "viewsCount": 33352,
+    "isCorporate": true,
+    "registeredCount": 1197,
+    "viewsCount": 33497,
     "isUndergradEligible": true
   },
   {
@@ -3638,7 +3923,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 1129,
-    "viewsCount": 24800,
+    "viewsCount": 24889,
     "isUndergradEligible": true
   },
   {
@@ -3663,8 +3948,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 981,
-    "viewsCount": 79396,
+    "isCorporate": true,
+    "registeredCount": 997,
+    "viewsCount": 79635,
     "isUndergradEligible": true
   },
   {
@@ -3691,7 +3977,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 583,
-    "viewsCount": 58372,
+    "viewsCount": 58716,
     "isUndergradEligible": true
   },
   {
@@ -3717,7 +4003,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 475,
-    "viewsCount": 55612,
+    "viewsCount": 55672,
     "isUndergradEligible": true
   },
   {
@@ -3743,8 +4029,35 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 345,
-    "viewsCount": 10146,
+    "registeredCount": 347,
+    "viewsCount": 10270,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1752247,
+    "title": "QuantumXpo",
+    "orgName": "Rajiv Gandhi University of Knowledge Technologies (RGUKT)-IIIT Nuzvid",
+    "orgLogo": null,
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa290f662f1a_fall_fest_be10f3ebbf.png",
+    "unstopUrl": "https://unstop.com/hackathons/quantumxpo-rajiv-gandhi-university-of-knowledge-technologies-rgukt-iiit-nuzvid-1752247",
+    "deadline": "2026-09-30T00:00:00+05:30",
+    "remainDaysText": "13 days left",
+    "daysRemainingNum": 14,
+    "urgency": "normal",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 1,
+    "maxTeam": 3,
+    "teamSizeDisplay": "1 - 3 Members",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 192,
+    "viewsCount": 123629,
     "isUndergradEligible": true
   },
   {
@@ -3769,8 +4082,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 176,
-    "viewsCount": 24438,
+    "registeredCount": 179,
+    "viewsCount": 24775,
     "isUndergradEligible": true
   },
   {
@@ -3795,8 +4108,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 139,
-    "viewsCount": 21902,
+    "isCorporate": true,
+    "registeredCount": 140,
+    "viewsCount": 21954,
     "isUndergradEligible": true
   },
   {
@@ -3822,8 +4136,35 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 118,
-    "viewsCount": 42350,
+    "registeredCount": 122,
+    "viewsCount": 42714,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1754811,
+    "title": "Policy Dilemma- 2026",
+    "orgName": "Lady Shri Ram College for Women (LSR) University of Delhi (DU)",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/63e9ea9455838_lst.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa6dae2aa26a_logo.png",
+    "unstopUrl": "https://unstop.com/competitions/policy-dilemma-2026-econvista26-lady-shri-ram-college-for-women-lsr-du-new-delhi-1754811",
+    "deadline": "2026-09-30T00:00:00+05:30",
+    "remainDaysText": "13 days left",
+    "daysRemainingNum": 14,
+    "urgency": "normal",
+    "category": "case",
+    "categoryLabel": "Case Competitions",
+    "categoryEmoji": "📊",
+    "minTeam": 1,
+    "maxTeam": 3,
+    "teamSizeDisplay": "1 - 3 Members",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
+    "isFlagship": true,
+    "isDU": true,
+    "isPremier": false,
+    "isCorporate": false,
+    "registeredCount": 114,
+    "viewsCount": 4516,
     "isUndergradEligible": true
   },
   {
@@ -3849,7 +4190,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 79,
-    "viewsCount": 19096,
+    "viewsCount": 19171,
     "isUndergradEligible": true
   },
   {
@@ -3869,13 +4210,13 @@ export const INITIAL_COMPETITIONS = [
     "minTeam": 2,
     "maxTeam": 4,
     "teamSizeDisplay": "2 - 4 Members",
-    "prizes": "Certificates & Recognition",
+    "prizes": "₹18,000 Cash Pool",
     "isFree": true,
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 56,
-    "viewsCount": 38220,
+    "registeredCount": 69,
+    "viewsCount": 46845,
     "isUndergradEligible": true
   },
   {
@@ -3902,7 +4243,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 49,
-    "viewsCount": 8655,
+    "viewsCount": 8863,
     "isUndergradEligible": true
   },
   {
@@ -3929,7 +4270,33 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 24,
-    "viewsCount": 4855,
+    "viewsCount": 4922,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1756769,
+    "title": "Article Writing Challenge 2026: Decode India's IPO Market",
+    "orgName": "IPOBARTA.AI",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-9xAPY0IR0w1355672821XeXr88U5D2.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aaa89b98232c_organisation_image-9xAPY0IR0w1355672821XeXr88U5D2.png",
+    "unstopUrl": "https://unstop.com/competitions/article-writing-challenge-2026-decode-indias-ipo-market-ipobartaai-1756769",
+    "deadline": "2026-09-30T00:00:00+05:30",
+    "remainDaysText": "13 days left",
+    "daysRemainingNum": 14,
+    "urgency": "normal",
+    "category": "writing",
+    "categoryLabel": "Writing & Research",
+    "categoryEmoji": "✍️",
+    "minTeam": 1,
+    "maxTeam": 4,
+    "teamSizeDisplay": "1 - 4 Members",
+    "prizes": "₹10,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 15,
+    "viewsCount": 526,
     "isUndergradEligible": true
   },
   {
@@ -3955,7 +4322,33 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 11,
-    "viewsCount": 9987,
+    "viewsCount": 10059,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1756688,
+    "title": "VQAR Mathematical Quiz",
+    "orgName": "SNS College of Technology (SNSCT), Coimbatore, Tamil Nadu",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/66d1cb06814c4_images__14_.jpeg",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aaa5d85c8d65_images__14_.jpeg",
+    "unstopUrl": "https://unstop.com/quiz/vqar-mathematical-quiz-sns-college-of-technology-snsct-coimbatore-tamil-nadu-1756688",
+    "deadline": "2026-09-30T00:00:00+05:30",
+    "remainDaysText": "13 days left",
+    "daysRemainingNum": 14,
+    "urgency": "normal",
+    "category": "quiz",
+    "categoryLabel": "Quizzes & Trivia",
+    "categoryEmoji": "🧠",
+    "minTeam": 1,
+    "maxTeam": 1,
+    "teamSizeDisplay": "Solo / Individual",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 3,
+    "viewsCount": 157,
     "isUndergradEligible": true
   },
   {
@@ -3966,8 +4359,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9e350654611_organisation_image-bUm8r633hw814459420o4G550QKOC.png",
     "unstopUrl": "https://unstop.com/competitions/acecubing-essay-challenge-september-ed-acecubing-1750396",
     "deadline": "2026-09-30T18:29:38+05:30",
-    "remainDaysText": "14 days left",
-    "daysRemainingNum": 15,
+    "remainDaysText": "13 days left",
+    "daysRemainingNum": 14,
     "urgency": "normal",
     "category": "writing",
     "categoryLabel": "Writing & Research",
@@ -3980,8 +4373,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 119,
-    "viewsCount": 28454,
+    "isCorporate": true,
+    "registeredCount": 120,
+    "viewsCount": 28518,
     "isUndergradEligible": true
   },
   {
@@ -3989,7 +4383,7 @@ export const INITIAL_COMPETITIONS = [
     "title": "HackNowa Global Hackathon 2026",
     "orgName": "Innovation Hacks",
     "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-HXRc6qSVLN27284711IzN783tlQS.png",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa8c150a6b4e_organisation_image-HXRc6qSVLN27284711IzN783tlQS.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aaa98bd1a6a8_organisation_image-HXRc6qSVLN27284711IzN783tlQS.png",
     "unstopUrl": "https://unstop.com/hackathons/hacknowa-global-hackathon-2026-innovation-hacks-1752198",
     "deadline": "2026-09-30T23:00:00+05:30",
     "remainDaysText": "14 days left",
@@ -4006,8 +4400,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 1165,
-    "viewsCount": 125674,
+    "isCorporate": true,
+    "registeredCount": 1181,
+    "viewsCount": 126941,
     "isUndergradEligible": true
   },
   {
@@ -4033,8 +4428,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 22,
-    "viewsCount": 2970,
+    "registeredCount": 31,
+    "viewsCount": 3124,
     "isUndergradEligible": true
   },
   {
@@ -4060,7 +4455,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 2,
-    "viewsCount": 10277,
+    "viewsCount": 10439,
     "isUndergradEligible": true
   },
   {
@@ -4086,8 +4481,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "isCorporate": true,
-    "registeredCount": 6115,
-    "viewsCount": 4117903,
+    "registeredCount": 6224,
+    "viewsCount": 4247268,
     "isUndergradEligible": true
   },
   {
@@ -4112,8 +4507,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 871,
-    "viewsCount": 26499,
+    "registeredCount": 928,
+    "viewsCount": 27280,
     "isUndergradEligible": true
   },
   {
@@ -4139,8 +4534,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 618,
-    "viewsCount": 55199,
+    "registeredCount": 621,
+    "viewsCount": 55889,
     "isUndergradEligible": true
   },
   {
@@ -4166,8 +4561,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 513,
-    "viewsCount": 39471,
+    "registeredCount": 518,
+    "viewsCount": 39727,
     "isUndergradEligible": true
   },
   {
@@ -4192,8 +4587,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 240,
-    "viewsCount": 26206,
+    "registeredCount": 241,
+    "viewsCount": 26470,
     "isUndergradEligible": true
   },
   {
@@ -4219,8 +4614,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 208,
-    "viewsCount": 29531,
+    "registeredCount": 236,
+    "viewsCount": 30392,
     "isUndergradEligible": true
   },
   {
@@ -4246,8 +4641,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 205,
-    "viewsCount": 6777,
+    "registeredCount": 219,
+    "viewsCount": 7223,
     "isUndergradEligible": true
   },
   {
@@ -4274,7 +4669,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 156,
-    "viewsCount": 10261,
+    "viewsCount": 10308,
     "isUndergradEligible": true
   },
   {
@@ -4300,8 +4695,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 84,
-    "viewsCount": 2788,
+    "registeredCount": 86,
+    "viewsCount": 2941,
     "isUndergradEligible": true
   },
   {
@@ -4309,7 +4704,7 @@ export const INITIAL_COMPETITIONS = [
     "title": "Codearambh 2.0: Dare to Code, Dare to Create",
     "orgName": "TechFuison Hiet Ghaziabad",
     "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-mNLZHVMpNt1497287694MOLJr4p8Zk.png",
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa7ab2210dbc_organisation_image-mNLZHVMpNt1497287694MOLJr4p8Zk.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aaa832f43b51_organisation_image-mNLZHVMpNt1497287694MOLJr4p8Zk.png",
     "unstopUrl": "https://unstop.com/hackathons/codearambh-20-dare-to-code-dare-to-create-techfuison-hiet-ghaziabad-1755103",
     "deadline": "2026-09-30T23:59:00+05:30",
     "remainDaysText": "14 days left",
@@ -4326,8 +4721,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 19,
-    "viewsCount": 1886,
+    "registeredCount": 21,
+    "viewsCount": 2011,
     "isUndergradEligible": true
   },
   {
@@ -4354,7 +4749,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 13,
-    "viewsCount": 6203,
+    "viewsCount": 6273,
     "isUndergradEligible": true
   },
   {
@@ -4380,8 +4775,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 2,
-    "viewsCount": 643,
+    "registeredCount": 4,
+    "viewsCount": 741,
     "isUndergradEligible": true
   },
   {
@@ -4407,8 +4802,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 152,
-    "viewsCount": 7137,
+    "registeredCount": 156,
+    "viewsCount": 7439,
     "isUndergradEligible": true
   },
   {
@@ -4434,8 +4829,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 137,
-    "viewsCount": 19454,
+    "registeredCount": 142,
+    "viewsCount": 19783,
     "isUndergradEligible": true
   },
   {
@@ -4461,8 +4856,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 166,
-    "viewsCount": 5413,
+    "registeredCount": 173,
+    "viewsCount": 5604,
     "isUndergradEligible": true
   },
   {
@@ -4488,8 +4883,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 934,
-    "viewsCount": 121776,
+    "registeredCount": 983,
+    "viewsCount": 129252,
     "isUndergradEligible": true
   },
   {
@@ -4515,8 +4910,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 236,
-    "viewsCount": 14018,
+    "registeredCount": 238,
+    "viewsCount": 14239,
     "isUndergradEligible": true
   },
   {
@@ -4541,8 +4936,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 149,
-    "viewsCount": 116737,
+    "registeredCount": 153,
+    "viewsCount": 117429,
     "isUndergradEligible": true
   },
   {
@@ -4553,8 +4948,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-68c6a9e316f73_capital_logo.png",
     "unstopUrl": "https://unstop.com/competitions/fintellect-2026-an-article-writing-competition-trade-winds-2026-iift-new-delhi-1754503",
     "deadline": "2026-10-01T18:29:43+05:30",
-    "remainDaysText": "15 days left",
-    "daysRemainingNum": 16,
+    "remainDaysText": "14 days left",
+    "daysRemainingNum": 15,
     "urgency": "normal",
     "category": "writing",
     "categoryLabel": "Writing & Research",
@@ -4568,8 +4963,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 113,
-    "viewsCount": 16046,
+    "registeredCount": 114,
+    "viewsCount": 16288,
     "isUndergradEligible": true
   },
   {
@@ -4580,8 +4975,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa4559ac11bc_praxis_logo.jpg",
     "unstopUrl": "https://unstop.com/competitions/the-policy-gazette-2026-article-writing-competition-trade-winds-2026-iift-new-delhi-1754529",
     "deadline": "2026-10-01T18:29:44+05:30",
-    "remainDaysText": "15 days left",
-    "daysRemainingNum": 16,
+    "remainDaysText": "14 days left",
+    "daysRemainingNum": 15,
     "urgency": "normal",
     "category": "writing",
     "categoryLabel": "Writing & Research",
@@ -4595,8 +4990,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 146,
-    "viewsCount": 15832,
+    "registeredCount": 150,
+    "viewsCount": 16052,
     "isUndergradEligible": true
   },
   {
@@ -4622,8 +5017,35 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 173,
-    "viewsCount": 12032,
+    "registeredCount": 179,
+    "viewsCount": 12345,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1747199,
+    "title": "InteractUp's (National Level NGO) National Core Committees Selection Challenge 2026 (Sept 2026 - Aug 2027)",
+    "orgName": "InteractUp",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/new_organisation_image-nruGdvc0Uo391133710dZYZ30FMho.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6a9f1004939d9_organisation_image-nruGdvc0Uo391133710dZYZ30FMho.png",
+    "unstopUrl": "https://unstop.com/competitions/national-core-committees-selection-challenge-2026-interactup-1747199",
+    "deadline": "2026-10-01T23:50:53+05:30",
+    "remainDaysText": "15 days left",
+    "daysRemainingNum": 16,
+    "urgency": "normal",
+    "category": "case",
+    "categoryLabel": "Case Competitions",
+    "categoryEmoji": "📊",
+    "minTeam": 1,
+    "maxTeam": 1,
+    "teamSizeDisplay": "Solo / Individual",
+    "prizes": "Volunteer for National Level NGO as National Core Committee Member",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "isCorporate": true,
+    "registeredCount": 127,
+    "viewsCount": 37753,
     "isUndergradEligible": true
   },
   {
@@ -4649,8 +5071,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 147,
-    "viewsCount": 16747,
+    "registeredCount": 155,
+    "viewsCount": 17101,
     "isUndergradEligible": true
   },
   {
@@ -4676,7 +5098,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 88,
-    "viewsCount": 37258,
+    "viewsCount": 37788,
     "isUndergradEligible": true
   },
   {
@@ -4702,7 +5124,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 50,
-    "viewsCount": 3066,
+    "viewsCount": 3280,
     "isUndergradEligible": true
   },
   {
@@ -4728,7 +5150,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 47,
-    "viewsCount": 1627,
+    "viewsCount": 1708,
     "isUndergradEligible": true
   },
   {
@@ -4754,7 +5176,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 47,
-    "viewsCount": 2474,
+    "viewsCount": 2526,
     "isUndergradEligible": true
   },
   {
@@ -4780,7 +5202,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 46,
-    "viewsCount": 5315,
+    "viewsCount": 5650,
     "isUndergradEligible": true
   },
   {
@@ -4806,7 +5228,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 46,
-    "viewsCount": 3901,
+    "viewsCount": 3958,
     "isUndergradEligible": true
   },
   {
@@ -4832,7 +5254,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 46,
-    "viewsCount": 3046,
+    "viewsCount": 3256,
     "isUndergradEligible": true
   },
   {
@@ -4858,7 +5280,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 46,
-    "viewsCount": 884,
+    "viewsCount": 921,
     "isUndergradEligible": true
   },
   {
@@ -4884,7 +5306,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 46,
-    "viewsCount": 863,
+    "viewsCount": 894,
     "isUndergradEligible": true
   },
   {
@@ -4910,7 +5332,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 47,
-    "viewsCount": 4498,
+    "viewsCount": 4688,
     "isUndergradEligible": true
   },
   {
@@ -4935,8 +5357,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 2500,
-    "viewsCount": 82440,
+    "registeredCount": 2551,
+    "viewsCount": 83321,
     "isUndergradEligible": true
   },
   {
@@ -4962,7 +5384,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 48,
-    "viewsCount": 2248,
+    "viewsCount": 2281,
     "isUndergradEligible": true
   },
   {
@@ -4988,7 +5410,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 47,
-    "viewsCount": 12901,
+    "viewsCount": 13302,
     "isUndergradEligible": true
   },
   {
@@ -5014,7 +5436,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 37,
-    "viewsCount": 4346,
+    "viewsCount": 4381,
     "isUndergradEligible": true
   },
   {
@@ -5040,7 +5462,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 0,
-    "viewsCount": 13047,
+    "viewsCount": 13486,
     "isUndergradEligible": true
   },
   {
@@ -5066,8 +5488,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 107,
-    "viewsCount": 16892,
+    "registeredCount": 109,
+    "viewsCount": 17029,
     "isUndergradEligible": true
   },
   {
@@ -5078,8 +5500,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa93e3b174d4_organisation_image-rdEtvQYYD71680906289sZyR2sXLs8.png",
     "unstopUrl": "https://unstop.com/quiz/protocol-60-wecodecoders-1754684",
     "deadline": "2026-10-03T16:00:00+05:30",
-    "remainDaysText": "17 days left",
-    "daysRemainingNum": 18,
+    "remainDaysText": "16 days left",
+    "daysRemainingNum": 17,
     "urgency": "normal",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -5092,8 +5514,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 531,
-    "viewsCount": 29174,
+    "isCorporate": true,
+    "registeredCount": 541,
+    "viewsCount": 30289,
     "isUndergradEligible": true
   },
   {
@@ -5119,8 +5542,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 157,
-    "viewsCount": 28696,
+    "registeredCount": 167,
+    "viewsCount": 29627,
     "isUndergradEligible": true
   },
   {
@@ -5145,8 +5568,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 43,
-    "viewsCount": 12522,
+    "registeredCount": 44,
+    "viewsCount": 12878,
     "isUndergradEligible": true
   },
   {
@@ -5171,8 +5594,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 188,
-    "viewsCount": 16232,
+    "registeredCount": 197,
+    "viewsCount": 16667,
     "isUndergradEligible": true
   },
   {
@@ -5183,8 +5606,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa9593e47dfb_chatgpt_image_sep_15_2026_07_57_57_pm.jpg",
     "unstopUrl": "https://unstop.com/quiz/ill-be-there-for-you-a-quiz-on-friends-quizarc-1756279",
     "deadline": "2026-10-04T19:00:00+05:30",
-    "remainDaysText": "18 days left",
-    "daysRemainingNum": 19,
+    "remainDaysText": "17 days left",
+    "daysRemainingNum": 18,
     "urgency": "normal",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -5197,8 +5620,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 95,
-    "viewsCount": 13522,
+    "registeredCount": 141,
+    "viewsCount": 20395,
     "isUndergradEligible": true
   },
   {
@@ -5223,8 +5646,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 1032,
-    "viewsCount": 65763,
+    "registeredCount": 1036,
+    "viewsCount": 65904,
     "isUndergradEligible": true
   },
   {
@@ -5251,7 +5674,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 4,
-    "viewsCount": 1184,
+    "viewsCount": 1256,
     "isUndergradEligible": true
   },
   {
@@ -5276,8 +5699,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 8,
-    "viewsCount": 2881,
+    "registeredCount": 9,
+    "viewsCount": 4930,
     "isUndergradEligible": true
   },
   {
@@ -5302,8 +5725,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 44,
-    "viewsCount": 7078,
+    "registeredCount": 47,
+    "viewsCount": 11692,
     "isUndergradEligible": true
   },
   {
@@ -5329,7 +5752,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 84,
-    "viewsCount": 9288,
+    "viewsCount": 9374,
     "isUndergradEligible": true
   },
   {
@@ -5355,7 +5778,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 5,
-    "viewsCount": 1963,
+    "viewsCount": 1980,
     "isUndergradEligible": true
   },
   {
@@ -5381,7 +5804,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 0,
-    "viewsCount": 3778,
+    "viewsCount": 4409,
     "isUndergradEligible": true
   },
   {
@@ -5407,8 +5830,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": true,
     "isPremier": false,
     "isCorporate": false,
-    "registeredCount": 73,
-    "viewsCount": 7995,
+    "registeredCount": 74,
+    "viewsCount": 8398,
     "isUndergradEligible": true
   },
   {
@@ -5419,8 +5842,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa8d0e033c50_images.png",
     "unstopUrl": "https://unstop.com/competitions/dream-forge-30-ieee-day-2026-dtu-new-delhi-1755311",
     "deadline": "2026-10-09T18:29:00+05:30",
-    "remainDaysText": "23 days left",
-    "daysRemainingNum": 24,
+    "remainDaysText": "22 days left",
+    "daysRemainingNum": 23,
     "urgency": "normal",
     "category": "case",
     "categoryLabel": "Case Competitions",
@@ -5434,8 +5857,34 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 73,
-    "viewsCount": 3614,
+    "registeredCount": 74,
+    "viewsCount": 4077,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1749381,
+    "title": "SYNOFURA' 26 - (International Student Symposium On Humanizing Technology - 2026)",
+    "orgName": "EGS Pillay Engineering College",
+    "orgLogo": null,
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a9abb761e9e1_synofura26_under_900kb.jpg",
+    "unstopUrl": "https://unstop.com/competitions/synofura-26-international-student-symposium-on-humanizing-technology-2026-egs-pillay-engineering-college-1749381",
+    "deadline": "2026-10-09T18:30:00+05:30",
+    "remainDaysText": "22 days left",
+    "daysRemainingNum": 23,
+    "urgency": "normal",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 1,
+    "maxTeam": 2,
+    "teamSizeDisplay": "1 - 2 Members",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 14,
+    "viewsCount": 5024,
     "isUndergradEligible": true
   },
   {
@@ -5460,8 +5909,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 248,
-    "viewsCount": 83763,
+    "registeredCount": 263,
+    "viewsCount": 87510,
     "isUndergradEligible": true
   },
   {
@@ -5487,34 +5936,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "isCorporate": true,
-    "registeredCount": 1663,
-    "viewsCount": 220540,
-    "isUndergradEligible": true
-  },
-  {
-    "id": 1739267,
-    "title": "The Fluorescent Quiz ",
-    "orgName": "Mohamed Sathak Engineering College",
-    "orgLogo": null,
-    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa55f4daf685_1000022305.jpg",
-    "unstopUrl": "https://unstop.com/quiz/the-fluorescent-quiz-hakitxmrdu-mohamed-sathak-engineering-college-1739267",
-    "deadline": "2026-10-10T21:09:55+05:30",
-    "remainDaysText": "24 days left",
-    "daysRemainingNum": 25,
-    "urgency": "normal",
-    "category": "quiz",
-    "categoryLabel": "Quizzes & Trivia",
-    "categoryEmoji": "🧠",
-    "minTeam": 1,
-    "maxTeam": 2,
-    "teamSizeDisplay": "1 - 2 Members",
-    "prizes": "₹100 Cash Pool",
-    "isFree": true,
-    "isFlagship": false,
-    "isDU": false,
-    "isPremier": false,
-    "registeredCount": 19,
-    "viewsCount": 2773,
+    "registeredCount": 1666,
+    "viewsCount": 220919,
     "isUndergradEligible": true
   },
   {
@@ -5540,8 +5963,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 310,
-    "viewsCount": 15337,
+    "registeredCount": 311,
+    "viewsCount": 15514,
     "isUndergradEligible": true
   },
   {
@@ -5567,8 +5990,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 76,
-    "viewsCount": 3095,
+    "registeredCount": 110,
+    "viewsCount": 3507,
     "isUndergradEligible": true
   },
   {
@@ -5594,8 +6017,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 229,
-    "viewsCount": 21370,
+    "registeredCount": 238,
+    "viewsCount": 21913,
     "isUndergradEligible": true
   },
   {
@@ -5620,8 +6043,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
+    "isCorporate": true,
     "registeredCount": 56,
-    "viewsCount": 8074,
+    "viewsCount": 8301,
     "isUndergradEligible": true
   },
   {
@@ -5646,8 +6070,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 411,
-    "viewsCount": 37520,
+    "registeredCount": 413,
+    "viewsCount": 37711,
     "isUndergradEligible": true
   },
   {
@@ -5672,8 +6096,8 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 72,
-    "viewsCount": 21451,
+    "registeredCount": 74,
+    "viewsCount": 21771,
     "isUndergradEligible": true
   },
   {
@@ -5699,8 +6123,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 71,
-    "viewsCount": 13096,
+    "registeredCount": 73,
+    "viewsCount": 13730,
     "isUndergradEligible": true
   },
   {
@@ -5726,7 +6150,7 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": false,
     "registeredCount": 38,
-    "viewsCount": 6476,
+    "viewsCount": 6534,
     "isUndergradEligible": true
   },
   {
@@ -5753,7 +6177,7 @@ export const INITIAL_COMPETITIONS = [
     "isPremier": true,
     "isCorporate": false,
     "registeredCount": 23,
-    "viewsCount": 3660,
+    "viewsCount": 4105,
     "isUndergradEligible": true
   },
   {
@@ -5779,8 +6203,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 53,
-    "viewsCount": 3231,
+    "registeredCount": 57,
+    "viewsCount": 3312,
     "isUndergradEligible": true
   },
   {
@@ -5806,8 +6230,62 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 634,
-    "viewsCount": 54992,
+    "registeredCount": 636,
+    "viewsCount": 55213,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1744836,
+    "title": "National Probability Challenge | Techfest 2026-27",
+    "orgName": "Indian Institute of Technology (IIT), Bombay",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/53216e16ef1e8.jpg",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6a8e39ae837e3_whatsapp_image_2026-08-26_at_06_25_35.jpeg",
+    "unstopUrl": "https://unstop.com/competitions/national-probability-challenge-techfest-2026-27-iit-bombay-1744836",
+    "deadline": "2026-10-15T23:59:18+05:30",
+    "remainDaysText": "29 days left",
+    "daysRemainingNum": 30,
+    "urgency": "normal",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 1,
+    "maxTeam": 1,
+    "teamSizeDisplay": "Solo / Individual",
+    "prizes": "₹3,80,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": true,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 384,
+    "viewsCount": 28445,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1744244,
+    "title": "Xperia 2026 — Internship Presentation Competition",
+    "orgName": "Narsee Monjee Institute of Management Studies (NMIMS), Indore",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/shield-log-5998261b1abf11503143451.jpg",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa0fcc173731_logo_of_xperia.png",
+    "unstopUrl": "https://unstop.com/competitions/xperia-2026-internship-presentation-competition-nmims-indore-1744244",
+    "deadline": "2026-10-17T00:01:00+05:30",
+    "remainDaysText": "30 days left",
+    "daysRemainingNum": 31,
+    "urgency": "normal",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 1,
+    "maxTeam": 1,
+    "teamSizeDisplay": "Solo / Individual",
+    "prizes": "₹40,000 Cash Pool",
+    "isFree": false,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 7,
+    "viewsCount": 5957,
     "isUndergradEligible": true
   },
   {
@@ -5818,8 +6296,8 @@ export const INITIAL_COMPETITIONS = [
     "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aa57a8ad1744_organisation_image-zySZulZIN119903956246ryPt6yEYH.png",
     "unstopUrl": "https://unstop.com/quiz/website-upgrade-challenge-godstockss-1743815",
     "deadline": "2026-10-17T18:30:00+05:30",
-    "remainDaysText": "1 month left",
-    "daysRemainingNum": 32,
+    "remainDaysText": "30 days left",
+    "daysRemainingNum": 31,
     "urgency": "normal",
     "category": "quiz",
     "categoryLabel": "Quizzes & Trivia",
@@ -5832,8 +6310,36 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
-    "registeredCount": 512,
-    "viewsCount": 75410,
+    "isCorporate": true,
+    "registeredCount": 513,
+    "viewsCount": 75602,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1748182,
+    "title": "Qiskit Fall Fest",
+    "orgName": "Mukesh Patel School of Technology Management and Engineering (NMIMS), Mumbai",
+    "orgLogo": "https://d8it4huxumps7.cloudfront.net/images/partners/partners125/67592470337df_images.png",
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/6aaa880f9d018_images.png",
+    "unstopUrl": "https://unstop.com/hackathons/qiskit-fall-fest-mukesh-patel-school-of-technology-management-and-engineering-nmims-mumbai-1748182",
+    "deadline": "2026-10-24T23:59:00+05:30",
+    "remainDaysText": "1 month left",
+    "daysRemainingNum": 39,
+    "urgency": "normal",
+    "category": "hackathon",
+    "categoryLabel": "Hackathons & Dev",
+    "categoryEmoji": "💻",
+    "minTeam": 1,
+    "maxTeam": 4,
+    "teamSizeDisplay": "1 - 4 Members",
+    "prizes": "₹18,000 Cash Pool",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": true,
+    "isCorporate": false,
+    "registeredCount": 380,
+    "viewsCount": 129503,
     "isUndergradEligible": true
   },
   {
@@ -5858,8 +6364,35 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
+    "isCorporate": true,
     "registeredCount": 933,
-    "viewsCount": 26754,
+    "viewsCount": 26820,
+    "isUndergradEligible": true
+  },
+  {
+    "id": 1751520,
+    "title": "International Physics Competition 2026",
+    "orgName": "Edu.Harbour",
+    "orgLogo": null,
+    "bannerUrl": "https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-6aa076d50f520_imagem_2026-09-08_175752356.png",
+    "unstopUrl": "https://unstop.com/competitions/international-physics-competition-2026-international-physics-competition-2026-eduharbour-1751520",
+    "deadline": "2026-11-01T21:29:00+05:30",
+    "remainDaysText": "1 month left",
+    "daysRemainingNum": 47,
+    "urgency": "normal",
+    "category": "general",
+    "categoryLabel": "General Opportunities",
+    "categoryEmoji": "🎯",
+    "minTeam": 1,
+    "maxTeam": 1,
+    "teamSizeDisplay": "Solo / Individual",
+    "prizes": "Certificates & Recognition",
+    "isFree": true,
+    "isFlagship": false,
+    "isDU": false,
+    "isPremier": false,
+    "registeredCount": 32,
+    "viewsCount": 4400,
     "isUndergradEligible": true
   },
   {
@@ -5871,7 +6404,7 @@ export const INITIAL_COMPETITIONS = [
     "unstopUrl": "https://unstop.com/hackathons/nasa-space-apps-challenge-2026-national-institute-of-technology-nit-raipur-1745979",
     "deadline": "2026-11-15T15:59:00+05:30",
     "remainDaysText": "1 month left",
-    "daysRemainingNum": 61,
+    "daysRemainingNum": 60,
     "urgency": "normal",
     "category": "hackathon",
     "categoryLabel": "Hackathons & Dev",
@@ -5885,8 +6418,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 1251,
-    "viewsCount": 182708,
+    "registeredCount": 1253,
+    "viewsCount": 183137,
     "isUndergradEligible": true
   },
   {
@@ -5912,8 +6445,8 @@ export const INITIAL_COMPETITIONS = [
     "isDU": false,
     "isPremier": true,
     "isCorporate": false,
-    "registeredCount": 105,
-    "viewsCount": 46190,
+    "registeredCount": 107,
+    "viewsCount": 46372,
     "isUndergradEligible": true
   },
   {
@@ -5925,7 +6458,7 @@ export const INITIAL_COMPETITIONS = [
     "unstopUrl": "https://unstop.com/competitions/monomousumi-monthly-international-essay-contest-monomousumi-225876",
     "deadline": "2027-10-30T18:30:00+05:30",
     "remainDaysText": "1 year left",
-    "daysRemainingNum": 410,
+    "daysRemainingNum": 409,
     "urgency": "normal",
     "category": "writing",
     "categoryLabel": "Writing & Research",
@@ -5938,8 +6471,9 @@ export const INITIAL_COMPETITIONS = [
     "isFlagship": false,
     "isDU": false,
     "isPremier": false,
+    "isCorporate": true,
     "registeredCount": 24601,
-    "viewsCount": 1522797,
+    "viewsCount": 1522849,
     "isUndergradEligible": true
   }
 ];

@@ -85,7 +85,13 @@ const CORPORATE_KEYWORDS = [
   'hero motocorp', 'hero colabs', 'hero', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
   'goldman sachs', 'jpmorgan', 'jp morgan', 'morgan stanley', 'citi', 'citigroup', 'hsbc',
   'american express', 'amex', 'standard chartered', 'barclays', 'deutsche bank',
-  'hdfc', 'icici', 'axis bank', 'kotak', 'optum', 'stratethon', 'raam group'
+  'hdfc', 'icici', 'axis bank', 'kotak', 'optum', 'stratethon', 'raam group',
+  // Startups, Platforms & Corporate entities
+  'cogniza', 'wonksknow', 'noobsync', 'invoqe', 'upforge', 'jetlearn', 'languify',
+  'product space', 'mhtechin', 'monomousumi', 'kartexa', 'skilled sapiens', 'indiastox',
+  'godstockss', 'acecubing', 'campusorbit', 'pharmaorbit', 'boss console', 'hackathon raptors',
+  'heritage vastra', 'code-x-novas', 'elite coders', 'wecodecoders', 'interactup', 'internhill',
+  'innovation hacks', 'gradient learnings', 'bharat academix', 'cyber hx'
 ];
 
 const GLOBAL_KEYWORDS = [
@@ -197,6 +203,7 @@ export async function fetchCompetitionsFromUnstop() {
   }
 
   const queryEndpoints = [
+    // Category & Core Theme Keywords
     'opportunity=competitions&subType=case-competitions&per_page=50',
     'opportunity=competitions&searchTerm=case competitions&per_page=50',
     'opportunity=competitions&searchTerm=case study&per_page=50',
@@ -205,33 +212,69 @@ export async function fetchCompetitionsFromUnstop() {
     'opportunity=competitions&searchTerm=strategy&per_page=50',
     'opportunity=competitions&searchTerm=b-plan&per_page=50',
     'opportunity=competitions&searchTerm=challenge&per_page=50',
+
+    // Hackathons & Coding Contests
     'opportunity=hackathons&per_page=50',
     'opportunity=competitions&searchTerm=hackathon&per_page=50',
     'opportunity=competitions&searchTerm=coding&per_page=50',
+
+    // Simulations, Auctions & Mock Stocks
     'opportunity=competitions&searchTerm=auction&per_page=50',
     'opportunity=competitions&searchTerm=mock stock&per_page=50',
     'opportunity=competitions&searchTerm=trading&per_page=50',
+
+    // Writing, Research & Papers
     'opportunity=competitions&searchTerm=article writing&per_page=50',
     'opportunity=competitions&searchTerm=essay&per_page=50',
     'opportunity=competitions&searchTerm=paper presentation&per_page=50',
+
+    // Quizzes & Trivia
     'opportunity=quizzes&per_page=50',
     'opportunity=competitions&searchTerm=quiz&per_page=50',
+
+    // Debates & MUNs
     'opportunity=competitions&searchTerm=debate&per_page=50',
     'opportunity=competitions&searchTerm=mun&per_page=50',
+
+    // Delhi University Circuit (Top Colleges)
     'opportunity=competitions&searchTerm=delhi university&per_page=50',
     'opportunity=competitions&searchTerm=du&per_page=50',
-    'opportunity=competitions&searchTerm=srcc&per_page=50',
     'opportunity=competitions&searchTerm=sscbs&per_page=50',
+    'opportunity=competitions&searchTerm=srcc&per_page=50',
     'opportunity=competitions&searchTerm=hindu&per_page=50',
+    'opportunity=competitions&searchTerm=miranda&per_page=50',
     'opportunity=competitions&searchTerm=hansraj&per_page=50',
+    'opportunity=competitions&searchTerm=kirori mal&per_page=50',
+    'opportunity=competitions&searchTerm=ramjas&per_page=50',
     'opportunity=competitions&searchTerm=lsr&per_page=50',
     'opportunity=competitions&searchTerm=stephen&per_page=50',
+    'opportunity=competitions&searchTerm=sggscc&per_page=50',
+    'opportunity=competitions&searchTerm=venky&per_page=50',
+    'opportunity=competitions&searchTerm=gargi&per_page=50',
+
+    // Premier National B-Schools, IITs & Premier Colleges
     'opportunity=competitions&searchTerm=iim&per_page=50',
     'opportunity=competitions&searchTerm=iit&per_page=50',
     'opportunity=competitions&searchTerm=xlri&per_page=50',
+    'opportunity=competitions&searchTerm=isb&per_page=50',
+    'opportunity=competitions&searchTerm=mdi&per_page=50',
     'opportunity=competitions&searchTerm=bits pilani&per_page=50',
+    'opportunity=competitions&searchTerm=nit&per_page=50',
+    'opportunity=competitions&searchTerm=spjimr&per_page=50',
+    'opportunity=competitions&searchTerm=dtu&per_page=50',
+    'opportunity=competitions&searchTerm=nsut&per_page=50',
+    'opportunity=competitions&searchTerm=fms&per_page=50',
+    'opportunity=competitions&searchTerm=nmims&per_page=50',
+    'opportunity=competitions&searchTerm=sibm&per_page=50',
+    'opportunity=competitions&searchTerm=iift&per_page=50',
+    'opportunity=competitions&searchTerm=ashoka&per_page=50',
+    'opportunity=competitions&searchTerm=iiit&per_page=50',
+
+    // Corporate & Global / International Challenges
     'opportunity=competitions&searchTerm=corporate&per_page=50',
-    'opportunity=competitions&searchTerm=global&per_page=50'
+    'opportunity=competitions&searchTerm=global&per_page=50',
+    'opportunity=competitions&searchTerm=international&per_page=50',
+    'opportunity=competitions&searchTerm=loreal&per_page=50'
   ];
 
   const headers = {
@@ -246,7 +289,7 @@ export async function fetchCompetitionsFromUnstop() {
       chunk.map(async (q) => {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
           const res = await fetch(`https://unstop.com/api/public/opportunity/search-result?${q}`, {
             headers,
             signal: controller.signal
@@ -266,17 +309,14 @@ export async function fetchCompetitionsFromUnstop() {
   };
 
   try {
-    const chunk1 = queryEndpoints.slice(0, 12);
-    const chunk2 = queryEndpoints.slice(12, 24);
-    const chunk3 = queryEndpoints.slice(24);
+    const chunkSize = 12;
+    const chunkPromises = [];
+    for (let i = 0; i < queryEndpoints.length; i += chunkSize) {
+      chunkPromises.push(fetchChunk(queryEndpoints.slice(i, i + chunkSize)));
+    }
 
-    const [res1, res2, res3] = await Promise.all([
-      fetchChunk(chunk1),
-      fetchChunk(chunk2),
-      fetchChunk(chunk3)
-    ]);
-
-    const batches = [...res1, ...res2, ...res3];
+    const chunkResults = await Promise.all(chunkPromises);
+    const batches = chunkResults.flat();
     const map = new Map();
 
     for (const list of batches) {
