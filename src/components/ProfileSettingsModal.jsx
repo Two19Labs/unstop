@@ -56,9 +56,11 @@ export default function ProfileSettingsModal() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [profileModalOpen, closeProfileModal]);
 
-  // Sync form inputs when modal opens or profile changes
+  const isInitializedRef = useRef(false);
+
+  // Sync form inputs once when modal opens without wiping user typing
   useEffect(() => {
-    if (profileModalOpen) {
+    if (profileModalOpen && !isInitializedRef.current) {
       setFullName(profile?.full_name || user?.user_metadata?.full_name || '');
       setCollege(profile?.college || user?.user_metadata?.college || '');
       setCourse(profile?.course || user?.user_metadata?.course || '');
@@ -67,6 +69,10 @@ export default function ProfileSettingsModal() {
       setBio(profile?.bio || user?.user_metadata?.bio || '');
       setErrorMsg(null);
       setSuccessMsg(null);
+      isInitializedRef.current = true;
+    }
+    if (!profileModalOpen) {
+      isInitializedRef.current = false;
     }
   }, [profileModalOpen, profile, user]);
 
@@ -92,7 +98,8 @@ export default function ProfileSettingsModal() {
       successTimerRef.current = setTimeout(() => {
         setSuccessMsg(null);
         successTimerRef.current = null;
-      }, 3500);
+        closeProfileModal();
+      }, 1200);
     } catch (err) {
       console.error('Error updating profile:', err);
       setErrorMsg(err.message || 'Failed to update profile.');

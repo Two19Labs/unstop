@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
@@ -23,6 +23,8 @@ export function AuthProvider({ children }) {
   // Authentication State
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const userRef = useRef(null);
+  userRef.current = user;
   const [profile, setProfile] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -162,7 +164,8 @@ export function AuthProvider({ children }) {
     }
 
     // Fetch applications if user is signed in
-    if (user) {
+    const activeUser = userRef.current;
+    if (activeUser) {
       try {
         const { data: apps, error: appErr } = await supabase
           .from('squad_applications')
@@ -177,7 +180,7 @@ export function AuthProvider({ children }) {
         console.warn('Could not sync squad apps from Supabase:', e.message);
       }
     }
-  }, [user]);
+  }, []);
 
   // 4. Initialize Supabase Auth Listener
   useEffect(() => {
@@ -355,29 +358,39 @@ export function AuthProvider({ children }) {
 
     if (authErr) throw authErr;
 
-    // 2. Update PostgreSQL profiles table
-    const basePayload = {
+    // 2. Update PostgreSQL profiles table (upsert to create if missing)
+    const profileRecord = {
+      id: user.id,
+      email: user.email,
       full_name: fullName,
       college: college || '',
+      course: course || '',
+      year: year || '2nd Year',
       phone: cleanPhone || '',
+      bio: bio || '',
       updated_at: new Date().toISOString(),
     };
 
     try {
-      await supabase
+      const { error: upsertErr } = await supabase
         .from('profiles')
-        .update({
-          ...basePayload,
-          course: course || '',
-          year: year || '2nd Year',
-          bio: bio || '',
-        })
-        .eq('id', user.id);
-    } catch {
-      await supabase
-        .from('profiles')
-        .update(basePayload)
-        .eq('id', user.id);
+        .upsert(profileRecord, { onConflict: 'id' });
+
+      if (upsertErr) {
+        console.warn('Full profile upsert error, attempting basic fields:', upsertErr.message);
+        await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            email: user.email,
+            full_name: fullName,
+            college: college || '',
+            phone: cleanPhone || '',
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'id' });
+      }
+    } catch (err) {
+      console.warn('Profile DB save caught error:', err.message);
     }
 
     const merged = {
