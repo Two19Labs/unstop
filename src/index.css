@@ -15,20 +15,20 @@
   color-scheme: light;
 
   /* Official Two19 Labs Palette (Brand Guidelines V1.0) */
-  --color-lab-blue: #0F3FFE;       /* Primary Accent ≈ 30% */
-  --color-bone: #F2EFEA;           /* Default Canvas ≈ 60% */
+  --color-lab-blue: #1A4275;       /* Primary Accent */
+  --color-bone: #FAF8F5;           /* Default Canvas matching reference */
   --color-ink: #0E0E0E;            /* Typography ≈ 10% */
   --color-white: #FFFFFF;          /* Pure White */
   --color-white-dark: #F7F5F1;     /* Elevated panel surface */
   --color-white-darkest: #E7E3DB;  /* Deep bone */
   --color-gray-dark: #6B6862;      /* Secondary muted ink */
   --color-gray: #A8A49C;           /* Faint / placeholder text */
-  --color-gray-light: #D9D5CD;     /* Crisp structural borders */
-  --color-gray-lighter: #E2DED6;   /* Subtle divider lines */
+  --color-gray-light: #E5E7EB;     /* Crisp structural borders */
+  --color-gray-lighter: #EAE7E1;   /* Subtle divider lines */
 
   /* Semantic Mappings */
-  --bg: var(--color-bone);
-  --surface: var(--color-white-dark);
+  --bg: #FAF8F5;
+  --surface: #FFFFFF;
   --surface-card: #FFFFFF;
   --surface-hover: #ECE8E0;
   --ink: var(--color-ink);
@@ -59,7 +59,7 @@
   --transition-fast: 150ms cubic-bezier(0.19, 1, 0.22, 1);
   --transition-normal: 250ms cubic-bezier(0.19, 1, 0.22, 1);
 
-  --max-content-width: 1240px;
+  --max-content-width: 1420px;
 }
 
 [data-theme='dark'] {
