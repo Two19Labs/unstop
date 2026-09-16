@@ -130,7 +130,7 @@ export default function AuthModal() {
             }
           }, 500);
         } else {
-          setSuccessMsg('Account created! If email confirmation is enabled, check your inbox to confirm your account.');
+          setSuccessMsg(`Verification link sent to ${email}! Please check your inbox to confirm your account.`);
         }
       } else if (mode === 'forgot') {
         await resetPassword(email);
@@ -138,7 +138,13 @@ export default function AuthModal() {
       }
     } catch (err) {
       console.error('Auth submit error:', err);
-      setErrorMsg(err.message || 'Authentication failed. Please check your credentials.');
+      let msg = err.message || 'Authentication failed. Please check your credentials.';
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        msg = 'Your email is not confirmed yet. Please check your inbox (and spam folder) for the verification link.';
+      } else if (msg.toLowerCase().includes('invalid login credentials')) {
+        msg = 'Invalid email or password. Please try again or click "Forgot password?".';
+      }
+      setErrorMsg(msg);
     } finally {
       setSubmitting(false);
     }
