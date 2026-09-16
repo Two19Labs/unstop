@@ -73,6 +73,10 @@ function MainApp() {
             bookmarkedOnly={bookmarkedOnly}
             setBookmarkedOnly={setBookmarkedOnly}
             onCountUpdate={setLiveCount}
+            onNavigateToSquads={() => {
+              setActiveTab('squad-finder');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         ) : (
           <SquadFinderPage

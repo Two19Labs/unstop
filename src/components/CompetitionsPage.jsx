@@ -23,8 +23,12 @@ import './CompetitionsPage.css';
 const ALL_CIRCUITS = ['du', 'iim-iit-premier', 'corporate-global', 'others'];
 const ALL_TRACKS = ['case', 'hackathon', 'writing', 'quiz', 'simulation', 'debate'];
 
-export default function CompetitionsPage({ onFindTeammates, showToast, bookmarkedOnly, setBookmarkedOnly, onCountUpdate }) {
-  const { bookmarks, toggleBookmark, isBookmarked } = useAuth();
+export default function CompetitionsPage({ onFindTeammates, showToast, bookmarkedOnly, setBookmarkedOnly, onCountUpdate, onNavigateToSquads }) {
+  const { user, bookmarks, toggleBookmark, isBookmarked, squadApps, openAuthModal } = useAuth();
+
+  const pendingCount = useMemo(() => {
+    return Array.isArray(squadApps) ? squadApps.filter(a => a.status === 'pending').length : 0;
+  }, [squadApps]);
 
   // Initialize with curated real opportunities instantly so there is ZERO delay or empty state
   const [competitions, setCompetitions] = useState(INITIAL_COMPETITIONS || []);
@@ -338,9 +342,15 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
           <button
             type="button"
             className="cbs-back-btn"
-            onClick={() => window.history.back()}
-            title="Go back"
-            aria-label="Go back"
+            onClick={() => {
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                handleResetFilters();
+              }
+            }}
+            title="Reset Filters / Back"
+            aria-label="Back or Reset"
           >
             <ArrowLeftIcon size={16} />
           </button>
@@ -350,9 +360,25 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
         </div>
 
         <div className="cbs-header-right">
-          <button type="button" className="cbs-bell-btn" title="Notifications" aria-label="Notifications">
+          <button
+            type="button"
+            className="cbs-bell-btn"
+            title="My Squads & Applications"
+            aria-label="My Squads & Applications"
+            onClick={() => {
+              if (!user) {
+                openAuthModal({
+                  title: 'Sign In to View Squads',
+                  subtitle: 'Access teammate applications, recruit status, and notifications.',
+                  initialTab: 'signin',
+                });
+              } else if (onNavigateToSquads) {
+                onNavigateToSquads();
+              }
+            }}
+          >
             <BellIcon size={18} />
-            <span className="cbs-bell-badge">4</span>
+            {pendingCount > 0 && <span className="cbs-bell-badge">{pendingCount}</span>}
           </button>
         </div>
       </header>
