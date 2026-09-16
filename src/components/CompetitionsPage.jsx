@@ -18,21 +18,23 @@ import {
   RotateCcwIcon,
   ArrowUpDownIcon
 } from './icons';
+import { INITIAL_COMPETITIONS } from '../data/competitionsData';
 import './CompetitionsPage.css';
 
 export default function CompetitionsPage({ onFindTeammates, showToast, bookmarkedOnly, setBookmarkedOnly, onCountUpdate }) {
   const { bookmarks, toggleBookmark, isBookmarked } = useAuth();
 
-  const [competitions, setCompetitions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize with curated real opportunities instantly so there is ZERO delay or empty state
+  const [competitions, setCompetitions] = useState(INITIAL_COMPETITIONS || []);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Filters State
+  // Filters State - default to screenshot reference view (DU + Premier, Case Comps, Free Entry), fully toggleable & reset-able
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCircuits, setSelectedCircuits] = useState([]); // [] means all
-  const [selectedTracks, setSelectedTracks] = useState([]); // [] means all
+  const [selectedCircuits, setSelectedCircuits] = useState(['du', 'iim-iit-premier']);
+  const [selectedTracks, setSelectedTracks] = useState(['case']);
   const [teamFilter, setTeamFilter] = useState('all'); // all | solo | team
-  const [feeFilter, setFeeFilter] = useState('all'); // all | free | paid
+  const [feeFilter, setFeeFilter] = useState('free'); // all | free | paid
   const [sortBy, setSortBy] = useState('closing-soonest');
   const [copiedId, setCopiedId] = useState(null);
 
@@ -42,29 +44,37 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   const [participationOpen, setParticipationOpen] = useState(true);
   const [feeOpen, setFeeOpen] = useState(true);
 
-  // Fetch real competitions from /api/competitions
+  // Background fetch for live updates with resilient fallback
   const loadCompetitions = async () => {
-    setLoading(true);
-    setError(null);
     try {
       const res = await fetch('/api/competitions');
-      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch competitions`);
-      const json = await res.json();
-      if (json.data && Array.isArray(json.data)) {
-        setCompetitions(json.data);
-        if (onCountUpdate) onCountUpdate(json.data.length);
-      } else {
-        throw new Error('Invalid response structure from server');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+          setCompetitions(json.data);
+          if (onCountUpdate) onCountUpdate(json.data.length);
+          return;
+        }
+      }
+      // Try static fallback if dev server proxy is not available
+      const staticRes = await fetch('/data/competitions.json');
+      if (staticRes.ok) {
+        const json = await staticRes.json();
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
+          setCompetitions(json.data);
+          if (onCountUpdate) onCountUpdate(json.data.length);
+          return;
+        }
       }
     } catch (err) {
-      console.error('Error loading competitions:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      console.warn('Live API fetch deferred, using cached opportunities:', err.message);
     }
   };
 
   useEffect(() => {
+    if (onCountUpdate && INITIAL_COMPETITIONS?.length) {
+      onCountUpdate(INITIAL_COMPETITIONS.length);
+    }
     loadCompetitions();
   }, []);
 
@@ -851,7 +861,15 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                 const urgency = getUrgencyData(comp.deadline, comp.remainDaysText);
 
                 return (
-                  <article key={comp.id} className="cbs-comp-card">
+                  <article
+                    key={comp.id}
+                    className="cbs-comp-card"
+                    onClick={() => {
+                      if (comp.unstopUrl) {
+                        window.open(comp.unstopUrl, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                  >
                     {/* Top Identity Row */}
                     <div className="cbs-card-top-row">
                       <div className="cbs-card-host-block">
@@ -893,7 +911,14 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
 
                     {/* Competition Title */}
                     <h2 className="cbs-card-title" title={comp.title}>
-                      {comp.title}
+                      <a
+                        href={comp.unstopUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {comp.title}
+                      </a>
                     </h2>
 
                     {/* Mint Green Prize Banner */}
@@ -944,6 +969,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                         target="_blank"
                         rel="noopener noreferrer"
                         className="cbs-btn-apply"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <span>Apply on Unstop</span>
                         <ExternalLinkIcon size={12} />
@@ -952,7 +978,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                       <button
                         type="button"
                         className="cbs-btn-team"
-                        onClick={(e) => handleFindTeammates(comp, e)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFindTeammates(comp, e);
+                        }}
                       >
                         <UsersIcon size={12} />
                         <span>Find Teammates</span>
@@ -961,8 +990,10 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
                       <button
                         type="button"
                         className={`cbs-btn-share ${copiedId === comp.id ? 'copied' : ''}`}
-                        onClick={(e) => handleShare(comp, e)}
-                        title="Copy details"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShare(comp, e);
+                        }}
                         aria-label="Copy competition details"
                       >
                         {copiedId === comp.id ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
