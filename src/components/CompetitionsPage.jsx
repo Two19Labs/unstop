@@ -348,9 +348,6 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
           </button>
           <div className="cbs-header-titles">
             <h1 className="cbs-page-title">Competitions</h1>
-            <p className="cbs-page-sub">
-              It's competitions season! Find opportunities relevant to CBS folks right here, synced with and pulled from Unstop, all filterable! :)
-            </p>
           </div>
         </div>
 
