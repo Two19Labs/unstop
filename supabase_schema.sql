@@ -82,7 +82,8 @@ CREATE POLICY "Authenticated users can create squad posts"
 CREATE POLICY "Users can update their own squad posts" 
   ON public.squad_posts FOR UPDATE 
   TO authenticated 
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own squad posts" 
   ON public.squad_posts FOR DELETE 
@@ -124,6 +125,11 @@ CREATE POLICY "Users can create squad applications"
   ON public.squad_applications FOR INSERT 
   TO authenticated 
   WITH CHECK (auth.uid() = applicant_id);
+
+CREATE POLICY "Applicants can delete their own applications" 
+  ON public.squad_applications FOR DELETE 
+  TO authenticated 
+  USING (auth.uid() = applicant_id);
 
 CREATE POLICY "Post owners can update application status" 
   ON public.squad_applications FOR UPDATE 

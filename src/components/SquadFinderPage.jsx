@@ -107,7 +107,9 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
     if (!data && rawSaved) {
       try {
         data = JSON.parse(rawSaved);
-      } catch (e) {}
+      } catch (e) {
+        sessionStorage.removeItem('comp_team_prefill');
+      }
     }
 
     if (data && data.competition_name) {
@@ -124,7 +126,20 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
       sessionStorage.removeItem('comp_team_prefill');
       if (onClearPrefill) onClearPrefill();
     }
-  }, [prefillData]);
+  }, [prefillData, onClearPrefill]);
+
+  // Close modals on Escape key
+  useEffect(() => {
+    if (!showCreateModal && !showApplyModal) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowCreateModal(false);
+        setShowApplyModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateModal, showApplyModal]);
 
   // Handle skill toggle in Create modal
   const toggleSkillHave = (skill) => {

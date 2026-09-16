@@ -17,7 +17,7 @@
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  z-index: 1000;
+  z-index: 10000;
   pointer-events: none;
   animation: toastSlideUp 0.3s cubic-bezier(0.19, 1, 0.22, 1);
 }

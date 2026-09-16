@@ -6,9 +6,10 @@ const AuthContext = createContext(null);
 
 export function sanitizeIndianPhone(raw) {
   if (!raw) return '';
-  let digits = String(raw).replace(/\D/g, '');
+  let digits = String(raw).trim().replace(/\D/g, '');
   if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
   else if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
+  else if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(-10);
   return digits.slice(0, 10);
 }
 
@@ -532,6 +533,9 @@ export function AuthProvider({ children }) {
   // Review Application (Accept / Reject)
   const updateApplicationStatus = async (appId, newStatus) => {
     let targetApp = null;
+    const prevApps = squadApps;
+    const prevPosts = squadPosts;
+
     setSquadApps(prev =>
       prev.map(app => {
         if (app.id === appId) {
@@ -542,10 +546,10 @@ export function AuthProvider({ children }) {
       })
     );
 
-    if (newStatus === 'accepted' && targetApp) {
+    if (newStatus === 'accepted') {
       setSquadPosts(prevPosts =>
         prevPosts.map(post => {
-          if (post.id === targetApp.post_id) {
+          if (targetApp && post.id === targetApp.post_id) {
             const nextSpots = Math.max(0, post.spots_left - 1);
             return {
               ...post,
@@ -561,16 +565,18 @@ export function AuthProvider({ children }) {
 
     if (supabase && user) {
       try {
-        await supabase
+        const { error: appErr } = await supabase
           .from('squad_applications')
           .update({ status: newStatus })
           .eq('id', appId);
+
+        if (appErr) throw appErr;
 
         if (newStatus === 'accepted' && targetApp) {
           const post = squadPosts.find(p => p.id === targetApp.post_id);
           if (post) {
             const nextSpots = Math.max(0, post.spots_left - 1);
-            await supabase
+            const { error: postErr } = await supabase
               .from('squad_posts')
               .update({
                 spots_left: nextSpots,
@@ -578,10 +584,15 @@ export function AuthProvider({ children }) {
                 accepted_emails: [...(post.accepted_emails || []), targetApp.applicant_email],
               })
               .eq('id', targetApp.post_id);
+
+            if (postErr) throw postErr;
           }
         }
       } catch (err) {
-        console.warn('Could not update status in Supabase:', err.message);
+        console.error('Could not update status in Supabase, rolling back optimistic state:', err.message);
+        setSquadApps(prevApps);
+        setSquadPosts(prevPosts);
+        throw err;
       }
     }
   };

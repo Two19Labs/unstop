@@ -1,5 +1,5 @@
 // src/components/Navbar.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   TrophyIcon,
@@ -41,20 +41,28 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const displayName = useMemo(() => {
+    return profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  }, [profile?.full_name, user?.user_metadata?.full_name, user?.email]);
+
   const displayCollege = profile?.college || user?.user_metadata?.college || '';
 
   const getInitials = (name, email) => {
     if (name) {
-      const parts = name.trim().split(' ');
+      const parts = name.trim().split(/\s+/).filter(Boolean);
       if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-      return name.slice(0, 2).toUpperCase();
+      if (parts.length === 1 && parts[0].length > 0) return parts[0].slice(0, 2).toUpperCase();
     }
-    if (email) return email.slice(0, 2).toUpperCase();
+    if (email) {
+      const cleanEmail = email.trim();
+      if (cleanEmail.length > 0) return cleanEmail.slice(0, 2).toUpperCase();
+    }
     return 'OS';
   };
 
-  const initials = getInitials(displayName, user?.email);
+  const initials = useMemo(() => {
+    return getInitials(displayName, user?.email);
+  }, [displayName, user?.email]);
 
   return (
     <header className="t19-navbar">
@@ -76,6 +84,12 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
           <div
             className="t19-product-tag"
             onClick={() => setActiveTab('competitions')}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setActiveTab('competitions');
+              }
+            }}
             role="button"
             tabIndex={0}
           >

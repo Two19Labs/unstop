@@ -1,5 +1,5 @@
 // src/components/AuthModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { CloseIcon, UsersIcon, CheckIcon, AlertCircleIcon } from './icons';
 import './AuthModal.css';
@@ -7,7 +7,7 @@ import './AuthModal.css';
 // Official Google "G" SVG Icon
 function GoogleIcon({ size = 18 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"
         fill="#4285F4"
@@ -36,8 +36,7 @@ export default function AuthModal() {
     signInWithGoogle,
     signInWithPassword,
     signUpWithPassword,
-    resetPassword,
-    hasSupabase
+    resetPassword
   } = useAuth();
 
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup' | 'forgot'
@@ -49,15 +48,35 @@ export default function AuthModal() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const timerRef = useRef(null);
 
   // Sync mode with modal config when opened
-  React.useEffect(() => {
+  useEffect(() => {
     if (authModalConfig?.initialTab) {
       setMode(authModalConfig.initialTab);
     }
     setErrorMsg(null);
     setSuccessMsg(null);
   }, [authModalConfig, authModalOpen]);
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!authModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeAuthModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [authModalOpen, closeAuthModal]);
 
   if (!authModalOpen) return null;
 
@@ -85,7 +104,8 @@ export default function AuthModal() {
       if (mode === 'signin') {
         await signInWithPassword({ email, password });
         setSuccessMsg('Successfully signed in!');
-        setTimeout(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => {
           closeAuthModal();
           if (authModalConfig?.postLoginAction) {
             authModalConfig.postLoginAction();
@@ -102,7 +122,8 @@ export default function AuthModal() {
 
         if (res?.user && res?.session) {
           setSuccessMsg('Account created successfully!');
-          setTimeout(() => {
+          if (timerRef.current) clearTimeout(timerRef.current);
+          timerRef.current = setTimeout(() => {
             closeAuthModal();
             if (authModalConfig?.postLoginAction) {
               authModalConfig.postLoginAction();

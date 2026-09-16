@@ -1,5 +1,5 @@
 // src/components/ProfileSettingsModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
 import './ProfileSettingsModal.css';
@@ -35,6 +35,26 @@ export default function ProfileSettingsModal() {
   const [resettingPassword, setResettingPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
+  const successTimerRef = useRef(null);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!profileModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeProfileModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [profileModalOpen, closeProfileModal]);
 
   // Sync form inputs when modal opens or profile changes
   useEffect(() => {
@@ -68,8 +88,10 @@ export default function ProfileSettingsModal() {
         bio: bio.trim(),
       });
       setSuccessMsg('Profile updated successfully!');
-      setTimeout(() => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      successTimerRef.current = setTimeout(() => {
         setSuccessMsg(null);
+        successTimerRef.current = null;
       }, 3500);
     } catch (err) {
       console.error('Error updating profile:', err);

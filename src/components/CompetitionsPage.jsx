@@ -1,5 +1,4 @@
-// src/components/CompetitionsPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   SearchIcon,
@@ -37,6 +36,7 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   const [feeFilter, setFeeFilter] = useState('free'); // all | free | paid
   const [sortBy, setSortBy] = useState('closing-soonest');
   const [copiedId, setCopiedId] = useState(null);
+  const shareTimeoutRef = useRef(null);
 
   // Accordion states
   const [circuitsOpen, setCircuitsOpen] = useState(true);
@@ -44,39 +44,59 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
   const [participationOpen, setParticipationOpen] = useState(true);
   const [feeOpen, setFeeOpen] = useState(true);
 
-  // Background fetch for live updates with resilient fallback
-  const loadCompetitions = async () => {
-    try {
-      const res = await fetch('/api/competitions');
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
-          setCompetitions(json.data);
-          if (onCountUpdate) onCountUpdate(json.data.length);
-          return;
-        }
-      }
-      // Try static fallback if dev server proxy is not available
-      const staticRes = await fetch('/data/competitions.json');
-      if (staticRes.ok) {
-        const json = await staticRes.json();
-        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
-          setCompetitions(json.data);
-          if (onCountUpdate) onCountUpdate(json.data.length);
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn('Live API fetch deferred, using cached opportunities:', err.message);
-    }
-  };
-
+  // Clean up timers on unmount
   useEffect(() => {
+    return () => {
+      if (shareTimeoutRef.current) {
+        clearTimeout(shareTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Background fetch for live updates with resilient fallback
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
     if (onCountUpdate && INITIAL_COMPETITIONS?.length) {
       onCountUpdate(INITIAL_COMPETITIONS.length);
     }
+
+    const loadCompetitions = async () => {
+      try {
+        const res = await fetch('/api/competitions', { signal: controller.signal });
+        if (res.ok) {
+          const json = await res.json();
+          if (isMounted && json.data && Array.isArray(json.data) && json.data.length > 0) {
+            setCompetitions(json.data);
+            if (onCountUpdate) onCountUpdate(json.data.length);
+            return;
+          }
+        }
+        // Try static fallback if dev server proxy is not available
+        const staticRes = await fetch('/data/competitions.json', { signal: controller.signal });
+        if (staticRes.ok) {
+          const json = await staticRes.json();
+          if (isMounted && json.data && Array.isArray(json.data) && json.data.length > 0) {
+            setCompetitions(json.data);
+            if (onCountUpdate) onCountUpdate(json.data.length);
+            return;
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.warn('Live API fetch deferred, using cached opportunities:', err.message);
+        }
+      }
+    };
+
     loadCompetitions();
-  }, []);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [onCountUpdate]);
 
   // Compute live metrics across circuits and tracks
   const metrics = useMemo(() => {
@@ -172,7 +192,11 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       }
       setCopiedId(comp.id);
       if (showToast) showToast('Competition details copied to clipboard!');
-      setTimeout(() => setCopiedId(null), 2500);
+      if (shareTimeoutRef.current) clearTimeout(shareTimeoutRef.current);
+      shareTimeoutRef.current = setTimeout(() => {
+        setCopiedId(null);
+        shareTimeoutRef.current = null;
+      }, 2500);
     } catch (err) {
       console.warn('Share copy failed:', err);
     }
@@ -234,12 +258,18 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
       if (sortBy === 'closing-soonest') {
         const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
         const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-        return (isNaN(timeA) ? Infinity : timeA) - (isNaN(timeB) ? Infinity : timeB);
+        const validA = isNaN(timeA) ? Infinity : timeA;
+        const validB = isNaN(timeB) ? Infinity : timeB;
+        if (validA === Infinity && validB === Infinity) return 0;
+        return validA - validB;
       }
       if (sortBy === 'closing-latest') {
         const timeA = a.deadline ? new Date(a.deadline).getTime() : -Infinity;
         const timeB = b.deadline ? new Date(b.deadline).getTime() : -Infinity;
-        return (isNaN(timeB) ? -Infinity : timeB) - (isNaN(timeA) ? -Infinity : timeA);
+        const validA = isNaN(timeA) ? -Infinity : timeA;
+        const validB = isNaN(timeB) ? -Infinity : timeB;
+        if (validA === -Infinity && validB === -Infinity) return 0;
+        return validB - validA;
       }
       if (sortBy === 'popular') {
         return (b.registeredCount || 0) - (a.registeredCount || 0);
@@ -349,6 +379,12 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
             <div
               className="cbs-card-header"
               onClick={() => setCircuitsOpen(!circuitsOpen)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setCircuitsOpen(!circuitsOpen);
+                }
+              }}
               role="button"
               tabIndex={0}
             >
@@ -440,6 +476,12 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
               <div
                 className="cbs-subgroup-header"
                 onClick={() => setCategoriesOpen(!categoriesOpen)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setCategoriesOpen(!categoriesOpen);
+                  }
+                }}
                 role="button"
                 tabIndex={0}
               >
@@ -538,6 +580,12 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
               <div
                 className="cbs-subgroup-header"
                 onClick={() => setParticipationOpen(!participationOpen)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setParticipationOpen(!participationOpen);
+                  }
+                }}
                 role="button"
                 tabIndex={0}
               >
@@ -580,6 +628,12 @@ export default function CompetitionsPage({ onFindTeammates, showToast, bookmarke
               <div
                 className="cbs-subgroup-header"
                 onClick={() => setFeeOpen(!feeOpen)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setFeeOpen(!feeOpen);
+                  }
+                }}
                 role="button"
                 tabIndex={0}
               >

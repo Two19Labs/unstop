@@ -1134,3 +1134,287 @@
     margin-top: -46px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Dark Theme Support for Competitions Page
+   ═══════════════════════════════════════════════════════════ */
+[data-theme='dark'] .cbs-competitions-page {
+  background-color: var(--bg);
+}
+
+[data-theme='dark'] .cbs-page-title {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-page-sub {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-back-btn,
+[data-theme='dark'] .cbs-bell-btn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-back-btn:hover,
+[data-theme='dark'] .cbs-bell-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-bell-badge {
+  border-color: var(--bg);
+}
+
+[data-theme='dark'] .cbs-notice-banner {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-notice-text {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-notice-text strong {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-card {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .cbs-card-header,
+[data-theme='dark'] .cbs-filters-top-bar {
+  border-bottom-color: var(--border);
+}
+
+[data-theme='dark'] .cbs-subgroup {
+  border-bottom-color: var(--border);
+}
+
+[data-theme='dark'] .cbs-card-heading {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-subgroup-title {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-check-row {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-check-row:hover {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-custom-checkbox {
+  background: var(--surface-card);
+  border-color: var(--border-strong);
+}
+
+[data-theme='dark'] .cbs-search-input {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-search-input::placeholder {
+  color: var(--ink-faint);
+}
+
+[data-theme='dark'] .cbs-view-tabs {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .cbs-tab-item {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-tab-item.active {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-tab-pill {
+  background: var(--surface-card);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-tab-pill.highlight {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FBBF24;
+}
+
+[data-theme='dark'] .cbs-sort-dropdown-box {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .cbs-sort-prefix {
+  color: var(--ink-faint);
+}
+
+[data-theme='dark'] .cbs-sort-select {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-sort-select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-status-indicator {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-opportunities-count strong {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .chip-purple {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #C084FC;
+}
+
+[data-theme='dark'] .chip-cyan {
+  background: rgba(14, 165, 233, 0.15);
+  border-color: rgba(14, 165, 233, 0.35);
+  color: #38BDF8;
+}
+
+[data-theme='dark'] .chip-green {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34D399;
+}
+
+[data-theme='dark'] .chip-slate {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #94A3B8;
+}
+
+[data-theme='dark'] .chip-amber {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #FBBF24;
+}
+
+[data-theme='dark'] .cbs-chip-reset-btn {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-chip-reset-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-comp-card {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme='dark'] .cbs-comp-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-hover);
+}
+
+[data-theme='dark'] .cbs-card-host-avatar {
+  background: var(--surface-card);
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-card-host-name {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-card-title {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-prize-banner {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+[data-theme='dark'] .cbs-prize-icon {
+  color: #34D399;
+}
+
+[data-theme='dark'] .cbs-prize-text {
+  color: #34D399;
+}
+
+[data-theme='dark'] .cbs-card-specs-row {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-spec-icon {
+  color: var(--ink-faint);
+}
+
+[data-theme='dark'] .cbs-registrations-count {
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-registrations-count strong {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-btn-team {
+  background: var(--surface-card);
+  border-color: var(--border);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-btn-team:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-btn-share {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--ink-dim);
+}
+
+[data-theme='dark'] .cbs-btn-share:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-card-skeleton {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .cbs-skel-header,
+[data-theme='dark'] .cbs-skel-title,
+[data-theme='dark'] .cbs-skel-prize,
+[data-theme='dark'] .cbs-skel-meta,
+[data-theme='dark'] .cbs-skel-actions {
+  background: var(--surface-card);
+}
+
+[data-theme='dark'] .cbs-empty-state {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme='dark'] .cbs-empty-state h3 {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .cbs-empty-state p {
+  color: var(--ink-dim);
+}

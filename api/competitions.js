@@ -386,8 +386,16 @@ export async function fetchCompetitionsFromUnstop() {
       return (b.registeredCount || 0) - (a.registeredCount || 0);
     });
 
-    cachedData = formatted;
-    lastFetchTime = now;
+    if (formatted.length > 0) {
+      cachedData = formatted;
+      lastFetchTime = now;
+      return formatted;
+    }
+
+    if (cachedData && cachedData.length > 0) {
+      return cachedData;
+    }
+
     return formatted;
   } catch (err) {
     console.error('Fatal fetch error from Unstop:', err);

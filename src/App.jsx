@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import CompetitionsPage from './components/CompetitionsPage';
@@ -16,15 +16,28 @@ function MainApp() {
   const [liveCount, setLiveCount] = useState(0);
   const [bookmarkedOnly, setBookmarkedOnly] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const toastTimeoutRef = useRef(null);
 
-  const showToast = (message) => {
+  const showToast = useCallback((message) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
     setToastMessage(message);
-    setTimeout(() => {
+    toastTimeoutRef.current = setTimeout(() => {
       setToastMessage(null);
+      toastTimeoutRef.current = null;
     }, 3000);
-  };
+  }, []);
 
-  const handleFindTeammates = (prefill) => {
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleFindTeammates = useCallback((prefill) => {
     setPrefillData(prefill);
     if (!user) {
       openAuthModal({
@@ -40,7 +53,7 @@ function MainApp() {
       setActiveTab('squad-finder');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [user, openAuthModal]);
 
   return (
     <div className="arena-app">
