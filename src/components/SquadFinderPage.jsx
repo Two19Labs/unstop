@@ -1,97 +1,138 @@
 // src/components/SquadFinderPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth, formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
+// Exact SSCBS OS Team Finder Architecture & Core Logic — Generalized for EVERYONE (All Colleges & Universities)
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import {
+  TrophyIcon,
   UsersIcon,
-  PlusIcon,
   SearchIcon,
   WhatsAppIcon,
   CheckIcon,
-  ClockIcon,
-  CalendarIcon,
-  TrophyIcon,
+  BackIcon,
+  ShieldIcon,
+  FileIcon,
+  MailIcon,
+  MoreVerticalIcon,
+  RefreshIcon,
   ExternalLinkIcon,
-  LockIcon,
-  ShieldCheckIcon,
-  SettingsIcon,
-  RotateCcwIcon,
   CloseIcon,
   AlertCircleIcon,
-  UserIcon
 } from './icons';
 import './SquadFinderPage.css';
 
-function GoogleIcon({ size = 18 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path
-        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"
-        fill="#4285F4"
-      />
-      <path
-        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.94H1.27v3.15C3.25 21.27 7.31 24 12 24z"
-        fill="#34A853"
-      />
-      <path
-        d="M5.28 14.26c-.25-.72-.38-1.49-.38-2.26s.13-1.54.38-2.26V6.59H1.27C.46 8.21 0 10.05 0 12s.46 3.79 1.27 5.41l4.01-3.15z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.73 1.27 6.59l4.01 3.15c.95-2.84 3.6-4.99 6.72-4.99z"
-        fill="#EA4335"
-      />
-    </svg>
-  );
-}
-
-const PRESET_SKILLS = [
+const DEFAULT_SKILLS = [
   'Financial Modeling',
   'Valuation & DCF',
   'Slide Deck & UI Design',
   'Public Speaking & Pitching',
-  'Market Research & Strategy',
-  'Python & Data Analytics',
+  'Market Strategy & Research',
+  'Python / Data Analytics',
   'Fullstack Dev / Tech',
-  'Economics & Policy'
+  'Economics & Policy',
 ];
 
-const POST_EXPIRATION_MS = 168 * 60 * 60 * 1000; // 7 days (168 hours)
+const PRESET_ORGANIZERS = [
+  'EY India',
+  'Bain & Company',
+  'McKinsey & Company',
+  'Accenture',
+  'IIM Ahmedabad',
+  'IIM Bangalore',
+  'IIT Bombay',
+  'L\'Oréal',
+  'Unilever / HUL',
+  'Tata Group',
+  'Delhi University',
+];
 
-export default function SquadFinderPage({ prefillData, onClearPrefill, showToast }) {
-  const {
-    user,
-    profile,
-    squadPosts,
-    squadApps,
-    createSquadPost,
-    applyToSquad,
-    updateApplicationStatus,
-    reapplyToSquad,
-    togglePostOpen,
-    deleteSquadPost,
-    refreshSquadData,
-    openAuthModal,
-    openProfileModal,
-    signInWithGoogle
-  } = useAuth();
+const POPULAR_COLLEGES = [
+  'SRCC',
+  'IIT Delhi',
+  'SSCBS',
+  'BITS Pilani',
+  'IIM Rohtak',
+  'Christ University',
+  'DTU',
+  'St. Stephen\'s',
+  'Hindu College',
+  'LSR',
+  'Hansraj College',
+  'IIT Bombay',
+  'NSUT',
+  'NMIMS',
+];
 
-  const [activeSubTab, setActiveSubTab] = useState('explore'); // 'explore' | 'my-squads'
+function sanitizeIndianPhone(raw) {
+  if (!raw) return '';
+  let digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) {
+    digits = digits.slice(2);
+  } else if (digits.length === 11 && digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+  return digits.slice(0, 10);
+}
+
+function formatWhatsAppUrl(phone, textMessage = '') {
+  const cleanPhone = sanitizeIndianPhone(phone);
+  if (!cleanPhone || cleanPhone.length !== 10) return '#';
+  return `https://wa.me/91${cleanPhone}${textMessage ? `?text=${encodeURIComponent(textMessage)}` : ''}`;
+}
+
+function formatStudentName(rawName, email) {
+  if (rawName && rawName !== 'Student Lead' && rawName !== 'Student' && rawName.trim()) {
+    return rawName.trim();
+  }
+  if (email && typeof email === 'string' && email.includes('@')) {
+    const handle = email.split('@')[0];
+    const parts = handle.split('.');
+    if (parts.length >= 2) {
+      const namePart = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+      const rollPart = parts[1];
+      return `${namePart} (${rollPart})`;
+    }
+    return handle.charAt(0).toUpperCase() + handle.slice(1);
+  }
+  return 'Competitor';
+}
+
+function isUserPost(post, user) {
+  if (!post || !user) return false;
+  const userEmailLower = user.email ? user.email.toLowerCase().trim() : '';
+  const postEmailLower = (post.created_by_email || post.user_email || '').toLowerCase().trim();
+  const isEmailMatch = Boolean(userEmailLower && postEmailLower && userEmailLower === postEmailLower);
+  const isUserIdMatch = Boolean(user.id && post.user_id && user.id === post.user_id);
+  return isEmailMatch || isUserIdMatch;
+}
+
+export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, showToast }) {
+  const { user, profile, openAuthModal } = useAuth();
+
+  const [posts, setPosts] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSkillFilter, setSelectedSkillFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('my'); // 'my' (My Listings), 'other' (Other Listings)
+  const [hasUserToggledTab, setHasUserToggledTab] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshToast, setRefreshToast] = useState('');
 
   // Modals state
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const [showReapplyModal, setShowReapplyModal] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState(null); // When editing a post
+  const [selectedPostForApply, setSelectedPostForApply] = useState(null);
+  const [selectedPostForReview, setSelectedPostForReview] = useState(null);
+  const [selectedPostForView, setSelectedPostForView] = useState(null);
+  const [activeAdminMenuPostId, setActiveAdminMenuPostId] = useState(null);
 
-  const [targetPostForApply, setTargetPostForApply] = useState(null);
-  const [targetPostForReview, setTargetPostForReview] = useState(null);
-  const [targetPostForDetail, setTargetPostForDetail] = useState(null);
-  const [targetAppForReapply, setTargetAppForReapply] = useState(null);
+  useEffect(() => {
+    const handleOutsideClick = () => setActiveAdminMenuPostId(null);
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
 
-  // Form States
+  // Create/Edit Form State
   const [formData, setFormData] = useState({
     competition_name: '',
     organizer: '',
@@ -101,1117 +142,1445 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
     description: '',
     skills_have: [],
     skills_looking_for: [],
+    custom_skill_have: '',
+    custom_skill_looking: '',
     total_members: 4,
     spots_left: 1,
     college: '',
     course: '',
     year: '2nd Year',
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
 
+  // Skill Feedback messages
+  const [skillHaveFeedback, setSkillHaveFeedback] = useState('');
+  const [skillLookingFeedback, setSkillLookingFeedback] = useState('');
+
+  // Apply Modal Form State
   const [applyForm, setApplyForm] = useState({
-    applicant_name: '',
+    pitch_note: '',
     applicant_phone: '',
     applicant_college: '',
     applicant_course: '',
     applicant_year: '2nd Year',
-    pitch_note: '',
-    highlighted_skills: []
+    highlighted_skills: [],
   });
+  const [applySubmitting, setApplySubmitting] = useState(false);
+  const [applyError, setApplyError] = useState('');
+  const [applySuccess, setApplySuccess] = useState('');
 
-  const [reapplyForm, setReapplyForm] = useState({
-    applicant_phone: '',
-    pitch_note: '',
-    highlighted_skills: []
-  });
+  const POST_EXPIRATION_MS = 168 * 60 * 60 * 1000; // 168 hours (7 days / 1 week)
 
-  // Check for prefill from Competitions Page ("Find Teammates" click)
-  useEffect(() => {
-    let data = prefillData;
-    if (!data) {
-      const rawSaved = sessionStorage.getItem('comp_team_prefill');
-      if (rawSaved) {
+  const invalidateSessionCache = () => {
+    try {
+      sessionStorage.removeItem('onestop_cached_team_posts');
+      sessionStorage.removeItem('onestop_cached_team_apps');
+      sessionStorage.removeItem('onestop_cached_team_time');
+    } catch (e) {}
+  };
+
+  // Fetch real posts & applications from Supabase
+  const fetchPostsAndApps = async (force = false) => {
+    const now = Date.now();
+
+    if (!force) {
+      const cachedPosts = sessionStorage.getItem('onestop_cached_team_posts');
+      const cachedApps = sessionStorage.getItem('onestop_cached_team_apps');
+      const cachedTime = sessionStorage.getItem('onestop_cached_team_time');
+      if (cachedPosts && cachedTime && now - Number(cachedTime) < 30000) {
         try {
-          data = JSON.parse(rawSaved);
-        } catch (e) {
-          sessionStorage.removeItem('comp_team_prefill');
+          setPosts(JSON.parse(cachedPosts));
+          if (cachedApps) setApplications(JSON.parse(cachedApps));
+          setLoading(false);
+          return;
+        } catch (e) {}
+      }
+    }
+
+    if (!force && !hasValidCredentials) {
+      const savedPosts = localStorage.getItem('onestop_squad_posts');
+      const savedApps = localStorage.getItem('onestop_squad_apps');
+      if (savedPosts) {
+        const parsed = JSON.parse(savedPosts);
+        const active = parsed.filter(
+          (p) => !p.created_at || now - new Date(p.created_at).getTime() <= POST_EXPIRATION_MS
+        );
+        setPosts(active);
+      }
+      if (savedApps) setApplications(JSON.parse(savedApps));
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (hasValidCredentials && supabase) {
+        const sevenDaysAgo = new Date(now - POST_EXPIRATION_MS).toISOString();
+
+        const [postsRes, appsRes] = await Promise.all([
+          supabase
+            .from('squad_posts')
+            .select(
+              'id, user_id, competition_name, organizer, competition_link, phone_number, title, description, skills_have, skills_looking_for, total_members, initial_open_spots, spots_left, accepted_emails, college, course, year, is_open, created_by_email, created_by_name, created_at, updated_at'
+            )
+            .gte('created_at', sevenDaysAgo)
+            .order('created_at', { ascending: false })
+            .limit(50),
+          supabase
+            .from('squad_applications')
+            .select(
+              'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_course, applicant_year, pitch_note, highlighted_skills, status, created_at, updated_at'
+            )
+            .gte('created_at', sevenDaysAgo)
+            .order('created_at', { ascending: false })
+            .limit(100),
+        ]);
+
+        if (!postsRes.error && postsRes.data) {
+          const activePostsData = postsRes.data.filter((p) => {
+            if (!p.created_at) return true;
+            const createdAtMs = new Date(p.created_at).getTime();
+            if (isNaN(createdAtMs)) return true;
+            const ageMs = now - createdAtMs;
+            return ageMs <= POST_EXPIRATION_MS;
+          });
+
+          const enrichedPosts = activePostsData.map((p) => {
+            const authorEmail = p.created_by_email || p.user_email || '';
+            const authorName = formatStudentName(p.created_by_name, authorEmail);
+            const acceptedEmails = Array.isArray(p.accepted_emails) ? p.accepted_emails : [];
+            const initialOpen =
+              p.initial_open_spots !== undefined && p.initial_open_spots !== null
+                ? p.initial_open_spots
+                : Math.max(1, (p.spots_left || 0) + acceptedEmails.length);
+            return {
+              ...p,
+              accepted_emails: acceptedEmails,
+              initial_open_spots: initialOpen,
+              created_by_name: authorName,
+              created_by_email: authorEmail,
+              total_members: p.total_members || (p.spots_left ? p.spots_left + 1 : 4),
+            };
+          });
+          setPosts(enrichedPosts);
+          localStorage.setItem('onestop_squad_posts', JSON.stringify(enrichedPosts));
+          try {
+            sessionStorage.setItem('onestop_cached_team_posts', JSON.stringify(enrichedPosts));
+            sessionStorage.setItem('onestop_cached_team_time', String(now));
+          } catch (e) {}
+        } else if (postsRes.error) {
+          console.error('Supabase fetch posts error:', postsRes.error);
         }
+
+        if (!appsRes.error && appsRes.data) {
+          setApplications(appsRes.data);
+          localStorage.setItem('onestop_squad_apps', JSON.stringify(appsRes.data));
+          try {
+            sessionStorage.setItem('onestop_cached_team_apps', JSON.stringify(appsRes.data));
+          } catch (e) {}
+        } else if (appsRes.error) {
+          console.error('Supabase fetch apps error:', appsRes.error);
+        }
+      } else {
+        const savedPosts = localStorage.getItem('onestop_squad_posts');
+        const savedApps = localStorage.getItem('onestop_squad_apps');
+        if (savedPosts) {
+          const parsed = JSON.parse(savedPosts);
+          const active = parsed.filter(
+            (p) => !p.created_at || now - new Date(p.created_at).getTime() <= POST_EXPIRATION_MS
+          );
+          setPosts(active);
+        }
+        if (savedApps) setApplications(JSON.parse(savedApps));
       }
+    } catch (err) {
+      console.warn('Error loading squad posts/apps:', err);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (data && data.competition_name) {
-      setFormData(prev => ({
-        ...prev,
-        competition_name: data.competition_name || '',
-        organizer: data.organizer || '',
-        competition_link: data.competition_link || '',
-        total_members: data.total_members || 4,
-        spots_left: Math.max(1, (data.total_members || 4) - 1),
-        title: `Building winning squad for ${data.competition_name.slice(0, 45)}...`,
-        college: profile?.college || '',
-        phone_number: profile?.phone || '',
-      }));
-      setShowCreateModal(true);
-      sessionStorage.removeItem('comp_team_prefill');
-      if (onClearPrefill) onClearPrefill();
-    }
-  }, [prefillData, onClearPrefill, profile]);
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    setRefreshToast('');
+    await fetchPostsAndApps(true);
+    setIsRefreshing(false);
+    setRefreshToast('✨ Listings updated!');
+    setTimeout(() => setRefreshToast(''), 2500);
+  };
 
-  // Sync profile defaults into forms when profile loads
   useEffect(() => {
-    if (profile) {
-      setFormData(prev => ({
-        ...prev,
-        college: prev.college || profile.college || '',
-        phone_number: prev.phone_number || profile.phone || '',
-      }));
-    }
-  }, [profile]);
+    fetchPostsAndApps();
 
-  // Close modals on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        setShowCreateModal(false);
-        setShowApplyModal(false);
-        setShowReapplyModal(false);
-        setShowReviewModal(false);
-        setShowDetailModal(false);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // 30s background poll for seamless updates
+    const pollInterval = setInterval(() => {
+      fetchPostsAndApps(true);
+    }, 30000);
+
+    if (hasValidCredentials && supabase) {
+      const channelPosts = supabase
+        .channel('public:squad_posts_realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, () => {
+          fetchPostsAndApps(true);
+        })
+        .subscribe();
+
+      const channelApps = supabase
+        .channel('public:squad_applications_realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, () => {
+          fetchPostsAndApps(true);
+        })
+        .subscribe();
+
+      return () => {
+        clearInterval(pollInterval);
+        supabase.removeChannel(channelPosts);
+        supabase.removeChannel(channelApps);
+      };
+    }
+
+    return () => clearInterval(pollInterval);
   }, []);
 
-  // Spot Accounting Helper (100% SSCBS OS calculation logic)
-  const getPostOpenSpots = (post) => {
-    if (!post) return 0;
-    const acceptedList = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
-    const initialOpen = post.initial_open_spots !== undefined && post.initial_open_spots !== null
-      ? post.initial_open_spots
-      : Math.max(1, (post.spots_left || 0) + acceptedList.length);
-    return Math.max(0, initialOpen - acceptedList.length);
-  };
+  // Smart default tab: if user has 0 posts of their own, auto-switch to "Other Listings"
+  useEffect(() => {
+    if (!loading && !hasUserToggledTab && posts.length > 0) {
+      const userHasPosts = posts.some((p) => isUserPost(p, user));
+      const peerHasPosts = posts.some((p) => !isUserPost(p, user));
+      if (!userHasPosts && peerHasPosts) {
+        setActiveTab('other');
+      }
+    }
+  }, [posts, loading, user, hasUserToggledTab]);
 
-  // Get current user's latest application status for a post
-  const getUserAppForPost = (postId) => {
-    if (!user) return null;
-    const userApps = squadApps.filter(
-      a => a.post_id === postId && (a.applicant_email === user.email || a.applicant_id === user.id)
-    );
-    if (userApps.length === 0) return null;
-    // Priority: accepted > pending > declined > removed
-    const accepted = userApps.find(a => a.status === 'accepted');
-    if (accepted) return accepted;
-    const pending = userApps.find(a => a.status === 'pending');
-    if (pending) return pending;
-    const declined = userApps.find(a => a.status === 'declined' || a.status === 'rejected');
-    if (declined) return declined;
-    return userApps[0];
-  };
-
-  // Filter squad posts (7-day freshness check + search + skills filter)
-  const filteredPosts = useMemo(() => {
-    const now = Date.now();
-    return squadPosts.filter(post => {
-      // 7-day expiration check
-      if (post.created_at) {
-        const postTime = new Date(post.created_at).getTime();
-        if (!isNaN(postTime) && (now - postTime) > POST_EXPIRATION_MS) {
-          return false;
+  // Auto-open and prefill when navigated from Competitions Discover Page ("Find Teammates" button)
+  useEffect(() => {
+    let prefill = prefillData;
+    if (!prefill && typeof window !== 'undefined') {
+      try {
+        const stored = sessionStorage.getItem('comp_team_prefill') || sessionStorage.getItem('sscbs_team_finder_prefill');
+        if (stored) {
+          prefill = JSON.parse(stored);
+          sessionStorage.removeItem('comp_team_prefill');
+          sessionStorage.removeItem('sscbs_team_finder_prefill');
         }
+      } catch (e) {
+        console.warn('Could not read team finder prefill', e);
       }
+    }
 
-      // Skill filter
-      if (selectedSkillFilter !== 'all' && !post.skills_looking_for?.includes(selectedSkillFilter)) {
-        return false;
-      }
+    if (prefill && prefill.competition_name) {
+      setEditingPost(null);
+      setFormData((prev) => ({
+        ...prev,
+        competition_name: prefill.competition_name || '',
+        organizer: prefill.organizer || '',
+        competition_link: prefill.competition_link || '',
+        title: prefill.title || `Looking for teammates for ${prefill.competition_name}`,
+        description:
+          prefill.description ||
+          `Building a squad for ${prefill.competition_name || 'Case Competition'}${prefill.organizer ? ` (${prefill.organizer})` : ''}`,
+        total_members: String(prefill.total_members || 4),
+        spots_left: String(Math.max(1, (prefill.total_members || 4) - 1)),
+        college: profile?.college || user?.user_metadata?.college || '',
+        course: profile?.course || user?.user_metadata?.course || '',
+        year: profile?.year || user?.user_metadata?.year || '2nd Year',
+        phone_number: profile?.phone || user?.user_metadata?.phone || '',
+      }));
+      setFormError('');
+      setIsCreateModalOpen(true);
+      if (typeof onClearPrefill === 'function') onClearPrefill();
+    }
+  }, [prefillData, onClearPrefill, profile, user]);
 
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const compMatch = (post.competition_name || '').toLowerCase().includes(q);
-        const titleMatch = (post.title || '').toLowerCase().includes(q);
-        const descMatch = (post.description || '').toLowerCase().includes(q);
-        const orgMatch = (post.organizer || '').toLowerCase().includes(q);
-        const collegeMatch = (post.college || '').toLowerCase().includes(q);
-        const creatorMatch = (post.created_by_name || '').toLowerCase().includes(q);
-        const skillsMatch = (post.skills_looking_for || []).some(s => s.toLowerCase().includes(q));
-        if (!compMatch && !titleMatch && !descMatch && !orgMatch && !collegeMatch && !creatorMatch && !skillsMatch) {
-          return false;
-        }
-      }
+  const handleOpenCreateModal = () => {
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Post a Squad',
+        subtitle: 'Sign in or create an account to recruit teammates for competitions.',
+        initialTab: 'signin',
+        postLoginAction: () => handleOpenCreateModal(),
+      });
+      return;
+    }
 
-      return true;
+    setEditingPost(null);
+    setFormData({
+      competition_name: '',
+      organizer: '',
+      competition_link: '',
+      phone_number: profile?.phone || user?.user_metadata?.phone || '',
+      title: '',
+      description: '',
+      skills_have: [],
+      skills_looking_for: [],
+      custom_skill_have: '',
+      custom_skill_looking: '',
+      total_members: 4,
+      spots_left: 1,
+      college: profile?.college || user?.user_metadata?.college || '',
+      course: profile?.course || user?.user_metadata?.course || '',
+      year: profile?.year || user?.user_metadata?.year || '2nd Year',
     });
-  }, [squadPosts, selectedSkillFilter, searchQuery]);
+    setFormError('');
+    setIsCreateModalOpen(true);
+  };
 
-  // User's own postings and applications
-  const myPosts = useMemo(() => {
-    if (!user) return [];
-    return squadPosts.filter(p => p.created_by_email === user.email || p.user_id === user.id);
-  }, [squadPosts, user]);
+  const handleOpenEditModal = (post) => {
+    setEditingPost(post);
+    setFormData({
+      competition_name: post.competition_name || '',
+      organizer: post.organizer || '',
+      competition_link: post.competition_link || '',
+      phone_number: post.phone_number || '',
+      title: post.title || '',
+      description: post.description || '',
+      skills_have: post.skills_have ? [...post.skills_have] : [],
+      skills_looking_for: post.skills_looking_for ? [...post.skills_looking_for] : [],
+      custom_skill_have: '',
+      custom_skill_looking: '',
+      total_members: post.total_members || 4,
+      spots_left: post.spots_left || 1,
+      college: post.college || profile?.college || '',
+      course: post.course || profile?.course || '',
+      year: post.year || profile?.year || '2nd Year',
+    });
+    setFormError('');
+    setIsCreateModalOpen(true);
+  };
 
-  const myApps = useMemo(() => {
-    if (!user) return [];
-    return squadApps.filter(a => a.applicant_email === user.email || a.applicant_id === user.id);
-  }, [squadApps, user]);
+  const handleToggleSkillHave = (skill) => {
+    setFormData((prev) => {
+      const exists = prev.skills_have.includes(skill);
+      return {
+        ...prev,
+        skills_have: exists ? prev.skills_have.filter((s) => s !== skill) : [...prev.skills_have, skill],
+      };
+    });
+  };
 
-  // Create Post Submit Handler
-  const handleCreateSubmit = async (e) => {
+  const handleToggleSkillLooking = (skill) => {
+    setFormData((prev) => {
+      const exists = prev.skills_looking_for.includes(skill);
+      return {
+        ...prev,
+        skills_looking_for: exists
+          ? prev.skills_looking_for.filter((s) => s !== skill)
+          : [...prev.skills_looking_for, skill],
+      };
+    });
+  };
+
+  const handleAddCustomSkillHave = () => {
+    const skill = formData.custom_skill_have.trim();
+    if (!skill) return;
+
+    if (!formData.skills_have.includes(skill)) {
+      setFormData((prev) => ({
+        ...prev,
+        skills_have: [...prev.skills_have, skill],
+        custom_skill_have: '',
+      }));
+      setSkillHaveFeedback(`✓ Added "${skill}" to skills present`);
+      setTimeout(() => setSkillHaveFeedback(''), 3000);
+    }
+  };
+
+  const handleAddCustomSkillLooking = () => {
+    const skill = formData.custom_skill_looking.trim();
+    if (!skill) return;
+
+    if (!formData.skills_looking_for.includes(skill)) {
+      setFormData((prev) => ({
+        ...prev,
+        skills_looking_for: [...prev.skills_looking_for, skill],
+        custom_skill_looking: '',
+      }));
+      setSkillLookingFeedback(`✓ Added "${skill}" to skills needed`);
+      setTimeout(() => setSkillLookingFeedback(''), 3000);
+    }
+  };
+
+  const handleRemoveSkillHave = (skill) => {
+    setFormData((prev) => ({
+      ...prev,
+      skills_have: prev.skills_have.filter((s) => s !== skill),
+    }));
+  };
+
+  const handleRemoveSkillLooking = (skill) => {
+    setFormData((prev) => ({
+      ...prev,
+      skills_looking_for: prev.skills_looking_for.filter((s) => s !== skill),
+    }));
+  };
+
+  const handleSubmitPost = async (e) => {
     e.preventDefault();
-    if (!formData.competition_name.trim() || !formData.title.trim() || !formData.description.trim()) {
-      alert('Please provide competition name, title, and team pitch description.');
+    setFormError('');
+
+    if (!formData.competition_name.trim()) {
+      setFormError('Please enter the competition name.');
+      return;
+    }
+    const descText = (formData.description || formData.title || '').trim();
+    if (!descText) {
+      setFormError('Please write a brief description for your opening.');
+      return;
+    }
+    const cleanPostPhone = sanitizeIndianPhone(formData.phone_number);
+    if (!cleanPostPhone || cleanPostPhone.length !== 10) {
+      setFormError('Please enter a valid compulsory 10-digit WhatsApp phone number (e.g. 9876543210).');
       return;
     }
 
-    const cleanPhone = sanitizeIndianPhone(formData.phone_number);
-    if (!cleanPhone || cleanPhone.length !== 10) {
-      alert('Please enter a valid 10-digit Indian WhatsApp number for squad coordination.');
+    let formattedLink = (formData.competition_link || '').trim();
+    if (formattedLink && !/^https?:\/\//i.test(formattedLink)) {
+      formattedLink = 'https://' + formattedLink;
+    }
+
+    setSubmitting(true);
+
+    const totalMem = parseInt(formData.total_members, 10) || 4;
+    const openSpots = Math.min(totalMem, parseInt(formData.spots_left, 10) || 1);
+
+    const userCollege = formData.college.trim() || profile?.college || user?.user_metadata?.college || 'Collegiate Network';
+    const userCourse = formData.course.trim() || profile?.course || user?.user_metadata?.course || 'Undergraduate';
+    const userYear = formData.year || profile?.year || user?.user_metadata?.year || '2nd Year';
+
+    if (editingPost) {
+      // ── EDIT EXISTING POST ──
+      const currentAccepted = Array.isArray(editingPost.accepted_emails) ? editingPost.accepted_emails : [];
+      const initialOpen = openSpots + currentAccepted.length;
+
+      const updatePayload = {
+        competition_name: formData.competition_name.trim(),
+        organizer: formData.organizer.trim() || 'Corporate / Society',
+        competition_link: formattedLink,
+        phone_number: cleanPostPhone,
+        title: descText,
+        description: descText,
+        skills_have: formData.skills_have,
+        skills_looking_for: formData.skills_looking_for,
+        total_members: totalMem,
+        initial_open_spots: initialOpen,
+        spots_left: openSpots,
+        college: userCollege,
+        course: userCourse,
+        year: userYear,
+        is_open: openSpots > 0,
+      };
+
+      try {
+        if (hasValidCredentials && supabase) {
+          await supabase.from('squad_posts').update(updatePayload).eq('id', editingPost.id);
+        }
+      } catch (err) {
+        console.warn('Supabase update post error:', err);
+      }
+
+      const updated = posts.map((p) => (p.id === editingPost.id ? { ...p, ...updatePayload } : p));
+      setPosts(updated);
+      localStorage.setItem('onestop_squad_posts', JSON.stringify(updated));
+      invalidateSessionCache();
+
+      setSubmitting(false);
+      setIsCreateModalOpen(false);
+      setEditingPost(null);
+      if (showToast) showToast('Listing updated successfully!');
       return;
     }
+
+    const authorDisplayName = formatStudentName(profile?.full_name || user?.user_metadata?.full_name, user?.email);
+
+    // ── CREATE NEW POST ──
+    const postPayload = {
+      user_id: user?.id,
+      competition_name: formData.competition_name.trim(),
+      organizer: formData.organizer.trim() || 'Corporate / Society',
+      competition_link: formattedLink,
+      phone_number: cleanPostPhone,
+      title: descText,
+      description: descText,
+      skills_have: formData.skills_have,
+      skills_looking_for: formData.skills_looking_for,
+      total_members: totalMem,
+      initial_open_spots: openSpots,
+      spots_left: openSpots,
+      college: userCollege,
+      course: userCourse,
+      year: userYear,
+      is_open: openSpots > 0,
+      created_by_email: user?.email || '',
+      created_by_name: authorDisplayName,
+      created_at: new Date().toISOString(),
+    };
 
     try {
-      await createSquadPost({
-        ...formData,
-        phone_number: cleanPhone
-      });
-      setShowCreateModal(false);
-      if (showToast) showToast('Squad opening posted successfully!');
-      setActiveSubTab('explore');
-      // Reset form
-      setFormData({
-        competition_name: '',
-        organizer: '',
-        competition_link: '',
-        phone_number: profile?.phone || '',
-        title: '',
-        description: '',
-        skills_have: [],
-        skills_looking_for: [],
-        total_members: 4,
-        spots_left: 1,
-        college: profile?.college || '',
-        course: '',
-        year: '2nd Year',
-      });
+      if (hasValidCredentials && supabase) {
+        const res = await supabase.from('squad_posts').insert([postPayload]).select();
+
+        if (!res.error && res.data && res.data[0]) {
+          postPayload.id = res.data[0].id;
+        } else if (res.error) {
+          console.error('Supabase squad_posts insert error:', res.error);
+          setFormError('Could not save post online: ' + (res.error.message || 'Database error'));
+          setSubmitting(false);
+          return;
+        }
+      }
     } catch (err) {
-      alert(err.message || 'Failed to create squad opening.');
+      console.error('Exception during post submission:', err);
+    }
+
+    if (!postPayload.id) {
+      postPayload.id = 'post-' + Date.now();
+    }
+
+    const updated = [postPayload, ...posts.filter((p) => p.id !== postPayload.id)];
+    setPosts(updated);
+    localStorage.setItem('onestop_squad_posts', JSON.stringify(updated));
+    invalidateSessionCache();
+
+    // Switch to 'my' tab so the author sees their new post immediately
+    setHasUserToggledTab(true);
+    setActiveTab('my');
+
+    setSubmitting(false);
+    setIsCreateModalOpen(false);
+    if (showToast) showToast('Team opening published!');
+  };
+
+  const handleDeletePost = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this squad listing?')) return;
+
+    try {
+      if (hasValidCredentials && supabase) {
+        await supabase.from('squad_posts').delete().eq('id', id);
+      }
+    } catch (err) {
+      console.warn('Failed to delete on Supabase:', err);
+    }
+
+    const updated = posts.filter((p) => p.id !== id);
+    setPosts(updated);
+    localStorage.setItem('onestop_squad_posts', JSON.stringify(updated));
+    invalidateSessionCache();
+    if (showToast) showToast('Listing deleted.');
+  };
+
+  const handleToggleStatus = async (id, currentOpenState) => {
+    const updated = posts.map((p) => (p.id === id ? { ...p, is_open: !currentOpenState } : p));
+    setPosts(updated);
+    localStorage.setItem('onestop_squad_posts', JSON.stringify(updated));
+    invalidateSessionCache();
+
+    try {
+      if (hasValidCredentials && supabase) {
+        await supabase.from('squad_posts').update({ is_open: !currentOpenState }).eq('id', id);
+      }
+    } catch (err) {
+      console.warn('Status update error:', err);
     }
   };
 
-  // Open Apply Modal
-  const openApplyModal = (post, e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
+  // ── IN-APP JOIN REQUEST FLOW ──
+  const handleOpenApplyModal = (post) => {
     if (!user) {
       openAuthModal({
         title: 'Sign In to Apply',
-        subtitle: `Join or sign in to OneStop to apply for "${post.competition_name}".`,
+        subtitle: `Sign in to send a join request for "${post.competition_name}".`,
         initialTab: 'signin',
+        postLoginAction: () => handleOpenApplyModal(post),
       });
       return;
     }
 
-    setTargetPostForApply(post);
+    setSelectedPostForApply(post);
     setApplyForm({
-      applicant_name: profile?.full_name || user?.user_metadata?.full_name || '',
+      pitch_note: '',
       applicant_phone: profile?.phone || user?.user_metadata?.phone || '',
       applicant_college: profile?.college || user?.user_metadata?.college || '',
-      applicant_course: profile?.course || '',
-      applicant_year: profile?.year || '2nd Year',
-      pitch_note: '',
-      highlighted_skills: []
+      applicant_course: profile?.course || user?.user_metadata?.course || '',
+      applicant_year: profile?.year || user?.user_metadata?.year || '2nd Year',
+      highlighted_skills: post.skills_looking_for ? [...post.skills_looking_for] : [],
     });
-    setShowApplyModal(true);
+    setApplyError('');
+    setApplySuccess('');
   };
 
-  // Submit Join Application
-  const handleApplySubmit = async (e) => {
+  const handleSubmitJoinRequest = async (e) => {
     e.preventDefault();
-    if (!applyForm.applicant_name.trim() || !applyForm.pitch_note.trim()) {
-      alert('Please fill in your name and pitch note.');
+    if (!applyForm.pitch_note.trim()) {
+      setApplyError('Please write a short pitch note.');
+      return;
+    }
+    const cleanApplyPhone = sanitizeIndianPhone(applyForm.applicant_phone);
+    if (!cleanApplyPhone || cleanApplyPhone.length !== 10) {
+      setApplyError('Please enter a valid compulsory 10-digit WhatsApp phone number (e.g. 9876543210).');
       return;
     }
 
-    const cleanPhone = sanitizeIndianPhone(applyForm.applicant_phone);
-    if (!cleanPhone || cleanPhone.length !== 10) {
-      alert('Please enter a valid 10-digit Indian WhatsApp phone number so the host can contact you.');
-      return;
-    }
+    setApplySubmitting(true);
+    setApplyError('');
+
+    const appPayload = {
+      id: 'app-' + Date.now(),
+      post_id: selectedPostForApply.id,
+      applicant_id: user?.id,
+      applicant_name: profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0],
+      applicant_email: user?.email,
+      applicant_phone: cleanApplyPhone,
+      applicant_college: applyForm.applicant_college.trim() || profile?.college || 'Collegiate Network',
+      applicant_course: applyForm.applicant_course.trim() || profile?.course || 'Undergraduate',
+      applicant_year: applyForm.applicant_year || profile?.year || '2nd Year',
+      pitch_note: applyForm.pitch_note.trim(),
+      highlighted_skills: applyForm.highlighted_skills,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    };
 
     try {
-      await applyToSquad({
-        post_id: targetPostForApply.id,
-        competition_name: targetPostForApply.competition_name,
-        ...applyForm,
-        applicant_phone: cleanPhone,
-      });
-      setShowApplyModal(false);
-      if (showToast) showToast('Application submitted to squad lead!');
-      setActiveSubTab('my-squads');
+      if (hasValidCredentials && supabase) {
+        const userEmailLower = user?.email?.toLowerCase();
+        const existingApp = applications.find((a) => {
+          const samePost = String(a.post_id) === String(selectedPostForApply.id);
+          const sameEmail = a.applicant_email && userEmailLower && a.applicant_email.toLowerCase() === userEmailLower;
+          return samePost && sameEmail;
+        });
+
+        let res;
+        if (existingApp && existingApp.id && !String(existingApp.id).startsWith('app-')) {
+          // Update existing application row back to 'pending' (re-apply!)
+          res = await supabase
+            .from('squad_applications')
+            .update({
+              applicant_name: appPayload.applicant_name,
+              applicant_phone: appPayload.applicant_phone,
+              applicant_college: appPayload.applicant_college,
+              applicant_course: appPayload.applicant_course,
+              applicant_year: appPayload.applicant_year,
+              pitch_note: appPayload.pitch_note,
+              highlighted_skills: appPayload.highlighted_skills,
+              status: 'pending',
+              created_at: new Date().toISOString(),
+            })
+            .eq('id', existingApp.id)
+            .select();
+        } else {
+          // Insert new application row
+          res = await supabase
+            .from('squad_applications')
+            .insert([
+              {
+                post_id: selectedPostForApply.id,
+                applicant_id: user?.id,
+                applicant_name: appPayload.applicant_name,
+                applicant_email: appPayload.applicant_email,
+                applicant_phone: appPayload.applicant_phone,
+                applicant_college: appPayload.applicant_college,
+                applicant_course: appPayload.applicant_course,
+                applicant_year: appPayload.applicant_year,
+                pitch_note: appPayload.pitch_note,
+                highlighted_skills: appPayload.highlighted_skills,
+                status: 'pending',
+              },
+            ])
+            .select();
+        }
+
+        if (res.error) {
+          console.error('Supabase application submit error:', res.error);
+          setApplyError('Could not save application online: ' + (res.error.message || 'Database error'));
+          setApplySubmitting(false);
+          return;
+        } else if (res.data && res.data[0]) {
+          appPayload.id = res.data[0].id;
+        }
+      }
     } catch (err) {
-      alert(err.message || 'Failed to submit squad application.');
-    }
-  };
-
-  // Open Re-apply Modal
-  const openReapplyModal = (app, e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    setTargetAppForReapply(app);
-    setReapplyForm({
-      applicant_phone: app.applicant_phone || profile?.phone || '',
-      pitch_note: app.pitch_note || '',
-      highlighted_skills: app.highlighted_skills || []
-    });
-    setShowReapplyModal(true);
-  };
-
-  // Submit Re-apply
-  const handleReapplySubmit = async (e) => {
-    e.preventDefault();
-    if (!reapplyForm.pitch_note.trim()) {
-      alert('Please provide an updated pitch note.');
-      return;
+      console.warn('Saving local application:', err);
     }
 
-    const cleanPhone = sanitizeIndianPhone(reapplyForm.applicant_phone);
-    if (!cleanPhone || cleanPhone.length !== 10) {
-      alert('Please enter a valid 10-digit Indian WhatsApp number.');
-      return;
-    }
+    const userEmailLower = user?.email?.toLowerCase();
+    const updatedApps = [
+      appPayload,
+      ...applications.filter((a) => {
+        const samePost = String(a.post_id) === String(selectedPostForApply.id);
+        const sameEmail = a.applicant_email && userEmailLower && a.applicant_email.toLowerCase() === userEmailLower;
+        const sameId = a.id === appPayload.id;
+        return !(sameId || (samePost && sameEmail));
+      }),
+    ];
+    setApplications(updatedApps);
+    localStorage.setItem('onestop_squad_apps', JSON.stringify(updatedApps));
+    invalidateSessionCache();
 
-    try {
-      await reapplyToSquad(targetAppForReapply.id, {
-        pitch_note: reapplyForm.pitch_note,
-        applicant_phone: cleanPhone,
-        highlighted_skills: reapplyForm.highlighted_skills
-      });
-      setShowReapplyModal(false);
-      if (showToast) showToast('Application re-submitted for review!');
-    } catch (err) {
-      alert(err.message || 'Failed to re-apply.');
-    }
+    setApplySubmitting(false);
+    setApplySuccess('🎉 Join request submitted! The team lead will review your application.');
+    setTimeout(() => {
+      setSelectedPostForApply(null);
+      setApplySuccess('');
+    }, 2000);
   };
 
-  // Open Host Review Modal
-  const openReviewModal = (post, e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    setTargetPostForReview(post);
-    setShowReviewModal(true);
-  };
-
-  // Open Full Detail Modal
-  const openDetailModal = (post) => {
-    setTargetPostForDetail(post);
-    setShowDetailModal(true);
-  };
-
-  // Accept Teammate Action
-  const handleAcceptTeammate = async (appId) => {
-    try {
-      await updateApplicationStatus(appId, 'accepted');
-      if (showToast) showToast('Teammate accepted! Seat filled.');
-    } catch (err) {
-      alert('Failed to accept teammate: ' + err.message);
-    }
-  };
-
-  // Decline Teammate Action
-  const handleDeclineTeammate = async (appId) => {
-    try {
-      await updateApplicationStatus(appId, 'declined');
-      if (showToast) showToast('Application declined.');
-    } catch (err) {
-      alert('Failed to decline application: ' + err.message);
-    }
-  };
-
-  // Remove Accepted Teammate (Reopens Spot!)
-  const handleRemoveTeammate = async (appId) => {
-    if (!window.confirm('Remove this teammate from your squad? Their spot will be reopened for new applicants.')) {
-      return;
-    }
-    try {
-      await updateApplicationStatus(appId, 'removed');
-      if (showToast) showToast('Teammate removed. Spot reopened!');
-    } catch (err) {
-      alert('Failed to remove teammate: ' + err.message);
-    }
-  };
-
-  // Toggles for Skill Checkboxes
-  const toggleSkillHave = (skill) => {
-    setFormData(prev => ({
-      ...prev,
-      skills_have: prev.skills_have.includes(skill)
-        ? prev.skills_have.filter(s => s !== skill)
-        : [...prev.skills_have, skill]
-    }));
-  };
-
-  const toggleSkillLookingFor = (skill) => {
-    setFormData(prev => ({
-      ...prev,
-      skills_looking_for: prev.skills_looking_for.includes(skill)
-        ? prev.skills_looking_for.filter(s => s !== skill)
-        : [...prev.skills_looking_for, skill]
-    }));
-  };
-
-  const toggleApplicantSkill = (skill) => {
-    setApplyForm(prev => ({
-      ...prev,
-      highlighted_skills: prev.highlighted_skills.includes(skill)
-        ? prev.highlighted_skills.filter(s => s !== skill)
-        : [...prev.highlighted_skills, skill]
-    }));
-  };
-
-  const toggleReapplySkill = (skill) => {
-    setReapplyForm(prev => ({
-      ...prev,
-      highlighted_skills: prev.highlighted_skills.includes(skill)
-        ? prev.highlighted_skills.filter(s => s !== skill)
-        : [...prev.highlighted_skills, skill]
-    }));
-  };
-
-  // If user is unauthenticated, show membership gate preview
-  if (!user) {
-    return (
-      <div className="squad-finder-view squad-finder-gated">
-        <section className="squad-gate-hero">
-          <div className="squad-gate-card">
-            <div className="squad-gate-top">
-              <div className="squad-gate-lock-badge">
-                <LockIcon size={16} color="var(--color-lab-blue)" />
-                <span>STUDENT NETWORK</span>
-              </div>
-              <span className="squad-gate-brand">TWO19 LABS / SQUAD FINDER</span>
-            </div>
-
-            <h1 className="squad-gate-title">
-              Sign in to unlock Squad Finder & teammate recruitment
-            </h1>
-
-            <p className="squad-gate-sub">
-              Finding competitions is free for everyone. But recruiting teammates, viewing verified collegiate profiles, and coordinating over WhatsApp requires a OneStop student account.
-            </p>
-
-            {prefillData && prefillData.competition_name && (
-              <div className="squad-gate-comp-banner">
-                <TrophyIcon size={16} color="var(--color-lab-blue)" />
-                <span>
-                  Ready to recruit a squad for: <strong>{prefillData.competition_name}</strong>
-                </span>
-              </div>
-            )}
-
-            <div className="squad-gate-cta-group">
-              <button
-                className="squad-gate-google-btn"
-                onClick={() => signInWithGoogle().catch(err => alert(err.message))}
-              >
-                <GoogleIcon size={18} />
-                <span>Continue with Google</span>
-              </button>
-
-              <button
-                className="squad-gate-email-btn"
-                onClick={() => openAuthModal({
-                  title: 'Sign In to Squad Finder',
-                  initialTab: 'signin',
-                  postLoginAction: prefillData ? () => setShowCreateModal(true) : null
-                })}
-              >
-                Sign in with Email
-              </button>
-
-              <button
-                className="squad-gate-signup-btn"
-                onClick={() => openAuthModal({
-                  title: 'Join OneStop Squad Network',
-                  initialTab: 'signup',
-                  postLoginAction: prefillData ? () => setShowCreateModal(true) : null
-                })}
-              >
-                Create Free Account
-              </button>
-            </div>
-
-            <div className="squad-gate-features">
-              <div className="squad-gate-feature-item">
-                <ShieldCheckIcon size={16} color="var(--color-lab-blue)" />
-                <span>Verified student network across DU, IITs, IIMs, BITS & Premier Colleges</span>
-              </div>
-              <div className="squad-gate-feature-item">
-                <WhatsAppIcon size={16} />
-                <span>1-Click WhatsApp direct chat with squad leaders</span>
-              </div>
-              <div className="squad-gate-feature-item">
-                <CheckIcon size={16} color="var(--color-lab-blue)" />
-                <span>Skill matching (DCF, Valuation, Slide Design, Python, Tech)</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Locked Preview / Teaser Feed */}
-        <section className="squad-gate-teaser-section">
-          <div className="squad-gate-teaser-header">
-            <div className="squad-gate-teaser-title-row">
-              <h2 className="squad-gate-teaser-title">Active Collegiate Squad Openings</h2>
-              <span className="squad-gate-teaser-pill">LOCKED PREVIEW</span>
-            </div>
-            <p className="squad-gate-teaser-subtitle">
-              Sign in to view contact details, message squad leads on WhatsApp, or post your own opening.
-            </p>
-          </div>
-
-          {squadPosts.length > 0 ? (
-            <div className="squad-gate-teaser-grid">
-              {squadPosts.slice(0, 3).map((item, idx) => (
-                <div key={item.id || idx} className="squad-gate-teaser-card">
-                  <div className="squad-gate-card-overlay">
-                    <button
-                      className="squad-gate-overlay-badge"
-                      onClick={() => openAuthModal({ title: 'Sign In to Connect', initialTab: 'signin' })}
-                    >
-                      <LockIcon size={14} />
-                      <span>Sign In to Unlock & Contact</span>
-                    </button>
-                  </div>
-
-                  <div className="squad-gate-card-content">
-                    <div className="squad-gate-card-comp">
-                      <TrophyIcon size={14} color="var(--color-lab-blue)" />
-                      <span>{item.competition_name}</span>
-                    </div>
-                    <h4 className="squad-gate-card-title">{item.title}</h4>
-                    <div className="squad-gate-card-meta">
-                      <span>{item.college || 'Collegiate Network'}</span>
-                      <span>·</span>
-                      <span>{getPostOpenSpots(item)} spots open</span>
-                    </div>
-                    <div className="squad-gate-card-skills">
-                      {(item.skills_looking_for || []).slice(0, 3).map((s, i) => (
-                        <span key={i} className="squad-gate-skill-tag">{s}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="squad-gate-empty-state">
-              <p>No squad openings have been posted yet.</p>
-              <button
-                type="button"
-                className="btn-create-squad"
-                onClick={() => openAuthModal({ title: 'Sign In to Post a Squad', initialTab: 'signin' })}
-              >
-                <PlusIcon size={16} />
-                <span>Sign In &amp; Post the First Opening</span>
-              </button>
-            </div>
-          )}
-        </section>
-      </div>
-    );
+  // ── SPOT COUNT & STATUS HELPERS ──
+  function getPostOpenSpots(post) {
+    if (!post) return 0;
+    const initialOpen = parseInt(post.initial_open_spots, 10) || parseInt(post.spots_left, 10) || 1;
+    const acceptedEmails = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
+    return Math.max(0, initialOpen - acceptedEmails.length);
   }
 
+  function isPostOpen(post) {
+    if (!post) return false;
+    if (post.is_closed_by_host || post.is_open === false) return false;
+    return getPostOpenSpots(post) > 0;
+  }
+
+  function getUserApp(post, apps, userEmail, userId) {
+    if (!post || !apps) return null;
+    const emailLower = userEmail ? userEmail.toLowerCase() : '';
+
+    const matches = apps.filter((a) => {
+      if (String(a.post_id) !== String(post.id)) return false;
+      const isEmail = a.applicant_email && emailLower && a.applicant_email.toLowerCase() === emailLower;
+      const isId = a.applicant_id && userId && a.applicant_id === userId;
+      return isEmail || isId;
+    });
+
+    if (matches.length === 0) return null;
+
+    matches.sort((a, b) => {
+      const timeA = new Date(a.created_at || 0).getTime() || (typeof a.id === 'number' ? a.id : 0);
+      const timeB = new Date(b.created_at || 0).getTime() || (typeof b.id === 'number' ? b.id : 0);
+      return timeB - timeA;
+    });
+
+    const latest = { ...matches[0] };
+    const acceptedEmails = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
+    const isAcceptedInPost = acceptedEmails.some((e) => e && emailLower && e.toLowerCase() === emailLower);
+
+    if (isAcceptedInPost) {
+      latest.status = 'accepted';
+    } else if (latest.status === 'accepted') {
+      latest.status = 'removed';
+    }
+
+    return latest;
+  }
+
+  const handleAcceptApplicant = async (app) => {
+    const post = posts.find((p) => String(p.id) === String(app.post_id));
+    if (!post) return;
+
+    const currentOpen = getPostOpenSpots(post);
+    if (currentOpen <= 0) {
+      alert('All open spots in this squad are already filled! Remove an accepted member or edit your listing to accept more.');
+      return;
+    }
+
+    const appEmailLower = (app.applicant_email || '').toLowerCase();
+    const currentAcceptedEmails = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
+
+    const newAcceptedEmails = currentAcceptedEmails.some((e) => e?.toLowerCase() === appEmailLower)
+      ? currentAcceptedEmails
+      : [...currentAcceptedEmails, app.applicant_email];
+
+    const updatedApps = applications.map((a) =>
+      a.id === app.id || (String(a.post_id) === String(app.post_id) && a.applicant_email?.toLowerCase() === appEmailLower)
+        ? { ...a, status: 'accepted' }
+        : a
+    );
+    setApplications(updatedApps);
+    localStorage.setItem('onestop_squad_apps', JSON.stringify(updatedApps));
+
+    const initialOpen =
+      parseInt(post.initial_open_spots, 10) || currentAcceptedEmails.length + (parseInt(post.spots_left, 10) || 0) || 1;
+    const newOpenSpots = Math.max(0, initialOpen - newAcceptedEmails.length);
+    const isNowOpen = newOpenSpots > 0;
+
+    const updatedPosts = posts.map((p) =>
+      String(p.id) === String(post.id)
+        ? {
+            ...p,
+            accepted_emails: newAcceptedEmails,
+            initial_open_spots: initialOpen,
+            spots_left: newOpenSpots,
+            is_open: isNowOpen,
+          }
+        : p
+    );
+    setPosts(updatedPosts);
+    localStorage.setItem('onestop_squad_posts', JSON.stringify(updatedPosts));
+    invalidateSessionCache();
+
+    try {
+      if (hasValidCredentials && supabase) {
+        await supabase
+          .from('squad_posts')
+          .update({
+            accepted_emails: newAcceptedEmails,
+            initial_open_spots: initialOpen,
+            spots_left: newOpenSpots,
+            is_open: isNowOpen,
+          })
+          .eq('id', post.id);
+
+        const isRealId = app.id && !String(app.id).startsWith('app-');
+        if (isRealId) {
+          await supabase.from('squad_applications').update({ status: 'accepted' }).eq('id', app.id);
+        }
+        if (app.applicant_email) {
+          await supabase
+            .from('squad_applications')
+            .update({ status: 'accepted' })
+            .eq('post_id', app.post_id)
+            .ilike('applicant_email', app.applicant_email);
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase status update error:', err);
+    }
+  };
+
+  const handleDeclineApplicant = async (app) => {
+    const appEmailLower = (app.applicant_email || '').toLowerCase();
+    const updatedApps = applications.map((a) =>
+      a.id === app.id || (String(a.post_id) === String(app.post_id) && a.applicant_email?.toLowerCase() === appEmailLower)
+        ? { ...a, status: 'declined' }
+        : a
+    );
+    setApplications(updatedApps);
+    localStorage.setItem('onestop_squad_apps', JSON.stringify(updatedApps));
+    invalidateSessionCache();
+
+    try {
+      if (hasValidCredentials && supabase) {
+        const isRealId = app.id && !String(app.id).startsWith('app-');
+        if (isRealId) {
+          await supabase.from('squad_applications').update({ status: 'declined' }).eq('id', app.id);
+        }
+        if (app.applicant_email) {
+          await supabase
+            .from('squad_applications')
+            .update({ status: 'declined' })
+            .eq('post_id', app.post_id)
+            .ilike('applicant_email', app.applicant_email);
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase status update error:', err);
+    }
+  };
+
+  const handleRemoveAcceptedMember = async (app) => {
+    const post = posts.find((p) => String(p.id) === String(app.post_id));
+    if (!post) return;
+
+    const appEmailLower = (app.applicant_email || '').toLowerCase();
+    const currentAcceptedEmails = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
+
+    const newAcceptedEmails = currentAcceptedEmails.filter((e) => e && e.toLowerCase() !== appEmailLower);
+
+    const updatedApps = applications.map((a) => {
+      const isMatch =
+        a.id === app.id ||
+        (String(a.post_id) === String(app.post_id) && a.applicant_email?.toLowerCase() === appEmailLower) ||
+        (app.applicant_id && String(a.post_id) === String(app.post_id) && a.applicant_id === app.applicant_id);
+      return isMatch ? { ...a, status: 'removed' } : a;
+    });
+
+    setApplications(updatedApps);
+    localStorage.setItem('onestop_squad_apps', JSON.stringify(updatedApps));
+
+    const initialOpen =
+      parseInt(post.initial_open_spots, 10) || currentAcceptedEmails.length + (parseInt(post.spots_left, 10) || 0) || 1;
+    const newOpenSpots = Math.max(0, initialOpen - newAcceptedEmails.length);
+    const isNowOpen = newOpenSpots > 0;
+
+    const updatedPosts = posts.map((p) =>
+      String(p.id) === String(post.id)
+        ? {
+            ...p,
+            accepted_emails: newAcceptedEmails,
+            initial_open_spots: initialOpen,
+            spots_left: newOpenSpots,
+            is_open: isNowOpen,
+          }
+        : p
+    );
+    setPosts(updatedPosts);
+    localStorage.setItem('onestop_squad_posts', JSON.stringify(updatedPosts));
+    invalidateSessionCache();
+
+    try {
+      if (hasValidCredentials && supabase) {
+        await supabase
+          .from('squad_posts')
+          .update({
+            accepted_emails: newAcceptedEmails,
+            initial_open_spots: initialOpen,
+            spots_left: newOpenSpots,
+            is_open: isNowOpen,
+          })
+          .eq('id', post.id);
+
+        const isRealId = app.id && !String(app.id).startsWith('app-');
+        if (isRealId) {
+          await supabase.from('squad_applications').update({ status: 'removed' }).eq('id', app.id);
+        }
+        if (app.applicant_email) {
+          await supabase
+            .from('squad_applications')
+            .update({ status: 'removed' })
+            .eq('post_id', app.post_id)
+            .ilike('applicant_email', app.applicant_email);
+        }
+        if (app.applicant_id) {
+          await supabase
+            .from('squad_applications')
+            .update({ status: 'removed' })
+            .eq('post_id', app.post_id)
+            .eq('applicant_id', app.applicant_id);
+        }
+      }
+    } catch (err) {
+      console.warn('Supabase remove member error:', err);
+    }
+  };
+
+  // Dots rendering helper
+  const renderSquadDots = (totalMembers = 4, openSpots = 1, isOpen = true) => {
+    const total = Math.max(1, parseInt(totalMembers, 10) || 4);
+    const open = isOpen ? Math.min(total, Math.max(0, parseInt(openSpots, 10) || 0)) : 0;
+    const filled = Math.max(0, total - open);
+
+    const dots = [];
+    for (let i = 0; i < filled; i++) {
+      dots.push(<span key={`f-${i}`} className="squad-dot-pill filled" title="Filled Member Spot" />);
+    }
+    for (let i = 0; i < open; i++) {
+      dots.push(<span key={`o-${i}`} className="squad-dot-pill open" title="Open Slot Looking for Member" />);
+    }
+
+    return (
+      <div className="squad-dots-wrapper" title={`${filled}/${total} slots filled (${open} open)`}>
+        <div className="squad-dots">{dots}</div>
+        <span className="squad-dots-subtext">{open > 0 ? `${open} OPEN` : 'FULL'}</span>
+      </div>
+    );
+  };
+
+  // Counts
+  const myPosts = posts.filter((p) => isUserPost(p, user));
+  const otherPosts = posts.filter((p) => !isUserPost(p, user));
+  const myPostsCount = myPosts.length;
+  const otherPostsCount = otherPosts.length;
+
+  // Pending incoming requests across all user's posts
+  const myPostIds = new Set(myPosts.map((p) => String(p.id)));
+  const pendingRequestsCount = applications.filter(
+    (a) => myPostIds.has(String(a.post_id)) && a.status === 'pending'
+  ).length;
+
+  // Filtering
+  const filteredPosts = posts.filter((post) => {
+    const isMyPost = isUserPost(post, user);
+
+    if (activeTab === 'my' && !isMyPost) return false;
+    if (activeTab === 'other' && isMyPost) return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        (post.competition_name || '').toLowerCase().includes(q) ||
+        (post.organizer || '').toLowerCase().includes(q) ||
+        (post.title || '').toLowerCase().includes(q) ||
+        (post.description || '').toLowerCase().includes(q) ||
+        (post.college || '').toLowerCase().includes(q) ||
+        (post.course || '').toLowerCase().includes(q) ||
+        (post.skills_looking_for || []).some((s) => s.toLowerCase().includes(q)) ||
+        (post.skills_have || []).some((s) => s.toLowerCase().includes(q));
+
+      if (!matchesSearch) return false;
+    }
+
+    return true;
+  });
+
   return (
-    <div className="squad-finder-view">
-      {/* Squad Hero Banner */}
-      <section className="squad-hero">
-        <div className="squad-hero-content">
-          <div className="squad-badge">
-            <UsersIcon size={15} color="var(--primary)" />
-            <span>Collegiate Peer Recruitment</span>
+    <div className="team-finder-container">
+      {/* ── Header ── */}
+      <header className="tf-header">
+        <div className="tf-header-left">
+          {onBack && (
+            <button className="tf-back-btn" onClick={onBack} title="Back">
+              <BackIcon />
+            </button>
+          )}
+          <div>
+            <h1 className="tf-title">Collegiate Team Finder & Squad Hub</h1>
+            <p className="tf-subtitle">
+              Connect with peers across colleges, match complementary skills, and form winning competition squads.
+            </p>
           </div>
-          <h1 className="squad-title">Find teammates with complementary skills & win together.</h1>
-          <p className="squad-sub">
-            Form high-synergy squads for Case Competitions, Hackathons, and Mock Stocks. Connect directly via WhatsApp once accepted.
-          </p>
         </div>
 
-        <div className="squad-header-actions">
+        <div className="tf-header-actions">
           <button
-            type="button"
-            className="btn-refresh-action"
-            onClick={refreshSquadData}
-            title="Refresh listings"
+            className={`btn-tf-secondary btn-refresh-listings ${isRefreshing ? 'refreshing' : ''}`}
+            onClick={handleManualRefresh}
+            disabled={isRefreshing}
+            title="Fetch latest team openings and peer requests"
           >
-            <RotateCcwIcon size={14} />
-            <span>Refresh</span>
+            <RefreshIcon size={14} className={isRefreshing ? 'spin-icon' : ''} />
+            <span>{isRefreshing ? 'Refreshing…' : 'Refresh Listings'}</span>
           </button>
+          {refreshToast && <span className="refresh-toast-msg">{refreshToast}</span>}
 
-          <button
-            type="button"
-            className="btn-profile-settings-action"
-            onClick={openProfileModal}
-            title="Update your collegiate profile details"
-          >
-            <SettingsIcon size={16} />
-            <span>Profile Settings</span>
-          </button>
-
-          <button className="btn-create-squad" onClick={() => setShowCreateModal(true)}>
-            <PlusIcon size={18} />
-            <span>Post Squad Opening</span>
+          <button className="btn-tf-primary" onClick={handleOpenCreateModal}>
+            <UsersIcon size={16} />
+            <span>Post Team Opening</span>
           </button>
         </div>
-      </section>
+      </header>
 
-      {/* Subtabs Switcher: Explore vs My Postings & Applications */}
-      <div className="squad-tab-controls">
-        <div className="squad-subtabs">
+      {/* ── Tab Switcher & Search Bar ── */}
+      <div className="tf-controls-bar">
+        <div className="tf-tab-switcher">
           <button
-            className={`subtab-btn ${activeSubTab === 'explore' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('explore')}
+            className={`tf-tab-btn ${activeTab === 'my' ? 'active' : ''}`}
+            onClick={() => {
+              setHasUserToggledTab(true);
+              setActiveTab('my');
+            }}
           >
-            <span>Explore Squads</span>
-            <span className="subtab-count">{filteredPosts.length}</span>
-          </button>
-
-          <button
-            className={`subtab-btn ${activeSubTab === 'my-squads' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('my-squads')}
-          >
-            <span>My Postings & Applications</span>
-            {(myPosts.length > 0 || myApps.length > 0) && (
-              <span className="subtab-count highlight">{myPosts.length + myApps.length}</span>
+            <span>📌 My Listings</span>
+            <span className="tf-tab-count">{myPostsCount}</span>
+            {pendingRequestsCount > 0 && (
+              <span className="tf-tab-pending-badge" title={`${pendingRequestsCount} pending applicant request(s)`}>
+                {pendingRequestsCount} new
+              </span>
             )}
           </button>
+          <button
+            className={`tf-tab-btn ${activeTab === 'other' ? 'active' : ''}`}
+            onClick={() => {
+              setHasUserToggledTab(true);
+              setActiveTab('other');
+            }}
+          >
+            <span>🌐 Other Listings</span>
+            <span className="tf-tab-count">{otherPostsCount}</span>
+          </button>
+        </div>
+
+        <div className="tf-search-box">
+          <SearchIcon size={15} />
+          <input
+            type="text"
+            placeholder="Search competitions, colleges, skills, or organizers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
+              ×
+            </button>
+          )}
         </div>
       </div>
 
-      {activeSubTab === 'explore' ? (
-        <>
-          {/* Search & Skill Chips Bar */}
-          <div className="squad-filter-bar">
-            <div className="squad-search-wrap">
-              <SearchIcon size={17} className="squad-search-icon" />
-              <input
-                type="text"
-                className="squad-search-input"
-                placeholder="Search squads by competition, college, role, or skill..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  className="squad-clear-search-btn"
-                  onClick={() => setSearchQuery('')}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            <div className="squad-skills-scroll">
-              <button
-                className={`skill-pill ${selectedSkillFilter === 'all' ? 'active' : ''}`}
-                onClick={() => setSelectedSkillFilter('all')}
-              >
-                All Skills
+      {/* ── Feed Grid ── */}
+      {loading ? (
+        <div className="tf-loading">
+          <div className="notice-spinner"></div>
+          <p>Loading squad postings…</p>
+        </div>
+      ) : filteredPosts.length === 0 ? (
+        <div className="tf-empty-state">
+          <TrophyIcon size={32} />
+          {searchQuery ? (
+            <>
+              <h3>No matching listings found</h3>
+              <p>No team listings match "{searchQuery}" under {activeTab === 'my' ? 'My Listings' : 'Other Listings'}.</p>
+              <button className="btn-tf-secondary" onClick={() => setSearchQuery('')} style={{ marginTop: '1rem' }}>
+                Clear Search
               </button>
-              {PRESET_SKILLS.map(skill => (
-                <button
-                  key={skill}
-                  className={`skill-pill ${selectedSkillFilter === skill ? 'active' : ''}`}
-                  onClick={() => setSelectedSkillFilter(skill)}
-                >
-                  {skill}
+            </>
+          ) : activeTab === 'my' ? (
+            <>
+              <h3>You haven't posted any team openings yet</h3>
+              <p>Post a team opening to find complementary teammates for upcoming competitions!</p>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button className="btn-tf-primary" onClick={handleOpenCreateModal}>
+                  <UsersIcon size={16} /> Post Team Opening
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Squad Posts Grid */}
-          <div className="squad-posts-grid">
-            {filteredPosts.length === 0 ? (
-              <div className="squad-empty-state">
-                <div className="empty-icon">🤝</div>
-                <h3>No open squads match your filter</h3>
-                <p>Be the first one to create a squad opening for your target competition!</p>
-                <button className="btn-create-squad" onClick={() => setShowCreateModal(true)}>
-                  Post Opening Now
-                </button>
-              </div>
-            ) : (
-              filteredPosts.map(post => {
-                const isUserPost = post.created_by_email === user?.email || post.user_id === user?.id;
-                const openSpots = getPostOpenSpots(post);
-                const totalMembers = post.total_members || 4;
-                const filledCount = Math.min(totalMembers, Math.max(0, totalMembers - openSpots));
-                const userApp = getUserAppForPost(post.id);
-                const isSquadFull = openSpots === 0 || !post.is_open;
-                const pendingApplicantsCount = squadApps.filter(a => a.post_id === post.id && a.status === 'pending').length;
-
-                return (
-                  <article
-                    key={post.id}
-                    className={`squad-card ${isUserPost ? 'is-owner' : ''}`}
-                    onClick={() => openDetailModal(post)}
+                {otherPostsCount > 0 && (
+                  <button
+                    className="btn-tf-secondary"
+                    onClick={() => {
+                      setHasUserToggledTab(true);
+                      setActiveTab('other');
+                    }}
                   >
-                    {/* Header Row: Competition & Spots Badge */}
-                    <div className="squad-card-header">
-                      <div className="squad-comp-meta">
-                        <div className="squad-comp-name" title={post.competition_name}>
-                          <TrophyIcon size={14} color="var(--primary)" />
-                          <span>{post.competition_name}</span>
-                        </div>
-                        {post.organizer && <span className="squad-org-name">{post.organizer}</span>}
-                      </div>
-
-                      {/* Squad Spots & Visual Seat Dots */}
-                      <div className="squad-spots-meta">
-                        <div className={`squad-spots-badge ${isSquadFull ? 'full' : 'open'}`}>
-                          <span className="spots-num">{openSpots}</span>
-                          <span className="spots-text">{openSpots === 1 ? 'spot left' : 'spots left'}</span>
-                        </div>
-                        {/* Visual Squad Dots Indicator */}
-                        <div className="squad-dots-container" title={`${filledCount} of ${totalMembers} seats filled`}>
-                          {Array.from({ length: totalMembers }).map((_, idx) => (
-                            <span
-                              key={idx}
-                              className={`squad-dot ${idx < filledCount ? 'filled' : 'empty'}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <h3 className="squad-post-title">{post.title}</h3>
-                    <p className="squad-post-desc">{post.description}</p>
-
-                    {/* Skills Looking For */}
-                    <div className="squad-skills-section">
-                      <span className="skills-heading">Looking for:</span>
-                      <div className="skills-tags-wrap">
-                        {post.skills_looking_for && post.skills_looking_for.length > 0 ? (
-                          post.skills_looking_for.map(skill => (
-                            <span key={skill} className="skill-tag looking">
-                              🎯 {skill}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="skill-tag general">All undergraduate skills welcome</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Skills We Have */}
-                    {post.skills_have && post.skills_have.length > 0 && (
-                      <div className="squad-skills-section">
-                        <span className="skills-heading">Team brings:</span>
-                        <div className="skills-tags-wrap">
-                          {post.skills_have.map(skill => (
-                            <span key={skill} className="skill-tag have">
-                              ✓ {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Author Row & Actions */}
-                    <div className="squad-author-row">
-                      <div className="author-info">
-                        <div className="author-avatar">
-                          {(post.created_by_name || 'U').charAt(0).toUpperCase()}
-                        </div>
-                        <div className="author-meta">
-                          <span className="author-name">{post.created_by_name}</span>
-                          <span className="author-college">
-                            {[post.college, post.course, post.year].filter(Boolean).join(' · ')}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Direct WhatsApp Outreach Button */}
-                      {post.phone_number && (
-                        <a
-                          href={formatWhatsAppUrl(
-                            post.phone_number,
-                            `Hi ${post.created_by_name}! Saw your squad opening for "${post.competition_name}" on OneStop.`
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-whatsapp-outreach"
-                          title="Message team host directly on WhatsApp"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <WhatsAppIcon size={14} />
-                          <span>WhatsApp</span>
-                        </a>
-                      )}
-                    </div>
-
-                    {/* Dynamic Status Callout & Action Bar */}
-                    <div className="squad-action-bar" onClick={(e) => e.stopPropagation()}>
-                      {isUserPost ? (
-                        <div className="owner-action-group">
-                          <button
-                            type="button"
-                            className="btn-manage-squad"
-                            onClick={(e) => openReviewModal(post, e)}
-                          >
-                            <span>Manage Applicants</span>
-                            {pendingApplicantsCount > 0 && (
-                              <span className="pending-badge">{pendingApplicantsCount}</span>
-                            )}
-                          </button>
-                        </div>
-                      ) : userApp ? (
-                        /* In-Card Application State Banners matching SSCBS OS */
-                        <div className="user-app-status-box">
-                          {userApp.status === 'accepted' ? (
-                            <div className="status-banner accepted">
-                              <span className="status-label">🎉 Accepted into Squad!</span>
-                              {post.phone_number && (
-                                <a
-                                  href={formatWhatsAppUrl(
-                                    post.phone_number,
-                                    `Hi ${post.created_by_name}! Excited to join our squad for ${post.competition_name}!`
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="btn-whatsapp-inline"
-                                >
-                                  <WhatsAppIcon size={13} />
-                                  <span>Chat with Lead</span>
-                                </a>
-                              )}
-                            </div>
-                          ) : userApp.status === 'pending' ? (
-                            <div className="status-banner pending">
-                              <span>⏳ Request Pending Review</span>
-                            </div>
-                          ) : userApp.status === 'declined' || userApp.status === 'rejected' ? (
-                            <div className="status-banner declined">
-                              <span>❌ Application Declined</span>
-                              <button
-                                type="button"
-                                className="btn-reapply-link"
-                                onClick={(e) => openReapplyModal(userApp, e)}
-                              >
-                                Re-apply
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="status-banner removed">
-                              <span>⚠️ Removed from Squad</span>
-                              <button
-                                type="button"
-                                className="btn-reapply-link"
-                                onClick={(e) => openReapplyModal(userApp, e)}
-                              >
-                                Re-apply
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ) : isSquadFull ? (
-                        <span className="badge-filled">Squad Full</span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-apply-squad"
-                          onClick={(e) => openApplyModal(post, e)}
-                        >
-                          Request to Join
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                );
-              })
-            )}
-          </div>
-        </>
+                    Browse {otherPostsCount} Other Team Opening{otherPostsCount === 1 ? '' : 's'}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <h3>No other team listings available right now</h3>
+              <p>Be the first to create a team opening for your squad!</p>
+              <button className="btn-tf-primary" onClick={handleOpenCreateModal} style={{ marginTop: '1rem' }}>
+                <UsersIcon size={16} /> Post Team Opening
+              </button>
+            </>
+          )}
+        </div>
       ) : (
-        /* My Postings & Applications Management SubTab */
-        <div className="my-squads-view">
-          <div className="management-grid">
-            {/* Column 1: Squad Openings I Posted */}
-            <div className="management-col">
-              <div className="col-header">
-                <h2>My Squad Postings ({myPosts.length})</h2>
-                <span className="col-sub">Manage applicants, fill spots, and coordinate over WhatsApp</span>
-              </div>
+        <div className="tf-posts-grid">
+          {filteredPosts.map((post) => {
+            const isHost = isUserPost(post, user);
+            const postApps = applications.filter((a) => a.post_id === post.id);
+            const pendingAppsCount = postApps.filter((a) => a.status === 'pending').length;
 
-              {myPosts.length === 0 ? (
-                <div className="empty-sub-card">
-                  <p>You haven't posted any squad openings yet.</p>
-                  <button className="btn-create-squad-small" onClick={() => setShowCreateModal(true)}>
-                    + Post Opening
-                  </button>
+            const userApp = getUserApp(post, applications, user?.email, user?.id);
+            const openSpots = getPostOpenSpots(post);
+            const openStatus = isPostOpen(post);
+
+            return (
+              <div
+                key={post.id}
+                className={`tf-post-card ${!openStatus ? 'closed' : ''}`}
+                onClick={() => setSelectedPostForView(post)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedPostForView(post);
+                  }
+                }}
+              >
+                <div className="card-top-bar">
+                  <span className="comp-organizer" title={post.organizer || 'Corporate / Society'}>
+                    {post.organizer || 'Corporate / Society'}
+                  </span>
+                  <div className="card-top-right">
+                    {renderSquadDots(post.total_members || 4, openSpots, openStatus)}
+                  </div>
                 </div>
-              ) : (
-                myPosts.map(post => {
-                  const applicantsForThisPost = squadApps.filter(a => a.post_id === post.id);
-                  const openSpots = getPostOpenSpots(post);
 
-                  return (
-                    <div key={post.id} className="management-post-card">
-                      <div className="m-post-header">
-                        <div>
-                          <div className="m-post-comp">{post.competition_name}</div>
-                          <h4 className="m-post-title">{post.title}</h4>
-                        </div>
-                        <div className="m-post-controls">
-                          <span className={`status-pill ${openSpots > 0 ? 'open' : 'filled'}`}>
-                            {openSpots > 0 ? `${openSpots} spots open` : 'Filled'}
-                          </span>
-                          <button
-                            type="button"
-                            className="btn-toggle-open"
-                            onClick={() => togglePostOpen(post.id, post.is_open)}
-                            title={post.is_open ? 'Close listing' : 'Reopen listing'}
-                          >
-                            {post.is_open ? 'Close' : 'Reopen'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-delete-post"
-                            onClick={() => {
-                              if (window.confirm('Delete this squad opening? All associated applications will also be removed.')) {
-                                deleteSquadPost(post.id);
-                              }
-                            }}
-                            title="Delete opening"
-                          >
-                            ✕
-                          </button>
-                        </div>
+                <div className="card-main-content">
+                  <div className="comp-title-row">
+                    <h2 className="comp-name" title={post.competition_name}>
+                      {post.competition_name}
+                    </h2>
+
+                    {post.competition_link && (
+                      <a
+                        href={
+                          post.competition_link.startsWith('http')
+                            ? post.competition_link
+                            : `https://${post.competition_link}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="comp-link-pill"
+                        title="Visit Competition Website"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span>Click to visit</span>
+                        <ExternalLinkIcon size={12} />
+                      </a>
+                    )}
+                  </div>
+
+                  {/* User Application Status Callout Banner */}
+                  {userApp && !isHost && (
+                    <div className={`user-app-banner compact ${userApp.status}`} onClick={(e) => e.stopPropagation()}>
+                      <div className="user-app-banner-icon">
+                        {userApp.status === 'accepted'
+                          ? '🎉'
+                          : userApp.status === 'declined'
+                          ? '❌'
+                          : userApp.status === 'removed'
+                          ? '⚠️'
+                          : '⏳'}
                       </div>
-
-                      {/* Applicants List */}
-                      <div className="applicants-section">
-                        <div className="applicants-header">
-                          <span>Applicants ({applicantsForThisPost.length})</span>
-                        </div>
-
-                        {applicantsForThisPost.length === 0 ? (
-                          <p className="no-applicants-note">No applications received yet. Your opening is live in the public board.</p>
-                        ) : (
-                          <div className="applicants-list">
-                            {applicantsForThisPost.map(app => (
-                              <div key={app.id} className="applicant-item-card">
-                                <div className="applicant-top">
-                                  <div>
-                                    <strong className="app-name">{app.applicant_name}</strong>
-                                    {app.applicant_college && (
-                                      <span className="app-college"> · {app.applicant_college}</span>
-                                    )}
-                                  </div>
-                                  <span className={`app-status-badge ${app.status}`}>
-                                    {app.status.toUpperCase()}
-                                  </span>
-                                </div>
-
-                                <p className="app-pitch">"{app.pitch_note}"</p>
-
-                                {app.highlighted_skills && app.highlighted_skills.length > 0 && (
-                                  <div className="app-skills-row">
-                                    {app.highlighted_skills.map(s => (
-                                      <span key={s} className="app-skill-badge">{s}</span>
-                                    ))}
-                                  </div>
-                                )}
-
-                                <div className="applicant-actions">
-                                  {app.status === 'pending' ? (
-                                    <>
-                                      {/* Host 1-Click WhatsApp to Screen Before Accepting */}
-                                      {app.applicant_phone && (
-                                        <a
-                                          href={formatWhatsAppUrl(
-                                            app.applicant_phone,
-                                            `Hi ${app.applicant_name}! Saw your application for our squad in ${post.competition_name} on OneStop. Wanted to connect!`
-                                          )}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="btn-action-chat"
-                                        >
-                                          <WhatsAppIcon size={14} />
-                                          <span>Chat</span>
-                                        </a>
-                                      )}
-
-                                      <button
-                                        className="btn-action-accept"
-                                        onClick={() => handleAcceptTeammate(app.id)}
-                                      >
-                                        Accept &amp; Fill Spot
-                                      </button>
-                                      <button
-                                        className="btn-action-reject"
-                                        onClick={() => handleDeclineTeammate(app.id)}
-                                      >
-                                        Decline
-                                      </button>
-                                    </>
-                                  ) : app.status === 'accepted' ? (
-                                    <>
-                                      {app.applicant_phone && (
-                                        <a
-                                          href={formatWhatsAppUrl(
-                                            app.applicant_phone,
-                                            `Hi ${app.applicant_name}! Welcome to the squad for ${post.competition_name}. Let's coordinate!`
-                                          )}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="btn-whatsapp-connect"
-                                        >
-                                          <WhatsAppIcon size={14} />
-                                          <span>WhatsApp Chat</span>
-                                        </a>
-                                      )}
-
-                                      {/* Member Removal Button (reopens spot!) */}
-                                      <button
-                                        className="btn-action-remove"
-                                        onClick={() => handleRemoveTeammate(app.id)}
-                                        title="Remove member and reopen spot"
-                                      >
-                                        Remove Member
-                                      </button>
-                                    </>
-                                  ) : (
-                                    <span className="declined-note">
-                                      {app.status === 'removed' ? 'Removed from Squad' : 'Application Declined'}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Column 2: Applications I Sent */}
-            <div className="management-col">
-              <div className="col-header">
-                <h2>Applications I've Sent ({myApps.length})</h2>
-                <span className="col-sub">Track team decisions and connect on WhatsApp</span>
-              </div>
-
-              {myApps.length === 0 ? (
-                <div className="empty-sub-card">
-                  <p>You haven't applied to any squads yet.</p>
-                  <button className="btn-create-squad-small" onClick={() => setActiveSubTab('explore')}>
-                    Browse Squads
-                  </button>
-                </div>
-              ) : (
-                myApps.map(app => {
-                  const targetPost = squadPosts.find(p => p.id === app.post_id);
-                  const isAccepted = app.status === 'accepted';
-                  const isDeclined = app.status === 'declined' || app.status === 'rejected';
-                  const isRemoved = app.status === 'removed';
-
-                  return (
-                    <div key={app.id} className="management-post-card">
-                      <div className="m-post-header">
-                        <div>
-                          <div className="m-post-comp">{app.competition_name || targetPost?.competition_name}</div>
-                          <h4 className="m-post-title">{targetPost?.title || 'Squad Application'}</h4>
-                        </div>
-                        <span className={`app-status-badge ${app.status}`}>
-                          {app.status.toUpperCase()}
+                      <div className="user-app-banner-content">
+                        <span className="user-app-banner-title">
+                          {userApp.status === 'accepted'
+                            ? 'Accepted into Squad'
+                            : userApp.status === 'declined'
+                            ? 'Application Declined'
+                            : userApp.status === 'removed'
+                            ? 'Removed from Squad'
+                            : 'Request Pending Review'}
                         </span>
                       </div>
+                    </div>
+                  )}
 
-                      <p className="app-pitch">Your pitch: "{app.pitch_note}"</p>
+                  {/* Description Clamped to Uniform 2 Lines */}
+                  <p className="post-desc" title={post.description || post.title}>
+                    {post.description || post.title}
+                  </p>
 
-                      {isAccepted && targetPost?.phone_number && (
-                        <div className="accepted-banner">
-                          <p className="accepted-headline">🎉 You were accepted into this squad!</p>
-                          <a
-                            href={formatWhatsAppUrl(
-                              targetPost.phone_number,
-                              `Hi ${targetPost.created_by_name}! Thanks for accepting my application for ${targetPost.competition_name}. Excited to collaborate!`
+                  {/* Read More Trigger */}
+                  <button
+                    type="button"
+                    className="tf-read-more-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedPostForView(post);
+                    }}
+                  >
+                    Open full squad card →
+                  </button>
+
+                  {/* Squeezed Skills Preview Section */}
+                  <div className="card-skills-preview">
+                    {(() => {
+                      const hasPresent = post.skills_have && post.skills_have.length > 0;
+                      const hasLooking = post.skills_looking_for && post.skills_looking_for.length > 0;
+
+                      if (!hasPresent && !hasLooking) {
+                        return (
+                          <div className="skills-empty-slot">
+                            <span className="skills-empty-tag">Open Squad</span>
+                            <span className="skills-empty-note">All skills & backgrounds welcome</span>
+                          </div>
+                        );
+                      }
+
+                      const MAX_PILLS = 2;
+
+                      return (
+                        <>
+                          {hasPresent && (
+                            <div className="skills-group">
+                              <span className="skills-group-label">Skills Present:</span>
+                              <div className="skills-pills">
+                                {post.skills_have.slice(0, MAX_PILLS).map((s, idx) => (
+                                  <span key={idx} className="skill-pill present" title={s}>
+                                    ✓ {s}
+                                  </span>
+                                ))}
+                                {post.skills_have.length > MAX_PILLS && (
+                                  <span
+                                    className="skill-pill more-pill"
+                                    title={post.skills_have.slice(MAX_PILLS).join(', ')}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedPostForView(post);
+                                    }}
+                                  >
+                                    +{post.skills_have.length - MAX_PILLS} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {hasLooking && (
+                            <div className="skills-group">
+                              <span className="skills-group-label">Looking For:</span>
+                              <div className="skills-pills">
+                                {post.skills_looking_for.slice(0, MAX_PILLS).map((s, idx) => (
+                                  <span key={idx} className="skill-pill needed" title={s}>
+                                    ⚡ {s}
+                                  </span>
+                                ))}
+                                {post.skills_looking_for.length > MAX_PILLS && (
+                                  <span
+                                    className="skill-pill more-pill"
+                                    title={post.skills_looking_for.slice(MAX_PILLS).join(', ')}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedPostForView(post);
+                                    }}
+                                  >
+                                    +{post.skills_looking_for.length - MAX_PILLS} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Card Footer */}
+                {(() => {
+                  const authorName = formatStudentName(post.created_by_name, post.created_by_email);
+                  const avatarChar = (authorName || 'C').charAt(0).toUpperCase();
+
+                  return (
+                    <div className="card-footer">
+                      <div className="creator-info">
+                        <span className="creator-avatar">{avatarChar}</span>
+                        <div className="creator-details">
+                          <span className="creator-name">{authorName}</span>
+                          <span className="creator-course">
+                            {post.college && <span className="creator-college-tag">{post.college}</span>}
+                            {post.course ? `${post.course} • ` : ''}
+                            {post.year || '2nd Year'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="card-actions">
+                        {/* Host Controls */}
+                        {isHost ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn-review-apps"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedPostForReview(post);
+                              }}
+                              title="Review Applicant Requests"
+                            >
+                              <MailIcon size={14} />
+                              <span>Requests</span>
+                              {pendingAppsCount > 0 && <span className="apps-count-badge">{pendingAppsCount}</span>}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-card-subtle"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEditModal(post);
+                              }}
+                              title="Edit Listing Details"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-card-subtle"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleStatus(post.id, openStatus);
+                              }}
+                            >
+                              {openStatus ? 'Close' : 'Reopen'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-card-subtle danger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePost(post.id);
+                              }}
+                              title="Delete Post"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          /* Peer Controls */
+                          <>
+                            {post.phone_number && (
+                              <a
+                                href={formatWhatsAppUrl(
+                                  post.phone_number,
+                                  `Hi! Saw your squad opening for ${post.competition_name} on OneStop.`
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="wa-connect-btn"
+                                title="Direct WhatsApp Connect"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <WhatsAppIcon size={14} /> WhatsApp
+                              </a>
                             )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn-whatsapp-connect full"
-                          >
-                            <WhatsAppIcon size={18} />
-                            <span>Chat with Team Lead on WhatsApp</span>
-                          </a>
-                        </div>
-                      )}
 
-                      {(isDeclined || isRemoved) && (
-                        <div className="declined-box">
-                          <p className="declined-text">
-                            {isRemoved ? 'You were removed from this squad.' : 'Your application was not selected for this opening.'}
-                          </p>
-                          <button
-                            type="button"
-                            className="btn-reapply-action"
-                            onClick={(e) => openReapplyModal(app, e)}
-                          >
-                            Re-apply with Updated Pitch
-                          </button>
-                        </div>
-                      )}
+                            {openStatus && (!userApp || userApp.status === 'declined' || userApp.status === 'removed') && (
+                              <button
+                                type="button"
+                                className="btn-tf-primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenApplyModal(post);
+                                }}
+                              >
+                                <MailIcon size={13} /> {userApp ? 'Re-apply to Join' : 'Request to Join'}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   );
-                })
-              )}
-            </div>
-          </div>
+                })()}
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Modal 1: Create Squad Post */}
-      {showCreateModal && (
-        <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <UsersIcon size={20} color="var(--primary)" />
-                <h2>Post a Squad Opening</h2>
+      {/* ── CREATE / EDIT POST MODAL ── */}
+      {isCreateModalOpen && (
+        <div className="tf-modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
+          <div className="tf-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="tf-modal-header">
+              <div>
+                <h3>{editingPost ? 'Edit Squad Listing' : 'Post Team Opening'}</h3>
+                <p className="tf-modal-subtitle">
+                  {editingPost
+                    ? 'Update competition details & team requirements'
+                    : 'Find complementary teammates for your competition squad across any college'}
+                </p>
               </div>
-              <button className="modal-close-btn" onClick={() => setShowCreateModal(false)}>✕</button>
+              <button
+                type="button"
+                className="tf-close-btn"
+                onClick={() => setIsCreateModalOpen(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="modal-form">
-              <div className="form-grid-2">
-                <div className="form-group">
+            <form onSubmit={handleSubmitPost} className="tf-modal-form" noValidate>
+              {formError && <div className="form-error-banner">{formError}</div>}
+
+              <div className="tf-form-row">
+                <div className="tf-form-group tf-flex-1">
                   <label>Competition Name *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Bain Strategy Challenge 2026"
+                    placeholder="e.g. Bain Strategy Challenge, EY NextGen Leader"
                     value={formData.competition_name}
                     onChange={(e) => setFormData({ ...formData, competition_name: e.target.value })}
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Host / Organizer</label>
+                <div className="tf-form-group tf-flex-1">
+                  <label>Organizing Institute / Corp</label>
                   <input
                     type="text"
-                    placeholder="e.g. Bain & Company / IIM Ahmedabad"
+                    placeholder="e.g. Bain, EY India, IIM Ahmedabad, SRCC"
                     value={formData.organizer}
                     onChange={(e) => setFormData({ ...formData, organizer: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label>Registration Link (Optional)</label>
+              <div className="tf-form-row">
+                <div className="tf-form-group tf-flex-1">
+                  <label>Competition Link</label>
                   <input
                     type="url"
                     placeholder="https://unstop.com/o/..."
@@ -1220,114 +1589,220 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Your WhatsApp Number *</label>
+                <div className="tf-form-group tf-flex-1">
+                  <label>WhatsApp / Contact Phone (10 Digits) *</label>
                   <input
                     type="tel"
                     required
+                    maxLength={16}
                     placeholder="10-digit mobile (e.g. 9876543210)"
                     value={formData.phone_number}
-                    onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, phone_number: sanitizeIndianPhone(e.target.value) })}
                   />
                 </div>
               </div>
 
-              <div className="form-group">
-                <label>Opening Headline *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Looking for 1 DCF valuation lead for 4-member squad"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Pitch & What You're Looking For *</label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="Describe your current team composition, background, past track record, and exactly what profile you need..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-
-              {/* Skills looking for */}
-              <div className="form-group">
-                <label>Skills You're Looking For</label>
-                <div className="skills-selector-wrap">
-                  {PRESET_SKILLS.map(skill => (
-                    <button
-                      type="button"
-                      key={skill}
-                      className={`skill-choice-btn ${formData.skills_looking_for.includes(skill) ? 'selected' : ''}`}
-                      onClick={() => toggleSkillLookingFor(skill)}
-                    >
-                      {skill}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Skills we have */}
-              <div className="form-group">
-                <label>Skills Your Team Already Has</label>
-                <div className="skills-selector-wrap">
-                  {PRESET_SKILLS.map(skill => (
-                    <button
-                      type="button"
-                      key={skill}
-                      className={`skill-choice-btn have ${formData.skills_have.includes(skill) ? 'selected' : ''}`}
-                      onClick={() => toggleSkillHave(skill)}
-                    >
-                      {skill}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-grid-3">
-                <div className="form-group">
-                  <label>Total Team Size</label>
-                  <input
-                    type="number"
-                    min={2}
-                    max={6}
-                    value={formData.total_members}
-                    onChange={(e) => setFormData({ ...formData, total_members: Number(e.target.value) })}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Spots Open Now</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={Math.max(1, (formData.total_members || 4) - 1)}
-                    value={formData.spots_left}
-                    onChange={(e) => setFormData({ ...formData, spots_left: Number(e.target.value) })}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Your College</label>
+              {/* Collegiate Details (For Everyone) */}
+              <div className="tf-form-row">
+                <div className="tf-form-group tf-flex-1">
+                  <label>Your College / University *</label>
                   <input
                     type="text"
-                    placeholder="e.g. SRCC, IIT Bombay, DTU"
+                    required
+                    placeholder="e.g. SRCC, IIT Delhi, SSCBS, BITS Pilani"
                     value={formData.college}
                     onChange={(e) => setFormData({ ...formData, college: e.target.value })}
                   />
                 </div>
+
+                <div className="tf-form-group tf-flex-1">
+                  <label>Degree / Course</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. B.Com (Hons), B.Tech, BMS, Economics"
+                    value={formData.course}
+                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                  />
+                </div>
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowCreateModal(false)}>
+              <div className="tf-form-group">
+                <label>Brief description, requirements, past track record *</label>
+                <textarea
+                  rows="3"
+                  required
+                  placeholder="Describe your current team composition, strategy, track record, and exactly what profile you need..."
+                  value={formData.description || formData.title}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value, title: e.target.value })}
+                />
+              </div>
+
+              {/* Members & Spots Selector */}
+              <div className="tf-form-row">
+                <div className="tf-form-group tf-flex-1">
+                  <label>Total Team Size</label>
+                  <select
+                    value={formData.total_members}
+                    onChange={(e) => setFormData({ ...formData, total_members: e.target.value })}
+                  >
+                    <option value="2">2 Members</option>
+                    <option value="3">3 Members</option>
+                    <option value="4">4 Members</option>
+                    <option value="5">5 Members</option>
+                    <option value="6">6 Members</option>
+                  </select>
+                </div>
+
+                <div className="tf-form-group tf-flex-1">
+                  <label>Open Spots Left</label>
+                  <select
+                    value={formData.spots_left}
+                    onChange={(e) => setFormData({ ...formData, spots_left: e.target.value })}
+                  >
+                    <option value="1">1 Open Spot (● ● ● ○)</option>
+                    <option value="2">2 Open Spots (● ● ○ ○)</option>
+                    <option value="3">3 Open Spots (● ○ ○ ○)</option>
+                    <option value="4">4 Open Spots (○ ○ ○ ○)</option>
+                    <option value="5">5 Open Spots</option>
+                  </select>
+                </div>
+
+                <div className="tf-form-group tf-flex-1">
+                  <label>Current Year</label>
+                  <select
+                    value={formData.year}
+                    onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                  >
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                    <option value="Postgraduate">Postgraduate</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Skills Present */}
+              <div className="tf-form-group">
+                <label>Skills Present in Your Team</label>
+
+                {formData.skills_have.length > 0 && (
+                  <div className="selected-skills-row">
+                    <span className="selected-skills-title">Active:</span>
+                    {formData.skills_have.map((skill) => (
+                      <span key={skill} className="selected-skill-pill present">
+                        {skill}
+                        <button
+                          type="button"
+                          className="btn-remove-skill"
+                          onClick={() => handleRemoveSkillHave(skill)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="tf-skill-selector-box">
+                  {DEFAULT_SKILLS.map((skill) => (
+                    <button
+                      type="button"
+                      key={skill}
+                      className={`tf-skill-pill ${formData.skills_have.includes(skill) ? 'active' : ''}`}
+                      onClick={() => handleToggleSkillHave(skill)}
+                    >
+                      {formData.skills_have.includes(skill) && <CheckIcon size={12} />} {skill}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="tf-custom-skill-row">
+                  <input
+                    type="text"
+                    placeholder="Type custom skill present..."
+                    value={formData.custom_skill_have}
+                    onChange={(e) => setFormData({ ...formData, custom_skill_have: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomSkillHave();
+                      }
+                    }}
+                  />
+                  <button type="button" onClick={handleAddCustomSkillHave} className="tf-btn-add-skill">
+                    + Add
+                  </button>
+                </div>
+                {skillHaveFeedback && <div className="skill-feedback-msg success">{skillHaveFeedback}</div>}
+              </div>
+
+              {/* Skills Needed */}
+              <div className="tf-form-group">
+                <label>Skills Needed in Teammate(s)</label>
+
+                {formData.skills_looking_for.length > 0 && (
+                  <div className="selected-skills-row">
+                    <span className="selected-skills-title">Needed:</span>
+                    {formData.skills_looking_for.map((skill) => (
+                      <span key={skill} className="selected-skill-pill needed">
+                        {skill}
+                        <button
+                          type="button"
+                          className="btn-remove-skill"
+                          onClick={() => handleRemoveSkillLooking(skill)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div className="tf-skill-selector-box">
+                  {DEFAULT_SKILLS.map((skill) => (
+                    <button
+                      type="button"
+                      key={skill}
+                      className={`tf-skill-pill needed ${formData.skills_looking_for.includes(skill) ? 'active' : ''}`}
+                      onClick={() => handleToggleSkillLooking(skill)}
+                    >
+                      {formData.skills_looking_for.includes(skill) && <CheckIcon size={12} />} {skill}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="tf-custom-skill-row">
+                  <input
+                    type="text"
+                    placeholder="Type custom skill needed..."
+                    value={formData.custom_skill_looking}
+                    onChange={(e) => setFormData({ ...formData, custom_skill_looking: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomSkillLooking();
+                      }
+                    }}
+                  />
+                  <button type="button" onClick={handleAddCustomSkillLooking} className="tf-btn-add-skill">
+                    + Add
+                  </button>
+                </div>
+                {skillLookingFeedback && <div className="skill-feedback-msg success">{skillLookingFeedback}</div>}
+              </div>
+
+              <div className="tf-modal-footer">
+                <button
+                  type="button"
+                  className="btn-tf-secondary"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  disabled={submitting}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit">
-                  Post Squad Opening
+                <button type="submit" className="btn-tf-primary" disabled={submitting}>
+                  {submitting ? 'Saving…' : editingPost ? 'Update Opening' : 'Publish Opening'}
                 </button>
               </div>
             </form>
@@ -1335,103 +1810,135 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
         </div>
       )}
 
-      {/* Modal 2: Apply to Squad */}
-      {showApplyModal && targetPostForApply && (
-        <div className="modal-backdrop" onClick={() => setShowApplyModal(false)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <TrophyIcon size={20} color="var(--primary)" />
-                <h2>Apply to Join Squad</h2>
+      {/* ── JOIN REQUEST MODAL (FOR APPLICANTS) ── */}
+      {selectedPostForApply && (
+        <div className="tf-modal-overlay" onClick={() => setSelectedPostForApply(null)}>
+          <div className="tf-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="tf-modal-header">
+              <div>
+                <h3>Request to Join Team</h3>
+                <p className="tf-modal-subtitle">{selectedPostForApply.competition_name}</p>
               </div>
-              <button className="modal-close-btn" onClick={() => setShowApplyModal(false)}>✕</button>
+              <button
+                type="button"
+                className="tf-close-btn"
+                onClick={() => setSelectedPostForApply(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
             </div>
 
-            <div className="apply-post-summary">
-              <span className="apply-comp-name">{targetPostForApply.competition_name}</span>
-              <h3 className="apply-comp-title">{targetPostForApply.title}</h3>
-              <span className="apply-host-meta">Lead: {targetPostForApply.created_by_name} ({targetPostForApply.college || 'Collegiate'})</span>
-            </div>
-
-            <form onSubmit={handleApplySubmit} className="modal-form">
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label>Your Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={applyForm.applicant_name}
-                    onChange={(e) => setApplyForm({ ...applyForm, applicant_name: e.target.value })}
-                  />
+            <form onSubmit={handleSubmitJoinRequest} className="tf-modal-form" noValidate>
+              {applyError && <div className="form-error-banner">{applyError}</div>}
+              {applySuccess && (
+                <div className="skill-feedback-msg success" style={{ marginBottom: '12px', fontSize: '0.85rem' }}>
+                  {applySuccess}
                 </div>
+              )}
 
-                <div className="form-group">
-                  <label>Your WhatsApp Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="10-digit mobile"
-                    value={applyForm.applicant_phone}
-                    onChange={(e) => setApplyForm({ ...applyForm, applicant_phone: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="form-grid-2">
-                <div className="form-group">
-                  <label>Your College</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. SRCC, SSCBS, IIT, BITS"
-                    value={applyForm.applicant_college}
-                    onChange={(e) => setApplyForm({ ...applyForm, applicant_college: e.target.value })}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Course / Degree</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. B.Com (Hons) / B.Tech / BBA"
-                    value={applyForm.applicant_course}
-                    onChange={(e) => setApplyForm({ ...applyForm, applicant_course: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Pitch Note (Why are you a good fit?) *</label>
+              <div className="tf-form-group">
+                <label>Pitch Note to Host *</label>
                 <textarea
-                  rows={3}
+                  rows="3"
                   required
-                  placeholder="Mention your relevant experience, past wins, technical strengths, or how you can contribute..."
+                  placeholder="Introduce yourself, past wins, relevant skills, and explain why you are a great fit for this squad..."
                   value={applyForm.pitch_note}
                   onChange={(e) => setApplyForm({ ...applyForm, pitch_note: e.target.value })}
                 />
               </div>
 
-              <div className="form-group">
-                <label>Highlight Skills You Bring</label>
-                <div className="skills-selector-wrap">
-                  {PRESET_SKILLS.map(skill => (
-                    <button
-                      type="button"
-                      key={skill}
-                      className={`skill-choice-btn have ${applyForm.highlighted_skills.includes(skill) ? 'selected' : ''}`}
-                      onClick={() => toggleApplicantSkill(skill)}
-                    >
-                      {skill}
-                    </button>
-                  ))}
+              <div className="tf-form-row">
+                <div className="tf-form-group tf-flex-1">
+                  <label>Your WhatsApp Mobile (10 Digits) *</label>
+                  <input
+                    type="tel"
+                    required
+                    maxLength={16}
+                    placeholder="10-digit mobile"
+                    value={applyForm.applicant_phone}
+                    onChange={(e) =>
+                      setApplyForm({ ...applyForm, applicant_phone: sanitizeIndianPhone(e.target.value) })
+                    }
+                  />
+                </div>
+
+                <div className="tf-form-group tf-flex-1">
+                  <label>Your College / University</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SRCC, IIT, SSCBS"
+                    value={applyForm.applicant_college}
+                    onChange={(e) => setApplyForm({ ...applyForm, applicant_college: e.target.value })}
+                  />
                 </div>
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowApplyModal(false)}>
+              <div className="tf-form-row">
+                <div className="tf-form-group tf-flex-1">
+                  <label>Your Degree / Course</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. B.Com (Hons), B.Tech, BMS"
+                    value={applyForm.applicant_course}
+                    onChange={(e) => setApplyForm({ ...applyForm, applicant_course: e.target.value })}
+                  />
+                </div>
+
+                <div className="tf-form-group tf-flex-1">
+                  <label>Year</label>
+                  <select
+                    value={applyForm.applicant_year}
+                    onChange={(e) => setApplyForm({ ...applyForm, applicant_year: e.target.value })}
+                  >
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                    <option value="Postgraduate">Postgraduate</option>
+                  </select>
+                </div>
+              </div>
+
+              {selectedPostForApply.skills_looking_for && selectedPostForApply.skills_looking_for.length > 0 && (
+                <div className="tf-form-group">
+                  <label>Highlight Skills You Bring to the Team</label>
+                  <div className="tf-skill-selector-box">
+                    {selectedPostForApply.skills_looking_for.map((skill) => {
+                      const isSelected = applyForm.highlighted_skills.includes(skill);
+                      return (
+                        <button
+                          type="button"
+                          key={skill}
+                          className={`tf-skill-pill ${isSelected ? 'active' : ''}`}
+                          onClick={() => {
+                            setApplyForm((prev) => ({
+                              ...prev,
+                              highlighted_skills: isSelected
+                                ? prev.highlighted_skills.filter((s) => s !== skill)
+                                : [...prev.highlighted_skills, skill],
+                            }));
+                          }}
+                        >
+                          {isSelected && <CheckIcon size={12} />} {skill}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="tf-modal-footer">
+                <button
+                  type="button"
+                  className="btn-tf-secondary"
+                  onClick={() => setSelectedPostForApply(null)}
+                  disabled={applySubmitting}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit">
-                  Submit Application
+                <button type="submit" className="btn-tf-primary" disabled={applySubmitting}>
+                  {applySubmitting ? 'Sending Request…' : 'Submit Join Request'}
                 </button>
               </div>
             </form>
@@ -1439,301 +1946,394 @@ export default function SquadFinderPage({ prefillData, onClearPrefill, showToast
         </div>
       )}
 
-      {/* Modal 3: Re-apply to Squad */}
-      {showReapplyModal && targetAppForReapply && (
-        <div className="modal-backdrop" onClick={() => setShowReapplyModal(false)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <RotateCcwIcon size={20} color="var(--primary)" />
-                <h2>Re-apply to Squad</h2>
-              </div>
-              <button className="modal-close-btn" onClick={() => setShowReapplyModal(false)}>✕</button>
-            </div>
-
-            <form onSubmit={handleReapplySubmit} className="modal-form">
-              <div className="form-group">
-                <label>Your WhatsApp Number *</label>
-                <input
-                  type="tel"
-                  required
-                  value={reapplyForm.applicant_phone}
-                  onChange={(e) => setReapplyForm({ ...reapplyForm, applicant_phone: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Updated Pitch Note *</label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="Explain how you can strengthen this squad..."
-                  value={reapplyForm.pitch_note}
-                  onChange={(e) => setReapplyForm({ ...reapplyForm, pitch_note: e.target.value })}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Skills You Offer</label>
-                <div className="skills-selector-wrap">
-                  {PRESET_SKILLS.map(skill => (
-                    <button
-                      type="button"
-                      key={skill}
-                      className={`skill-choice-btn have ${reapplyForm.highlighted_skills.includes(skill) ? 'selected' : ''}`}
-                      onClick={() => toggleReapplySkill(skill)}
-                    >
-                      {skill}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowReapplyModal(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-submit">
-                  Re-submit Application
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 4: Host Review Modal (Drawer / Dialog) */}
-      {showReviewModal && targetPostForReview && (
-        <div className="modal-backdrop" onClick={() => setShowReviewModal(false)}>
-          <div className="modal-dialog review-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <UsersIcon size={20} color="var(--primary)" />
-                <h2>Review Applicants</h2>
-              </div>
-              <button className="modal-close-btn" onClick={() => setShowReviewModal(false)}>✕</button>
-            </div>
-
-            <div className="review-post-banner">
+      {/* ── HOST REVIEW APPLICATIONS MODAL ── */}
+      {selectedPostForReview && (
+        <div className="tf-modal-overlay" onClick={() => setSelectedPostForReview(null)}>
+          <div className="tf-modal-card review-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="tf-modal-header">
               <div>
-                <span className="review-comp-name">{targetPostForReview.competition_name}</span>
-                <h3 className="review-post-title">{targetPostForReview.title}</h3>
+                <h3>Review Team Applicants</h3>
+                {(() => {
+                  const activeReviewPost =
+                    posts.find((p) => String(p.id) === String(selectedPostForReview.id)) || selectedPostForReview;
+                  const openSpotsRemaining = getPostOpenSpots(activeReviewPost);
+                  return (
+                    <p className="tf-modal-subtitle">
+                      {activeReviewPost.competition_name} • {openSpotsRemaining} open spot(s) remaining
+                    </p>
+                  );
+                })()}
               </div>
-              <div className="review-post-spots">
-                <span className="spots-num">{getPostOpenSpots(targetPostForReview)}</span>
-                <span className="spots-text">open spot{getPostOpenSpots(targetPostForReview) === 1 ? '' : 's'}</span>
-              </div>
+              <button
+                type="button"
+                className="tf-close-btn"
+                onClick={() => setSelectedPostForReview(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
             </div>
 
-            <div className="review-applicants-container">
+            <div className="review-apps-body">
               {(() => {
-                const postApps = squadApps.filter(a => a.post_id === targetPostForReview.id);
+                const postApps = applications.filter((a) => a.post_id === selectedPostForReview.id);
+                const activeReviewPost =
+                  posts.find((p) => String(p.id) === String(selectedPostForReview.id)) || selectedPostForReview;
+                const openSpotsRemaining = getPostOpenSpots(activeReviewPost);
+
                 if (postApps.length === 0) {
                   return (
-                    <div className="empty-review-note">
-                      <p>No applications received yet for this squad opening.</p>
+                    <div className="tf-empty-state" style={{ padding: '30px 10px' }}>
+                      <MailIcon size={28} />
+                      <p>No join requests received yet for this competition opening.</p>
                     </div>
                   );
                 }
 
-                return postApps.map(app => (
-                  <div key={app.id} className="review-applicant-card">
-                    <div className="review-app-top">
-                      <div>
-                        <strong className="review-app-name">{app.applicant_name}</strong>
-                        <span className="review-app-meta"> · {[app.applicant_college, app.applicant_course].filter(Boolean).join(' · ')}</span>
-                      </div>
-                      <span className={`review-app-status ${app.status}`}>{app.status.toUpperCase()}</span>
-                    </div>
-
-                    <p className="review-app-pitch">"{app.pitch_note}"</p>
-
-                    {app.highlighted_skills && app.highlighted_skills.length > 0 && (
-                      <div className="review-skills-row">
-                        {app.highlighted_skills.map(s => (
-                          <span key={s} className="skill-pill-small">{s}</span>
-                        ))}
+                return (
+                  <div className="apps-review-list">
+                    {openSpotsRemaining <= 0 && (
+                      <div
+                        style={{
+                          margin: '0 0 16px 0',
+                          padding: '10px 14px',
+                          background: 'rgba(239, 68, 68, 0.08)',
+                          border: '1px solid rgba(239, 68, 68, 0.25)',
+                          borderRadius: '8px',
+                          fontSize: '0.85rem',
+                          color: 'var(--danger, #ef4444)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <span>⚠️</span>
+                        <span>
+                          <strong>All open spots are filled!</strong> To accept additional applicants, remove an accepted
+                          member below or edit your post to increase total team size.
+                        </span>
                       </div>
                     )}
+                    {postApps.map((app) => (
+                      <div key={app.id} className={`app-review-card ${app.status}`}>
+                        <div className="app-card-header">
+                          <div className="app-applicant-info">
+                            <span className="applicant-avatar">
+                              {(app.applicant_name || 'C').charAt(0).toUpperCase()}
+                            </span>
+                            <div>
+                              <span className="applicant-name">{app.applicant_name}</span>
+                              <span className="applicant-meta">
+                                {app.applicant_college && (
+                                  <span className="applicant-college-badge">{app.applicant_college}</span>
+                                )}{' '}
+                                {app.applicant_course ? `${app.applicant_course} • ` : ''}
+                                {app.applicant_year || '2nd Year'}
+                              </span>
+                            </div>
+                          </div>
 
-                    <div className="review-app-actions">
-                      {/* 1-Click WhatsApp to Screen Before Decision */}
-                      {app.applicant_phone && (
-                        <a
-                          href={formatWhatsAppUrl(
-                            app.applicant_phone,
-                            `Hi ${app.applicant_name}! Saw your application for our squad in ${targetPostForReview.competition_name} on OneStop.`
+                          <span className={`status-pill-badge ${app.status}`}>
+                            {app.status === 'accepted'
+                              ? '✓ Accepted'
+                              : app.status === 'declined'
+                              ? 'Declined'
+                              : app.status === 'removed'
+                              ? 'Removed'
+                              : 'Pending'}
+                          </span>
+                        </div>
+
+                        <p className="app-pitch-text">"{app.pitch_note}"</p>
+
+                        {app.highlighted_skills && app.highlighted_skills.length > 0 && (
+                          <div className="app-skills-row">
+                            <span className="app-skills-label">Skills Offered:</span>
+                            {app.highlighted_skills.map((s, idx) => (
+                              <span key={idx} className="skill-pill present">
+                                {s}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="app-card-actions">
+                          {app.applicant_phone && (
+                            <a
+                              href={formatWhatsAppUrl(
+                                app.applicant_phone,
+                                `Hi ${app.applicant_name}! Regarding your request to join our squad for ${selectedPostForReview.competition_name}.`
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="wa-connect-btn"
+                            >
+                              <WhatsAppIcon size={13} /> Chat on WhatsApp
+                            </a>
                           )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-action-chat"
-                        >
-                          <WhatsAppIcon size={14} />
-                          <span>Chat on WhatsApp</span>
-                        </a>
-                      )}
 
-                      {app.status === 'pending' ? (
-                        <>
-                          <button
-                            type="button"
-                            className="btn-action-accept"
-                            onClick={() => handleAcceptTeammate(app.id)}
-                          >
-                            Accept &amp; Fill Spot
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-action-reject"
-                            onClick={() => handleDeclineTeammate(app.id)}
-                          >
-                            Decline
-                          </button>
-                        </>
-                      ) : app.status === 'accepted' ? (
-                        <button
-                          type="button"
-                          className="btn-action-remove"
-                          onClick={() => handleRemoveTeammate(app.id)}
-                        >
-                          Remove Member (Reopen Spot)
-                        </button>
-                      ) : (
-                        <span className="declined-note">
-                          {app.status === 'removed' ? 'Removed from Squad' : 'Declined'}
-                        </span>
-                      )}
-                    </div>
+                          {app.status === 'pending' && (
+                            <>
+                              <button
+                                type="button"
+                                className="btn-accept-app"
+                                onClick={() => handleAcceptApplicant(app)}
+                                disabled={openSpotsRemaining <= 0}
+                                title={
+                                  openSpotsRemaining <= 0
+                                    ? 'Squad is full. Remove a member or expand team size.'
+                                    : 'Accept applicant'
+                                }
+                                style={openSpotsRemaining <= 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                              >
+                                {openSpotsRemaining <= 0 ? 'Squad Full' : '✓ Accept & Fill Spot'}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-card-subtle danger"
+                                onClick={() => handleDeclineApplicant(app)}
+                              >
+                                Decline
+                              </button>
+                            </>
+                          )}
+
+                          {app.status === 'accepted' && (
+                            <button
+                              type="button"
+                              className="btn-card-subtle danger"
+                              onClick={() => handleRemoveAcceptedMember(app)}
+                            >
+                              Remove Member (Reopen Spot)
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ));
+                );
               })()}
             </div>
 
-            <div className="modal-actions">
-              <button type="button" className="btn-cancel" onClick={() => setShowReviewModal(false)}>
-                Close Review
+            <div className="tf-modal-footer" style={{ padding: '16px 24px' }}>
+              <button type="button" className="btn-tf-secondary" onClick={() => setSelectedPostForReview(null)}>
+                Done Reviewing
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal 5: Full Detail Modal */}
-      {showDetailModal && targetPostForDetail && (
-        <div className="modal-backdrop" onClick={() => setShowDetailModal(false)}>
-          <div className="modal-dialog detail-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <TrophyIcon size={20} color="var(--primary)" />
-                <h2>Squad Details</h2>
-              </div>
-              <button className="modal-close-btn" onClick={() => setShowDetailModal(false)}>✕</button>
-            </div>
+      {/* ── FULL OPENING DETAILS MODAL ── */}
+      {selectedPostForView &&
+        (() => {
+          const post = selectedPostForView;
+          const isHost = isUserPost(post, user);
+          const userApp = getUserApp(post, applications, user?.email, user?.id);
+          const openSpots = getPostOpenSpots(post);
+          const openStatus = isPostOpen(post);
+          const authorName = formatStudentName(post.created_by_name, post.created_by_email);
+          const avatarChar = (authorName || 'C').charAt(0).toUpperCase();
 
-            <div className="detail-content">
-              <span className="detail-comp-tag">{targetPostForDetail.competition_name}</span>
-              <h3 className="detail-title">{targetPostForDetail.title}</h3>
-              {targetPostForDetail.organizer && (
-                <p className="detail-org">Organized by: {targetPostForDetail.organizer}</p>
-              )}
-
-              <div className="detail-desc-box">
-                <h4>Pitch & Overview</h4>
-                <p>{targetPostForDetail.description}</p>
-              </div>
-
-              {targetPostForDetail.competition_link && (
-                <div className="detail-link-row">
-                  <a
-                    href={targetPostForDetail.competition_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="detail-ext-link"
-                  >
-                    <span>View Competition Official Link</span>
-                    <ExternalLinkIcon size={14} />
-                  </a>
-                </div>
-              )}
-
-              <div className="detail-skills-grid">
-                <div>
-                  <h4>Skills Team Brings</h4>
-                  <div className="skills-tags-wrap">
-                    {targetPostForDetail.skills_have?.length > 0 ? (
-                      targetPostForDetail.skills_have.map(s => (
-                        <span key={s} className="skill-tag have">✓ {s}</span>
-                      ))
-                    ) : (
-                      <span className="detail-dim">None listed</span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h4>Skills Looking For</h4>
-                  <div className="skills-tags-wrap">
-                    {targetPostForDetail.skills_looking_for?.length > 0 ? (
-                      targetPostForDetail.skills_looking_for.map(s => (
-                        <span key={s} className="skill-tag looking">🎯 {s}</span>
-                      ))
-                    ) : (
-                      <span className="detail-dim">All skills welcome</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="detail-author-section">
-                <div className="author-info">
-                  <div className="author-avatar large">
-                    {(targetPostForDetail.created_by_name || 'U').charAt(0).toUpperCase()}
-                  </div>
+          return (
+            <div className="tf-modal-overlay" onClick={() => setSelectedPostForView(null)}>
+              <div className="tf-modal-card tf-view-modal-card" onClick={(e) => e.stopPropagation()}>
+                <div className="tf-modal-header">
                   <div>
-                    <strong className="detail-lead-name">{targetPostForDetail.created_by_name}</strong>
-                    <div className="detail-lead-college">
-                      {[targetPostForDetail.college, targetPostForDetail.course, targetPostForDetail.year].filter(Boolean).join(' · ')}
+                    <div className="tf-modal-badges" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="comp-organizer">{post.organizer || 'Corporate / Society'}</span>
+                      {renderSquadDots(post.total_members || 4, openSpots, openStatus)}
+                    </div>
+                    <h3 style={{ marginTop: '8px', fontSize: '1.25rem' }}>{post.competition_name}</h3>
+                  </div>
+                  <button
+                    type="button"
+                    className="tf-close-btn"
+                    onClick={() => setSelectedPostForView(null)}
+                    aria-label="Close"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div
+                  className="tf-modal-body tf-view-modal-body"
+                  style={{ padding: '20px 24px', maxHeight: '65vh', overflowY: 'auto' }}
+                >
+                  {/* User Application Status Callout in Modal */}
+                  {userApp && !isHost && (
+                    <div className={`user-app-banner ${userApp.status}`} style={{ marginBottom: '16px' }}>
+                      <div className="user-app-banner-icon">
+                        {userApp.status === 'accepted'
+                          ? '🎉'
+                          : userApp.status === 'declined'
+                          ? '❌'
+                          : userApp.status === 'removed'
+                          ? '⚠️'
+                          : '⏳'}
+                      </div>
+                      <div className="user-app-banner-content">
+                        <span className="user-app-banner-title">
+                          {userApp.status === 'accepted'
+                            ? 'Accepted into Squad'
+                            : userApp.status === 'declined'
+                            ? 'Application Declined'
+                            : userApp.status === 'removed'
+                            ? 'Removed from Squad'
+                            : 'Request Pending Review'}
+                        </span>
+                        <span className="user-app-banner-sub">
+                          {userApp.status === 'accepted'
+                            ? 'You are part of this team! Connect on WhatsApp below.'
+                            : userApp.status === 'declined'
+                            ? 'The host declined your request.'
+                            : userApp.status === 'removed'
+                            ? 'You were removed from this squad by the host.'
+                            : 'The team lead is reviewing your application.'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {post.competition_link && (
+                    <div style={{ marginBottom: '14px' }}>
+                      <a
+                        href={
+                          post.competition_link.startsWith('http')
+                            ? post.competition_link
+                            : `https://${post.competition_link}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="comp-link-pill"
+                      >
+                        <span>Visit Competition Page</span>
+                        <ExternalLinkIcon size={12} />
+                      </a>
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      fontSize: '0.9rem',
+                      color: 'var(--ink)',
+                      lineHeight: '1.6',
+                      whiteSpace: 'pre-line',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    {post.description || post.title}
+                  </div>
+
+                  {/* All Skills Present */}
+                  {post.skills_have && post.skills_have.length > 0 && (
+                    <div className="skills-group" style={{ marginTop: '16px' }}>
+                      <span className="skills-group-label">Skills Present in Squad:</span>
+                      <div className="skills-pills">
+                        {post.skills_have.map((s, idx) => (
+                          <span key={idx} className="skill-pill present">
+                            ✓ {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All Skills Needed */}
+                  {post.skills_looking_for && post.skills_looking_for.length > 0 && (
+                    <div className="skills-group" style={{ marginTop: '12px' }}>
+                      <span className="skills-group-label">Looking For Teammates With:</span>
+                      <div className="skills-pills">
+                        {post.skills_looking_for.map((s, idx) => (
+                          <span key={idx} className="skill-pill needed">
+                            ⚡ {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(!post.skills_have || post.skills_have.length === 0) &&
+                    (!post.skills_looking_for || post.skills_looking_for.length === 0) && (
+                      <div
+                        style={{
+                          marginTop: '16px',
+                          padding: '12px 14px',
+                          background: 'var(--border-light, rgba(0,0,0,0.02))',
+                          borderRadius: '8px',
+                          border: '1px dashed var(--border)',
+                        }}
+                      >
+                        <span style={{ fontSize: '0.8rem', color: 'var(--ink-dim)' }}>
+                          No specific skills specified — open squad welcoming all roles and backgrounds.
+                        </span>
+                      </div>
+                    )}
+
+                  {/* Host Info */}
+                  <div
+                    style={{
+                      marginTop: '20px',
+                      paddingTop: '14px',
+                      borderTop: '1px solid var(--border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                    }}
+                  >
+                    <div className="creator-avatar" style={{ width: '32px', height: '32px', fontSize: '0.85rem' }}>
+                      {avatarChar}
+                    </div>
+                    <div className="creator-details">
+                      <span className="creator-name" style={{ fontSize: '0.825rem' }}>
+                        Posted by {authorName}
+                      </span>
+                      <span className="creator-course" style={{ fontSize: '0.725rem' }}>
+                        {post.college && <span className="creator-college-tag">{post.college}</span>}
+                        {post.course ? `${post.course} • ` : ''}
+                        {post.year || '2nd Year'}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {targetPostForDetail.phone_number && (
-                  <a
-                    href={formatWhatsAppUrl(
-                      targetPostForDetail.phone_number,
-                      `Hi ${targetPostForDetail.created_by_name}! Saw your opening for ${targetPostForDetail.competition_name} on OneStop.`
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-whatsapp-outreach full"
-                  >
-                    <WhatsAppIcon size={16} />
-                    <span>WhatsApp Lead</span>
-                  </a>
-                )}
+                <div
+                  className="tf-modal-footer"
+                  style={{ padding: '14px 24px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}
+                >
+                  {post.phone_number && (
+                    <a
+                      href={formatWhatsAppUrl(
+                        post.phone_number,
+                        `Hi! Saw your team post for ${post.competition_name} on OneStop.`
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="wa-connect-btn"
+                      style={{ height: '36px', padding: '0 16px', fontSize: '0.8rem' }}
+                    >
+                      <WhatsAppIcon size={16} /> WhatsApp Connect
+                    </a>
+                  )}
+
+                  {openStatus && (!userApp || userApp.status === 'declined' || userApp.status === 'removed') && !isHost && (
+                    <button
+                      type="button"
+                      className="btn-tf-primary"
+                      style={{ height: '36px', padding: '0 16px', fontSize: '0.8rem' }}
+                      onClick={() => {
+                        setSelectedPostForView(null);
+                        handleOpenApplyModal(post);
+                      }}
+                    >
+                      <MailIcon size={14} /> {userApp ? 'Re-apply to Join' : 'Request to Join'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-
-            <div className="modal-actions">
-              <button type="button" className="btn-cancel" onClick={() => setShowDetailModal(false)}>
-                Close
-              </button>
-              {targetPostForDetail.created_by_email !== user?.email && !getUserAppForPost(targetPostForDetail.id) && getPostOpenSpots(targetPostForDetail) > 0 && (
-                <button
-                  type="button"
-                  className="btn-submit"
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    openApplyModal(targetPostForDetail);
-                  }}
-                >
-                  Apply to Squad
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+          );
+        })()}
     </div>
   );
 }
