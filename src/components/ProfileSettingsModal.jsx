@@ -1,18 +1,10 @@
 // src/components/ProfileSettingsModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { YEAR_OPTIONS, normalizeYear } from '../data/colleges';
+import SearchableCollegeSelect from './SearchableCollegeSelect';
 import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
 import './ProfileSettingsModal.css';
-
-const YEAR_OPTIONS = [
-  '1st Year',
-  '2nd Year',
-  '3rd Year',
-  '4th Year',
-  '5th Year / Dual Degree',
-  'Postgraduate / Masters',
-  'Alumni / Graduated'
-];
 
 export default function ProfileSettingsModal() {
   const {
@@ -26,8 +18,7 @@ export default function ProfileSettingsModal() {
 
   const [fullName, setFullName] = useState('');
   const [college, setCollege] = useState('');
-  const [course, setCourse] = useState('');
-  const [year, setYear] = useState('2nd Year');
+  const [year, setYear] = useState('UG 2nd Year');
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('');
 
@@ -63,8 +54,7 @@ export default function ProfileSettingsModal() {
     if (profileModalOpen && !isInitializedRef.current) {
       setFullName(profile?.full_name || user?.user_metadata?.full_name || '');
       setCollege(profile?.college || user?.user_metadata?.college || '');
-      setCourse(profile?.course || user?.user_metadata?.course || '');
-      setYear(profile?.year || user?.user_metadata?.year || '2nd Year');
+      setYear(normalizeYear(profile?.year || user?.user_metadata?.year));
       setPhone(profile?.phone || user?.user_metadata?.phone || '');
       setBio(profile?.bio || user?.user_metadata?.bio || '');
       setErrorMsg(null);
@@ -88,7 +78,7 @@ export default function ProfileSettingsModal() {
       await updateProfile({
         fullName: fullName.trim(),
         college: college.trim(),
-        course: course.trim(),
+        course: '',
         year,
         phone: phone.trim(),
         bio: bio.trim(),
@@ -206,29 +196,15 @@ export default function ProfileSettingsModal() {
             />
           </div>
 
-          <div className="arena-profile-row">
-            <div className="arena-profile-field">
-              <label htmlFor="prof-college">College / University</label>
-              <input
-                id="prof-college"
-                type="text"
-                value={college}
-                onChange={(e) => setCollege(e.target.value)}
-                placeholder="e.g. SRCC, SSCBS, IIT Delhi"
-                required
-              />
-            </div>
-
-            <div className="arena-profile-field">
-              <label htmlFor="prof-course">Degree / Course</label>
-              <input
-                id="prof-course"
-                type="text"
-                value={course}
-                onChange={(e) => setCourse(e.target.value)}
-                placeholder="e.g. B.Com (Hons), B.Tech CSE"
-              />
-            </div>
+          <div className="arena-profile-field">
+            <label htmlFor="prof-college">College / University</label>
+            <SearchableCollegeSelect
+              id="prof-college"
+              value={college}
+              onChange={setCollege}
+              placeholder="Search your college or university (e.g. SSCBS, SRCC, IIT Delhi)..."
+              required
+            />
           </div>
 
           <div className="arena-profile-row">

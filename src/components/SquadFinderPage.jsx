@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
+import { YEAR_OPTIONS, normalizeYear } from '../data/colleges';
+import SearchableCollegeSelect from './SearchableCollegeSelect';
 import {
   TrophyIcon,
   UsersIcon,
@@ -148,7 +150,7 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
     spots_left: 1,
     college: '',
     course: '',
-    year: '2nd Year',
+    year: 'UG 2nd Year',
   });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -163,7 +165,7 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
     applicant_phone: '',
     applicant_college: '',
     applicant_course: '',
-    applicant_year: '2nd Year',
+    applicant_year: 'UG 2nd Year',
     highlighted_skills: [],
   });
   const [applySubmitting, setApplySubmitting] = useState(false);
@@ -384,8 +386,8 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
         total_members: String(prefill.total_members || 4),
         spots_left: String(Math.max(1, (prefill.total_members || 4) - 1)),
         college: profile?.college || user?.user_metadata?.college || '',
-        course: profile?.course || user?.user_metadata?.course || '',
-        year: profile?.year || user?.user_metadata?.year || '2nd Year',
+        course: '',
+        year: normalizeYear(profile?.year || user?.user_metadata?.year),
         phone_number: profile?.phone || user?.user_metadata?.phone || '',
       }));
       setFormError('');
@@ -420,8 +422,8 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
       total_members: 4,
       spots_left: 1,
       college: profile?.college || user?.user_metadata?.college || '',
-      course: profile?.course || user?.user_metadata?.course || '',
-      year: profile?.year || user?.user_metadata?.year || '2nd Year',
+      course: '',
+      year: normalizeYear(profile?.year || user?.user_metadata?.year),
     });
     setFormError('');
     setIsCreateModalOpen(true);
@@ -443,8 +445,8 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
       total_members: post.total_members || 4,
       spots_left: post.spots_left || 1,
       college: post.college || profile?.college || '',
-      course: post.course || profile?.course || '',
-      year: post.year || profile?.year || '2nd Year',
+      course: '',
+      year: normalizeYear(post.year || profile?.year),
     });
     setFormError('');
     setIsCreateModalOpen(true);
@@ -702,8 +704,8 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
       pitch_note: '',
       applicant_phone: profile?.phone || user?.user_metadata?.phone || '',
       applicant_college: profile?.college || user?.user_metadata?.college || '',
-      applicant_course: profile?.course || user?.user_metadata?.course || '',
-      applicant_year: profile?.year || user?.user_metadata?.year || '2nd Year',
+      applicant_course: '',
+      applicant_year: normalizeYear(profile?.year || user?.user_metadata?.year),
       highlighted_skills: post.skills_looking_for ? [...post.skills_looking_for] : [],
     });
     setApplyError('');
@@ -733,8 +735,8 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
       applicant_email: user?.email,
       applicant_phone: cleanApplyPhone,
       applicant_college: applyForm.applicant_college.trim() || profile?.college || 'Collegiate Network',
-      applicant_course: applyForm.applicant_course.trim() || profile?.course || 'Undergraduate',
-      applicant_year: applyForm.applicant_year || profile?.year || '2nd Year',
+      applicant_course: '',
+      applicant_year: normalizeYear(applyForm.applicant_year || profile?.year),
       pitch_note: applyForm.pitch_note.trim(),
       highlighted_skills: applyForm.highlighted_skills,
       status: 'pending',
@@ -1430,8 +1432,7 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
                           <span className="creator-name">{authorName}</span>
                           <span className="creator-course">
                             {post.college && <span className="creator-college-tag">{post.college}</span>}
-                            {post.course ? `${post.course} • ` : ''}
-                            {post.year || '2nd Year'}
+                            <span>{normalizeYear(post.year)}</span>
                           </span>
                         </div>
                       </div>
@@ -1603,27 +1604,14 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
               </div>
 
               {/* Collegiate Details (For Everyone) */}
-              <div className="tf-form-row">
-                <div className="tf-form-group tf-flex-1">
-                  <label>Your College / University *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. SRCC, IIT Delhi, SSCBS, BITS Pilani"
-                    value={formData.college}
-                    onChange={(e) => setFormData({ ...formData, college: e.target.value })}
-                  />
-                </div>
-
-                <div className="tf-form-group tf-flex-1">
-                  <label>Degree / Course</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. B.Com (Hons), B.Tech, BMS, Economics"
-                    value={formData.course}
-                    onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                  />
-                </div>
+              <div className="tf-form-group">
+                <label>Your College / University *</label>
+                <SearchableCollegeSelect
+                  value={formData.college}
+                  onChange={(val) => setFormData({ ...formData, college: val })}
+                  placeholder="Search your college or university (e.g. SSCBS, SRCC, IIT Delhi)..."
+                  required
+                />
               </div>
 
               <div className="tf-form-group">
@@ -1848,6 +1836,16 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
                 />
               </div>
 
+              <div className="tf-form-group">
+                <label>Your College / University *</label>
+                <SearchableCollegeSelect
+                  value={applyForm.applicant_college}
+                  onChange={(val) => setApplyForm({ ...applyForm, applicant_college: val })}
+                  placeholder="Search your college or university..."
+                  required
+                />
+              </div>
+
               <div className="tf-form-row">
                 <div className="tf-form-group tf-flex-1">
                   <label>Your WhatsApp Mobile (10 Digits) *</label>
@@ -1864,38 +1862,16 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
                 </div>
 
                 <div className="tf-form-group tf-flex-1">
-                  <label>Your College / University</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. SRCC, IIT, SSCBS"
-                    value={applyForm.applicant_college}
-                    onChange={(e) => setApplyForm({ ...applyForm, applicant_college: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="tf-form-row">
-                <div className="tf-form-group tf-flex-1">
-                  <label>Your Degree / Course</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. B.Com (Hons), B.Tech, BMS"
-                    value={applyForm.applicant_course}
-                    onChange={(e) => setApplyForm({ ...applyForm, applicant_course: e.target.value })}
-                  />
-                </div>
-
-                <div className="tf-form-group tf-flex-1">
-                  <label>Year</label>
+                  <label>Current Standing / Year</label>
                   <select
                     value={applyForm.applicant_year}
                     onChange={(e) => setApplyForm({ ...applyForm, applicant_year: e.target.value })}
                   >
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                    <option value="Postgraduate">Postgraduate</option>
+                    {YEAR_OPTIONS.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -2027,8 +2003,7 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
                                 {app.applicant_college && (
                                   <span className="applicant-college-badge">{app.applicant_college}</span>
                                 )}{' '}
-                                {app.applicant_course ? `${app.applicant_course} • ` : ''}
-                                {app.applicant_year || '2nd Year'}
+                                <span>{normalizeYear(app.applicant_year)}</span>
                               </span>
                             </div>
                           </div>
@@ -2290,8 +2265,7 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
                       </span>
                       <span className="creator-course" style={{ fontSize: '0.725rem' }}>
                         {post.college && <span className="creator-college-tag">{post.college}</span>}
-                        {post.course ? `${post.course} • ` : ''}
-                        {post.year || '2nd Year'}
+                        <span>{normalizeYear(post.year)}</span>
                       </span>
                     </div>
                   </div>

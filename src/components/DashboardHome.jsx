@@ -1,29 +1,24 @@
 // src/components/DashboardHome.jsx
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+// Two19 Labs — High-Density Minimal Competitor Workstation
+// Editorial Brutalist / Utilitarian: Compact, Zero Slop, Maximum Signal
+import React, { useMemo } from 'react';
 import {
-  SearchIcon,
-  ClockIcon,
-  TrophyIcon,
-  UsersIcon,
-  FlameIcon,
   ExternalLinkIcon,
-  ArrowRightIcon,
   ZapIcon,
   ChevronDownIcon,
   BookmarkIcon,
   WhatsAppIcon,
-  UserIcon,
-  FilterIcon,
-  CloseIcon,
+  ArrowRightIcon,
   RotateCcwIcon,
-  SparklesIcon
+  PlusIcon
 } from './icons';
+import { normalizeYear } from '../data/colleges';
 import './DashboardHome.css';
 
 const CIRCUIT_LABELS = {
   'du': 'DU Circuit',
   'iim-iit-premier': 'IIMs & IITs',
-  'corporate-global': 'Corporate & Global',
+  'corporate-global': 'Corporate',
   'others': 'Others',
 };
 
@@ -44,6 +39,25 @@ function getWhatsAppUrl(phone, hostName, compTitle) {
   const greetingName = hostName && hostName !== 'Competitor' ? ` ${hostName.split(' ')[0]}` : '';
   const msg = `Hi${greetingName}! Saw your squad post for "${compTitle}" on OneStop. I'd love to connect and discuss teaming up!`;
   return `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`;
+}
+
+function formatCleanCountdown(deadline) {
+  if (!deadline) return { text: 'Ongoing', urgency: 'normal' };
+  const diff = new Date(deadline).getTime() - Date.now();
+  if (diff <= 0) return { text: 'Closing Soon', urgency: 'red' };
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days === 0) {
+    return { text: `${remHours}h ${mins}m left`, urgency: 'red' };
+  }
+  if (days <= 2) {
+    return { text: `${days}d ${remHours}h left`, urgency: 'amber' };
+  }
+  return { text: `${days}d left`, urgency: 'normal' };
 }
 
 export default function DashboardHome({
@@ -78,25 +92,14 @@ export default function DashboardHome({
   onScrollToRepository,
   onToggleBookmark
 }) {
-  const searchInputRef = useRef(null);
-
-  // Time of day greeting
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }, []);
-
   const competitorName = useMemo(() => {
     return profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Competitor';
   }, [profile, user]);
 
   const competitorCollege = useMemo(() => {
-    return profile?.college || user?.user_metadata?.college || 'Undergraduate Circuit';
+    return profile?.college || user?.user_metadata?.college || 'SSCBS';
   }, [profile, user]);
 
-  // Compute total prize pool estimate
   const totalPrizeString = useMemo(() => {
     let totalLakhs = 0;
     for (const comp of competitions) {
@@ -113,503 +116,323 @@ export default function DashboardHome({
     return '₹25L+';
   }, [competitions]);
 
-  // Has any active non-default filter
-  const hasFilterPreferences = useMemo(() => {
+  const hasActiveFilters = useMemo(() => {
     return (
       (selectedCircuits && selectedCircuits.length > 0) ||
       (selectedTracks && selectedTracks.length > 0) ||
       teamFilter !== 'all' ||
       feeFilter !== 'all' ||
-      (searchQuery && searchQuery.trim() !== '')
+      Boolean(searchQuery && searchQuery.trim())
     );
   }, [selectedCircuits, selectedTracks, teamFilter, feeFilter, searchQuery]);
 
-  // Active filter label summary
-  const activeFiltersSummary = useMemo(() => {
-    const parts = [];
-    if (selectedCircuits && selectedCircuits.length > 0) {
-      parts.push(selectedCircuits.map((id) => CIRCUIT_LABELS[id] || id).join(', '));
-    }
-    if (selectedTracks && selectedTracks.length > 0) {
-      parts.push(selectedTracks.map((id) => TRACK_LABELS[id] || id).join(', '));
-    }
-    if (teamFilter === 'team') parts.push('Teams');
-    if (teamFilter === 'solo') parts.push('Solo');
-    if (feeFilter === 'free') parts.push('Free');
-    if (feeFilter === 'paid') parts.push('Paid');
-    return parts.length > 0 ? parts.join(' • ') : 'All Circuits & Categories';
-  }, [selectedCircuits, selectedTracks, teamFilter, feeFilter]);
-
-  // Fallback top competitions if prop not provided
   const displayCompetitions = topFilteredCompetitions.length > 0
     ? topFilteredCompetitions
     : filteredCompetitions.slice(0, 6);
 
-  // Fallback squads if prop not provided
   const displaySquads = matchingSquads.length > 0
     ? matchingSquads
     : [];
 
+  const isAllCircuits = !selectedCircuits || selectedCircuits.length === 0;
+
   return (
-    <div className="t19-dashboard-root">
-      {/* ── 00 // Competitor Status Bar ── */}
-      <header className="t19-dash-status-bar">
-        <div className="t19-dash-status-left">
-          <div className="t19-status-avatar">
-            <UserIcon size={18} />
+    <div className="t19-dashboard-minimal">
+      {/* ── 01 // Streamlined Compact Competitor Bar ── */}
+      <header className="t19-min-bar">
+        <div className="t19-min-bar-left">
+          <div className="t19-user-badge">
+            <span className="t19-user-avatar">
+              {(competitorName || 'C').charAt(0).toUpperCase()}
+            </span>
+            <span className="t19-user-name">{competitorName}</span>
+            <span className="t19-user-college">{competitorCollege}</span>
           </div>
-          <div className="t19-status-info">
-            <div className="t19-status-title-row">
-              <span className="t19-status-greeting">{greeting},</span>
-              <h2 className="t19-status-name">{competitorName}</h2>
-              <span className="t19-status-college-pill">{competitorCollege}</span>
-            </div>
-            <div className="t19-status-meta-row">
-              <span className="t19-pulse-beacon">
-                <span className="t19-pulse-dot-green" />
-                <span>Real-Time Unstop Sync</span>
-              </span>
-              <span className="t19-status-dot-sep">•</span>
-              <span className="t19-status-metric">
-                <strong>{competitions.length}</strong> Undergrad Opportunities
-              </span>
-              <span className="t19-status-dot-sep">•</span>
-              <span className="t19-status-metric">
-                <strong>{totalPrizeString}</strong> Total Prizes
-              </span>
-            </div>
+
+          <div className="t19-bar-stats">
+            <span className="t19-live-dot" title="Live Synced from Unstop" />
+            <span className="t19-stat-item">
+              <strong>{competitions.length}</strong> live opportunities
+            </span>
+            <span className="t19-stat-sep">·</span>
+            <span className="t19-stat-item">
+              <strong>{totalPrizeString}</strong> total pool
+            </span>
           </div>
         </div>
 
-        <div className="t19-dash-status-right">
+        <div className="t19-min-bar-right">
           <button
             type="button"
-            className="t19-status-btn squad-cta"
+            className="t19-btn-recruit"
             onClick={onNavigateToSquads}
-            title="Create a teammate recruitment post"
+            title="Create squad post to recruit teammates"
           >
-            <UsersIcon size={14} />
-            <span>+ Recruit Teammates</span>
+            <PlusIcon size={13} />
+            <span>Recruit Teammates</span>
           </button>
 
           <button
             type="button"
-            className="t19-status-btn secondary"
+            className={`t19-btn-saved ${bookmarkedIds.length > 0 ? 'has-saved' : ''}`}
             onClick={() => onQuickFilter && onQuickFilter('bookmarked')}
-            title="View your saved opportunities"
+            title="View saved opportunities"
           >
-            <BookmarkIcon size={14} filled={bookmarkedIds.length > 0} color="var(--color-lab-blue)" />
+            <BookmarkIcon size={13} filled={bookmarkedIds.length > 0} color="currentColor" />
             <span>Saved ({bookmarkedIds.length})</span>
           </button>
         </div>
       </header>
 
-      {/* ── 01 // Saved Filter Preferences Bar ── */}
-      <section className="t19-filter-prefs-bar">
-        <div className="t19-filter-prefs-left">
-          <div className="t19-filter-prefs-label-group">
-            <FilterIcon size={14} className="t19-filter-icon" />
-            <span className="t19-prefs-label">YOUR RADAR FILTERS:</span>
-          </div>
+      {/* ── 02 // Tight 1-Line Radar Filter Navigation ── */}
+      <nav className="t19-filter-nav">
+        <div className="t19-filter-tabs">
+          <span className="t19-filter-label">Filter:</span>
 
-          <div className="t19-active-pills-list">
-            {selectedCircuits && selectedCircuits.map((circuitId) => (
-              <span key={`pill-circuit-${circuitId}`} className="t19-active-pill circuit">
-                <span>🏛️ {CIRCUIT_LABELS[circuitId] || circuitId}</span>
-                <button
-                  type="button"
-                  className="t19-pill-remove"
-                  onClick={() => onToggleCircuit && onToggleCircuit(circuitId)}
-                  title="Remove this circuit filter"
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
+          <button
+            type="button"
+            className={`t19-tab-btn ${isAllCircuits && selectedTracks.length === 0 && feeFilter === 'all' ? 'active' : ''}`}
+            onClick={onResetFilters}
+          >
+            All Live
+          </button>
 
-            {selectedTracks && selectedTracks.map((trackId) => (
-              <span key={`pill-track-${trackId}`} className="t19-active-pill track">
-                <span>🎯 {TRACK_LABELS[trackId] || trackId}</span>
-                <button
-                  type="button"
-                  className="t19-pill-remove"
-                  onClick={() => onToggleTrack && onToggleTrack(trackId)}
-                  title="Remove this category filter"
-                >
-                  ✕
-                </button>
-              </span>
-            ))}
+          <button
+            type="button"
+            className={`t19-tab-btn ${selectedCircuits.includes('du') ? 'active' : ''}`}
+            onClick={() => onToggleCircuit && onToggleCircuit('du')}
+          >
+            DU Circuit
+            {selectedCircuits.includes('du') && <span className="t19-tab-remove">×</span>}
+          </button>
 
-            {teamFilter !== 'all' && (
-              <span className="t19-active-pill format">
-                <span>👥 {teamFilter === 'solo' ? 'Solo Only' : 'Teams (2+)'}</span>
-                <button
-                  type="button"
-                  className="t19-pill-remove"
-                  onClick={() => onSetTeamFilter && onSetTeamFilter('all')}
-                  title="Remove team filter"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
+          <button
+            type="button"
+            className={`t19-tab-btn ${selectedCircuits.includes('iim-iit-premier') ? 'active' : ''}`}
+            onClick={() => onToggleCircuit && onToggleCircuit('iim-iit-premier')}
+          >
+            IIMs & IITs
+            {selectedCircuits.includes('iim-iit-premier') && <span className="t19-tab-remove">×</span>}
+          </button>
 
-            {feeFilter !== 'all' && (
-              <span className="t19-active-pill fee">
-                <span>{feeFilter === 'free' ? '🆓 Free Entry' : '💳 Paid'}</span>
-                <button
-                  type="button"
-                  className="t19-pill-remove"
-                  onClick={() => onSetFeeFilter && onSetFeeFilter('all')}
-                  title="Remove fee filter"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
+          <button
+            type="button"
+            className={`t19-tab-btn ${selectedCircuits.includes('corporate-global') ? 'active' : ''}`}
+            onClick={() => onToggleCircuit && onToggleCircuit('corporate-global')}
+          >
+            Corporate
+            {selectedCircuits.includes('corporate-global') && <span className="t19-tab-remove">×</span>}
+          </button>
 
-            {searchQuery && (
-              <span className="t19-active-pill search">
-                <span>🔍 "{searchQuery}"</span>
-                <button
-                  type="button"
-                  className="t19-pill-remove"
-                  onClick={() => onSearchChange && onSearchChange('')}
-                  title="Clear search query"
-                >
-                  ✕
-                </button>
-              </span>
-            )}
+          <span className="t19-tab-sep">|</span>
 
-            {!hasFilterPreferences && (
-              <span className="t19-active-pill default">
-                <span>🌐 All Circuits & Categories (Saved Default)</span>
-              </span>
-            )}
-          </div>
+          <button
+            type="button"
+            className={`t19-tab-btn ${selectedTracks.includes('case') ? 'active' : ''}`}
+            onClick={() => onToggleTrack && onToggleTrack('case')}
+          >
+            Case Comps
+            {selectedTracks.includes('case') && <span className="t19-tab-remove">×</span>}
+          </button>
+
+          <button
+            type="button"
+            className={`t19-tab-btn ${selectedTracks.includes('hackathon') ? 'active' : ''}`}
+            onClick={() => onToggleTrack && onToggleTrack('hackathon')}
+          >
+            Hackathons
+            {selectedTracks.includes('hackathon') && <span className="t19-tab-remove">×</span>}
+          </button>
+
+          <button
+            type="button"
+            className={`t19-tab-btn ${feeFilter === 'free' ? 'active' : ''}`}
+            onClick={() => onSetFeeFilter && onSetFeeFilter(feeFilter === 'free' ? 'all' : 'free')}
+          >
+            Free Entry
+            {feeFilter === 'free' && <span className="t19-tab-remove">×</span>}
+          </button>
         </div>
 
-        <div className="t19-filter-prefs-right">
-          {hasFilterPreferences && (
+        <div className="t19-filter-nav-right">
+          {hasActiveFilters && (
             <button
               type="button"
-              className="t19-reset-prefs-btn"
+              className="t19-link-reset"
               onClick={onResetFilters}
-              title="Reset all filters to defaults"
+              title="Clear all filters"
             >
-              <RotateCcwIcon size={12} />
-              <span>Reset Filters</span>
+              <RotateCcwIcon size={11} />
+              <span>Reset</span>
             </button>
           )}
 
           <button
             type="button"
-            className="t19-change-filters-btn"
+            className="t19-link-deep-filters"
             onClick={onScrollToRepository}
-            title="Change & refine deep filters below"
+            title="Browse all opportunities and deep filters below"
           >
-            <span>⚙️ Change Filters</span>
-            <ChevronDownIcon size={12} />
+            <span>All Comps ({filteredCompetitions.length}) ↓</span>
           </button>
         </div>
-      </section>
+      </nav>
 
-      {/* ── 02 // Quick Filter Switchers (1-click toggle) ── */}
-      <div className="t19-quick-filter-strip">
-        <span className="t19-quick-label">Quick Switch:</span>
-
-        <button
-          type="button"
-          className={`t19-quick-chip ${selectedCircuits.includes('du') ? 'active' : ''}`}
-          onClick={() => onToggleCircuit && onToggleCircuit('du')}
-        >
-          🏛️ DU Circuit
-        </button>
-
-        <button
-          type="button"
-          className={`t19-quick-chip ${selectedCircuits.includes('iim-iit-premier') ? 'active' : ''}`}
-          onClick={() => onToggleCircuit && onToggleCircuit('iim-iit-premier')}
-        >
-          🎓 IIMs & IITs
-        </button>
-
-        <button
-          type="button"
-          className={`t19-quick-chip ${selectedCircuits.includes('corporate-global') ? 'active' : ''}`}
-          onClick={() => onToggleCircuit && onToggleCircuit('corporate-global')}
-        >
-          💼 Corporate Flagships
-        </button>
-
-        <span className="t19-strip-divider">|</span>
-
-        <button
-          type="button"
-          className={`t19-quick-chip ${selectedTracks.includes('case') ? 'active' : ''}`}
-          onClick={() => onToggleTrack && onToggleTrack('case')}
-        >
-          📊 Case Comps
-        </button>
-
-        <button
-          type="button"
-          className={`t19-quick-chip ${selectedTracks.includes('hackathon') ? 'active' : ''}`}
-          onClick={() => onToggleTrack && onToggleTrack('hackathon')}
-        >
-          💻 Hackathons
-        </button>
-
-        <button
-          type="button"
-          className={`t19-quick-chip ${selectedTracks.includes('simulation') ? 'active' : ''}`}
-          onClick={() => onToggleTrack && onToggleTrack('simulation')}
-        >
-          📈 Simulations
-        </button>
-
-        <button
-          type="button"
-          className={`t19-quick-chip ${feeFilter === 'free' ? 'active' : ''}`}
-          onClick={() => onSetFeeFilter && onSetFeeFilter(feeFilter === 'free' ? 'all' : 'free')}
-        >
-          🆓 Free Entry
-        </button>
-      </div>
-
-      {/* ── 03 // THE 50/50 SPLIT SCREEN ── */}
-      <div className="t19-split-dashboard">
-        {/* ════════════════════════════════════════════════════════════
-            LEFT HALF (50%): TOP 5-6 COMPETITIONS MATCHING FILTERS
-           ════════════════════════════════════════════════════════════ */}
-        <section className="t19-split-column t19-split-comps">
-          <div className="t19-column-header">
-            <div className="t19-column-header-left">
-              <span className="t19-column-idx">01 //</span>
-              <h3 className="t19-column-title">TOP MATCHING COMPETITIONS</h3>
-              <span className="t19-column-badge comps">
-                {displayCompetitions.length} of {filteredCompetitions.length} Live
+      {/* ── 03 // Compact 50/50 Split Grid (Linear / Terminal Density) ── */}
+      <div className="t19-grid-split">
+        {/* ── Left Column: Top Matching Competitions ── */}
+        <section className="t19-column">
+          <div className="t19-col-header">
+            <div className="t19-col-title-group">
+              <span className="t19-col-num">01</span>
+              <h3 className="t19-col-title">Top Matching Competitions</h3>
+              <span className="t19-col-count">
+                {displayCompetitions.length} of {filteredCompetitions.length}
               </span>
             </div>
 
             <button
               type="button"
-              className="t19-column-header-link"
+              className="t19-col-link"
               onClick={onScrollToRepository}
-              title="Open full catalog below"
             >
-              <span>View All ({filteredCompetitions.length})</span>
+              <span>View all ({filteredCompetitions.length})</span>
               <ArrowRightIcon size={12} />
             </button>
           </div>
 
-          <p className="t19-column-subtext">
-            Top live competitions matching your active filters: <strong>{activeFiltersSummary}</strong>.
-          </p>
-
-          <div className="t19-split-card-list">
+          <div className="t19-rows-list">
             {displayCompetitions.length === 0 ? (
-              <div className="t19-empty-column-state">
-                <div className="t19-empty-icon">🔍</div>
-                <h4 className="t19-empty-title">No competitions match your current filters</h4>
-                <p className="t19-empty-desc">
-                  Try clearing some filter tags or search terms to broaden your results.
-                </p>
-                <button
-                  type="button"
-                  className="t19-empty-action-btn"
-                  onClick={onResetFilters}
-                >
-                  Reset Filter Preferences
+              <div className="t19-empty-row">
+                <span>No competitions match active filters.</span>
+                <button type="button" className="t19-btn-inline-reset" onClick={onResetFilters}>
+                  Clear filters
                 </button>
               </div>
             ) : (
               displayCompetitions.map((comp) => {
-                const diff = comp.deadline ? new Date(comp.deadline).getTime() - Date.now() : 0;
-                const hoursLeft = Math.max(0, Math.floor(diff / (1000 * 60 * 60)));
-                const daysLeft = Math.floor(hoursLeft / 24);
-                const remHours = hoursLeft % 24;
-                const mins = Math.max(0, Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)));
-
-                let countdownText = 'Ongoing';
-                let urgencyClass = 'green';
-                if (diff > 0) {
-                  if (daysLeft === 0) {
-                    countdownText = `⏳ ${remHours}h ${mins}m left`;
-                    urgencyClass = 'red';
-                  } else if (daysLeft <= 2) {
-                    countdownText = `⏳ ${daysLeft}d ${remHours}h left`;
-                    urgencyClass = 'red';
-                  } else if (daysLeft <= 6) {
-                    countdownText = `⏳ ${daysLeft}d left`;
-                    urgencyClass = 'yellow';
-                  } else {
-                    countdownText = `⏳ ${daysLeft}d left`;
-                    urgencyClass = 'green';
-                  }
-                } else if (comp.deadline) {
-                  countdownText = 'Closing Soon';
-                  urgencyClass = 'red';
-                }
-
+                const countdown = formatCleanCountdown(comp.deadline);
                 const isBookmarked = bookmarkedIds.includes(comp.id);
+                const initial = (comp.orgName || 'OS').slice(0, 2).toUpperCase();
 
                 return (
-                  <article key={comp.id} className="t19-split-comp-card">
-                    <div className="t19-comp-card-top">
-                      <div className="t19-comp-org-box">
-                        {comp.orgLogo ? (
-                          <img
-                            src={comp.orgLogo}
-                            alt={comp.orgName}
-                            className="t19-comp-org-logo"
-                            loading="lazy"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="t19-comp-org-initial">
-                            {(comp.orgName || 'OS').slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="t19-comp-org-meta">
-                          <span className="t19-comp-org-name" title={comp.orgName}>
-                            {comp.orgName || 'Premier University'}
-                          </span>
-                          <span className="t19-comp-circuit-pill">
-                            {comp.circuitLabel || 'Undergrad Open'}
-                          </span>
-                        </div>
+                  <article key={comp.id} className="t19-item-row comp-row">
+                    <div className="t19-row-avatar">
+                      {comp.orgLogo ? (
+                        <img
+                          src={comp.orgLogo}
+                          alt={comp.orgName}
+                          className="t19-row-img"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span className="t19-row-monogram">{initial}</span>
+                      )}
+                    </div>
+
+                    <div className="t19-row-content">
+                      <div className="t19-row-meta-top">
+                        <span className="t19-row-org">{comp.orgName || 'Undergrad Open'}</span>
+                        <span className="t19-meta-dot">·</span>
+                        <span className="t19-row-circuit">{comp.circuitLabel || 'Open'}</span>
                       </div>
 
-                      <div className="t19-comp-top-right">
-                        <span className={`t19-comp-countdown-pill ${urgencyClass}`}>
-                          {countdownText}
-                        </span>
+                      <h4 className="t19-row-title" title={comp.title}>
+                        {comp.title}
+                      </h4>
+
+                      <div className="t19-row-meta-bottom">
+                        <span className="t19-pill-prize">{comp.prizes || 'Certificates'}</span>
+                        <span className="t19-meta-dot">·</span>
+                        <span className="t19-pill-tag">{comp.teamSizeDisplay || 'Solo / Team'}</span>
+                        <span className="t19-meta-dot">·</span>
+                        <span className="t19-pill-tag">{comp.categoryLabel || 'Case'}</span>
+                      </div>
+                    </div>
+
+                    <div className="t19-row-actions">
+                      <span className={`t19-countdown-tag ${countdown.urgency}`}>
+                        {countdown.text}
+                      </span>
+
+                      <div className="t19-btn-group">
                         <button
                           type="button"
-                          className={`t19-comp-bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
-                          onClick={(e) => onToggleBookmark && onToggleBookmark(comp.id, e)}
-                          title={isBookmarked ? 'Saved to bookmarks' : 'Bookmark competition'}
-                          aria-label="Bookmark competition"
+                          className="t19-btn-action squad"
+                          onClick={() =>
+                            onFindTeammates &&
+                            onFindTeammates({
+                              competition_name: comp.title,
+                              competition_url: comp.unstopUrl,
+                              organizer: comp.orgName,
+                              category: comp.category || 'case',
+                              maxTeam: comp.maxTeam || 4
+                            })
+                          }
+                          title="Recruit teammates for this comp"
                         >
-                          <BookmarkIcon size={14} filled={isBookmarked} color={isBookmarked ? 'var(--color-lab-blue)' : 'currentColor'} />
+                          <ZapIcon size={11} />
+                          <span>Squad Up</span>
+                        </button>
+
+                        <a
+                          href={comp.unstopUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="t19-btn-action apply"
+                          title="Apply on Unstop"
+                        >
+                          <span>Apply</span>
+                          <ExternalLinkIcon size={11} />
+                        </a>
+
+                        <button
+                          type="button"
+                          className={`t19-btn-bookmark ${isBookmarked ? 'active' : ''}`}
+                          onClick={(e) => onToggleBookmark && onToggleBookmark(comp.id, e)}
+                          title={isBookmarked ? 'Remove bookmark' : 'Bookmark competition'}
+                          aria-label="Bookmark"
+                        >
+                          <BookmarkIcon size={13} filled={isBookmarked} color="currentColor" />
                         </button>
                       </div>
-                    </div>
-
-                    <h4 className="t19-comp-card-title" title={comp.title}>
-                      {comp.title}
-                    </h4>
-
-                    <div className="t19-comp-card-meta-row">
-                      <span className="t19-comp-prize-badge">
-                        <TrophyIcon size={12} color="var(--color-lab-blue)" />
-                        <span>{comp.prizes || 'Certificates & PPIs'}</span>
-                      </span>
-
-                      <span className="t19-comp-meta-chip">
-                        {comp.teamSizeDisplay || 'Solo / Team'}
-                      </span>
-
-                      <span className="t19-comp-meta-chip category">
-                        {comp.categoryLabel || 'Case Comp'}
-                      </span>
-                    </div>
-
-                    <div className="t19-comp-card-footer">
-                      <button
-                        type="button"
-                        className="t19-btn-squad-action"
-                        onClick={() =>
-                          onFindTeammates &&
-                          onFindTeammates({
-                            competition_name: comp.title,
-                            competition_url: comp.unstopUrl,
-                            organizer: comp.orgName,
-                            category: comp.category || 'case',
-                            maxTeam: comp.maxTeam || 4
-                          })
-                        }
-                        title="Find complementary teammates for this comp"
-                      >
-                        <ZapIcon size={12} />
-                        <span>⚡ Squad Up</span>
-                      </button>
-
-                      <a
-                        href={comp.unstopUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="t19-btn-unstop-action"
-                        title="Open application on Unstop"
-                      >
-                        <span>Apply</span>
-                        <ExternalLinkIcon size={12} />
-                      </a>
                     </div>
                   </article>
                 );
               })
             )}
           </div>
-
-          <div className="t19-column-footer-action">
-            <button
-              type="button"
-              className="t19-open-all-comps-btn"
-              onClick={onScrollToRepository}
-            >
-              <span>Open All Live Comps ({filteredCompetitions.length}) & Deep Filters</span>
-              <ChevronDownIcon size={15} />
-            </button>
-          </div>
         </section>
 
-        {/* ════════════════════════════════════════════════════════════
-            RIGHT HALF (50%): TEAMS HOSTED FOR THE SAME FILTERS
-           ════════════════════════════════════════════════════════════ */}
-        <section className="t19-split-column t19-split-squads">
-          <div className="t19-column-header">
-            <div className="t19-column-header-left">
-              <span className="t19-column-idx">02 //</span>
-              <h3 className="t19-column-title">MATCHING SQUADS & ROSTERS</h3>
-              <span className="t19-column-badge squads">
-                Same Filtered Comps
-              </span>
+        {/* ── Right Column: Matching Squads (Same Filters) ── */}
+        <section className="t19-column">
+          <div className="t19-col-header">
+            <div className="t19-col-title-group">
+              <span className="t19-col-num">02</span>
+              <h3 className="t19-col-title">Matching Squads & Rosters</h3>
+              <span className="t19-col-tag-sync">Same Filters</span>
             </div>
 
             <button
               type="button"
-              className="t19-post-squad-pill-btn"
+              className="t19-col-post-btn"
               onClick={onNavigateToSquads}
-              title="Post your own team requirement"
+              title="Post your squad requirement"
             >
-              <span>+ Post Squad</span>
+              <PlusIcon size={12} />
+              <span>Post Squad</span>
             </button>
           </div>
 
-          <p className="t19-column-subtext">
-            Students actively recruiting teammates for these competitions. 1-click WhatsApp handshakes.
-          </p>
-
-          <div className="t19-split-card-list">
+          <div className="t19-rows-list">
             {displaySquads.length === 0 ? (
-              <div className="t19-empty-column-state">
-                <div className="t19-empty-icon">👥</div>
-                <h4 className="t19-empty-title">No squads currently posted for this filter</h4>
-                <p className="t19-empty-desc">
-                  Be the first competitor to build a squad for these opportunities!
-                </p>
-                <button
-                  type="button"
-                  className="t19-empty-action-btn squad"
-                  onClick={onNavigateToSquads}
-                >
-                  + Post Squad Requirement
+              <div className="t19-empty-row">
+                <span>No open squads posted for this filter yet.</span>
+                <button type="button" className="t19-btn-inline-reset" onClick={onNavigateToSquads}>
+                  + Be the first to recruit
                 </button>
               </div>
             ) : (
@@ -619,114 +442,86 @@ export default function DashboardHome({
                   squad.student_name,
                   squad.competition_name
                 );
+                const leadInitial = (squad.student_name || 'U').charAt(0).toUpperCase();
 
                 return (
-                  <article key={squad.id || `squad-${idx}`} className="t19-split-squad-card">
-                    <div className="t19-squad-card-top">
-                      <div className="t19-squad-target-info">
-                        <span className="t19-squad-target-tag">
-                          {squad.circuitLabel || 'UNDERGRAD SQUAD'}
-                        </span>
-                        <h4 className="t19-squad-target-title" title={squad.competition_name}>
-                          {squad.competition_name}
-                        </h4>
-                      </div>
-
-                      <div className="t19-squad-spots-badge">
-                        <span className="t19-squad-spots-pulse" />
-                        <span>Need {squad.spots_left || 1} Teammate{squad.spots_left > 1 ? 's' : ''}</span>
-                      </div>
+                  <article key={squad.id || `squad-${idx}`} className="t19-item-row squad-row">
+                    <div className="t19-row-avatar host">
+                      <span className="t19-row-monogram">{leadInitial}</span>
                     </div>
 
-                    <div className="t19-squad-host-row">
-                      <div className="t19-squad-host-avatar">
-                        {(squad.student_name || 'U').charAt(0).toUpperCase()}
-                      </div>
-                      <div className="t19-squad-host-details">
-                        <span className="t19-squad-host-name">
-                          {squad.student_name || 'Lead Competitor'}
-                        </span>
-                        <span className="t19-squad-host-college">
-                          {squad.college || 'Delhi University'} • {squad.course || 'Undergrad'} ({squad.year || '2nd Year'})
+                    <div className="t19-row-content">
+                      <div className="t19-row-meta-top">
+                        <span className="t19-row-target-tag">{squad.circuitLabel || 'UNDERGRAD SQUAD'}</span>
+                        <span className="t19-meta-dot">·</span>
+                        <span className="t19-row-host-info">
+                          {squad.student_name || 'Lead'} · {squad.college || 'SSCBS'} ({normalizeYear(squad.year)})
                         </span>
                       </div>
-                    </div>
 
-                    {/* Skill Tags */}
-                    <div className="t19-squad-skills-section">
-                      <span className="t19-squad-skills-label">Looking for:</span>
-                      <div className="t19-squad-skills-pills">
+                      <h4 className="t19-row-title squad-target" title={squad.competition_name}>
+                        {squad.competition_name}
+                      </h4>
+
+                      <div className="t19-skills-inline">
+                        <span className="t19-skills-prefix">Needs:</span>
                         {(squad.skills_looking_for && squad.skills_looking_for.length > 0
                           ? squad.skills_looking_for
                           : ['Deck Specialist', 'Financial Modeling']
-                        ).map((skill, sIdx) => (
-                          <span
-                            key={`skill-${sIdx}`}
-                            className={`t19-squad-skill-pill ${sIdx === 0 ? 'priority' : ''}`}
-                          >
+                        ).slice(0, 2).map((skill, sIdx) => (
+                          <span key={`skill-${sIdx}`} className="t19-skill-compact">
                             {skill}
                           </span>
                         ))}
                       </div>
                     </div>
 
-                    {/* Footer / WhatsApp CTA */}
-                    <div className="t19-squad-card-footer">
-                      <span className="t19-squad-roster-status">
-                        Slots: <strong>{squad.spots_left || 1}</strong> of {squad.total_members || 3} Open
+                    <div className="t19-row-actions">
+                      <span className="t19-spots-indicator">
+                        {squad.spots_left || 1} open slot{squad.spots_left > 1 ? 's' : ''}
                       </span>
 
-                      {waUrl ? (
-                        <a
-                          href={waUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="t19-squad-whatsapp-btn"
-                          title="Direct WhatsApp handshake with team lead"
-                        >
-                          <WhatsAppIcon size={14} />
-                          <span>WhatsApp Connect</span>
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          className="t19-squad-whatsapp-btn"
-                          onClick={onNavigateToSquads}
-                          title="Connect with team lead in Squad Finder"
-                        >
-                          <UsersIcon size={14} />
-                          <span>Connect</span>
-                        </button>
-                      )}
+                      <div className="t19-btn-group">
+                        {waUrl ? (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="t19-btn-wa"
+                            title="Connect with team lead on WhatsApp"
+                          >
+                            <WhatsAppIcon size={13} />
+                            <span>Connect</span>
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            className="t19-btn-wa fallback"
+                            onClick={onNavigateToSquads}
+                            title="Open Squad in Team Finder"
+                          >
+                            <span>Connect</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </article>
                 );
               })
             )}
           </div>
-
-          <div className="t19-column-footer-action">
-            <button
-              type="button"
-              className="t19-explore-squads-btn"
-              onClick={onNavigateToSquads}
-            >
-              <span>Explore All Squads & Open Listings</span>
-              <ArrowRightIcon size={14} />
-            </button>
-          </div>
         </section>
       </div>
 
-      {/* ── 04 // Seamless Transition to Full Repository ── */}
-      <div className="t19-directory-anchor-row">
+      {/* ── 04 // Quiet Link to Full Repository ── */}
+      <div className="t19-bottom-anchor">
         <button
           type="button"
-          className="t19-directory-anchor-btn"
+          className="t19-anchor-link"
           onClick={onScrollToRepository}
         >
-          <span>Explore Complete Directory ({competitions.length} Opportunities & Full Filter Sidebar)</span>
-          <ChevronDownIcon size={15} />
+          <span>Explore Complete Directory ({competitions.length} Opportunities & Deep Filters)</span>
+          <ChevronDownIcon size={13} />
         </button>
       </div>
     </div>

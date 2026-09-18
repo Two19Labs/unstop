@@ -1018,12 +1018,12 @@ export default function CompetitionsPage({
     // Contextual seed squads matching top filtered competitions to guarantee 5-6 slots
     const seedSquadsForFilteredComps = [];
     const rolePools = [
-      { lead: 'Aditya S.', college: 'SSCBS', course: 'BMS', skills: ['Deck Specialist', 'Financial Modeling'], phone: '9810123456' },
-      { lead: 'Rhea M.', college: 'SRCC', course: 'B.Com (Hons)', skills: ['Market Strategy', 'Pitch / Speaker'], phone: '9871234567' },
-      { lead: 'Aryan K.', college: 'IIT Delhi', course: 'B.Tech', skills: ['Fullstack Dev', 'AI/ML Integration'], phone: '9899123456' },
-      { lead: 'Tanvi G.', college: 'Hindu College', course: 'Economics (Hons)', skills: ['Valuation & DCF', 'Policy Research'], phone: '9910234567' },
-      { lead: 'Kabir V.', college: 'St. Stephen’s', course: 'Economics', skills: ['Case Solving', 'Deck Specialist'], phone: '9811345678' },
-      { lead: 'Sanya D.', college: 'LSR', course: 'Statistics', skills: ['Data Analytics', 'Risk Simulation'], phone: '9873456789' },
+      { lead: 'Aditya S.', college: 'SSCBS', year: 'UG 2nd Year', skills: ['Deck Specialist', 'Financial Modeling'], phone: '9810123456' },
+      { lead: 'Rhea M.', college: 'SRCC', year: 'UG 3rd Year', skills: ['Market Strategy', 'Pitch / Speaker'], phone: '9871234567' },
+      { lead: 'Aryan K.', college: 'IIT Delhi', year: 'UG 2nd Year', skills: ['Fullstack Dev', 'AI/ML Integration'], phone: '9899123456' },
+      { lead: 'Tanvi G.', college: 'Hindu College', year: 'UG 2nd Year', skills: ['Valuation & DCF', 'Policy Research'], phone: '9910234567' },
+      { lead: 'Kabir V.', college: 'St. Stephen’s', year: 'UG 3rd Year', skills: ['Case Solving', 'Deck Specialist'], phone: '9811345678' },
+      { lead: 'Sanya D.', college: 'LSR', year: 'UG 2nd Year', skills: ['Data Analytics', 'Risk Simulation'], phone: '9873456789' },
     ];
 
     topComps.forEach((comp, idx) => {
@@ -1050,8 +1050,7 @@ export default function CompetitionsPage({
           circuitType: getCardCircuit(comp).type,
           student_name: persona.lead,
           college: persona.college,
-          course: persona.course,
-          year: '2nd / 3rd Year',
+          year: persona.year,
           spots_left: Math.max(1, (comp.maxTeam || 3) - 1),
           total_members: comp.maxTeam || 3,
           skills_looking_for: skillsLooking,
