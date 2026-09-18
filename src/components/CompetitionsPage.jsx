@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
-import LandingHero from './LandingHero';
+import DashboardHome from './DashboardHome';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
@@ -434,7 +434,7 @@ export default function CompetitionsPage({
   onNavigateToSquads,
   headerAction,
 }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
   const bookmarksKey = `${LOCAL_STORAGE_KEY}${userKeySuffix}`;
 
@@ -722,9 +722,11 @@ export default function CompetitionsPage({
       setSortBy('closing-soonest');
     } else if (type === 'free') {
       setFeeFilter('free');
+    } else if (type === 'bookmarked') {
+      setBookmarkedOnly(true);
     }
     scrollToRepository();
-  }, [scrollToRepository]);
+  }, [scrollToRepository, setBookmarkedOnly]);
 
   const toggleSection = (sectionKey) => {
     setOpenSections((prev) => ({
@@ -907,10 +909,13 @@ export default function CompetitionsPage({
 
   return (
     <div className="case-comps-container">
-      {/* ── Two19 Labs OneStop Curated Landing Portal ── */}
-      <LandingHero
+      {/* ── Two19 Labs OneStop Bento Grid Competitor Dashboard ── */}
+      <DashboardHome
         competitions={competitions}
         metrics={metrics}
+        user={user}
+        profile={profile}
+        bookmarkedIds={bookmarkedIds}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onSelectCircuit={handleSelectCircuit}
@@ -919,6 +924,7 @@ export default function CompetitionsPage({
         onFindTeammates={handleFindTeammates}
         onNavigateToSquads={onNavigateToSquads}
         onScrollToRepository={scrollToRepository}
+        onToggleBookmark={toggleBookmark}
       />
 
       {/* ── Section 05: Complete Directory & Deep Filters ── */}
