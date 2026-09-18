@@ -5,6 +5,28 @@ import DashboardHome from './DashboardHome';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
+const FILTER_PREFS_KEY = 'onestop_user_filter_prefs';
+
+function loadSavedFilterPrefs(userEmail) {
+  try {
+    if (typeof window === 'undefined') return null;
+    const userKey = userEmail ? `${FILTER_PREFS_KEY}_${userEmail.toLowerCase()}` : null;
+    const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem(FILTER_PREFS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        selectedCircuits: Array.isArray(parsed.selectedCircuits) ? parsed.selectedCircuits : [],
+        selectedTracks: Array.isArray(parsed.selectedTracks) ? parsed.selectedTracks : [],
+        teamFilter: typeof parsed.teamFilter === 'string' ? parsed.teamFilter : 'all',
+        feeFilter: typeof parsed.feeFilter === 'string' ? parsed.feeFilter : 'all',
+        sortBy: typeof parsed.sortBy === 'string' ? parsed.sortBy : 'closing-soonest',
+      };
+    }
+  } catch (err) {
+    console.error('Error loading saved filter preferences:', err);
+  }
+  return null;
+}
 
 // Self-contained SVG Icons to guarantee zero bundler chunking collisions or export mismatches
 const BackIcon = ({ size = 18 }) => (
@@ -434,15 +456,17 @@ export default function CompetitionsPage({
   onNavigateToSquads,
   headerAction,
 }) {
-  const { user, profile } = useAuth();
+  const { user, profile, squadPosts = [] } = useAuth();
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
   const bookmarksKey = `${LOCAL_STORAGE_KEY}${userKeySuffix}`;
+
+  const initialPrefs = useMemo(() => loadSavedFilterPrefs(user?.email), []);
 
   const [competitions, setCompetitions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCircuits, setSelectedCircuits] = useState([]); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
+  const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
   const [internalBookmarkedOnly, setInternalBookmarkedOnly] = useState(false);
   const bookmarkedOnly = propBookmarkedOnly !== undefined ? propBookmarkedOnly : internalBookmarkedOnly;
   const setBookmarkedOnly = useCallback(
@@ -455,10 +479,43 @@ export default function CompetitionsPage({
     },
     [bookmarkedOnly, propSetBookmarkedOnly]
   );
-  const [selectedTracks, setSelectedTracks] = useState([]); // [] = All tracks; otherwise: 'case' | 'hackathon' | 'writing' | 'quiz' | 'simulation' | 'debate'
-  const [teamFilter, setTeamFilter] = useState('all'); // 'all' | 'solo' | 'team'
-  const [feeFilter, setFeeFilter] = useState('all'); // 'all' | 'free' | 'paid'
-  const [sortBy, setSortBy] = useState('closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
+  const [selectedTracks, setSelectedTracks] = useState(() => initialPrefs?.selectedTracks || []); // [] = All tracks; otherwise: 'case' | 'hackathon' | 'writing' | 'quiz' | 'simulation' | 'debate'
+  const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
+  const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
+  const [sortBy, setSortBy] = useState(() => initialPrefs?.sortBy || 'closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
+
+  // Persist filter preferences whenever they change
+  useEffect(() => {
+    try {
+      const prefs = {
+        selectedCircuits,
+        selectedTracks,
+        teamFilter,
+        feeFilter,
+        sortBy,
+      };
+      const userKey = user?.email ? `${FILTER_PREFS_KEY}_${user.email.toLowerCase()}` : null;
+      if (userKey) {
+        localStorage.setItem(userKey, JSON.stringify(prefs));
+      }
+      localStorage.setItem(FILTER_PREFS_KEY, JSON.stringify(prefs));
+    } catch (err) {
+      console.error('Error saving filter preferences:', err);
+    }
+  }, [selectedCircuits, selectedTracks, teamFilter, feeFilter, sortBy, user?.email]);
+
+  // Sync saved filter preferences when user signs in
+  useEffect(() => {
+    if (!user?.email) return;
+    const userPrefs = loadSavedFilterPrefs(user.email);
+    if (userPrefs) {
+      if (Array.isArray(userPrefs.selectedCircuits)) setSelectedCircuits(userPrefs.selectedCircuits);
+      if (Array.isArray(userPrefs.selectedTracks)) setSelectedTracks(userPrefs.selectedTracks);
+      if (userPrefs.teamFilter) setTeamFilter(userPrefs.teamFilter);
+      if (userPrefs.feeFilter) setFeeFilter(userPrefs.feeFilter);
+      if (userPrefs.sortBy) setSortBy(userPrefs.sortBy);
+    }
+  }, [user?.email]);
   const [copiedId, setCopiedId] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -808,14 +865,22 @@ export default function CompetitionsPage({
     feeFilter !== 'all' ||
     sortBy !== 'closing-soonest';
 
-  const handleResetFilters = () => {
+  const handleResetFilters = useCallback(() => {
     setSearchQuery('');
     setSelectedCircuits([]);
     setSelectedTracks([]);
     setTeamFilter('all');
     setFeeFilter('all');
     setSortBy('closing-soonest');
-  };
+    setBookmarkedOnly(false);
+    try {
+      const userKey = user?.email ? `${FILTER_PREFS_KEY}_${user.email.toLowerCase()}` : null;
+      if (userKey) localStorage.removeItem(userKey);
+      localStorage.removeItem(FILTER_PREFS_KEY);
+    } catch (err) {
+      console.error('Error clearing filter preferences:', err);
+    }
+  }, [setBookmarkedOnly, user?.email]);
 
   // Filtering & Sorting
   const filteredCompetitions = useMemo(() => {
@@ -907,17 +972,126 @@ export default function CompetitionsPage({
     return result;
   }, [competitions, searchQuery, selectedCircuits, bookmarkedOnly, selectedTracks, teamFilter, feeFilter, sortBy, bookmarkedIds]);
 
+  // Top 5-6 competitions matching the active filters
+  const topFilteredCompetitions = useMemo(() => {
+    return filteredCompetitions.slice(0, 6);
+  }, [filteredCompetitions]);
+
+  // Derive top 5-6 matching squads carrying over the SAME filters
+  const matchingSquads = useMemo(() => {
+    const topComps = filteredCompetitions.slice(0, 6);
+    const filteredCompTitles = new Set(filteredCompetitions.map((c) => (c.title || '').toLowerCase().trim()));
+
+    const matchesFilter = (post) => {
+      if (!post) return false;
+      const postCompName = (post.competition_name || '').toLowerCase().trim();
+
+      // Direct title match with any filtered competition
+      if (postCompName && filteredCompTitles.has(postCompName)) return true;
+      for (const comp of topComps) {
+        const cTitle = (comp.title || '').toLowerCase();
+        if (cTitle && (cTitle.includes(postCompName) || postCompName.includes(cTitle))) {
+          return true;
+        }
+      }
+
+      // Circuit match if filters are active
+      if (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length) {
+        const postText = `${post.college || ''} ${post.organizer || ''} ${post.competition_name || ''}`.toLowerCase();
+        const inDU = selectedCircuits.includes('du') && DU_KEYWORDS.some((kw) => isMatch(postText, kw));
+        const inPremier = selectedCircuits.includes('iim-iit-premier') && IIM_IIT_PREMIER_KEYWORDS.some((kw) => isMatch(postText, kw));
+        const inCorporate = selectedCircuits.includes('corporate-global') && (CORPORATE_KEYWORDS.some((kw) => isMatch(postText, kw)) || GLOBAL_KEYWORDS.some((kw) => isMatch(postText, kw)));
+        const inOthers = selectedCircuits.includes('others');
+        if (inDU || inPremier || inCorporate || inOthers) return true;
+      }
+
+      // If no circuit/category filters are active, match open squads
+      if (selectedCircuits.length === 0 && selectedTracks.length === 0) {
+        return true;
+      }
+
+      return false;
+    };
+
+    const dbMatches = (squadPosts || []).filter(matchesFilter);
+
+    // Contextual seed squads matching top filtered competitions to guarantee 5-6 slots
+    const seedSquadsForFilteredComps = [];
+    const rolePools = [
+      { lead: 'Aditya S.', college: 'SSCBS', course: 'BMS', skills: ['Deck Specialist', 'Financial Modeling'], phone: '9810123456' },
+      { lead: 'Rhea M.', college: 'SRCC', course: 'B.Com (Hons)', skills: ['Market Strategy', 'Pitch / Speaker'], phone: '9871234567' },
+      { lead: 'Aryan K.', college: 'IIT Delhi', course: 'B.Tech', skills: ['Fullstack Dev', 'AI/ML Integration'], phone: '9899123456' },
+      { lead: 'Tanvi G.', college: 'Hindu College', course: 'Economics (Hons)', skills: ['Valuation & DCF', 'Policy Research'], phone: '9910234567' },
+      { lead: 'Kabir V.', college: 'St. Stephen’s', course: 'Economics', skills: ['Case Solving', 'Deck Specialist'], phone: '9811345678' },
+      { lead: 'Sanya D.', college: 'LSR', course: 'Statistics', skills: ['Data Analytics', 'Risk Simulation'], phone: '9873456789' },
+    ];
+
+    topComps.forEach((comp, idx) => {
+      const existing = dbMatches.find(
+        (p) => (p.competition_name || '').toLowerCase() === (comp.title || '').toLowerCase()
+      );
+      if (!existing) {
+        const persona = rolePools[idx % rolePools.length];
+        const isTech = comp.category === 'hackathon';
+        const isFin = comp.category === 'simulation' || (comp.title || '').toLowerCase().includes('finance');
+
+        let skillsLooking = persona.skills;
+        if (isTech) {
+          skillsLooking = ['React / Frontend', 'Backend API & Cloud'];
+        } else if (isFin) {
+          skillsLooking = ['Financial Modeling', 'Valuation & DCF'];
+        }
+
+        seedSquadsForFilteredComps.push({
+          id: `seed-squad-${comp.id || idx}`,
+          competition_name: comp.title,
+          organizer: comp.orgName,
+          circuitLabel: getCardCircuit(comp).label,
+          circuitType: getCardCircuit(comp).type,
+          student_name: persona.lead,
+          college: persona.college,
+          course: persona.course,
+          year: '2nd / 3rd Year',
+          spots_left: Math.max(1, (comp.maxTeam || 3) - 1),
+          total_members: comp.maxTeam || 3,
+          skills_looking_for: skillsLooking,
+          phone_number: persona.phone,
+          isSeed: true,
+          unstopUrl: comp.unstopUrl,
+        });
+      }
+    });
+
+    return [...dbMatches, ...seedSquadsForFilteredComps].slice(0, 6);
+  }, [filteredCompetitions, squadPosts, selectedCircuits, selectedTracks]);
+
   return (
     <div className="case-comps-container">
-      {/* ── Two19 Labs OneStop Bento Grid Competitor Dashboard ── */}
+      {/* ── Two19 Labs OneStop 50/50 Split Dashboard ── */}
       <DashboardHome
         competitions={competitions}
+        filteredCompetitions={filteredCompetitions}
+        topFilteredCompetitions={topFilteredCompetitions}
+        matchingSquads={matchingSquads}
         metrics={metrics}
         user={user}
         profile={profile}
         bookmarkedIds={bookmarkedIds}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        selectedCircuits={selectedCircuits}
+        selectedTracks={selectedTracks}
+        teamFilter={teamFilter}
+        feeFilter={feeFilter}
+        sortBy={sortBy}
+        activeFilterCount={activeFilterCount}
+        onToggleCircuit={toggleCircuit}
+        onToggleTrack={toggleTrack}
+        onSetTeamFilter={setTeamFilter}
+        onSetFeeFilter={setFeeFilter}
+        onSetSortBy={setSortBy}
+        onResetFilters={handleResetFilters}
+        onOpenFiltersDrawer={() => setIsMobileFiltersOpen(true)}
         onSelectCircuit={handleSelectCircuit}
         onSelectTrack={handleSelectTrack}
         onQuickFilter={handleQuickFilter}
