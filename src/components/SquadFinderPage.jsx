@@ -109,7 +109,7 @@ function isUserPost(post, user) {
 }
 
 export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, showToast }) {
-  const { user, profile, openAuthModal } = useAuth();
+  const { user, profile, openAuthModal, openProfileModal } = useAuth();
 
   const [posts, setPosts] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -547,9 +547,15 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
     const totalMem = parseInt(formData.total_members, 10) || 4;
     const openSpots = Math.min(totalMem, parseInt(formData.spots_left, 10) || 1);
 
-    const userCollege = formData.college.trim() || profile?.college || user?.user_metadata?.college || 'Collegiate Network';
+    const userCollege = (profile?.college || user?.user_metadata?.college || formData.college || '').trim();
     const userCourse = formData.course.trim() || profile?.course || user?.user_metadata?.course || 'Undergraduate';
-    const userYear = formData.year || profile?.year || user?.user_metadata?.year || '2nd Year';
+    const userYear = normalizeYear(profile?.year || user?.user_metadata?.year || formData.year);
+
+    if (!userCollege) {
+      setFormError('Please set your College in your profile settings before hosting a team opening.');
+      setSubmitting(false);
+      return;
+    }
 
     if (editingPost) {
       // ── EDIT EXISTING POST ──
@@ -1603,16 +1609,57 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
                 </div>
               </div>
 
-              {/* Collegiate Details (For Everyone) */}
-              <div className="tf-form-group">
-                <label>Your College / University *</label>
-                <SearchableCollegeSelect
-                  value={formData.college}
-                  onChange={(val) => setFormData({ ...formData, college: val })}
-                  placeholder="Search your college or university (e.g. SSCBS, SRCC, IIT Delhi)..."
-                  required
-                />
-              </div>
+              {/* Collegiate Details (Automatically Pulled from Profile) */}
+              {(profile?.college || user?.user_metadata?.college) ? (
+                <div className="tf-form-group">
+                  <div className="tf-profile-sync-row">
+                    <label>Your College / University *</label>
+                    <span className="tf-profile-sync-badge">
+                      <ShieldIcon size={12} /> Auto-pulled from Profile
+                    </span>
+                  </div>
+                  <div className="tf-profile-locked-wrap">
+                    <input
+                      type="text"
+                      readOnly
+                      disabled
+                      className="tf-profile-locked-field"
+                      value={profile?.college || user?.user_metadata?.college}
+                    />
+                    <button
+                      type="button"
+                      className="tf-profile-sync-btn"
+                      onClick={() => {
+                        setIsCreateModalOpen(false);
+                        openProfileModal();
+                      }}
+                      title="Edit in Profile Settings"
+                    >
+                      Edit in Profile ↗
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="tf-form-group">
+                  <label>Your College / University *</label>
+                  <div className="tf-profile-missing-banner">
+                    <div className="tf-profile-missing-text">
+                      <strong>⚠️ College Missing from Profile</strong>
+                      <p>You must set your college in your profile settings before hosting a team opening.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="tf-profile-set-btn"
+                      onClick={() => {
+                        setIsCreateModalOpen(false);
+                        openProfileModal();
+                      }}
+                    >
+                      Set College in Profile ↗
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="tf-form-group">
                 <label>Brief description, requirements, past track record *</label>
@@ -1656,17 +1703,19 @@ export default function SquadFinderPage({ onBack, prefillData, onClearPrefill, s
                 </div>
 
                 <div className="tf-form-group tf-flex-1">
-                  <label>Current Year</label>
-                  <select
-                    value={formData.year}
-                    onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                  >
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
-                    <option value="Postgraduate">Postgraduate</option>
-                  </select>
+                  <div className="tf-profile-sync-row">
+                    <label>Current Year</label>
+                    <span className="tf-profile-sync-badge">
+                      <ShieldIcon size={11} /> Auto-pulled
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    className="tf-profile-locked-field"
+                    value={normalizeYear(profile?.year || user?.user_metadata?.year)}
+                  />
                 </div>
               </div>
 

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   phone TEXT,
   bio TEXT,
   avatar_url TEXT,
+  profile_last_updated_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS course TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS year TEXT DEFAULT '2nd Year';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bio TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS profile_last_updated_at TIMESTAMPTZ;
 
 -- Enable RLS on profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

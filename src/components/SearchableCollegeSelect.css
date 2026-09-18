@@ -208,3 +208,19 @@
 [data-theme='dark'] .t19-college-option-name {
   color: #F4F4F5;
 }
+
+/* Disabled State */
+.t19-college-disabled .t19-college-input {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: var(--surface-hover, #ECE8E0);
+  border-color: var(--border, #D9D5CD);
+  color: var(--text-secondary, #4A4844);
+}
+
+[data-theme='dark'] .t19-college-disabled .t19-college-input {
+  background-color: #27272A;
+  border-color: #3F3F46;
+  color: #A1A1AA;
+}
+

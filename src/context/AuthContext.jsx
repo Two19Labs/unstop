@@ -1,8 +1,48 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
+import { normalizeYear } from '../data/colleges';
 
 const AuthContext = createContext(null);
+
+export const PROFILE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+export function getProfileCooldown(profile, user) {
+  const lastUpdated =
+    profile?.profile_last_updated_at ||
+    user?.user_metadata?.profile_last_updated_at ||
+    (user?.id ? localStorage.getItem(`arena_profile_last_updated_${user.id}`) : null);
+
+  if (!lastUpdated) {
+    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
+  }
+
+  const lastTime = new Date(lastUpdated).getTime();
+  if (isNaN(lastTime)) {
+    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
+  }
+
+  const now = Date.now();
+  const elapsed = now - lastTime;
+  if (elapsed >= PROFILE_COOLDOWN_MS) {
+    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
+  }
+
+  const remainingMs = PROFILE_COOLDOWN_MS - elapsed;
+  const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+  const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+  const remainingFormatted = `${hours}h ${minutes}m ${seconds}s`;
+
+  return {
+    isLocked: true,
+    remainingMs,
+    hours,
+    minutes,
+    seconds,
+    remainingFormatted,
+    unlockDate: new Date(lastTime + PROFILE_COOLDOWN_MS),
+  };
+}
 
 export function sanitizeIndianPhone(raw) {
   if (!raw) return '';
@@ -101,13 +141,16 @@ export function AuthProvider({ children }) {
 
       const { data: authData } = await supabase.auth.getUser();
       const meta = authData?.user?.user_metadata || {};
+      const localLastUpdated = localStorage.getItem(`arena_profile_last_updated_${userId}`);
+      const lastUpdatedAt = data?.profile_last_updated_at || meta?.profile_last_updated_at || localLastUpdated || null;
 
       if (!error && data) {
         setProfile({
           ...data,
           course: data.course || meta.course || '',
-          year: data.year || meta.year || '2nd Year',
+          year: data.year || meta.year || 'UG 2nd Year',
           bio: data.bio || meta.bio || '',
+          profile_last_updated_at: lastUpdatedAt,
         });
       } else if (meta.full_name) {
         setProfile({
@@ -117,8 +160,9 @@ export function AuthProvider({ children }) {
           college: meta.college || '',
           phone: meta.phone || '',
           course: meta.course || '',
-          year: meta.year || '2nd Year',
+          year: meta.year || 'UG 2nd Year',
           bio: meta.bio || '',
+          profile_last_updated_at: lastUpdatedAt,
         });
       }
     } catch (err) {
@@ -359,39 +403,80 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  // Profile Update (Database & Auth Metadata)
+  // Profile Update (Database & Auth Metadata with 24-Hour Cooldown)
   const updateProfile = async ({ fullName, college, course, year, phone, bio }) => {
     if (!user || !supabase) {
       throw new Error('You must be signed in to update your profile.');
     }
 
-    const cleanPhone = sanitizeIndianPhone(phone);
+    // 1. Enforce 24-Hour Cooldown
+    const cooldown = getProfileCooldown(profile, user);
+    if (cooldown.isLocked) {
+      throw new Error(`Profile details cannot be modified for 24 hours after an update. Cooldown remaining: ${cooldown.remainingFormatted}.`);
+    }
 
-    // 1. Update Supabase Auth user metadata
+    const cleanPhone = sanitizeIndianPhone(phone);
+    const trimmedName = (fullName || '').trim();
+    const trimmedCollege = (college || '').trim();
+    const trimmedCourse = (course || '').trim();
+    const selectedYear = normalizeYear(year);
+    const trimmedBio = (bio || '').trim();
+
+    // Check if any field has actually changed
+    const prevName = (profile?.full_name || user?.user_metadata?.full_name || '').trim();
+    const prevCollege = (profile?.college || user?.user_metadata?.college || '').trim();
+    const prevCourse = (profile?.course || user?.user_metadata?.course || '').trim();
+    const prevYear = normalizeYear(profile?.year || user?.user_metadata?.year);
+    const prevPhone = sanitizeIndianPhone(profile?.phone || user?.user_metadata?.phone || '');
+    const prevBio = (profile?.bio || user?.user_metadata?.bio || '').trim();
+
+    const hasChanged =
+      trimmedName !== prevName ||
+      trimmedCollege !== prevCollege ||
+      trimmedCourse !== prevCourse ||
+      selectedYear !== prevYear ||
+      cleanPhone !== prevPhone ||
+      trimmedBio !== prevBio;
+
+    // If nothing has changed, do not start/reset cooldown
+    if (!hasChanged && (profile?.profile_last_updated_at || user?.user_metadata?.profile_last_updated_at)) {
+      return profile;
+    }
+
+    const nowIso = new Date().toISOString();
+
+    // 2. Update Supabase Auth user metadata
     const { error: authErr } = await supabase.auth.updateUser({
       data: {
-        full_name: fullName,
-        college: college || '',
-        course: course || '',
-        year: year || '2nd Year',
-        phone: cleanPhone || '',
-        bio: bio || '',
+        full_name: trimmedName,
+        college: trimmedCollege,
+        course: trimmedCourse,
+        year: selectedYear,
+        phone: cleanPhone,
+        bio: trimmedBio,
+        profile_last_updated_at: nowIso,
       },
     });
 
     if (authErr) throw authErr;
 
-    // 2. Update PostgreSQL profiles table (upsert to create if missing)
+    // 3. Persist timestamp to localStorage for immediate resilience
+    try {
+      localStorage.setItem(`arena_profile_last_updated_${user.id}`, nowIso);
+    } catch (e) {}
+
+    // 4. Update PostgreSQL profiles table (upsert to create if missing)
     const profileRecord = {
       id: user.id,
       email: user.email,
-      full_name: fullName,
-      college: college || '',
-      course: course || '',
-      year: year || '2nd Year',
-      phone: cleanPhone || '',
-      bio: bio || '',
-      updated_at: new Date().toISOString(),
+      full_name: trimmedName,
+      college: trimmedCollege,
+      course: trimmedCourse,
+      year: selectedYear,
+      phone: cleanPhone,
+      bio: trimmedBio,
+      profile_last_updated_at: nowIso,
+      updated_at: nowIso,
     };
 
     try {
@@ -406,10 +491,10 @@ export function AuthProvider({ children }) {
           .upsert({
             id: user.id,
             email: user.email,
-            full_name: fullName,
-            college: college || '',
-            phone: cleanPhone || '',
-            updated_at: new Date().toISOString(),
+            full_name: trimmedName,
+            college: trimmedCollege,
+            phone: cleanPhone,
+            updated_at: nowIso,
           }, { onConflict: 'id' });
       }
     } catch (err) {
@@ -420,12 +505,14 @@ export function AuthProvider({ children }) {
       ...(profile || {}),
       id: user.id,
       email: user.email,
-      full_name: fullName,
-      college: college || '',
-      course: course || '',
-      year: year || '2nd Year',
-      phone: cleanPhone || '',
-      bio: bio || '',
+      full_name: trimmedName,
+      college: trimmedCollege,
+      course: trimmedCourse,
+      year: selectedYear,
+      phone: cleanPhone,
+      bio: trimmedBio,
+      profile_last_updated_at: nowIso,
+      updated_at: nowIso,
     };
     setProfile(merged);
     return merged;
@@ -494,9 +581,9 @@ export function AuthProvider({ children }) {
       spots_left: Number(postData.spots_left || 1),
       initial_open_spots: Number(postData.spots_left || 1),
       is_open: true,
-      college: postData.college || profile?.college || '',
-      course: postData.course || '',
-      year: postData.year || '2nd Year',
+      college: (profile?.college || user?.user_metadata?.college || postData.college || '').trim(),
+      course: postData.course || profile?.course || user?.user_metadata?.course || '',
+      year: normalizeYear(profile?.year || user?.user_metadata?.year || postData.year),
       accepted_emails: [],
     };
 
@@ -747,6 +834,8 @@ export function AuthProvider({ children }) {
         openProfileModal,
         closeProfileModal,
         updateProfile,
+        getProfileCooldown,
+        PROFILE_COOLDOWN_MS,
         signInWithGoogle,
         signInWithPassword,
         signUpWithPassword,

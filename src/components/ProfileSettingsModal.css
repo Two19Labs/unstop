@@ -383,3 +383,149 @@
     text-align: center;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════ */
+/* 24-Hour Profile Cooldown Banner & Locked Form Elements        */
+/* ══════════════════════════════════════════════════════════════ */
+.arena-profile-cooldown-banner {
+  background: #FFFBEB;
+  border: 1px solid #FCD34D;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.15rem;
+  animation: arenaProfileFadeIn 0.2s ease-out;
+}
+
+[data-theme='dark'] .arena-profile-cooldown-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.arena-profile-cooldown-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.arena-profile-lock-icon {
+  font-size: 1.35rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.arena-profile-cooldown-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.arena-profile-cooldown-title {
+  display: block;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #92400E;
+  margin-bottom: 0.25rem;
+}
+
+[data-theme='dark'] .arena-profile-cooldown-title {
+  color: #FBBF24;
+}
+
+.arena-profile-cooldown-desc {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #78350F;
+  margin: 0;
+}
+
+[data-theme='dark'] .arena-profile-cooldown-desc {
+  color: #FDE68A;
+}
+
+.arena-profile-cooldown-timer-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(217, 119, 6, 0.3);
+}
+
+.arena-profile-timer-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #92400E;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+[data-theme='dark'] .arena-profile-timer-label {
+  color: #FCD34D;
+}
+
+.arena-profile-timer-val {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #B45309;
+  background: rgba(251, 191, 36, 0.3);
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+[data-theme='dark'] .arena-profile-timer-val {
+  color: #FEF3C7;
+  background: rgba(245, 158, 11, 0.25);
+}
+
+/* Integrity Notice below form */
+.arena-profile-policy-note {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--text-secondary, #4A4844);
+  background: var(--surface, #F7F5F1);
+  border: 1px solid var(--border, #D9D5CD);
+  border-radius: 6px;
+  padding: 0.55rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+[data-theme='dark'] .arena-profile-policy-note {
+  background: #1C1917;
+  border-color: #292524;
+  color: #D6D3D1;
+}
+
+/* Disabled input state during lock */
+.arena-profile-form.is-locked .arena-profile-field input,
+.arena-profile-form.is-locked .arena-profile-field select,
+.arena-profile-form.is-locked .arena-profile-field textarea,
+.arena-profile-field input:disabled,
+.arena-profile-field select:disabled,
+.arena-profile-field textarea:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: var(--surface-hover, #ECE8E0);
+  border-color: var(--border, #D9D5CD);
+  color: var(--text-secondary, #4A4844);
+}
+
+[data-theme='dark'] .arena-profile-form.is-locked .arena-profile-field input,
+[data-theme='dark'] .arena-profile-form.is-locked .arena-profile-field select,
+[data-theme='dark'] .arena-profile-form.is-locked .arena-profile-field textarea,
+[data-theme='dark'] .arena-profile-field input:disabled,
+[data-theme='dark'] .arena-profile-field select:disabled,
+[data-theme='dark'] .arena-profile-field textarea:disabled {
+  background-color: #27272A;
+  border-color: #3F3F46;
+  color: #A1A1AA;
+}
+
+.arena-profile-save-btn.btn-locked {
+  background: #64748B;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+

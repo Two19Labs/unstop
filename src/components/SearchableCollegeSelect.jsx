@@ -10,6 +10,7 @@ export default function SearchableCollegeSelect({
   placeholder = 'Search college or university (e.g. SSCBS, SRCC, IIT Delhi)...',
   required = false,
   id = 'college-select',
+  disabled = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState(value || '');
@@ -94,7 +95,7 @@ export default function SearchableCollegeSelect({
   };
 
   return (
-    <div className="t19-college-select-root" ref={containerRef}>
+    <div className={`t19-college-select-root ${disabled ? 't19-college-disabled' : ''}`} ref={containerRef}>
       <div className="t19-college-input-wrapper">
         <SearchIcon size={16} className="t19-college-search-icon" />
         <input
@@ -105,19 +106,26 @@ export default function SearchableCollegeSelect({
           value={query}
           placeholder={placeholder}
           required={required}
+          disabled={disabled}
           autoComplete="off"
           onFocus={() => {
-            setIsOpen(true);
-            setHighlightedIndex(0);
+            if (!disabled) {
+              setIsOpen(true);
+              setHighlightedIndex(0);
+            }
           }}
           onChange={(e) => {
-            setQuery(e.target.value);
-            setIsOpen(true);
-            setHighlightedIndex(0);
+            if (!disabled) {
+              setQuery(e.target.value);
+              setIsOpen(true);
+              setHighlightedIndex(0);
+            }
           }}
-          onKeyDown={handleKeyDown}
+          onKeyDown={(e) => {
+            if (!disabled) handleKeyDown(e);
+          }}
         />
-        {query ? (
+        {query && !disabled ? (
           <button
             type="button"
             className="t19-college-clear-btn"
@@ -130,7 +138,7 @@ export default function SearchableCollegeSelect({
         ) : null}
       </div>
 
-      {isOpen && (
+      {!disabled && isOpen && (
         <div className="t19-college-dropdown-menu" role="listbox">
           {filteredOptions.length > 0 ? (
             filteredOptions.map((opt, idx) => {

@@ -13,7 +13,8 @@ export default function ProfileSettingsModal() {
     profileModalOpen,
     closeProfileModal,
     updateProfile,
-    resetPassword
+    resetPassword,
+    getProfileCooldown,
   } = useAuth();
 
   const [fullName, setFullName] = useState('');
@@ -27,6 +28,19 @@ export default function ProfileSettingsModal() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const successTimerRef = useRef(null);
+
+  // Live 24-Hour Profile Cooldown State
+  const [cooldown, setCooldown] = useState(() => (getProfileCooldown ? getProfileCooldown(profile, user) : { isLocked: false }));
+  const isLocked = Boolean(cooldown?.isLocked);
+
+  useEffect(() => {
+    if (!profileModalOpen || !getProfileCooldown) return;
+    setCooldown(getProfileCooldown(profile, user));
+    const interval = setInterval(() => {
+      setCooldown(getProfileCooldown(profile, user));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [profileModalOpen, profile, user, getProfileCooldown]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -182,8 +196,27 @@ export default function ProfileSettingsModal() {
           </div>
         )}
 
+        {/* 24-Hour Cooldown Banner */}
+        {isLocked && (
+          <div className="arena-profile-cooldown-banner">
+            <div className="arena-profile-cooldown-top">
+              <span className="arena-profile-lock-icon">🔒</span>
+              <div className="arena-profile-cooldown-text">
+                <span className="arena-profile-cooldown-title">Profile Editing Locked (24-Hour Policy)</span>
+                <p className="arena-profile-cooldown-desc">
+                  To prevent fraudulent college impersonation and maintain fair competition, profile details can only be changed once every 24 hours.
+                </p>
+              </div>
+            </div>
+            <div className="arena-profile-cooldown-timer-box">
+              <span className="arena-profile-timer-label">Next profile update available in:</span>
+              <span className="arena-profile-timer-val">{cooldown.remainingFormatted}</span>
+            </div>
+          </div>
+        )}
+
         {/* Profile Edit Form */}
-        <form onSubmit={handleSubmit} className="arena-profile-form">
+        <form onSubmit={handleSubmit} className={`arena-profile-form ${isLocked ? 'is-locked' : ''}`}>
           <div className="arena-profile-field">
             <label htmlFor="prof-fullname">Full Name</label>
             <input
@@ -193,6 +226,7 @@ export default function ProfileSettingsModal() {
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Aditya Singhani"
               required
+              disabled={isLocked || saving}
             />
           </div>
 
@@ -204,6 +238,7 @@ export default function ProfileSettingsModal() {
               onChange={setCollege}
               placeholder="Search your college or university (e.g. SSCBS, SRCC, IIT Delhi)..."
               required
+              disabled={isLocked || saving}
             />
           </div>
 
@@ -214,6 +249,7 @@ export default function ProfileSettingsModal() {
                 id="prof-year"
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
+                disabled={isLocked || saving}
               >
                 {YEAR_OPTIONS.map((y) => (
                   <option key={y} value={y}>
@@ -231,6 +267,7 @@ export default function ProfileSettingsModal() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="10-digit phone"
+                disabled={isLocked || saving}
               />
               <span className="arena-profile-help">Used for teammate coordination once accepted</span>
             </div>
@@ -244,8 +281,15 @@ export default function ProfileSettingsModal() {
               onChange={(e) => setBio(e.target.value)}
               placeholder="e.g. Finance and strategy enthusiast specializing in DCF valuation, pitch decks, and case competitions."
               rows={3}
+              disabled={isLocked || saving}
             />
           </div>
+
+          {!isLocked && (
+            <div className="arena-profile-policy-note">
+              🛡️ <strong>Integrity Policy:</strong> Saving changes will lock your profile details for <strong>24 hours</strong> to prevent collegiate impersonation.
+            </div>
+          )}
 
           <div className="arena-profile-btn-row">
             <button
@@ -258,10 +302,14 @@ export default function ProfileSettingsModal() {
             </button>
             <button
               type="submit"
-              className="arena-profile-save-btn"
-              disabled={saving}
+              className={`arena-profile-save-btn ${isLocked ? 'btn-locked' : ''}`}
+              disabled={isLocked || saving}
             >
-              {saving ? 'Saving changes...' : 'Save Profile Changes'}
+              {isLocked
+                ? `Locked (${cooldown.hours}h ${cooldown.minutes}m left)`
+                : saving
+                ? 'Saving changes...'
+                : 'Save Profile Changes'}
             </button>
           </div>
         </form>
