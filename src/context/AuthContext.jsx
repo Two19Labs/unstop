@@ -155,7 +155,7 @@ export function AuthProvider({ children }) {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!postErr && Array.isArray(posts) && posts.length > 0) {
+      if (!postErr && Array.isArray(posts)) {
         setSquadPosts(posts);
         localStorage.setItem('arena_squad_posts', JSON.stringify(posts));
       }
