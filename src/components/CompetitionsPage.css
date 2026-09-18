@@ -64,6 +64,54 @@
   }
 }
 
+/* ── Directory Return to Dashboard Bar ── */
+.cc-directory-back-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cc-btn-back-dashboard {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #0E0E0E;
+  color: #FFFFFF;
+  border: none;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cc-btn-back-dashboard:hover {
+  background: #262626;
+  transform: translateX(-2px);
+}
+
+[data-theme='dark'] .cc-btn-back-dashboard {
+  background: var(--color-lab-blue, #0F3FFE);
+}
+
+.cc-directory-stats-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.74rem;
+  color: var(--ink-dim);
+}
+
+.cc-directory-stats-pill strong {
+  color: var(--ink);
+}
+
 /* ── Top Header ── */
 .cc-header {
   display: flex;

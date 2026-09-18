@@ -483,6 +483,13 @@ export default function CompetitionsPage({
   const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
   const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
   const [sortBy, setSortBy] = useState(() => initialPrefs?.sortBy || 'closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
+  const [pageViewMode, setPageViewMode] = useState('dashboard'); // 'dashboard' | 'directory'
+
+  useEffect(() => {
+    if (bookmarkedOnly) {
+      setPageViewMode('directory');
+    }
+  }, [bookmarkedOnly]);
 
   // Persist filter preferences whenever they change
   useEffect(() => {
@@ -1066,42 +1073,64 @@ export default function CompetitionsPage({
 
   return (
     <div className="case-comps-container">
-      {/* ── Two19 Labs OneStop 50/50 Split Dashboard ── */}
-      <DashboardHome
-        competitions={competitions}
-        filteredCompetitions={filteredCompetitions}
-        topFilteredCompetitions={topFilteredCompetitions}
-        matchingSquads={matchingSquads}
-        metrics={metrics}
-        user={user}
-        profile={profile}
-        bookmarkedIds={bookmarkedIds}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedCircuits={selectedCircuits}
-        selectedTracks={selectedTracks}
-        teamFilter={teamFilter}
-        feeFilter={feeFilter}
-        sortBy={sortBy}
-        activeFilterCount={activeFilterCount}
-        onToggleCircuit={toggleCircuit}
-        onToggleTrack={toggleTrack}
-        onSetTeamFilter={setTeamFilter}
-        onSetFeeFilter={setFeeFilter}
-        onSetSortBy={setSortBy}
-        onResetFilters={handleResetFilters}
-        onOpenFiltersDrawer={() => setIsMobileFiltersOpen(true)}
-        onSelectCircuit={handleSelectCircuit}
-        onSelectTrack={handleSelectTrack}
-        onQuickFilter={handleQuickFilter}
-        onFindTeammates={handleFindTeammates}
-        onNavigateToSquads={onNavigateToSquads}
-        onScrollToRepository={scrollToRepository}
-        onToggleBookmark={toggleBookmark}
-      />
-
-      {/* ── Section 05: Complete Directory & Deep Filters ── */}
-      <section id="repository" className="cbs-repository-section">
+      {pageViewMode === 'dashboard' ? (
+        <DashboardHome
+          competitions={competitions}
+          filteredCompetitions={filteredCompetitions}
+          topFilteredCompetitions={topFilteredCompetitions}
+          matchingSquads={matchingSquads}
+          metrics={metrics}
+          user={user}
+          profile={profile}
+          bookmarkedIds={bookmarkedIds}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          selectedCircuits={selectedCircuits}
+          selectedTracks={selectedTracks}
+          teamFilter={teamFilter}
+          feeFilter={feeFilter}
+          sortBy={sortBy}
+          activeFilterCount={activeFilterCount}
+          onToggleCircuit={toggleCircuit}
+          onToggleTrack={toggleTrack}
+          onSetTeamFilter={setTeamFilter}
+          onSetFeeFilter={setFeeFilter}
+          onSetSortBy={setSortBy}
+          onResetFilters={handleResetFilters}
+          onOpenFiltersDrawer={() => setIsMobileFiltersOpen(true)}
+          onFindTeammates={handleFindTeammates}
+          onNavigateToSquads={onNavigateToSquads}
+          onScrollToRepository={() => {
+            setPageViewMode('directory');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onToggleBookmark={toggleBookmark}
+          onSwitchToDirectory={() => {
+            setPageViewMode('directory');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          pageViewMode={pageViewMode}
+          onSetPageViewMode={setPageViewMode}
+        />
+      ) : (
+        <section id="repository" className="cbs-repository-section">
+          {/* Top Return to Dashboard bar */}
+          <div className="cc-directory-back-bar">
+            <button
+              type="button"
+              className="cc-btn-back-dashboard"
+              onClick={() => {
+                setPageViewMode('dashboard');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              <BackIcon size={16} />
+              <span>← Back to Split Radar</span>
+            </button>
+            <div className="cc-directory-stats-pill">
+              <span>Showing <strong>{filteredCompetitions.length}</strong> of <strong>{competitions.length}</strong> Live Opportunities</span>
+            </div>
+          </div>
         {/* Top Header */}
         <header className="cc-header">
         <div className="cc-header-left">
@@ -1700,6 +1729,7 @@ export default function CompetitionsPage({
         </main>
       </div>
     </section>
+  )}
   </div>
 );
 }
