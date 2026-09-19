@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { YEAR_OPTIONS, normalizeYear } from '../data/colleges';
 import SearchableCollegeSelect from './SearchableCollegeSelect';
 import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
+import OneStopLogo from './OneStopLogo';
 import './ProfileSettingsModal.css';
 
 export default function ProfileSettingsModal() {
@@ -150,7 +151,8 @@ export default function ProfileSettingsModal() {
           <div className="arena-profile-brand-pill">
             <span className="arena-profile-t19">Two19 Labs</span>
             <span className="arena-profile-divider">/</span>
-            <span className="arena-profile-badge">ACCOUNT SETTINGS</span>
+            <OneStopLogo height={15} />
+            <span className="arena-profile-badge">SETTINGS</span>
           </div>
 
           <button

@@ -13,6 +13,7 @@ import {
   ChevronDownIcon,
   SettingsIcon
 } from './icons';
+import OneStopLogo from './OneStopLogo';
 import './Navbar.css';
 
 export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedOnly, setBookmarkedOnly }) {
@@ -92,8 +93,9 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             }}
             role="button"
             tabIndex={0}
+            title="OneStop — Undergraduate Opportunities Hub"
           >
-            <span className="t19-product-name">ONESTOP</span>
+            <OneStopLogo height={25} className="t19-navbar-logo" />
             <span className="t19-subdomain-pill">undergrad hub</span>
           </div>
 

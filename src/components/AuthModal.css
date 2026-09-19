@@ -86,6 +86,12 @@
   margin-bottom: 0.65rem;
 }
 
+.arena-auth-logo-wrap {
+  margin-bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+}
+
 .arena-auth-brand-pill {
   display: inline-flex;
   align-items: center;

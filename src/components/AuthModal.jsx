@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { CloseIcon, UsersIcon, CheckIcon, AlertCircleIcon } from './icons';
+import OneStopLogo from './OneStopLogo';
 import './AuthModal.css';
 
 // Official Google "G" SVG Icon
@@ -179,6 +180,9 @@ export default function AuthModal() {
 
         {/* Brand Header */}
         <div className="arena-auth-header">
+          <div className="arena-auth-logo-wrap">
+            <OneStopLogo height={28} />
+          </div>
           <h2 id="auth-modal-title" className="arena-auth-title">
             {mode === 'forgot'
               ? 'Reset Password'

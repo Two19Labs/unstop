@@ -1,0 +1,47 @@
+/* src/components/OneStopLogo.css */
+.onestop-logo-wrapper {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  line-height: 1;
+  text-decoration: none;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.onestop-logo-img {
+  display: block;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  transition: transform var(--transition-fast, 0.15s ease);
+}
+
+.onestop-logo-img.onestop-logo-light {
+  display: block;
+}
+
+.onestop-logo-img.onestop-logo-dark {
+  display: none;
+}
+
+[data-theme='dark'] .onestop-logo-img.onestop-logo-light {
+  display: none;
+}
+
+[data-theme='dark'] .onestop-logo-img.onestop-logo-dark {
+  display: block;
+}
+
+.onestop-icon-img {
+  display: block;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  transition: transform var(--transition-fast, 0.15s ease);
+}
+
+.onestop-logo-wrapper.interactive:hover .onestop-logo-img,
+.onestop-logo-wrapper.interactive:hover .onestop-icon-img {
+  transform: scale(1.02);
+}

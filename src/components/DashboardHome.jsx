@@ -16,6 +16,7 @@ import {
   TrophyIcon
 } from './icons';
 import { normalizeYear } from '../data/colleges';
+import OneStopLogo from './OneStopLogo';
 import './DashboardHome.css';
 
 const CIRCUIT_OPTIONS = [
@@ -144,7 +145,10 @@ export default function DashboardHome({
         <div className="t19-header-left">
           <div className="t19-desk-title-wrap">
             <div className="t19-kicker-row">
-              <span className="t19-kicker-tag">COMPETITOR RADAR</span>
+              <span className="t19-kicker-tag">
+                <OneStopLogo variant="icon" height={13} style={{ marginRight: 6, display: 'inline-flex', verticalAlign: 'middle' }} />
+                COMPETITOR RADAR
+              </span>
               <span className="t19-live-indicator">
                 <span className="t19-pulse-dot" />
                 <span>Live Sync</span>

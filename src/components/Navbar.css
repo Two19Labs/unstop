@@ -64,8 +64,18 @@
 .t19-product-tag {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.t19-product-tag:hover {
+  opacity: 0.88;
+}
+
+.t19-navbar-logo {
+  display: inline-flex;
+  align-items: center;
 }
 
 .t19-product-name {
@@ -469,6 +479,10 @@
     font-size: 1.05rem;
   }
 
+  .t19-navbar-logo {
+    height: 22px !important;
+  }
+
   .t19-brand-divider {
     font-size: 0.85rem;
   }
@@ -535,6 +549,10 @@
 
   .t19-product-name {
     font-size: 0.95rem;
+  }
+
+  .t19-navbar-logo {
+    height: 19px !important;
   }
 
   .t19-nav-tab {

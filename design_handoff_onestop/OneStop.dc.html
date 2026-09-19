@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #F6F6F4; }
+  * { box-sizing: border-box; }
+  a { color: #0F3FFE; text-decoration: none; }
+  a:hover { color: #1A1A19; }
+  input, button, textarea, select { font-family: inherit; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: #0F3FFE; }
+  textarea { resize: vertical; }
+  ::selection { background: rgba(15,63,254,0.18); }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #F6F6F4; color: #1A1A19; font-family: Archivo, sans-serif; -webkit-font-smoothing: antialiased; display: grid; grid-template-columns: 236px minmax(0, 1fr);">
+
+  <aside style="background: #FFFFFF; border-right: 1px solid #E7E6E2; padding: 20px 14px; display: flex; flex-direction: column; gap: 20px;">
+    <img src="logo-onestop.png" alt="OneStop" style="height: 26px; width: auto; align-self: flex-start; margin: 2px 8px 0; display: block;" />
+
+    <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="2">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.onClick }}" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: {{ t.bg }}; color: {{ t.color }}; padding: 9px 12px; cursor: pointer; font-size: 14px; font-weight: {{ t.weight }};" style-hover="background: #F2F1ED;">
+            <span>{{ t.label }}</span>
+            <sc-if value="{{ t.badge }}" hint-placeholder-val="{{ false }}">
+              <span style="background: {{ t.badgeBg }}; color: {{ t.badgeColor }}; border-radius: 20px; padding: 1px 7px; font-size: 11px; font-weight: 700;">{{ t.badge }}</span>
+            </sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </sc-for>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+      <button onClick="{{ goProfile }}" style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: {{ profileBg }}; padding: 9px 8px; cursor: pointer;" style-hover="background: #F2F1ED;">
+        <span style="width: 30px; height: 30px; border-radius: 50%; background: #E7E6E2; color: #55534D; display: flex; align-items: center; justify-content: center; flex: none; font-size: 11px; font-weight: 700;">{{ initials }}</span>
+        <span style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 600;">{{ profileName }}</span>
+          <span style="font-size: 11px; color: #75736C;">{{ profileMeta }}</span>
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <main style="min-width: 0; padding: 26px 30px 48px;">
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div>
+          <h1 style="margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.02em;">{{ greeting }}</h1>
+          <p style="margin: 7px 0 0; font-size: 14px; color: #75736C;">{{ alertSummary }}</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); gap: 12px;">
+          <sc-for list="{{ tiles }}" as="s" hint-placeholder-count="4">
+            <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 15px 17px;">
+              <div style="font-size: 12px; font-weight: 500; color: #75736C;">{{ s.label }}</div>
+              <div style="margin-top: 6px; font-size: 25px; font-weight: 700; letter-spacing: -0.02em; color: {{ s.color }};">{{ s.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hasInbox }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #E7E6E2;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Needs your response</h2>
+              <button onClick="{{ goRequests }}" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #1A1A19; padding: 6px 11px; cursor: pointer; font-size: 13px; font-weight: 500;" style-hover="background: #F2F1ED;">All requests</button>
+            </div>
+            <sc-for list="{{ inbox }}" as="a" hint-placeholder-count="2">
+              <div style="display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 13px; padding: 14px 18px; border-bottom: 1px solid #F0EFEB;">
+                <span style="width: 34px; height: 34px; border-radius: 8px; border: 1px solid #EFEEEA; background-color: {{ a.logoBg }}; background-image: {{ a.logoImg }}; background-size: contain; background-repeat: no-repeat; background-position: center; color: #55534D; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; font-size: 11px; font-weight: 700;">
+                  <sc-if value="{{ a.noLogo }}" hint-placeholder-val="{{ true }}">
+                    <span>{{ a.hostInitials }}</span>
+                  </sc-if>
+                </span>
+                <div style="min-width: 0;">
+                  <div style="font-size: 14px; font-weight: 600;">{{ a.who }}</div>
+                  <p style="margin: 4px 0 0; font-size: 13px; color: #75736C;">{{ a.sub }}</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button onClick="{{ a.onAccept }}" style="border: 1px solid #0F3FFE; border-radius: 8px; background: #0F3FFE; color: #FFFFFF; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 600;">Accept</button>
+                  <button onClick="{{ a.onReject }}" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #55534D; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;" style-hover="background: #F2F1ED;">Decline</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; overflow: hidden;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #E7E6E2;">
+            <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Saved filters</h2>
+            <button onClick="{{ goBrowse }}" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #1A1A19; padding: 6px 11px; cursor: pointer; font-size: 13px; font-weight: 500;" style-hover="background: #F2F1ED;">Add new</button>
+          </div>
+          <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="3">
+            <div onClick="{{ a.onOpen }}" style="display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 14px 18px; border-bottom: 1px solid #F0EFEB; cursor: pointer;" style-hover="background: #FAFAF8;">
+              <div style="min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+                  <span style="font-size: 14px; font-weight: 600;">{{ a.name }}</span>
+                  <span style="background: {{ a.badgeBg }}; color: {{ a.badgeColor }}; border: 1px solid {{ a.badgeBorder }}; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 600; white-space: nowrap;">{{ a.badge }}</span>
+                </div>
+                <p style="margin: 5px 0 0; font-size: 13px; color: #75736C;">{{ a.rule }}</p>
+                <div style="display: flex; align-items: center; gap: 9px; margin-top: 7px;">
+                  <sc-if value="{{ a.hasSoonest }}" hint-placeholder-val="{{ true }}">
+                    <span style="width: 26px; height: 26px; border-radius: 7px; border: 1px solid #EFEEEA; background-color: {{ a.logoBg }}; background-image: {{ a.logoImg }}; background-size: contain; background-repeat: no-repeat; background-position: center; color: #55534D; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; font-size: 10px; font-weight: 700;">
+                      <sc-if value="{{ a.noLogo }}" hint-placeholder-val="{{ true }}">
+                        <span>{{ a.hostInitials }}</span>
+                      </sc-if>
+                    </span>
+                  </sc-if>
+                  <p style="margin: 0; font-size: 13px;">{{ a.newest }}</p>
+                </div>
+              </div>
+              <button onClick="{{ a.onDelete }}" title="Stop alerting" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #75736C; width: 30px; height: 30px; cursor: pointer; font-size: 14px; line-height: 1;" style-hover="background: #F2F1ED; color: #1A1A19;">×</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noAlerts }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 32px 18px; text-align: center;">
+              <p style="margin: 0; font-size: 14px; font-weight: 600;">No saved filters yet</p>
+              <p style="margin: 6px 0 0; font-size: 13px; color: #75736C;">Set filters in Browse and save them — new matches show up here.</p>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isBrowse }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div>
+          <h1 style="margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.02em;">{{ browseTitle }}</h1>
+          <p style="margin: 7px 0 0; font-size: 14px; color: #75736C;">{{ browseSub }}</p>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 11px; flex-wrap: wrap; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 11px 14px;">
+          <span style="background: #0F3FFE; color: #FFFFFF; border-radius: 5px; padding: 3px 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;">UNSTOP ONLY</span>
+          <span style="font-size: 13px; color: #55534D;">Curated for undergraduate eligibility, synced directly from Unstop. External opportunities are not shown.</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 252px minmax(0, 1fr); gap: 16px; align-items: start;">
+
+          <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 18px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <h2 style="margin: 0; font-size: 15px; font-weight: 600;">Filters</h2>
+              <button onClick="{{ onReset }}" style="border: 0; background: none; color: #75736C; padding: 0; cursor: pointer; font-size: 13px; font-weight: 500;" style-hover="color: #0F3FFE;">Clear all</button>
+            </div>
+
+            <sc-for list="{{ checkGroups }}" as="g" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 9px; padding-top: 15px; border-top: 1px solid #F0EFEB;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                  <span style="font-size: 13px; font-weight: 600;">{{ g.label }}</span>
+                  <button onClick="{{ g.onAll }}" style="border: 0; background: none; color: {{ g.allColor }}; padding: 0; cursor: pointer; font-size: 12px; font-weight: 500;">All</button>
+                </div>
+                <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="4">
+                  <button onClick="{{ i.onClick }}" style="display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0; background: none; padding: 2px 0; cursor: pointer;">
+                    <span style="width: 16px; height: 16px; border-radius: 4px; border: 1px solid {{ i.boxBorder }}; background: {{ i.boxBg }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none; font-size: 11px; font-weight: 700; line-height: 1;">{{ i.mark }}</span>
+                    <span style="flex: 1; font-size: 13px; font-weight: {{ i.weight }}; color: #1A1A19;">{{ i.label }}</span>
+                    <span style="font-size: 12px; color: #75736C;">{{ i.count }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-for>
+
+            <sc-for list="{{ segGroups }}" as="g" hint-placeholder-count="2">
+              <div style="display: flex; flex-direction: column; gap: 9px; padding-top: 15px; border-top: 1px solid #F0EFEB;">
+                <span style="font-size: 12px; font-weight: 600; color: #75736C;">{{ g.label }}</span>
+                <div style="display: flex; background: #F6F6F4; border: 1px solid #EFEEEA; border-radius: 8px; padding: 3px; gap: 3px;">
+                  <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="3">
+                    <button onClick="{{ i.onClick }}" style="flex: 1; border: 0; border-radius: 6px; background: {{ i.bg }}; color: {{ i.color }}; padding: 7px 4px; cursor: pointer; white-space: nowrap; font-size: 12px; font-weight: {{ i.weight }}; box-shadow: {{ i.shadow }};">{{ i.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <input value="{{ q }}" onChange="{{ onSearch }}" placeholder="Search competitions, hosts, prizes…" style="flex: 1; min-width: 210px; border: 1px solid #E7E6E2; border-radius: 10px; background: #FFFFFF; padding: 11px 14px; font-size: 14px; color: #1A1A19;" />
+              <div style="display: flex; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 3px; gap: 3px;">
+                <sc-for list="{{ scopeTabs }}" as="t" hint-placeholder-count="2">
+                  <button onClick="{{ t.onClick }}" style="display: flex; align-items: center; gap: 7px; border: 0; border-radius: 7px; background: {{ t.bg }}; color: {{ t.color }}; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: {{ t.weight }};">
+                    <span>{{ t.label }}</span>
+                    <span style="background: {{ t.pillBg }}; color: {{ t.pillColor }}; border-radius: 20px; padding: 1px 7px; font-size: 11px; font-weight: 700;">{{ t.count }}</span>
+                  </button>
+                </sc-for>
+              </div>
+              <select value="{{ sort }}" onChange="{{ onSort }}" style="border: 1px solid #E7E6E2; border-radius: 10px; background: #FFFFFF; padding: 11px 12px; font-size: 13px; font-weight: 500; color: #1A1A19; cursor: pointer;">
+                <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="3">
+                  <option value="{{ o.value }}">{{ o.label }}</option>
+                </sc-for>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: #17A34A; display: inline-block; flex: none;"></span>
+                <span style="font-size: 13px; color: #55534D;">{{ resultLine }}</span>
+              </div>
+              <button onClick="{{ onSaveFilter }}" style="border: 0; background: none; color: {{ saveTextColor }}; padding: 0; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 600;">{{ saveLabel }}</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(288px, 1fr)); gap: 14px;">
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+                <div onClick="{{ r.onOpen }}" style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 17px 17px; display: flex; flex-direction: column; gap: 13px; cursor: pointer;" style-hover="border-color: #D6D4CE;">
+                  <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: start; gap: 11px;">
+                    <span style="width: 40px; height: 40px; border-radius: 9px; border: 1px solid #EFEEEA; background-color: {{ r.logoBg }}; background-image: {{ r.logoImg }}; background-size: contain; background-repeat: no-repeat; background-position: center; color: #55534D; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; font-size: 12px; font-weight: 700;">
+                      <sc-if value="{{ r.noLogo }}" hint-placeholder-val="{{ true }}">
+                        <span>{{ r.hostInitials }}</span>
+                      </sc-if>
+                    </span>
+                    <span style="font-size: 13px; font-weight: 500; color: #55534D; line-height: 1.35; padding-top: 2px; text-wrap: pretty;">{{ r.host }}</span>
+                    <button onClick="{{ r.onBookmark }}" title="Bookmark" style="border: 1px solid {{ r.bmBorder }}; border-radius: 8px; background: {{ r.bmBg }}; color: {{ r.bmColor }}; width: 30px; height: 30px; flex: none; cursor: pointer; font-size: 13px; line-height: 1;">{{ r.bmMark }}</button>
+                  </div>
+
+                  <h3 style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; text-wrap: pretty;">{{ r.title }}</h3>
+
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F9F9F7; border: 1px solid #EFEEEA; border-radius: 9px; padding: 9px 11px;">
+                    <span style="font-size: 13px; font-weight: 600; color: #1A1A19; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ r.prize }}</span>
+                    <span style="border: 1px solid {{ r.feeBorder }}; border-radius: 6px; background: {{ r.feeBg }}; color: {{ r.feeColor }}; padding: 3px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; flex: none;">{{ r.fee }}</span>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 12px; color: #55534D;">
+                    <span>{{ r.participation }}</span>
+                    <span style="color: #C9C7C1;">·</span>
+                    <span>{{ r.ends }}</span>
+                  </div>
+
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-size: 12px; color: #75736C;">{{ r.regs }}</span>
+                    <span style="border: 1px solid {{ r.pillBorder }}; border-radius: 20px; background: {{ r.pillBg }}; color: {{ r.pillColor }}; padding: 4px 10px; font-size: 12px; font-weight: 600; white-space: nowrap;">{{ r.deadline }}</span>
+                  </div>
+
+                  <div style="display: flex; gap: 8px; margin-top: auto;">
+                    <a href="#" onClick="{{ stop }}" style="flex: 1; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 10px 12px; text-align: center; font-size: 13px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC; color: #FFFFFF;">Apply on Unstop</a>
+                    <sc-if value="{{ r.teamable }}" hint-placeholder-val="{{ true }}">
+                      <button onClick="{{ r.onFindTeam }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 10px 12px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;" style-hover="background: #F2F1ED;">Find teammates</button>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+              <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 44px 18px; text-align: center;">
+                <p style="margin: 0; font-size: 14px; font-weight: 600;">{{ emptyTitle }}</p>
+                <p style="margin: 6px 0 0; font-size: 13px; color: #75736C;">{{ emptyNote }}</p>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTeams }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 17px;">
+        <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div>
+            <h1 style="margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.02em;">Team finder</h1>
+            <p style="margin: 7px 0 0; font-size: 14px; color: #75736C;">Squads looking for undergrad teammates. Once a lead accepts you, WhatsApp opens in one click.</p>
+          </div>
+          <button onClick="{{ onOpenPost }}" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 11px 17px; cursor: pointer; white-space: nowrap; font-size: 14px; font-weight: 600;">Post a squad</button>
+        </div>
+
+        <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <input value="{{ tq }}" onChange="{{ onTeamSearch }}" placeholder="Search by competition, college or skill" style="flex: 1; min-width: 210px; border: 1px solid #E7E6E2; border-radius: 10px; background: #FFFFFF; padding: 10px 13px; font-size: 14px; color: #1A1A19;" />
+            <div style="display: flex; background: #F6F6F4; border: 1px solid #EFEEEA; border-radius: 10px; padding: 3px; gap: 3px;">
+              <sc-for list="{{ teamScopes }}" as="t" hint-placeholder-count="3">
+                <button onClick="{{ t.onClick }}" style="display: flex; align-items: center; gap: 7px; border: 0; border-radius: 7px; background: {{ t.bg }}; color: {{ t.color }}; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: {{ t.weight }}; box-shadow: {{ t.shadow }};">
+                  <span>{{ t.label }}</span>
+                  <span style="background: {{ t.pillBg }}; color: {{ t.pillColor }}; border-radius: 20px; padding: 1px 7px; font-size: 11px; font-weight: 700;">{{ t.count }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: flex-start; gap: 9px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #F0EFEB;">
+            <span style="font-size: 12px; font-weight: 500; color: #75736C; padding-top: 7px;">Skill needed</span>
+            <sc-for list="{{ teamSkillChips }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.onClick }}" style="border: 1px solid {{ c.border }}; border-radius: 20px; background: {{ c.bg }}; color: {{ c.color }}; padding: 6px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;">{{ c.label }}</button>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">Category</span>
+            <sc-for list="{{ teamDiscChips }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.onClick }}" style="border: 1px solid {{ c.border }}; border-radius: 20px; background: {{ c.bg }}; color: {{ c.color }}; padding: 6px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;">{{ c.label }}</button>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #F0EFEB;">
+            <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+              <button onClick="{{ onToggleMatch }}" style="display: flex; align-items: center; gap: 8px; border: 1px solid {{ matchBorder }}; border-radius: 20px; background: {{ matchBg }}; color: {{ matchColor }}; padding: 6px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;">
+                <span style="width: 15px; height: 15px; border-radius: 4px; border: 1px solid {{ matchBoxBorder }}; background: {{ matchBoxBg }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none; font-size: 10px; font-weight: 700; line-height: 1;">{{ matchMark }}</span>
+                <span>Matches my skills</span>
+              </button>
+              <span style="font-size: 13px; color: #55534D;">{{ teamResultLine }}</span>
+            </div>
+            <button onClick="{{ onTeamReset }}" style="border: 0; background: none; color: #75736C; padding: 0; cursor: pointer; font-size: 13px; font-weight: 500;" style-hover="color: #0F3FFE;">Clear all</button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;">
+          <sc-for list="{{ posts }}" as="p" hint-placeholder-count="4">
+            <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 17px 18px; display: flex; flex-direction: column; gap: 11px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <span style="font-size: 12px; font-weight: 600; color: {{ p.spotsColor }}; white-space: nowrap;">{{ p.spots }}</span>
+                <span style="font-size: 12px; color: #75736C; white-space: nowrap;">{{ p.posted }}</span>
+              </div>
+              <div style="display: flex; gap: 12px; align-items: flex-start;">
+                <span style="width: 34px; height: 34px; border-radius: 8px; border: 1px solid #EFEEEA; background-color: {{ p.logoBg }}; background-image: {{ p.logoImg }}; background-size: contain; background-repeat: no-repeat; background-position: center; color: #55534D; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; font-size: 11px; font-weight: 700;">
+                  <sc-if value="{{ p.noLogo }}" hint-placeholder-val="{{ true }}">
+                    <span>{{ p.hostInitials }}</span>
+                  </sc-if>
+                </span>
+                <div style="min-width: 0;">
+                  <h3 style="margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; text-wrap: pretty;">{{ p.comp }}</h3>
+                  <p style="margin: 6px 0 0; font-size: 13px; color: #55534D; line-height: 1.5;">{{ p.desc }}</p>
+                </div>
+              </div>
+              <div>
+                <span style="font-size: 11px; font-weight: 600; color: #75736C;">Looking for</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
+                  <sc-for list="{{ p.want }}" as="n" hint-placeholder-count="2">
+                    <span style="background: rgba(15,63,254,0.07); border-radius: 6px; padding: 4px 9px; font-size: 12px; font-weight: 500; color: #0F3FFE; white-space: nowrap;">{{ n }}</span>
+                  </sc-for>
+                </div>
+              </div>
+              <p style="margin: 0; font-size: 12px; color: #75736C;">{{ p.lead }}</p>
+              <button onClick="{{ p.onClick }}" style="margin-top: auto; border: 1px solid {{ p.btnBorder }}; border-radius: 8px; background: {{ p.btnBg }}; color: {{ p.btnColor }}; padding: 10px 14px; cursor: pointer; font-size: 13px; font-weight: 600;">{{ p.btnLabel }}</button>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ noPosts }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 44px 18px; text-align: center;">
+            <p style="margin: 0; font-size: 14px; font-weight: 600;">No squads match these filters</p>
+            <p style="margin: 6px 0 0; font-size: 13px; color: #75736C;">Clear a filter, or post your own squad and let applicants come to you.</p>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isRequests }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 17px;">
+        <div>
+          <h1 style="margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.02em;">Requests</h1>
+          <p style="margin: 7px 0 0; font-size: 14px; color: #75736C;">Applications to your squads, and the ones you have sent out.</p>
+        </div>
+        <div style="display: flex; gap: 7px;">
+          <sc-for list="{{ reqTabs }}" as="t" hint-placeholder-count="2">
+            <button onClick="{{ t.onClick }}" style="border: 1px solid {{ t.border }}; border-radius: 20px; background: {{ t.bg }}; color: {{ t.color }}; padding: 8px 15px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; overflow: hidden;">
+          <sc-for list="{{ reqRows }}" as="a" hint-placeholder-count="3">
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 16px; padding: 15px 18px; border-bottom: 1px solid #F0EFEB;">
+              <div style="min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+                  <span style="font-size: 14px; font-weight: 600;">{{ a.who }}</span>
+                  <span style="background: {{ a.pillBg }}; color: {{ a.pillColor }}; border: 1px solid {{ a.pillBorder }}; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 600; white-space: nowrap;">{{ a.status }}</span>
+                </div>
+                <p style="margin: 5px 0 0; font-size: 13px; color: #75736C;">{{ a.sub }}</p>
+                <sc-if value="{{ a.pitch }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin: 9px 0 0; font-size: 13px; color: #55534D; line-height: 1.5; border-left: 2px solid #E7E6E2; padding-left: 11px;">{{ a.pitch }}</p>
+                </sc-if>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px;">
+                  <sc-for list="{{ a.skills }}" as="s" hint-placeholder-count="2">
+                    <span style="background: #F2F1ED; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 500; color: #55534D; white-space: nowrap;">{{ s }}</span>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; padding-top: 2px;">
+                <sc-for list="{{ a.actions }}" as="b" hint-placeholder-count="2">
+                  <button onClick="{{ b.onClick }}" style="border: 1px solid {{ b.border }}; border-radius: 8px; background: {{ b.bg }}; color: {{ b.color }}; padding: 8px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: {{ b.weight }};">{{ b.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noReqs }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 38px 18px; text-align: center;">
+              <p style="margin: 0; font-size: 14px; font-weight: 600;">Nothing here</p>
+              <p style="margin: 6px 0 0; font-size: 13px; color: #75736C;">{{ reqEmpty }}</p>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 17px; max-width: 620px;">
+        <div>
+          <h1 style="margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.02em;">Profile</h1>
+          <p style="margin: 7px 0 0; font-size: 14px; color: #75736C;">Squad leads see this when you apply. Skills drive what gets recommended to you.</p>
+        </div>
+        <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 15px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 13px;">
+            <sc-for list="{{ profileFields }}" as="f" hint-placeholder-count="4">
+              <label style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 12px; font-weight: 500; color: #75736C;">{{ f.label }}</span>
+                <input value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 12px; font-size: 14px; color: #1A1A19;" />
+              </label>
+            </sc-for>
+          </div>
+          <div>
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">Skills</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px;">
+              <sc-for list="{{ skillChips }}" as="c" hint-placeholder-count="8">
+                <button onClick="{{ c.onClick }}" style="border: 1px solid {{ c.border }}; border-radius: 20px; background: {{ c.bg }}; color: {{ c.color }}; padding: 6px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;">{{ c.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">WhatsApp number</span>
+            <input value="{{ phone }}" onChange="{{ onPhone }}" placeholder="+91 …" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 12px; font-size: 14px; color: #1A1A19;" />
+            <span style="font-size: 12px; color: #75736C;">Shared only after a lead accepts you.</span>
+          </label>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+
+  <sc-if value="{{ detail }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseDetail }}" style="position: fixed; inset: 0; background: rgba(26,26,25,0.35); display: flex; justify-content: flex-end; z-index: 40;">
+      <div onClick="{{ stop }}" style="width: min(460px, 100%); height: 100%; overflow-y: auto; background: #FFFFFF; border-left: 1px solid #E7E6E2;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #E7E6E2;">
+          <span style="font-size: 13px; font-weight: 600; color: #75736C;">{{ detail.discipline }}</span>
+          <button onClick="{{ onCloseDetail }}" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #75736C; width: 30px; height: 30px; cursor: pointer; font-size: 14px; line-height: 1;" style-hover="background: #F2F1ED; color: #1A1A19;">×</button>
+        </div>
+        <div style="padding: 20px; display: flex; gap: 14px; align-items: flex-start;">
+          <span style="width: 46px; height: 46px; border-radius: 10px; border: 1px solid #EFEEEA; background-color: {{ detail.logoBg }}; background-image: {{ detail.logoImg }}; background-size: contain; background-repeat: no-repeat; background-position: center; color: #55534D; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; font-size: 14px; font-weight: 700;">
+            <sc-if value="{{ detail.noLogo }}" hint-placeholder-val="{{ true }}">
+              <span>{{ detail.hostInitials }}</span>
+            </sc-if>
+          </span>
+          <div style="min-width: 0;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 700; line-height: 1.25; letter-spacing: -0.02em; text-wrap: pretty;">{{ detail.title }}</h2>
+            <p style="margin: 5px 0 0; font-size: 13px; color: #75736C;">{{ detail.host }}</p>
+            <p style="margin: 10px 0 0; font-size: 14px; line-height: 1.55; color: #55534D;">{{ detail.desc }}</p>
+          </div>
+        </div>
+        <div style="border-top: 1px solid #E7E6E2;">
+          <sc-for list="{{ detail.facts }}" as="f" hint-placeholder-count="6">
+            <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;">
+              <span style="font-size: 13px; color: #75736C;">{{ f.k }}</span>
+              <span style="font-size: 13px; font-weight: 500;">{{ f.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 9px;">
+          <button onClick="{{ onOpenPost }}" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 13px; cursor: pointer; font-size: 14px; font-weight: 600;">Post a squad for this</button>
+          <button onClick="{{ detail.onBookmark }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 13px; cursor: pointer; font-size: 14px; font-weight: 500;" style-hover="background: #F2F1ED;">{{ detail.bmLabel }}</button>
+          <a href="#" style="border: 1px solid #E7E6E2; border-radius: 9px; color: #1A1A19; padding: 13px; text-align: center; font-size: 14px; font-weight: 500;" style-hover="background: #F2F1ED;">Open on Unstop</a>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #75736C; line-height: 1.5;">{{ detail.squadNote }}</p>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ postOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onClosePost }}" style="position: fixed; inset: 0; background: rgba(26,26,25,0.35); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 50;">
+      <div onClick="{{ stop }}" style="width: min(460px, 100%); max-height: 100%; overflow-y: auto; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #E7E6E2;">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600;">Post a squad</h2>
+          <button onClick="{{ onClosePost }}" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #75736C; width: 30px; height: 30px; cursor: pointer; font-size: 14px; line-height: 1;" style-hover="background: #F2F1ED; color: #1A1A19;">×</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <label style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">Competition</span>
+            <select value="{{ draftComp }}" onChange="{{ onDraftComp }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 12px; font-size: 14px; color: #1A1A19;">
+              <sc-for list="{{ compOptions }}" as="o" hint-placeholder-count="5">
+                <option value="{{ o.value }}">{{ o.label }}</option>
+              </sc-for>
+            </select>
+          </label>
+          <label style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">Spots open</span>
+            <input value="{{ draftSpots }}" onChange="{{ onDraftSpots }}" placeholder="2" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 12px; font-size: 14px; color: #1A1A19;" />
+          </label>
+          <div>
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">Skills you need</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px;">
+              <sc-for list="{{ draftSkillChips }}" as="c" hint-placeholder-count="8">
+                <button onClick="{{ c.onClick }}" style="border: 1px solid {{ c.border }}; border-radius: 20px; background: {{ c.bg }}; color: {{ c.color }}; padding: 6px 13px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500;">{{ c.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">What you are building</span>
+            <textarea value="{{ draftDesc }}" onChange="{{ onDraftDesc }}" rows="3" placeholder="Two lines on the approach and what you want from a teammate." style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 12px; font-size: 14px; line-height: 1.5; color: #1A1A19;"></textarea>
+          </label>
+          <button onClick="{{ onSubmitPost }}" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 13px; cursor: pointer; font-size: 14px; font-weight: 600;">Post squad</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ applyPost }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseApply }}" style="position: fixed; inset: 0; background: rgba(26,26,25,0.35); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 50;">
+      <div onClick="{{ stop }}" style="width: min(440px, 100%); background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px; border-bottom: 1px solid #E7E6E2;">
+          <h2 style="margin: 0; font-size: 16px; font-weight: 600;">Request to join</h2>
+          <button onClick="{{ onCloseApply }}" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #75736C; width: 30px; height: 30px; cursor: pointer; font-size: 14px; line-height: 1;" style-hover="background: #F2F1ED; color: #1A1A19;">×</button>
+        </div>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+          <div>
+            <p style="margin: 0; font-size: 14px; font-weight: 600;">{{ applyPost.comp }}</p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #75736C;">{{ applyPost.lead }}</p>
+          </div>
+          <label style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 12px; font-weight: 500; color: #75736C;">Why you</span>
+            <textarea value="{{ pitch }}" onChange="{{ onPitch }}" rows="3" placeholder="One or two lines — what you bring and any relevant past competitions." style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 12px; font-size: 14px; line-height: 1.5; color: #1A1A19;"></textarea>
+          </label>
+          <p style="margin: 0; font-size: 12px; color: #75736C; line-height: 1.5;">{{ applyNote }}</p>
+          <button onClick="{{ onSubmitApply }}" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 13px; cursor: pointer; font-size: 14px; font-weight: 600;">Send request</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: #1A1A19; color: #FFFFFF; border-radius: 10px; padding: 12px 18px; font-size: 13px; font-weight: 500; z-index: 60;">{{ toast }}</div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#0F3FFE&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#0F3FFE&quot;,&quot;#1A1A19&quot;],&quot;section&quot;:&quot;Brand&quot;},&quot;organiserLogos&quot;:{&quot;editor&quot;:null,&quot;default&quot;:{},&quot;tsType&quot;:&quot;Record&lt;string, string&gt;&quot;,&quot;section&quot;:&quot;Data&quot;}}">
+const DATA = [
+  { id: 1, title: "Ambition 2026 — Flagship Case Championship", host: "SRCC", circuit: "DU Circuit", logo: null, discipline: "Case", days: 2, prize: "₹2,00,000", team: "3–4", mode: "On-campus, Delhi", fee: "Free", desc: "The flagship case championship of the DU circuit. Three elimination rounds with a live jury from consulting and industry.", tags: ["Case", "Team of 3–4", "Delhi"] },
+  { id: 2, title: "Code Chakra 3.0", host: "IIT Delhi", circuit: "IIM / IIT", logo: null, discipline: "Hackathon", days: 8, prize: "₹1,50,000", team: "2–4", mode: "36-hour, hybrid", fee: "Free", desc: "Thirty-six hours, four tracks, hardware bench on site. Shipping something that runs matters more than the pitch.", tags: ["Hackathon", "36 hours", "Hybrid"] },
+  { id: 3, title: "Quantum Quiz Open", host: "SSCBS", circuit: "DU Circuit", logo: null, discipline: "Quiz", days: 3, prize: "₹40,000", team: "1–2", mode: "On-campus, Delhi", fee: "₹100", desc: "Open general and business quiz. Written prelims followed by a stage final. Solo entries allowed.", tags: ["Quiz", "Solo or pair"] },
+  { id: 4, title: "Ascend Case Challenge", host: "McKinsey & Company", circuit: "Corporate", logo: null, discipline: "Case", days: 11, prize: "Interview fast-track", team: "3", mode: "Online, national", fee: "Free", desc: "Corporate flagship whose shortlist feeds the summer recruitment funnel. Penultimate-year undergraduates eligible.", tags: ["Case", "Corporate", "Fast-track"] },
+  { id: 5, title: "Trading Titans — Market Simulation", host: "Hansraj College", circuit: "DU Circuit", logo: null, discipline: "Simulation", days: 6, prize: "₹75,000", team: "2", mode: "On-campus, Delhi", fee: "₹200", desc: "Live mock-market simulation across three trading sessions, with a sealed-bid auction deciding final standings.", tags: ["Simulation", "Team of 2"] },
+  { id: 6, title: "Brandstorm Undergraduate Track", host: "L'Oréal", circuit: "Corporate", logo: null, discipline: "Case", days: 14, prize: "Global final berth", team: "3", mode: "Online, global", fee: "Free", desc: "Product and brand innovation brief judged on consumer insight and go-to-market feasibility.", tags: ["Case", "Brand", "Global"] },
+  { id: 7, title: "The Editorial Prize", host: "Kirori Mal College", circuit: "DU Circuit", logo: null, discipline: "Writing", days: 4, prize: "₹25,000 + publication", team: "1", mode: "Submission only", fee: "Free", desc: "Long-form essay and research submission on a set theme, blind-reviewed by faculty and working journalists.", tags: ["Writing", "Solo"] },
+  { id: 8, title: "Delhi Model United Nations 2026", host: "Miranda House", circuit: "DU Circuit", logo: null, discipline: "Debate & MUN", days: 9, prize: "₹60,000 pool", team: "1–2", mode: "On-campus, Delhi", fee: "₹850", desc: "Six committees including a crisis council. Delegate applications reviewed on written position papers.", tags: ["MUN", "Delhi"] },
+  { id: 9, title: "BOLD Analytics Sprint", host: "Bain & Company", circuit: "Corporate", logo: null, discipline: "Hackathon", days: 17, prize: "Internship offers", team: "2–3", mode: "Online, national", fee: "Free", desc: "A data sprint on an anonymised commercial dataset, judged on modelling rigour and clarity of recommendation.", tags: ["Data", "Corporate"] },
+  { id: 10, title: "Startup Sprint On-Campus", host: "Hindu College", circuit: "DU Circuit", logo: null, discipline: "Case", days: 5, prize: "₹1,00,000 seed", team: "3–5", mode: "On-campus, Delhi", fee: "Free", desc: "On-campus qualifier for the national social-enterprise track. Teams pitch a venture with a working prototype.", tags: ["Startup", "Pitch", "Seed"] },
+  { id: 11, title: "Finlit Valuation Olympiad", host: "NMIMS", circuit: "Corporate", logo: null, discipline: "Simulation", days: 12, prize: "₹50,000", team: "2", mode: "Online, national", fee: "Free", desc: "Two rounds of company valuation against a live comparables set, with a defence in front of sell-side analysts.", tags: ["Finance", "Valuation"] },
+  { id: 12, title: "Parliamentary Debate Invitational", host: "Ramjas College", circuit: "DU Circuit", logo: null, discipline: "Debate & MUN", days: 20, prize: "₹35,000", team: "2", mode: "On-campus, Delhi", fee: "₹500", desc: "Asian parliamentary format across five preliminary rounds and open breaks to semifinals.", tags: ["Debate", "Delhi"] }
+];
+
+const SKILLS = ["Finance modelling", "Deck design", "Market research", "Frontend", "Backend", "ML / Data", "Copywriting", "Public speaking", "Valuation", "Design"];
+
+const POSTS = [
+  { id: "p1", compId: 1, spots: 2, filled: 2, size: 4, posted: "6h ago", desc: "Two rounds cleared here last year. Want someone who can hold a model together under time pressure.", want: ["Finance modelling", "Deck design"], lead: "Ananya R. · SSCBS · 2027", mine: false, state: "open" },
+  { id: "p2", compId: 2, spots: 1, filled: 3, size: 4, posted: "1d ago", desc: "Building on an offline-first stack. Hardware track, so bench time matters more than polish.", want: ["Frontend", "ML / Data"], lead: "Dev M. · Hansraj · 2028", mine: false, state: "accepted" },
+  { id: "p3", compId: 6, spots: 2, filled: 1, size: 3, posted: "2d ago", desc: "Going after the personal-care brief. Need someone comfortable running primary research on campus.", want: ["Market research", "Copywriting"], lead: "Ishita K. · Hindu · 2027", mine: false, state: "open" },
+  { id: "p4", compId: 5, spots: 1, filled: 1, size: 2, posted: "3d ago", desc: "Derivatives-heavy sessions. Looking for one partner who has traded a sim before.", want: ["Valuation"], lead: "Rohan S. · SRCC · 2027", mine: false, state: "requested" },
+  { id: "p5", compId: 9, spots: 1, filled: 2, size: 3, posted: "4d ago", desc: "Dataset is retail transactions. Need a third who can turn the model into a story for non-technical judges.", want: ["ML / Data", "Public speaking"], lead: "Meher J. · KMC · 2028", mine: false, state: "open" },
+  { id: "p6", compId: 10, spots: 2, filled: 3, size: 5, posted: "5h ago", desc: "Pitching a campus logistics pilot. Prototype exists, need help on unit economics and the deck.", want: ["Finance modelling", "Design"], lead: "You", mine: true, state: "own" }
+];
+
+const APPLICATIONS = [
+  { id: "ap1", postId: "p6", who: "Nikhil V.", meta: "Hansraj · 2028", skills: ["Finance modelling", "Valuation"], pitch: "Built the unit-economics model for our Ashoka pitch last term — happy to own the P&L sheet end to end.", status: "pending", dir: "in" },
+  { id: "ap2", postId: "p6", who: "Sara Q.", meta: "LSR · 2027", skills: ["Design", "Deck design"], pitch: "I design decks for our commerce society. Can turn the prototype screens into something a jury reads in ten seconds.", status: "pending", dir: "in" },
+  { id: "ap3", postId: "p6", who: "Aman T.", meta: "SRCC · 2029", skills: ["Market research"], pitch: "First competition, but I ran the campus survey for our department fest — 400 responses.", status: "rejected", dir: "in" },
+  { id: "ap4", postId: "p4", who: "You", meta: "Trading Titans — Market Simulation", skills: ["Valuation"], pitch: "Traded the SSCBS sim twice, finished third. Comfortable with options pricing.", status: "pending", dir: "out" },
+  { id: "ap5", postId: "p2", who: "You", meta: "Code Chakra 3.0", skills: ["Frontend"], pitch: "React and offline sync. Can own the client while you two take the hardware bench.", status: "accepted", dir: "out" }
+];
+
+const DISCIPLINES = ["Case", "Hackathon", "Simulation", "Writing", "Quiz", "Debate & MUN"];
+const CIRCUITS = ["DU Circuit", "IIM / IIT", "Corporate"];
+const TEAMTYPES = [{ id: "any", label: "All" }, { id: "solo", label: "Solo" }, { id: "team", label: "Teams (2+)" }];
+const FEES = [{ id: "any", label: "All" }, { id: "free", label: "Free" }, { id: "paid", label: "Paid" }];
+const REGS = { 1: 1054, 2: 383, 3: 76, 4: 2140, 5: 167, 6: 1806, 7: 136, 8: 248, 9: 912, 10: 431, 11: 208, 12: 95 };
+const WINDOWS = [{ id: "any", label: "Any time" }, { id: "3", label: "72 hours" }, { id: "7", label: "7 days" }, { id: "14", label: "14 days" }];
+
+const ACCENT = "#0F3FFE";
+const INK = "#1A1A19";
+const MUTED = "#75736C";
+const LINE = "#E7E6E2";
+
+class Component extends DCLogic {
+  state = {
+    screen: "home",
+    disc: [], circ: [], win: "any", team: "any", fee: "any", q: "", sort: "deadline",
+    bookmarks: [1, 6],
+    alerts: [
+      { id: "a1", disc: ["Case"], circ: ["DU Circuit"], win: "7", team: "any", fresh: 4 },
+      { id: "a2", disc: ["Hackathon"], circ: [], win: "any", team: "any", fresh: 1 },
+      { id: "a3", disc: [], circ: ["Corporate"], win: "14", team: "any", fresh: 0 }
+    ],
+    posts: POSTS,
+    apps: APPLICATIONS,
+    reqTab: "in",
+    tq: "", tSkills: [], tDisc: [], tScope: "all", tMatch: false,
+    openId: null,
+    postOpen: false,
+    applyId: null,
+    pitch: "",
+    draft: { compId: 1, spots: "2", skills: [], desc: "" },
+    profile: { name: "Arjun R.", college: "SSCBS", batch: "2027", course: "B.Com (H)", phone: "+91 98••• ••210", skills: ["Finance modelling", "Deck design"] },
+    toast: null
+  };
+
+  accent() { return this.props.accent || ACCENT; }
+
+  flash(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+
+  componentWillUnmount() { clearTimeout(this._t); }
+
+  toggle(key, value) {
+    this.setState(s => {
+      const list = s[key];
+      return { [key]: list.includes(value) ? list.filter(v => v !== value) : list.concat(value) };
+    });
+  }
+
+  comp(id) { return DATA.find(d => d.id === id); }
+
+  // Unstop ingestion supplies organiser logo URLs; until then fall back to an initials tile.
+  logoOf(item) {
+    const map = this.props.organiserLogos || {};
+    return map[item.host] || item.logo || null;
+  }
+
+  initialsOf(host) {
+    const skip = { "&": 1, "and": 1, "company": 1, "college": 1, "of": 1 };
+    const words = host.split(/[\s.]+/).filter(w => w && !skip[w.toLowerCase()]);
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return words.slice(0, 2).map(w => w.charAt(0)).join("").toUpperCase();
+  }
+
+  logoVals(item) {
+    const url = this.logoOf(item);
+    return {
+      logo: url,
+      noLogo: !url,
+      hostInitials: this.initialsOf(item.host),
+      logoBg: url ? "#FFFFFF" : "#F2F1ED",
+      logoImg: url ? 'url("' + url + '")' : "none"
+    };
+  }
+
+  soloOk(item) { return item.team.charAt(0) === "1"; }
+
+  match(item, f) {
+    if (f.disc.length && !f.disc.includes(item.discipline)) return false;
+    if (f.circ.length && !f.circ.includes(item.circuit)) return false;
+    if (f.win !== "any" && item.days > Number(f.win)) return false;
+    if (f.team === "solo" && !this.soloOk(item)) return false;
+    if (f.team === "team" && this.soloOk(item)) return false;
+    if (f.fee === "free" && item.fee !== "Free") return false;
+    if (f.fee === "paid" && item.fee === "Free") return false;
+    if (f.q && f.q.trim()) {
+      const hay = (item.title + " " + item.host + " " + item.discipline + " " + item.circuit).toLowerCase();
+      if (!hay.includes(f.q.trim().toLowerCase())) return false;
+    }
+    return true;
+  }
+
+  describe(f) {
+    const parts = [];
+    if (f.disc.length) parts.push(f.disc.join(" + "));
+    if (f.circ.length) parts.push(f.circ.join(" + "));
+    if (f.team && f.team !== "any") parts.push(f.team === "solo" ? "solo allowed" : "teams of 2+");
+    if (f.fee && f.fee !== "any") parts.push(f.fee === "free" ? "free entry" : "paid entry");
+    if (f.win !== "any") parts.push("closes within " + (f.win === "3" ? "72 hours" : f.win + " days"));
+    return parts.length ? parts.join(" · ") : "Everything open";
+  }
+
+  filterName(f) {
+    if (f.disc.length) return f.disc.join(" + ") + (f.circ.length ? " · " + f.circ[0] : "");
+    if (f.circ.length) return f.circ.join(" + ");
+    return "Everything open";
+  }
+
+  chip(label, on, onClick) {
+    const a = this.accent();
+    return { label, onClick, bg: on ? a : "#FFFFFF", color: on ? "#FFFFFF" : INK, border: on ? a : LINE };
+  }
+
+  postSpots(p) {
+    const left = p.size - p.filled;
+    return left <= 0 ? "Full" : left + (left === 1 ? " spot left" : " spots left");
+  }
+
+  setApp(id, status) {
+    this.setState(s => ({ apps: s.apps.map(a => a.id === id ? Object.assign({}, a, { status }) : a) }));
+  }
+
+  renderVals() {
+    const a = this.accent();
+    const s = this.state;
+    const current = { disc: s.disc, circ: s.circ, win: s.win, team: s.team, fee: s.fee, q: s.q };
+    const onSaved = s.screen === "saved";
+
+    let pool = DATA.filter(i => this.match(i, current));
+    if (onSaved) pool = DATA.filter(i => s.bookmarks.includes(i.id) && this.match(i, current));
+    const matched = pool.slice().sort((x, y) =>
+      s.sort === "popular" ? (REGS[y.id] || 0) - (REGS[x.id] || 0)
+        : s.sort === "new" ? y.id - x.id
+        : x.days - y.days
+    );
+
+    const alerts = s.alerts.map(al => {
+      const hits = DATA.filter(i => this.match(i, Object.assign({ q: "" }, al))).sort((x, y) => x.days - y.days);
+      const soonest = hits[0];
+      return Object.assign(soonest ? this.logoVals(soonest) : { logo: null, noLogo: false, hostInitials: "", logoBg: "#F2F1ED", logoImg: "none" }, {
+        hasSoonest: !!soonest,
+        name: this.filterName(al),
+        rule: this.describe(al) + " · " + hits.length + " open",
+        badge: al.fresh > 0 ? al.fresh + " new" : "No change",
+        badgeBg: al.fresh > 0 ? a : "#FFFFFF",
+        badgeColor: al.fresh > 0 ? "#FFFFFF" : MUTED,
+        badgeBorder: al.fresh > 0 ? a : LINE,
+        newest: soonest
+          ? "Closing soonest: " + soonest.title + " — " + soonest.days + (soonest.days === 1 ? " day" : " days")
+          : "Nothing open against this filter right now.",
+        onOpen: () => this.setState({ screen: "browse", disc: al.disc, circ: al.circ, win: al.win, team: al.team || "any", q: "" }),
+        onDelete: e => {
+          e.stopPropagation();
+          this.setState(prev => ({ alerts: prev.alerts.filter(x => x.id !== al.id) }));
+          this.flash("Alert removed");
+        }
+      });
+    });
+
+    const totalNew = s.alerts.reduce((n, x) => n + x.fresh, 0);
+    const inboxAll = s.apps.filter(x => x.dir === "in" && x.status === "pending");
+    const outPending = s.apps.filter(x => x.dir === "out" && x.status === "pending").length;
+    const alreadySaved = s.alerts.some(x => this.describe(Object.assign({ q: "" }, x)) === this.describe(current));
+
+    const navGroups = [
+      { label: "", items: [
+        { id: "home", label: "Home", badge: totalNew > 0 ? String(totalNew) : null, accentBadge: true },
+        { id: "browse", label: "Browse", badge: null },
+        { id: "saved", label: "Bookmarks", badge: s.bookmarks.length ? String(s.bookmarks.length) : null, accentBadge: false },
+        { id: "teams", label: "Team finder", badge: null },
+        { id: "requests", label: "Requests", badge: inboxAll.length ? String(inboxAll.length) : null, accentBadge: true }
+      ]}
+    ].map(g => ({
+      label: g.label,
+      items: g.items.map(t => ({
+        label: t.label,
+        badge: t.badge,
+        badgeBg: t.accentBadge ? a : "#E7E6E2",
+        badgeColor: t.accentBadge ? "#FFFFFF" : "#55534D",
+        bg: s.screen === t.id ? "#F2F1ED" : "transparent",
+        color: s.screen === t.id ? INK : "#55534D",
+        weight: s.screen === t.id ? "600" : "500",
+        onClick: () => this.setState({ screen: t.id, openId: null })
+      }))
+    }));
+
+    const rows = matched.map(i => {
+      const urgent = i.days <= 3;
+      const bm = s.bookmarks.includes(i.id);
+      const free = i.fee === "Free";
+      const regs = REGS[i.id] || 0;
+      return Object.assign(this.logoVals(i), {
+        title: i.title,
+        host: i.host,
+        prize: i.prize,
+        fee: free ? "Free entry" : i.fee + " entry",
+        feeBg: free ? "rgba(23,163,74,0.08)" : "#FFFFFF",
+        feeColor: free ? "#15803D" : "#55534D",
+        feeBorder: free ? "rgba(23,163,74,0.30)" : LINE,
+        participation: this.soloOk(i) ? "Solo / individual" : i.team + " members",
+        ends: i.mode,
+        regs: regs.toLocaleString("en-IN") + " registered",
+        teamable: !this.soloOk(i),
+        onFindTeam: e => { e.stopPropagation(); this.setState({ screen: "teams" }); },
+        meta: i.host + " · " + i.mode + " · " + i.prize,
+        tags: i.tags,
+        deadline: i.days + (i.days === 1 ? " day left" : " days left"),
+        pillBg: urgent ? "rgba(15,63,254,0.08)" : "#FFFFFF",
+        pillColor: urgent ? a : "#55534D",
+        pillBorder: urgent ? "rgba(15,63,254,0.35)" : LINE,
+        bmMark: bm ? "×" : "+",
+        bmBg: bm ? "#F2F1ED" : "#FFFFFF",
+        bmColor: bm ? INK : MUTED,
+        bmBorder: LINE,
+        onOpen: () => this.setState({ openId: i.id }),
+        onBookmark: e => { e.stopPropagation(); this.toggle("bookmarks", i.id); }
+      });
+    });
+
+    const visiblePosts = s.posts.filter(p => {
+      const c = this.comp(p.compId);
+      if (s.tScope === "mine" && !p.mine) return false;
+      if (s.tScope === "open" && (p.mine || p.size - p.filled <= 0)) return false;
+      if (s.tSkills.length && !p.want.some(w => s.tSkills.includes(w))) return false;
+      if (s.tDisc.length && !s.tDisc.includes(c.discipline)) return false;
+      if (s.tMatch && !p.want.some(w => s.profile.skills.includes(w))) return false;
+      if (s.tq.trim()) {
+        const hay = (c.title + " " + c.host + " " + p.lead + " " + p.want.join(" ") + " " + p.desc).toLowerCase();
+        if (!hay.includes(s.tq.trim().toLowerCase())) return false;
+      }
+      return true;
+    });
+
+    const posts = visiblePosts.map(p => {
+      const c = this.comp(p.compId);
+      const left = p.size - p.filled;
+      const look = p.mine
+        ? { label: "Manage applicants", bg: INK, color: "#FFFFFF", border: INK }
+        : p.state === "open"
+          ? { label: "Request to join", bg: a, color: "#FFFFFF", border: a }
+          : p.state === "requested"
+            ? { label: "Requested — pending", bg: "#FFFFFF", color: MUTED, border: LINE }
+            : { label: "Open WhatsApp group", bg: INK, color: "#FFFFFF", border: INK };
+      return Object.assign(this.logoVals(c), {
+        comp: c.title,
+        desc: p.desc,
+        want: p.want,
+        lead: p.mine ? "Your post · " + p.filled + " of " + p.size + " filled" : p.lead,
+        spots: this.postSpots(p),
+        spotsColor: left <= 1 ? a : "#55534D",
+        posted: p.posted,
+        btnLabel: look.label,
+        btnBg: look.bg,
+        btnColor: look.color,
+        btnBorder: look.border,
+        onClick: () => {
+          if (p.mine) { this.setState({ screen: "requests", reqTab: "in" }); return; }
+          if (p.state === "open") { this.setState({ applyId: p.id, pitch: "" }); return; }
+          if (p.state === "accepted") this.flash("Opening WhatsApp group…");
+        }
+      });
+    });
+
+    const statusLook = {
+      pending: { label: "Pending", bg: "#FFFFFF", color: MUTED, border: LINE },
+      accepted: { label: "Accepted", bg: "rgba(23,163,74,0.09)", color: "#15803D", border: "rgba(23,163,74,0.35)" },
+      rejected: { label: "Declined", bg: "#F2F1ED", color: "#55534D", border: LINE }
+    };
+
+    const reqRows = s.apps.filter(x => x.dir === s.reqTab).map(x => {
+      const look = statusLook[x.status];
+      const post = s.posts.find(p => p.id === x.postId);
+      const c = post ? this.comp(post.compId) : null;
+      const actions = [];
+      if (x.dir === "in" && x.status === "pending") {
+        actions.push({ label: "Accept", bg: a, color: "#FFFFFF", border: a, weight: "600", onClick: () => { this.setApp(x.id, "accepted"); this.flash("Accepted — WhatsApp number shared"); } });
+        actions.push({ label: "Decline", bg: "#FFFFFF", color: "#55534D", border: LINE, weight: "500", onClick: () => this.setApp(x.id, "rejected") });
+      }
+      if (x.dir === "in" && x.status === "accepted") {
+        actions.push({ label: "Open WhatsApp", bg: INK, color: "#FFFFFF", border: INK, weight: "600", onClick: () => this.flash("Opening WhatsApp…") });
+      }
+      if (x.dir === "out" && x.status === "pending") {
+        actions.push({ label: "Withdraw", bg: "#FFFFFF", color: "#55534D", border: LINE, weight: "500", onClick: () => { this.setState(prev => ({ apps: prev.apps.filter(y => y.id !== x.id) })); this.flash("Request withdrawn"); } });
+      }
+      if (x.dir === "out" && x.status === "accepted") {
+        actions.push({ label: "Open WhatsApp", bg: INK, color: "#FFFFFF", border: INK, weight: "600", onClick: () => this.flash("Opening WhatsApp…") });
+      }
+      return {
+        who: x.dir === "in" ? x.who : (c ? c.title : x.meta),
+        sub: x.dir === "in"
+          ? x.meta + (c ? " · applied to " + c.title : "")
+          : (post ? "Squad led by " + post.lead : x.meta),
+        pitch: x.pitch,
+        skills: x.skills,
+        status: look.label,
+        pillBg: look.bg,
+        pillColor: look.color,
+        pillBorder: look.border,
+        actions
+      };
+    });
+
+    const open = s.openId ? this.comp(s.openId) : null;
+    const openPosts = open ? s.posts.filter(p => p.compId === open.id).length : 0;
+    const detail = open ? Object.assign(this.logoVals(open), {
+      title: open.title,
+      host: open.host,
+      discipline: open.discipline + " · " + open.circuit,
+      desc: open.desc,
+      bmLabel: s.bookmarks.includes(open.id) ? "Remove bookmark" : "Bookmark",
+      onBookmark: () => this.toggle("bookmarks", open.id),
+      squadNote: openPosts > 0
+        ? openPosts + (openPosts === 1 ? " squad is" : " squads are") + " already looking for teammates on this."
+        : "No squads posted for this yet — post one and applicants come to you.",
+      facts: [
+        { k: "Host", v: open.host },
+        { k: "Circuit", v: open.circuit },
+        { k: "Team size", v: open.team },
+        { k: "Format", v: open.mode },
+        { k: "Prize", v: open.prize },
+        { k: "Entry", v: open.fee },
+        { k: "Closes in", v: open.days + (open.days === 1 ? " day" : " days") }
+      ]
+    }) : null;
+
+    const applyPostRaw = s.applyId ? s.posts.find(p => p.id === s.applyId) : null;
+    const applyPost = applyPostRaw ? {
+      comp: this.comp(applyPostRaw.compId).title,
+      lead: applyPostRaw.lead + " · " + this.postSpots(applyPostRaw)
+    } : null;
+
+    const pf = s.profile;
+    const setP = (k, v) => this.setState(prev => ({ profile: Object.assign({}, prev.profile, { [k]: v }) }));
+
+    return {
+      navGroups,
+      ingestLine: "1,284 listings · refreshed 4 min ago",
+      initials: pf.name.split(" ").map(w => w.charAt(0)).join("").slice(0, 2).toUpperCase(),
+      profileName: pf.name,
+      profileMeta: pf.college + " · " + pf.batch,
+      profileBg: s.screen === "profile" ? "#F2F1ED" : "transparent",
+      goProfile: () => this.setState({ screen: "profile" }),
+      goBrowse: () => this.setState({ screen: "browse", disc: [], circ: [], win: "any", team: "any", q: "" }),
+      goRequests: () => this.setState({ screen: "requests", reqTab: "in" }),
+
+      isHome: s.screen === "home",
+      isBrowse: s.screen === "browse" || onSaved,
+      isTeams: s.screen === "teams",
+      isRequests: s.screen === "requests",
+      isProfile: s.screen === "profile",
+
+      greeting: "Hi " + pf.name.split(" ")[0],
+      alertSummary: totalNew > 0
+        ? totalNew + " new competitions matched your saved filters since you last looked."
+        : "Nothing new against your saved filters today.",
+      tiles: [
+        { label: "New for you", value: String(totalNew), color: totalNew > 0 ? a : INK },
+        { label: "Closing in 72h", value: String(DATA.filter(i => i.days <= 3).length), color: INK },
+        { label: "Applicants waiting", value: String(inboxAll.length), color: inboxAll.length ? a : INK },
+        { label: "Your requests out", value: String(outPending), color: INK }
+      ],
+      hasInbox: inboxAll.length > 0,
+      inbox: inboxAll.slice(0, 2).map(x => {
+        const post = s.posts.find(p => p.id === x.postId);
+        const c = post ? this.comp(post.compId) : null;
+        return Object.assign(c ? this.logoVals(c) : { logo: null, noLogo: true, hostInitials: "··", logoBg: "#F2F1ED", logoImg: "none" }, {
+          who: x.who + " · " + x.meta,
+          sub: (c ? c.title : "Your squad") + " · " + x.skills.join(", "),
+          onAccept: () => { this.setApp(x.id, "accepted"); this.flash("Accepted — WhatsApp number shared"); },
+          onReject: () => this.setApp(x.id, "rejected")
+        });
+      }),
+      alerts,
+      noAlerts: alerts.length === 0,
+
+      browseTitle: onSaved ? "Bookmarks" : "Browse",
+      browseSub: onSaved
+        ? s.bookmarks.length + " saved · bookmarks stay until you remove them"
+        : "Undergraduate-eligible only. MBA-only, PG-exclusive and expired listings are purged.",
+      q: s.q,
+      onSearch: e => this.setState({ q: e.target.value }),
+      checkGroups: [
+        {
+          label: "Circuits", key: "circ", list: CIRCUITS,
+          countOf: v => DATA.filter(i => i.circuit === v).length,
+          active: s.circ
+        },
+        {
+          label: "Categories", key: "disc", list: DISCIPLINES,
+          countOf: v => DATA.filter(i => i.discipline === v).length,
+          active: s.disc
+        }
+      ].map(g => ({
+        label: g.label,
+        allColor: g.active.length ? a : MUTED,
+        onAll: () => this.setState({ [g.key]: [] }),
+        items: g.list.map(v => {
+          const on = g.active.includes(v);
+          return {
+            label: v,
+            count: g.countOf(v),
+            mark: on ? "✓" : "",
+            boxBg: on ? a : "#FFFFFF",
+            boxBorder: on ? a : "#CFCDC7",
+            weight: on ? "600" : "400",
+            onClick: () => this.toggle(g.key, v)
+          };
+        })
+      })),
+      segGroups: [
+        { label: "Participation", items: TEAMTYPES, current: s.team, set: v => this.setState({ team: v }) },
+        { label: "Entry fee", items: FEES, current: s.fee, set: v => this.setState({ fee: v }) }
+      ].map(g => ({
+        label: g.label,
+        items: g.items.map(o => {
+          const on = g.current === o.id;
+          return {
+            label: o.label,
+            bg: on ? "#FFFFFF" : "transparent",
+            color: on ? INK : "#55534D",
+            weight: on ? "600" : "500",
+            shadow: on ? "0 1px 2px rgba(26,26,25,0.10)" : "none",
+            onClick: () => g.set(o.id)
+          };
+        })
+      })),
+      scopeTabs: [
+        { id: "browse", label: "All", count: DATA.length },
+        { id: "saved", label: "Bookmarked", count: s.bookmarks.length }
+      ].map(t => {
+        const on = (t.id === "saved") === onSaved;
+        return {
+          label: t.label,
+          count: String(t.count),
+          bg: on ? "#F2F1ED" : "transparent",
+          color: on ? INK : "#55534D",
+          weight: on ? "600" : "500",
+          pillBg: on ? a : "#E7E6E2",
+          pillColor: on ? "#FFFFFF" : "#55534D",
+          onClick: () => this.setState({ screen: t.id })
+        };
+      }),
+      sort: s.sort,
+      onSort: e => this.setState({ sort: e.target.value }),
+      sortOptions: [
+        { value: "deadline", label: "Sort: Closing soonest" },
+        { value: "popular", label: "Sort: Most registrations" },
+        { value: "new", label: "Sort: Recently added" }
+      ],
+      resultLine: "Showing " + matched.length + (onSaved ? (matched.length === 1 ? " bookmark" : " bookmarks") : (matched.length === 1 ? " opportunity" : " opportunities")) + " · " + this.describe(current),
+      onReset: () => this.setState({ disc: [], circ: [], win: "any", team: "any", fee: "any", q: "" }),
+      saveTextColor: alreadySaved ? MUTED : a,
+      saveLabel: alreadySaved ? "Filter saved" : "Save filter & alert me",
+      saveBg: alreadySaved ? "#FFFFFF" : a,
+      saveColor: alreadySaved ? MUTED : "#FFFFFF",
+      saveBorder: alreadySaved ? LINE : a,
+      onSaveFilter: () => {
+        if (alreadySaved) { this.flash("Already saved"); return; }
+        this.setState(prev => ({
+          alerts: prev.alerts.concat({ id: "a" + Date.now(), disc: prev.disc, circ: prev.circ, win: prev.win, team: prev.team, fresh: 0 })
+        }));
+        this.flash("Saved — you will be alerted on new matches");
+      },
+      rows,
+      noRows: rows.length === 0,
+      emptyTitle: onSaved ? (s.bookmarks.length ? "No bookmarks match these filters" : "No bookmarks yet") : "Nothing matches all of that",
+      emptyNote: onSaved
+        ? (s.bookmarks.length ? "Clear a filter to see the rest of your bookmarks." : "Bookmark anything in Browse to keep it here.")
+        : "Drop a filter and try again.",
+
+      posts,
+      noPosts: posts.length === 0,
+      tq: s.tq,
+      onTeamSearch: e => this.setState({ tq: e.target.value }),
+      teamScopes: [
+        { id: "all", label: "All squads", count: s.posts.length },
+        { id: "open", label: "Open spots", count: s.posts.filter(p => !p.mine && p.size - p.filled > 0).length },
+        { id: "mine", label: "My posts", count: s.posts.filter(p => p.mine).length }
+      ].map(t => {
+        const on = s.tScope === t.id;
+        return {
+          label: t.label,
+          count: String(t.count),
+          bg: on ? "#FFFFFF" : "transparent",
+          color: on ? INK : "#55534D",
+          weight: on ? "600" : "500",
+          shadow: on ? "0 1px 2px rgba(26,26,25,0.10)" : "none",
+          pillBg: on ? a : "#E7E6E2",
+          pillColor: on ? "#FFFFFF" : "#55534D",
+          onClick: () => this.setState({ tScope: t.id })
+        };
+      }),
+      teamSkillChips: SKILLS.filter(k => s.posts.some(p => p.want.includes(k)))
+        .map(k => this.chip(k, s.tSkills.includes(k), () => this.toggle("tSkills", k))),
+      teamDiscChips: DISCIPLINES.filter(d => s.posts.some(p => this.comp(p.compId).discipline === d))
+        .map(d => this.chip(d, s.tDisc.includes(d), () => this.toggle("tDisc", d))),
+      matchBg: s.tMatch ? "rgba(15,63,254,0.07)" : "#FFFFFF",
+      matchColor: INK,
+      matchBorder: s.tMatch ? a : LINE,
+      matchBoxBg: s.tMatch ? a : "#FFFFFF",
+      matchBoxBorder: s.tMatch ? a : "#CFCDC7",
+      matchMark: s.tMatch ? "✓" : "",
+      onToggleMatch: () => this.setState({ tMatch: !s.tMatch }),
+      teamResultLine: visiblePosts.length + (visiblePosts.length === 1 ? " squad" : " squads"),
+      onTeamReset: () => this.setState({ tq: "", tSkills: [], tDisc: [], tScope: "all", tMatch: false }),
+      onOpenPost: () => this.setState({ postOpen: true, openId: null }),
+      onClosePost: () => this.setState({ postOpen: false }),
+      postOpen: s.postOpen,
+      compOptions: DATA.map(d => ({ value: String(d.id), label: d.title })),
+      draftComp: String(s.draft.compId),
+      onDraftComp: e => this.setState(prev => ({ draft: Object.assign({}, prev.draft, { compId: Number(e.target.value) }) })),
+      draftSpots: s.draft.spots,
+      onDraftSpots: e => this.setState(prev => ({ draft: Object.assign({}, prev.draft, { spots: e.target.value }) })),
+      draftDesc: s.draft.desc,
+      onDraftDesc: e => this.setState(prev => ({ draft: Object.assign({}, prev.draft, { desc: e.target.value }) })),
+      draftSkillChips: SKILLS.map(k => this.chip(k, s.draft.skills.includes(k), () => this.setState(prev => {
+        const has = prev.draft.skills.includes(k);
+        return { draft: Object.assign({}, prev.draft, { skills: has ? prev.draft.skills.filter(x => x !== k) : prev.draft.skills.concat(k) }) };
+      }))),
+      onSubmitPost: () => {
+        const d = s.draft;
+        const size = Math.max(2, Number(d.spots) + 1 || 2);
+        this.setState(prev => ({
+          posts: [{
+            id: "p" + Date.now(), compId: d.compId, spots: Number(d.spots) || 1, filled: 1, size,
+            posted: "just now", desc: d.desc || "No description yet.",
+            want: d.skills.length ? d.skills : ["Open to anyone"], lead: "You", mine: true, state: "own"
+          }].concat(prev.posts),
+          postOpen: false, screen: "teams",
+          draft: { compId: 1, spots: "2", skills: [], desc: "" }
+        }));
+        this.flash("Squad posted");
+      },
+
+      applyPost,
+      applyNote: "Your profile, college, batch and skills go with this request. WhatsApp number is shared only if the lead accepts.",
+      pitch: s.pitch,
+      onPitch: e => this.setState({ pitch: e.target.value }),
+      onCloseApply: () => this.setState({ applyId: null }),
+      onSubmitApply: () => {
+        const p = applyPostRaw;
+        this.setState(prev => ({
+          posts: prev.posts.map(x => x.id === p.id ? Object.assign({}, x, { state: "requested" }) : x),
+          apps: prev.apps.concat({
+            id: "ap" + Date.now(), postId: p.id, who: "You", meta: this.comp(p.compId).title,
+            skills: prev.profile.skills, pitch: prev.pitch || "", status: "pending", dir: "out"
+          }),
+          applyId: null, pitch: ""
+        }));
+        this.flash("Request sent to " + p.lead.split(" ")[0]);
+      },
+
+      reqTabs: [
+        { id: "in", label: "To my squads (" + s.apps.filter(x => x.dir === "in").length + ")" },
+        { id: "out", label: "Sent by me (" + s.apps.filter(x => x.dir === "out").length + ")" }
+      ].map(t => {
+        const on = s.reqTab === t.id;
+        return { label: t.label, bg: on ? a : "#FFFFFF", color: on ? "#FFFFFF" : INK, border: on ? a : LINE, onClick: () => this.setState({ reqTab: t.id }) };
+      }),
+      reqRows,
+      noReqs: reqRows.length === 0,
+      reqEmpty: s.reqTab === "in" ? "No one has applied to your squads yet." : "You have not requested to join any squad yet.",
+
+      profileFields: [
+        { label: "Name", value: pf.name, ph: "Your name", onChange: e => setP("name", e.target.value) },
+        { label: "College", value: pf.college, ph: "College", onChange: e => setP("college", e.target.value) },
+        { label: "Course", value: pf.course, ph: "Course", onChange: e => setP("course", e.target.value) },
+        { label: "Graduating batch", value: pf.batch, ph: "2027", onChange: e => setP("batch", e.target.value) }
+      ],
+      skillChips: SKILLS.map(k => this.chip(k, pf.skills.includes(k), () => setP("skills", pf.skills.includes(k) ? pf.skills.filter(x => x !== k) : pf.skills.concat(k)))),
+      phone: pf.phone,
+      onPhone: e => setP("phone", e.target.value),
+
+      detail,
+      onCloseDetail: () => this.setState({ openId: null }),
+      stop: e => e.stopPropagation(),
+      toast: s.toast
+    };
+  }
+}
+
+</script>
+</body>
+</html>
