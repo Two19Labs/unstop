@@ -105,11 +105,12 @@ export default function HomeScreen({
           </div>
 
           {inboxAll.slice(0, 2).map((app) => {
-            const post = posts.find(p => p.id === app.postId);
-            const comp = post ? competitions.find(c => c.id === post.compId) : null;
-            const initials = initialsOf(comp?.host || 'OneStop');
-            const who = `${app.who} · ${app.meta}`;
-            const sub = `${comp ? comp.title : 'Your squad'} · ${(app.skills || []).join(', ')}`;
+            const post = posts.find(p => p.id === (app.postId || app.post_id));
+            const comp = post ? competitions.find(c => c.id === post.compId || (post.competition_name && c.title === post.competition_name)) : null;
+            const initials = initialsOf(comp?.host || post?.organizer || 'OneStop');
+            const who = [app.applicant_name || app.who, app.applicant_college || app.meta].filter(Boolean).join(' · ');
+            const compTitle = comp?.title || post?.competition_name || post?.title || 'Your squad';
+            const sub = `${compTitle}${(app.highlighted_skills || app.skills)?.length ? ` · ${(app.highlighted_skills || app.skills).join(', ')}` : ''}`;
 
             return (
               <div

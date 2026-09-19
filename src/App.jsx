@@ -15,7 +15,11 @@ import AuthModal from './components/AuthModal';
 
 import {
   describeFilter,
-  matchListing
+  matchListing,
+  isMockPost,
+  isMockApp,
+  isMockAlert,
+  isMockBookmark
 } from './data/initialData';
 
 import './App.css';
@@ -56,20 +60,21 @@ function OneStopInner() {
   const [localBookmarks, setLocalBookmarks] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_bookmarks');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved).filter(b => !isMockBookmark(b)) : [];
     } catch {
       return [];
     }
   });
 
-  const bookmarks = authBookmarks && authBookmarks.length > 0 ? authBookmarks : localBookmarks;
+  const bookmarks = (authBookmarks && authBookmarks.length > 0 ? authBookmarks : localBookmarks).filter(b => !isMockBookmark(b));
 
   const handleToggleBookmark = useCallback((compId) => {
     if (authToggleBookmark) {
       authToggleBookmark(compId);
     }
     setLocalBookmarks(prev => {
-      const next = prev.includes(compId) ? prev.filter(id => id !== compId) : [...prev, compId];
+      const cleanPrev = prev.filter(b => !isMockBookmark(b));
+      const next = cleanPrev.includes(compId) ? cleanPrev.filter(id => id !== compId) : [...cleanPrev, compId];
       localStorage.setItem('onestop_bookmarks', JSON.stringify(next));
       return next;
     });
@@ -79,7 +84,7 @@ function OneStopInner() {
   const [alerts, setAlerts] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_saved_alerts');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved).filter(a => !isMockAlert(a)) : [];
     } catch {
       return [];
     }
@@ -87,7 +92,8 @@ function OneStopInner() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('onestop_saved_alerts', JSON.stringify(alerts));
+      const clean = alerts.filter(a => !isMockAlert(a));
+      localStorage.setItem('onestop_saved_alerts', JSON.stringify(clean));
     } catch (e) {
       console.warn('Failed to save alerts to local storage:', e);
     }
@@ -97,17 +103,17 @@ function OneStopInner() {
   const [localPosts, setLocalPosts] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_posts');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved).filter(p => !isMockPost(p)) : [];
     } catch {
       return [];
     }
   });
 
-  const posts = authSquadPosts && authSquadPosts.length > 0 ? authSquadPosts : localPosts;
+  const posts = (authSquadPosts && authSquadPosts.length > 0 ? authSquadPosts : localPosts).filter(p => !isMockPost(p));
 
   useEffect(() => {
     try {
-      localStorage.setItem('onestop_posts', JSON.stringify(posts));
+      localStorage.setItem('onestop_posts', JSON.stringify(posts.filter(p => !isMockPost(p))));
     } catch (e) {}
   }, [posts]);
 
@@ -115,17 +121,17 @@ function OneStopInner() {
   const [localApplications, setLocalApplications] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_applications');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved).filter(a => !isMockApp(a)) : [];
     } catch {
       return [];
     }
   });
 
-  const applications = authSquadApps && authSquadApps.length > 0 ? authSquadApps : localApplications;
+  const applications = (authSquadApps && authSquadApps.length > 0 ? authSquadApps : localApplications).filter(a => !isMockApp(a));
 
   useEffect(() => {
     try {
-      localStorage.setItem('onestop_applications', JSON.stringify(applications));
+      localStorage.setItem('onestop_applications', JSON.stringify(applications.filter(a => !isMockApp(a))));
     } catch (e) {}
   }, [applications]);
 
@@ -333,33 +339,47 @@ function OneStopInner() {
   // Post a Squad Submission
   const handleSubmitPost = (draft) => {
     const creatorName = profile.name || user?.email?.split('@')[0] || 'You';
+    const comp = competitions.find(c => c.id === draft.compId);
+    const compTitle = comp?.title || 'Competition';
+    const compHost = comp?.host || '';
     const newPost = {
-      id: `p${Date.now()}`,
+      id: `post_${Date.now()}`,
       compId: draft.compId,
+      competition_name: compTitle,
+      organizer: compHost,
+      competition_link: comp?.unstopUrl || '',
+      title: `Squad for ${compTitle}`,
       spots: draft.spots,
+      spots_left: draft.spots,
       filled: 1,
+      total_members: Math.max(2, draft.spots + 1),
       size: Math.max(2, draft.spots + 1),
       posted: 'just now',
       desc: draft.desc,
+      description: draft.desc,
       want: draft.skills,
+      skills_looking_for: draft.skills,
       lead: creatorName,
+      created_by_name: creatorName,
       leadPhone: profile.phone || '',
+      phone_number: profile.phone || '',
+      college: profile.college || '',
+      year: profile.batch || '',
       mine: true,
       state: 'own'
     };
 
-    setLocalPosts(prev => [newPost, ...prev]);
+    setLocalPosts(prev => [newPost, ...prev].filter(p => !isMockPost(p)));
     setPostModalOpen(false);
     setScreen('teams');
     flash('Squad posted');
 
     if (user && authCreatePost) {
-      const comp = competitions.find(c => c.id === draft.compId);
       authCreatePost({
-        competition_name: comp?.title || 'Competition',
-        organizer: comp?.host || '',
+        competition_name: compTitle,
+        organizer: compHost,
         competition_link: comp?.unstopUrl || '',
-        title: `Squad for ${comp?.title || 'Competition'}`,
+        title: `Squad for ${compTitle}`,
         description: draft.desc,
         skills_looking_for: draft.skills,
         spots_left: draft.spots,
@@ -376,26 +396,33 @@ function OneStopInner() {
   };
 
   const handleSubmitApply = (targetPost, pitchText) => {
-    const comp = competitions.find(c => c.id === targetPost.compId);
+    const comp = competitions.find(c => c.id === targetPost.compId || (targetPost.competition_name && c.title === targetPost.competition_name));
+    const compTitle = comp ? comp.title : (targetPost.competition_name || 'Competition');
     const applicantName = profile.name || user?.email?.split('@')[0] || 'You';
     const newApp = {
-      id: `ap${Date.now()}`,
+      id: `app_${Date.now()}`,
       postId: targetPost.id,
+      post_id: targetPost.id,
       who: applicantName,
-      meta: comp ? comp.title : 'Competition',
+      applicant_name: applicantName,
+      meta: compTitle,
       phone: profile.phone || '',
+      applicant_phone: profile.phone || '',
+      applicant_college: profile.college || '',
       skills: profile.skills || [],
+      highlighted_skills: profile.skills || [],
       pitch: pitchText,
+      pitch_note: pitchText,
       status: 'pending',
       dir: 'out'
     };
 
-    setLocalApplications(prev => [...prev, newApp]);
+    setLocalApplications(prev => [...prev, newApp].filter(a => !isMockApp(a)));
     setLocalPosts(prev => prev.map(p => p.id === targetPost.id ? { ...p, state: 'requested' } : p));
     setApplyModalOpen(false);
     setApplyTargetPost(null);
 
-    const leadFirst = targetPost.lead ? targetPost.lead.split(' ')[0] : 'lead';
+    const leadFirst = (targetPost.created_by_name || targetPost.lead || 'lead').split(' ')[0];
     flash(`Request sent to ${leadFirst}`);
 
     if (user && authApplySquad) {

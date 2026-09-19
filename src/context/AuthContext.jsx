@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import { normalizeYear } from '../data/colleges';
+import { isMockPost, isMockApp, isMockBookmark } from '../data/initialData';
 
 const AuthContext = createContext(null);
 
@@ -10,7 +11,7 @@ export function getProfileCooldown(profile, user) {
   const lastUpdated =
     profile?.profile_last_updated_at ||
     user?.user_metadata?.profile_last_updated_at ||
-    (user?.id ? localStorage.getItem(`arena_profile_last_updated_${user.id}`) : null);
+    (user?.id ? localStorage.getItem(`onestop_profile_last_updated_${user.id}`) : null);
 
   if (!lastUpdated) {
     return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
@@ -84,36 +85,34 @@ export function AuthProvider({ children }) {
 
   // UI / Theme State
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('arena_theme') || 'light';
+    return localStorage.getItem('onestop_theme') || 'light';
   });
 
-  // Bookmarks State
+  // Bookmarks State (100% real, zero mock data)
   const [bookmarks, setBookmarks] = useState(() => {
     try {
-      const saved = localStorage.getItem('arena_bookmarks');
-      return saved ? JSON.parse(saved) : [];
+      const saved = localStorage.getItem('onestop_bookmarks');
+      return saved ? JSON.parse(saved).filter(b => !isMockBookmark(b)) : [];
     } catch {
       return [];
     }
   });
 
-  // Squad Posts State
+  // Squad Posts State (100% real, zero mock data)
   const [squadPosts, setSquadPosts] = useState(() => {
     try {
-      const saved = localStorage.getItem('arena_squad_posts');
-      if (saved) return JSON.parse(saved);
-      return [];
+      const saved = localStorage.getItem('onestop_posts');
+      return saved ? JSON.parse(saved).filter(p => !isMockPost(p)) : [];
     } catch {
       return [];
     }
   });
 
-  // Squad Applications State
+  // Squad Applications State (100% real, zero mock data)
   const [squadApps, setSquadApps] = useState(() => {
     try {
-      const saved = localStorage.getItem('arena_squad_apps');
-      if (saved) return JSON.parse(saved);
-      return [];
+      const saved = localStorage.getItem('onestop_applications');
+      return saved ? JSON.parse(saved).filter(a => !isMockApp(a)) : [];
     } catch {
       return [];
     }
@@ -122,7 +121,7 @@ export function AuthProvider({ children }) {
   // 1. Sync Theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('arena_theme', theme);
+    localStorage.setItem('onestop_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -141,7 +140,7 @@ export function AuthProvider({ children }) {
 
       const { data: authData } = await supabase.auth.getUser();
       const meta = authData?.user?.user_metadata || {};
-      const localLastUpdated = localStorage.getItem(`arena_profile_last_updated_${userId}`);
+      const localLastUpdated = localStorage.getItem(`onestop_profile_last_updated_${userId}`);
       const lastUpdatedAt = data?.profile_last_updated_at || meta?.profile_last_updated_at || localLastUpdated || null;
 
       if (!error && data) {
@@ -179,9 +178,9 @@ export function AuthProvider({ children }) {
         .eq('user_id', userId);
 
       if (!error && Array.isArray(data)) {
-        const ids = data.map(b => b.comp_id);
+        const ids = data.map(b => b.comp_id).filter(id => !isMockBookmark(id));
         setBookmarks(ids);
-        localStorage.setItem('arena_bookmarks', JSON.stringify(ids));
+        localStorage.setItem('onestop_bookmarks', JSON.stringify(ids));
       }
     } catch (err) {
       console.warn('Bookmarks fetch warning:', err.message);
@@ -200,8 +199,9 @@ export function AuthProvider({ children }) {
         .order('created_at', { ascending: false });
 
       if (!postErr && Array.isArray(posts)) {
-        setSquadPosts(posts);
-        localStorage.setItem('arena_squad_posts', JSON.stringify(posts));
+        const cleanPosts = posts.filter(p => !isMockPost(p));
+        setSquadPosts(cleanPosts);
+        localStorage.setItem('onestop_posts', JSON.stringify(cleanPosts));
       }
     } catch (e) {
       console.warn('Could not sync squad posts from Supabase:', e.message);
@@ -217,8 +217,9 @@ export function AuthProvider({ children }) {
           .order('created_at', { ascending: false });
 
         if (!appErr && Array.isArray(apps)) {
-          setSquadApps(apps);
-          localStorage.setItem('arena_squad_apps', JSON.stringify(apps));
+          const cleanApps = apps.filter(a => !isMockApp(a));
+          setSquadApps(cleanApps);
+          localStorage.setItem('onestop_applications', JSON.stringify(cleanApps));
         }
       } catch (e) {
         console.warn('Could not sync squad apps from Supabase:', e.message);
@@ -306,15 +307,15 @@ export function AuthProvider({ children }) {
 
   // 6. Local Storage Sync Fallback
   useEffect(() => {
-    localStorage.setItem('arena_bookmarks', JSON.stringify(bookmarks));
+    localStorage.setItem('onestop_bookmarks', JSON.stringify(bookmarks.filter(b => !isMockBookmark(b))));
   }, [bookmarks]);
 
   useEffect(() => {
-    localStorage.setItem('arena_squad_posts', JSON.stringify(squadPosts));
+    localStorage.setItem('onestop_posts', JSON.stringify(squadPosts.filter(p => !isMockPost(p))));
   }, [squadPosts]);
 
   useEffect(() => {
-    localStorage.setItem('arena_squad_apps', JSON.stringify(squadApps));
+    localStorage.setItem('onestop_applications', JSON.stringify(squadApps.filter(a => !isMockApp(a))));
   }, [squadApps]);
 
   // Modal Open/Close Controls
@@ -462,7 +463,7 @@ export function AuthProvider({ children }) {
 
     // 3. Persist timestamp to localStorage for immediate resilience
     try {
-      localStorage.setItem(`arena_profile_last_updated_${user.id}`, nowIso);
+      localStorage.setItem(`onestop_profile_last_updated_${user.id}`, nowIso);
     } catch (e) {}
 
     // 4. Update PostgreSQL profiles table (upsert to create if missing)
@@ -527,7 +528,7 @@ export function AuthProvider({ children }) {
 
     // Optimistic UI update
     setBookmarks(nextBookmarks);
-    localStorage.setItem('arena_bookmarks', JSON.stringify(nextBookmarks));
+    localStorage.setItem('onestop_bookmarks', JSON.stringify(nextBookmarks));
 
     // Persist to Supabase if authenticated
     if (supabase && user) {
@@ -599,8 +600,8 @@ export function AuthProvider({ children }) {
         throw error;
       }
 
-      setSquadPosts(prev => [data, ...prev]);
-      localStorage.setItem('arena_squad_posts', JSON.stringify([data, ...squadPosts]));
+      setSquadPosts(prev => [data, ...prev].filter(p => !isMockPost(p)));
+      localStorage.setItem('onestop_posts', JSON.stringify([data, ...squadPosts].filter(p => !isMockPost(p))));
       return data;
     }
 
@@ -645,8 +646,8 @@ export function AuthProvider({ children }) {
         throw error;
       }
 
-      setSquadApps(prev => [data, ...prev]);
-      localStorage.setItem('arena_squad_apps', JSON.stringify([data, ...squadApps]));
+      setSquadApps(prev => [data, ...prev].filter(a => !isMockApp(a)));
+      localStorage.setItem('onestop_applications', JSON.stringify([data, ...squadApps].filter(a => !isMockApp(a))));
       return data;
     }
 

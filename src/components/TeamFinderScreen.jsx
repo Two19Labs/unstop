@@ -1,6 +1,6 @@
 // src/components/TeamFinderScreen.jsx
 import React, { useState } from 'react';
-import { SKILLS, DISCIPLINES, initialsOf } from '../data/initialData';
+import { SKILLS, DISCIPLINES, initialsOf, isMockPost } from '../data/initialData';
 
 export default function TeamFinderScreen({
   posts = [],
@@ -17,26 +17,54 @@ export default function TeamFinderScreen({
   const [tDisc, setTDisc] = useState([]);
   const [tMatch, setTMatch] = useState(false);
 
-  const compMap = new Map();
-  competitions.forEach(c => compMap.set(c.id, c));
-
-  const getComp = (compId) => compMap.get(compId) || { title: 'Competition', host: 'OneStop', discipline: 'General', logo: null };
-
   const profileSkills = profile?.skills || [];
 
-  // Filter posts
-  const visiblePosts = posts.filter((p) => {
-    const c = getComp(p.compId);
-    const spotsLeft = (p.size || 4) - (p.filled || 1);
+  // Filter out any mock posts and normalize schema
+  const cleanPosts = posts.filter(p => !isMockPost(p));
 
-    if (tScope === 'mine' && !p.mine) return false;
-    if (tScope === 'open' && (p.mine || spotsLeft <= 0)) return false;
-    if (tSkills.length > 0 && !p.want?.some(w => tSkills.includes(w))) return false;
-    if (tDisc.length > 0 && !tDisc.includes(c.discipline)) return false;
-    if (tMatch && !p.want?.some(w => profileSkills.includes(w))) return false;
+  const normalizedPosts = cleanPosts.map((p) => {
+    const comp = competitions.find(c => c.id === p.compId || (p.competition_name && c.title && c.title.toLowerCase() === p.competition_name.toLowerCase())) || null;
+    const title = p.competition_name || comp?.title || p.title || 'Competition';
+    const host = p.organizer || comp?.host || 'Host Institution';
+    const logo = comp?.logo || null;
+    const desc = p.description || p.desc || '';
+    const want = p.skills_looking_for || p.want || [];
+    const spotsLeft = p.spots_left !== undefined ? Number(p.spots_left) : Math.max(0, (p.total_members || p.size || 4) - (p.filled || 1));
+    const totalMembers = p.total_members || p.size || (spotsLeft + (p.filled || 1));
+    const filledCount = p.filled !== undefined ? p.filled : Math.max(1, totalMembers - spotsLeft);
+    const lead = p.created_by_name || p.lead || 'Student Lead';
+    const leadMeta = [lead, p.college, p.year].filter(Boolean).join(' · ');
+    const isMine = Boolean(p.mine || (profile?.name && lead === profile.name));
+    const discipline = comp?.discipline || 'General';
+
+    return {
+      ...p,
+      displayTitle: title,
+      displayHost: host,
+      displayLogo: logo,
+      displayDesc: desc,
+      displaySkills: want,
+      displaySpotsLeft: spotsLeft,
+      displayTotalMembers: totalMembers,
+      displayFilledCount: filledCount,
+      displayLead: lead,
+      displayLeadMeta: leadMeta,
+      isMine,
+      discipline,
+      rawComp: comp
+    };
+  });
+
+  // Filter posts
+  const visiblePosts = normalizedPosts.filter((p) => {
+    if (tScope === 'mine' && !p.isMine) return false;
+    if (tScope === 'open' && (p.isMine || p.displaySpotsLeft <= 0)) return false;
+    if (tSkills.length > 0 && !p.displaySkills.some(w => tSkills.includes(w))) return false;
+    if (tDisc.length > 0 && !tDisc.includes(p.discipline)) return false;
+    if (tMatch && !p.displaySkills.some(w => profileSkills.includes(w))) return false;
 
     if (tq.trim()) {
-      const hay = `${c.title || ''} ${c.host || ''} ${p.lead || ''} ${(p.want || []).join(' ')} ${p.desc || ''}`.toLowerCase();
+      const hay = `${p.displayTitle} ${p.displayHost} ${p.displayLeadMeta} ${p.displaySkills.join(' ')} ${p.displayDesc}`.toLowerCase();
       if (!hay.includes(tq.trim().toLowerCase())) return false;
     }
     return true;
@@ -59,12 +87,12 @@ export default function TeamFinderScreen({
   };
 
   // Extract skills and categories present in current posts for chips
-  const activeSkills = SKILLS.filter(k => posts.some(p => p.want?.includes(k)));
-  const activeDisciplines = DISCIPLINES.filter(d => posts.some(p => getComp(p.compId).discipline === d));
+  const activeSkills = SKILLS.filter(k => normalizedPosts.some(p => p.displaySkills.includes(k)));
+  const activeDisciplines = DISCIPLINES.filter(d => normalizedPosts.some(p => p.discipline === d));
 
-  const countAll = posts.length;
-  const countOpen = posts.filter(p => !p.mine && (p.size || 4) - (p.filled || 1) > 0).length;
-  const countMine = posts.filter(p => p.mine).length;
+  const countAll = normalizedPosts.length;
+  const countOpen = normalizedPosts.filter(p => !p.isMine && p.displaySpotsLeft > 0).length;
+  const countMine = normalizedPosts.filter(p => p.isMine).length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '17px' }}>
@@ -341,18 +369,17 @@ export default function TeamFinderScreen({
         }}
       >
         {visiblePosts.map((post) => {
-          const comp = getComp(post.compId);
-          const left = (post.size || 4) - (post.filled || 1);
+          const left = post.displaySpotsLeft;
           const spotsText = left <= 0 ? 'Full' : `${left} ${left === 1 ? 'spot left' : 'spots left'}`;
           const isUrgent = left <= 1;
-          const initials = initialsOf(comp.host || 'Host');
+          const initials = initialsOf(post.displayHost || 'Host');
 
           let btnLabel = 'Request to join';
           let btnBg = '#0F3FFE';
           let btnColor = '#FFFFFF';
           let btnBorder = '#0F3FFE';
 
-          if (post.mine) {
+          if (post.isMine) {
             btnLabel = 'Manage applicants';
             btnBg = '#1A1A19';
             btnColor = '#FFFFFF';
@@ -407,8 +434,8 @@ export default function TeamFinderScreen({
                     height: '34px',
                     borderRadius: '8px',
                     border: '1px solid #EFEEEA',
-                    backgroundColor: comp.logo ? '#FFFFFF' : '#F2F1ED',
-                    backgroundImage: comp.logo ? `url("${comp.logo}")` : 'none',
+                    backgroundColor: post.displayLogo ? '#FFFFFF' : '#F2F1ED',
+                    backgroundImage: post.displayLogo ? `url("${post.displayLogo}")` : 'none',
                     backgroundSize: 'contain',
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'center',
@@ -422,7 +449,7 @@ export default function TeamFinderScreen({
                     fontWeight: 700
                   }}
                 >
-                  {!comp.logo && <span>{initials}</span>}
+                  {!post.displayLogo && <span>{initials}</span>}
                 </span>
 
                 <div style={{ minWidth: 0 }}>
@@ -436,20 +463,25 @@ export default function TeamFinderScreen({
                       color: '#1A1A19'
                     }}
                   >
-                    {comp.title}
+                    {post.displayTitle}
                   </h3>
-                  <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#55534D', lineHeight: 1.5 }}>
-                    {post.desc}
-                  </p>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: '#75736C', marginTop: '2px' }}>
+                    {post.displayHost}
+                  </div>
+                  {post.displayDesc && (
+                    <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#55534D', lineHeight: 1.5 }}>
+                      {post.displayDesc}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Row 3: Skills Needed */}
-              {post.want && post.want.length > 0 && (
+              {post.displaySkills && post.displaySkills.length > 0 && (
                 <div>
                   <span style={{ fontSize: '11px', fontWeight: 600, color: '#75736C' }}>Looking for</span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-                    {post.want.map((skill, sIdx) => (
+                    {post.displaySkills.map((skill, sIdx) => (
                       <span
                         key={sIdx}
                         style={{
@@ -471,24 +503,24 @@ export default function TeamFinderScreen({
 
               {/* Row 4: Lead Line */}
               <p style={{ margin: 0, fontSize: '12px', color: '#75736C' }}>
-                {post.mine
-                  ? `Your post · ${post.filled || 1} of ${post.size || 4} filled`
-                  : post.lead}
+                {post.isMine
+                  ? `Your post · ${post.displayFilledCount} of ${post.displayTotalMembers} filled`
+                  : post.displayLeadMeta}
               </p>
 
               {/* Row 5: Action Button */}
               <button
                 onClick={() => {
-                  if (post.mine) {
+                  if (post.isMine) {
                     onGoRequests();
-                    return;
-                  }
-                  if (post.state === 'open' || !post.state) {
-                    onOpenApply(post);
                     return;
                   }
                   if (post.state === 'accepted') {
                     onOpenWhatsApp(post);
+                    return;
+                  }
+                  if (post.state !== 'requested') {
+                    onOpenApply(post);
                   }
                 }}
                 style={{
@@ -518,16 +550,44 @@ export default function TeamFinderScreen({
             background: '#FFFFFF',
             border: '1px solid #E7E6E2',
             borderRadius: '12px',
-            padding: '44px 18px',
+            padding: '52px 20px',
             textAlign: 'center'
           }}
         >
-          <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>
-            No squads match these filters
-          </p>
-          <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#75736C' }}>
-            Clear a filter, or post your own squad and let applicants come to you.
-          </p>
+          {cleanPosts.length === 0 ? (
+            <>
+              <p style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1A1A19' }}>
+                No squad openings right now
+              </p>
+              <p style={{ margin: '8px auto 16px', maxWidth: '420px', fontSize: '13px', color: '#75736C', lineHeight: 1.5 }}>
+                Be the first to post a squad opening for an undergraduate competition. Teammates can apply and connect with you on WhatsApp.
+              </p>
+              <button
+                onClick={() => onOpenPostSquad(null)}
+                style={{
+                  border: '1px solid #0F3FFE',
+                  borderRadius: '8px',
+                  background: '#0F3FFE',
+                  color: '#FFFFFF',
+                  padding: '10px 18px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 600
+                }}
+              >
+                Post a squad opening
+              </button>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1A1A19' }}>
+                No squads match these filters
+              </p>
+              <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#75736C' }}>
+                Clear a filter, or post your own squad and let applicants come to you.
+              </p>
+            </>
+          )}
         </div>
       )}
     </div>

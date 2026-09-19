@@ -91,3 +91,36 @@ export function matchListing(item, f = {}) {
   }
   return true;
 }
+
+export function isMockPost(p) {
+  if (!p) return true;
+  const id = String(p.id || '');
+  if (/^p[1-9]\d*$/.test(id) || ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(id)) return true;
+  const lead = String(p.lead || p.created_by_name || '');
+  if (lead.includes('Ananya') || lead.includes('Dev M.') || lead.includes('Ishita') || lead.includes('Rohan') || lead.includes('Meher') || lead.includes('Sanya')) return true;
+  const desc = String(p.desc || p.description || '');
+  if (desc.includes('Two rounds cleared') || desc.includes('offline-first') || desc.includes('personal-care') || desc.includes('Derivatives-heavy') || desc.includes('retail transactions')) return true;
+  return false;
+}
+
+export function isMockApp(a) {
+  if (!a) return true;
+  const id = String(a.id || '');
+  if (/^ap[1-9]\d*$/.test(id) || ['ap1', 'ap2', 'ap3', 'ap4', 'ap5'].includes(id)) return true;
+  const who = String(a.who || a.applicant_name || '');
+  if (who.includes('Sanya') || who.includes('Tanmay') || who.includes('Dev M.') || who.includes('Ananya')) return true;
+  return false;
+}
+
+export function isMockAlert(a) {
+  if (!a) return true;
+  const id = String(a.id || '');
+  return /^a[1-9]$/.test(id);
+}
+
+export function isMockBookmark(b) {
+  if (typeof b === 'number' && b <= 50) return true;
+  if (typeof b === 'string' && /^\d+$/.test(b) && Number(b) <= 50) return true;
+  return false;
+}
+

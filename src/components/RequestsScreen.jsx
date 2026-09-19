@@ -1,5 +1,6 @@
 // src/components/RequestsScreen.jsx
 import React, { useState } from 'react';
+import { isMockApp, isMockPost } from '../data/initialData';
 
 export default function RequestsScreen({
   applications = [],
@@ -12,16 +13,19 @@ export default function RequestsScreen({
 }) {
   const [reqTab, setReqTab] = useState('in'); // 'in' | 'out'
 
+  const cleanApps = applications.filter(a => !isMockApp(a));
+  const cleanPosts = posts.filter(p => !isMockPost(p));
+
   const compMap = new Map();
   competitions.forEach(c => compMap.set(c.id, c));
 
   const postMap = new Map();
-  posts.forEach(p => postMap.set(p.id, p));
+  cleanPosts.forEach(p => postMap.set(p.id, p));
 
-  const inCount = applications.filter(a => a.dir === 'in').length;
-  const outCount = applications.filter(a => a.dir === 'out').length;
+  const inCount = cleanApps.filter(a => a.dir === 'in').length;
+  const outCount = cleanApps.filter(a => a.dir === 'out').length;
 
-  const currentRows = applications.filter(a => a.dir === reqTab);
+  const currentRows = cleanApps.filter(a => a.dir === reqTab);
 
   const getStatusLook = (status) => {
     switch (status) {
@@ -96,14 +100,22 @@ export default function RequestsScreen({
       {/* Requests Card */}
       <div style={{ background: '#FFFFFF', border: '1px solid #E7E6E2', borderRadius: '12px', overflow: 'hidden' }}>
         {currentRows.map((app) => {
-          const post = postMap.get(app.postId);
-          const comp = post ? compMap.get(post.compId) : null;
+          const post = postMap.get(app.postId || app.post_id);
+          const comp = post ? (competitions.find(c => c.id === post.compId || (post.competition_name && c.title === post.competition_name)) || null) : null;
           const look = getStatusLook(app.status);
 
-          const whoTitle = app.dir === 'in' ? app.who : (comp ? comp.title : app.meta);
+          const applicantName = app.applicant_name || app.who || 'Applicant';
+          const applicantCollege = app.applicant_college || app.meta || '';
+          const compTitle = post?.competition_name || comp?.title || post?.title || app.meta || 'Competition';
+          const leadName = post?.created_by_name || post?.lead || 'Squad Lead';
+
+          const whoTitle = app.dir === 'in' ? applicantName : compTitle;
           const subline = app.dir === 'in'
-            ? `${app.meta || ''}${comp ? ` · applied to ${comp.title}` : ''}`
-            : (post ? `Squad led by ${post.lead}` : app.meta);
+            ? [applicantCollege, compTitle ? `applied to ${compTitle}` : ''].filter(Boolean).join(' · ')
+            : `Squad led by ${leadName}`;
+
+          const pitch = app.pitch || app.pitch_note;
+          const skills = app.highlighted_skills || app.skills || [];
 
           return (
             <div
@@ -138,7 +150,7 @@ export default function RequestsScreen({
 
                 <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#75736C' }}>{subline}</p>
 
-                {app.pitch && (
+                {pitch && (
                   <p
                     style={{
                       margin: '9px 0 0',
@@ -149,13 +161,13 @@ export default function RequestsScreen({
                       paddingLeft: '11px'
                     }}
                   >
-                    {app.pitch}
+                    {pitch}
                   </p>
                 )}
 
-                {app.skills && app.skills.length > 0 && (
+                {skills.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '9px' }}>
-                    {app.skills.map((s, idx) => (
+                    {skills.map((s, idx) => (
                       <span
                         key={idx}
                         style={{
