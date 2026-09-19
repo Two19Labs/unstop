@@ -43,10 +43,13 @@ export default function Sidebar({
   ];
 
   const initials = profile?.name
-    ? profile.name.split(' ').map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase()
-    : 'AR';
+    ? profile.name.split(' ').filter(Boolean).map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase() || 'UG'
+    : 'UG';
 
-  const profileMeta = `${profile?.college || 'SSCBS'} · ${profile?.batch || '2027'}`;
+  const profileName = profile?.name || 'Your Profile';
+  const profileMeta = profile?.college
+    ? `${profile.college}${profile.batch ? ` · ${profile.batch}` : ''}`
+    : 'Click to edit details';
 
   const handleNav = (id) => {
     onNavigate(id);
@@ -204,7 +207,7 @@ export default function Sidebar({
                   whiteSpace: 'nowrap'
                 }}
               >
-                {profile?.name || 'User'}
+                {profileName}
               </span>
               <span
                 style={{

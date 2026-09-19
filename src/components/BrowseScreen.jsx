@@ -24,7 +24,8 @@ export default function BrowseScreen({
   onFindTeammates,
   onSaveFilter,
   alreadySaved = false,
-  onSwitchScope
+  onSwitchScope,
+  loading = false
 }) {
   const { disc = [], circ = [], team = 'any', fee = 'any', q = '', sort = 'deadline' } = filters;
 
@@ -769,8 +770,28 @@ export default function BrowseScreen({
             })}
           </div>
 
+          {/* Loading State */}
+          {loading && competitions.length === 0 && (
+            <div
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid #E7E6E2',
+                borderRadius: '12px',
+                padding: '44px 18px',
+                textAlign: 'center'
+              }}
+            >
+              <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>
+                Syncing live opportunities directly from Unstop…
+              </p>
+              <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#75736C' }}>
+                Fetching real active competitions across DU, IIM, IIT, and Corporate circuits.
+              </p>
+            </div>
+          )}
+
           {/* Empty State */}
-          {matched.length === 0 && (
+          {!loading && matched.length === 0 && (
             <div
               style={{
                 background: '#FFFFFF',

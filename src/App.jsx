@@ -14,23 +14,19 @@ import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
 
 import {
-  INITIAL_COMPETITIONS,
-  INITIAL_POSTS,
-  INITIAL_APPLICATIONS,
-  INITIAL_ALERTS,
   describeFilter,
   matchListing
 } from './data/initialData';
 
 import './App.css';
 
-const DEFAULT_PROFILE = {
-  name: 'Arjun R.',
-  college: 'SSCBS',
-  batch: '2027',
-  course: 'B.Com (H)',
-  phone: '+91 98111 00210',
-  skills: ['Finance modelling', 'Deck design']
+const EMPTY_PROFILE = {
+  name: '',
+  college: '',
+  batch: '',
+  course: '',
+  phone: '',
+  skills: []
 };
 
 function OneStopInner() {
@@ -52,16 +48,17 @@ function OneStopInner() {
   // Screen State: 'home' | 'browse' | 'saved' | 'teams' | 'requests' | 'profile'
   const [screen, setScreen] = useState('home');
 
-  // Competitions State
-  const [competitions, setCompetitions] = useState(INITIAL_COMPETITIONS);
+  // Competitions State (100% real data fetched from Unstop crawler)
+  const [competitions, setCompetitions] = useState([]);
+  const [competitionsLoading, setCompetitionsLoading] = useState(true);
 
-  // Bookmarks State (with default fallback to [1, 6])
+  // Bookmarks State (100% real user data, zero mock IDs)
   const [localBookmarks, setLocalBookmarks] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_bookmarks');
-      return saved ? JSON.parse(saved) : [1, 6];
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return [1, 6];
+      return [];
     }
   });
 
@@ -78,13 +75,13 @@ function OneStopInner() {
     });
   }, [authToggleBookmark]);
 
-  // Saved Filter Alerts State
+  // Saved Filter Alerts State (100% real user alerts, zero mock alerts)
   const [alerts, setAlerts] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_saved_alerts');
-      return saved ? JSON.parse(saved) : INITIAL_ALERTS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return INITIAL_ALERTS;
+      return [];
     }
   });
 
@@ -96,15 +93,17 @@ function OneStopInner() {
     }
   }, [alerts]);
 
-  // Squad Posts State
-  const [posts, setPosts] = useState(() => {
+  // Squad Posts State (100% real Supabase squad posts)
+  const [localPosts, setLocalPosts] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_posts');
-      return saved ? JSON.parse(saved) : INITIAL_POSTS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return INITIAL_POSTS;
+      return [];
     }
   });
+
+  const posts = authSquadPosts && authSquadPosts.length > 0 ? authSquadPosts : localPosts;
 
   useEffect(() => {
     try {
@@ -112,15 +111,17 @@ function OneStopInner() {
     } catch (e) {}
   }, [posts]);
 
-  // Squad Applications State
-  const [applications, setApplications] = useState(() => {
+  // Squad Applications State (100% real Supabase squad applications)
+  const [localApplications, setLocalApplications] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_applications');
-      return saved ? JSON.parse(saved) : INITIAL_APPLICATIONS;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return INITIAL_APPLICATIONS;
+      return [];
     }
   });
+
+  const applications = authSquadApps && authSquadApps.length > 0 ? authSquadApps : localApplications;
 
   useEffect(() => {
     try {
@@ -128,30 +129,35 @@ function OneStopInner() {
     } catch (e) {}
   }, [applications]);
 
-  // Profile State
+  // Profile State (100% real user profile, zero fake data)
   const [profile, setProfile] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_user_profile');
-      return saved ? JSON.parse(saved) : DEFAULT_PROFILE;
+      return saved ? JSON.parse(saved) : EMPTY_PROFILE;
     } catch {
-      return DEFAULT_PROFILE;
+      return EMPTY_PROFILE;
     }
   });
 
   // Sync profile when Supabase profile loads
   useEffect(() => {
-    if (authProfile && authProfile.full_name) {
+    if (authProfile && (authProfile.full_name || authProfile.name)) {
       setProfile(prev => ({
         ...prev,
-        name: authProfile.full_name,
-        college: authProfile.college || prev.college,
-        course: authProfile.course || prev.course,
-        batch: authProfile.year || prev.batch,
-        phone: authProfile.phone || prev.phone,
-        skills: authProfile.skills || prev.skills || DEFAULT_PROFILE.skills
+        name: authProfile.full_name || authProfile.name || '',
+        college: authProfile.college || prev.college || '',
+        course: authProfile.course || prev.course || '',
+        batch: authProfile.year || prev.batch || '',
+        phone: authProfile.phone || prev.phone || '',
+        skills: authProfile.skills || prev.skills || []
+      }));
+    } else if (user && user.email && !profile.name) {
+      setProfile(prev => ({
+        ...prev,
+        name: user.email.split('@')[0]
       }));
     }
-  }, [authProfile]);
+  }, [authProfile, user]);
 
   const handleSaveProfile = useCallback(async (updatedData) => {
     setProfile(updatedData);
@@ -214,15 +220,16 @@ function OneStopInner() {
     };
   }, []);
 
-  // Fetch Live Competitions from /api/competitions with graceful fallback
+  // Fetch Live Competitions strictly from /api/competitions (Unstop ingestion)
   useEffect(() => {
     let isMounted = true;
     async function loadCompetitions() {
+      setCompetitionsLoading(true);
       try {
         const res = await fetch(`/api/competitions?t=${Date.now()}`);
-        if (!res.ok) return;
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        if (isMounted && json.success && Array.isArray(json.data) && json.data.length > 0) {
+        if (isMounted && json.success && Array.isArray(json.data)) {
           const mapped = json.data.map(c => {
             let circuitVal = 'DU Circuit';
             if (c.isDU) circuitVal = 'DU Circuit';
@@ -256,13 +263,12 @@ function OneStopInner() {
             };
           });
 
-          // Merge with starter items so all 12 key competitions exist
-          const existingIds = new Set(mapped.map(m => m.id));
-          const combined = [...mapped, ...INITIAL_COMPETITIONS.filter(i => !existingIds.has(i.id))];
-          setCompetitions(combined);
+          setCompetitions(mapped);
         }
       } catch (e) {
-        console.info('Using high-fidelity reference competitions dataset.');
+        console.warn('Could not fetch real-time Unstop competitions:', e.message);
+      } finally {
+        if (isMounted) setCompetitionsLoading(false);
       }
     }
     loadCompetitions();
@@ -326,6 +332,7 @@ function OneStopInner() {
 
   // Post a Squad Submission
   const handleSubmitPost = (draft) => {
+    const creatorName = profile.name || user?.email?.split('@')[0] || 'You';
     const newPost = {
       id: `p${Date.now()}`,
       compId: draft.compId,
@@ -335,13 +342,13 @@ function OneStopInner() {
       posted: 'just now',
       desc: draft.desc,
       want: draft.skills,
-      lead: 'You',
-      leadPhone: profile.phone || '+91 98111 00210',
+      lead: creatorName,
+      leadPhone: profile.phone || '',
       mine: true,
       state: 'own'
     };
 
-    setPosts(prev => [newPost, ...prev]);
+    setLocalPosts(prev => [newPost, ...prev]);
     setPostModalOpen(false);
     setScreen('teams');
     flash('Squad posted');
@@ -370,20 +377,21 @@ function OneStopInner() {
 
   const handleSubmitApply = (targetPost, pitchText) => {
     const comp = competitions.find(c => c.id === targetPost.compId);
+    const applicantName = profile.name || user?.email?.split('@')[0] || 'You';
     const newApp = {
       id: `ap${Date.now()}`,
       postId: targetPost.id,
-      who: 'You',
+      who: applicantName,
       meta: comp ? comp.title : 'Competition',
-      phone: profile.phone || '+91 98111 00210',
+      phone: profile.phone || '',
       skills: profile.skills || [],
       pitch: pitchText,
       status: 'pending',
       dir: 'out'
     };
 
-    setApplications(prev => [...prev, newApp]);
-    setPosts(prev => prev.map(p => p.id === targetPost.id ? { ...p, state: 'requested' } : p));
+    setLocalApplications(prev => [...prev, newApp]);
+    setLocalPosts(prev => prev.map(p => p.id === targetPost.id ? { ...p, state: 'requested' } : p));
     setApplyModalOpen(false);
     setApplyTargetPost(null);
 
@@ -393,7 +401,7 @@ function OneStopInner() {
     if (user && authApplySquad) {
       authApplySquad({
         post_id: targetPost.id,
-        applicant_name: profile.name,
+        applicant_name: applicantName,
         applicant_phone: profile.phone,
         pitch_note: pitchText,
         highlighted_skills: profile.skills
@@ -404,10 +412,10 @@ function OneStopInner() {
   // Applications Actions
   const handleAcceptApp = (appId) => {
     const targetApp = applications.find(a => a.id === appId);
-    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'accepted' } : a));
+    setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'accepted' } : a));
 
     if (targetApp) {
-      setPosts(prev => prev.map(p => {
+      setLocalPosts(prev => prev.map(p => {
         if (p.id === targetApp.postId) {
           const nextFilled = (p.filled || 1) + 1;
           const nextSpots = Math.max(0, (p.size || 4) - nextFilled);
@@ -425,27 +433,29 @@ function OneStopInner() {
   };
 
   const handleDeclineApp = (appId) => {
-    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'rejected' } : a));
+    setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'rejected' } : a));
     if (user && authUpdateAppStatus) {
       authUpdateAppStatus(appId, 'rejected').catch(err => console.warn('Supabase decline error:', err.message));
     }
   };
 
   const handleWithdrawApp = (appId) => {
-    setApplications(prev => prev.filter(a => a.id !== appId));
+    setLocalApplications(prev => prev.filter(a => a.id !== appId));
     flash('Request withdrawn');
   };
 
-  // WhatsApp Handshake Launcher
+  // WhatsApp Handshake Launcher (strictly real phone numbers)
   const handleOpenWhatsApp = (appOrPost) => {
-    flash('Opening WhatsApp…');
-    let phoneDigits = '9811100210';
-    if (appOrPost.phone) {
-      phoneDigits = String(appOrPost.phone).replace(/\D/g, '').slice(-10);
-    } else if (appOrPost.leadPhone) {
-      phoneDigits = String(appOrPost.leadPhone).replace(/\D/g, '').slice(-10);
+    const rawPhone = appOrPost.phone || appOrPost.leadPhone || appOrPost.applicant_phone || appOrPost.phone_number || '';
+    const cleanDigits = String(rawPhone).replace(/\D/g, '').slice(-10);
+
+    if (!cleanDigits || cleanDigits.length !== 10) {
+      flash('No phone number shared for this squad.');
+      return;
     }
-    const waUrl = `https://wa.me/91${phoneDigits}`;
+
+    flash('Opening WhatsApp…');
+    const waUrl = `https://wa.me/91${cleanDigits}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -522,6 +532,7 @@ function OneStopInner() {
             onSaveFilter={handleSaveFilter}
             alreadySaved={alreadySaved}
             onSwitchScope={(targetScope) => setScreen(targetScope)}
+            loading={competitionsLoading}
           />
         )}
 
