@@ -1,7 +1,9 @@
 // src/components/HomeScreen.jsx — OneStop Home Filter-Driven Rails
-import React, { useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown, getUrgencyLevel } from '../data/initialData';
 import InstitutionLogo from './InstitutionLogo';
+import OneStopLogo from './OneStopLogo';
+import { GENERAL_PUNS, BROWSE_PUNS, SQUAD_PUNS } from './FunLoadingScreen';
 import {
   TrophyIcon,
   UsersIcon,
@@ -109,6 +111,175 @@ function RailCardSkeleton() {
   );
 }
 
+function RailSquadCardSkeleton() {
+  return (
+    <div
+      className="home-rail-card home-rail-card-skeleton"
+      style={{
+        flex: '0 0 302px',
+        width: '302px',
+        padding: '16px 17px 17px',
+        gap: '12px',
+        boxSizing: 'border-box'
+      }}
+      aria-hidden="true"
+    >
+      {/* Top Bar: Spots badge placeholder + time */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="skeleton-box" style={{ height: '20px', width: '85px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '12px', width: '50px', borderRadius: '4px' }} />
+      </div>
+
+      {/* Host & Title */}
+      <div style={{ display: 'grid', gridTemplateColumns: '32px minmax(0, 1fr)', alignItems: 'center', gap: '10px' }}>
+        <div className="skeleton-box" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div className="skeleton-box" style={{ height: '14px', width: '90%', borderRadius: '4px' }} />
+          <div className="skeleton-box" style={{ height: '10px', width: '50%', borderRadius: '4px' }} />
+        </div>
+      </div>
+
+      {/* Lead info */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="skeleton-box" style={{ width: '22px', height: '22px', borderRadius: '50%' }} />
+        <div className="skeleton-box" style={{ height: '11px', width: '120px', borderRadius: '4px' }} />
+      </div>
+
+      {/* Skills chips */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div className="skeleton-box" style={{ height: '22px', width: '70px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '22px', width: '85px', borderRadius: '20px' }} />
+      </div>
+
+      {/* Buttons */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
+        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+      </div>
+    </div>
+  );
+}
+
+function RailPunLoadingCard({
+  badge = "SYNCING DEADLINES",
+  category = "bookmarks",
+  customPuns = null,
+  minDurationMs = 2500
+}) {
+  const [punIndex, setPunIndex] = useState(0);
+  const [fadeState, setFadeState] = useState('in');
+  const [progress, setProgress] = useState(15);
+
+  const punsList = useMemo(() => {
+    let pool = GENERAL_PUNS;
+    if (category === 'bookmarks' || category === 'comps') pool = BROWSE_PUNS;
+    else if (category === 'squads') pool = SQUAD_PUNS;
+    if (customPuns) pool = customPuns;
+    return [...pool].sort(() => 0.5 - Math.random());
+  }, [category, customPuns]);
+
+  useEffect(() => {
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(96, Math.floor((elapsed / minDurationMs) * 96));
+      setProgress(pct);
+    }, 35);
+    return () => clearInterval(interval);
+  }, [minDurationMs]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFadeState('out');
+      setTimeout(() => {
+        setPunIndex((prev) => (prev + 1) % punsList.length);
+        setFadeState('in');
+      }, 140);
+    }, 820);
+    return () => clearInterval(interval);
+  }, [punsList.length]);
+
+  return (
+    <div
+      className="home-rail-card home-rail-pun-card"
+      style={{
+        flex: '0 0 302px',
+        width: '302px',
+        padding: '16px 17px 17px',
+        gap: '12px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF9F6 100%)',
+        border: '1px solid #E7E6E2',
+        borderRadius: '12px'
+      }}
+    >
+      {/* Top Bar: Icon + Badge */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <OneStopLogo variant="icon" height={26} />
+          <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A19' }}>OneStop</span>
+        </div>
+        <span
+          style={{
+            background: 'rgba(15, 63, 254, 0.08)',
+            color: '#0F3FFE',
+            border: '1px solid rgba(15, 63, 254, 0.22)',
+            borderRadius: '20px',
+            padding: '2px 8px',
+            fontSize: '10px',
+            fontWeight: 700,
+            letterSpacing: '0.03em',
+            textTransform: 'uppercase'
+          }}
+        >
+          {badge}
+        </span>
+      </div>
+
+      {/* Middle: Rotating Pun */}
+      <div style={{ margin: 'auto 0', minHeight: '68px', display: 'flex', alignItems: 'center' }}>
+        <p
+          className={`home-rail-pun-text ${fadeState === 'out' ? 'pun-fade-out' : 'pun-fade-in'}`}
+          style={{
+            margin: 0,
+            fontSize: '12.5px',
+            fontWeight: 500,
+            color: '#374151',
+            lineHeight: 1.45
+          }}
+        >
+          "{punsList[punIndex]}"
+        </p>
+      </div>
+
+      {/* Bottom: Progress Bar & Ticker */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+        <div style={{ width: '100%', height: '4px', background: '#ECEBE7', borderRadius: '10px', overflow: 'hidden' }}>
+          <div
+            style={{
+              width: `${progress}%`,
+              height: '100%',
+              background: 'linear-gradient(90deg, #0F3FFE 0%, #10B981 100%)',
+              borderRadius: '10px',
+              transition: 'width 40ms linear'
+            }}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#75736C' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+            Live Ingestion
+          </span>
+          <span>Zero Sandboxes</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HomeScreen({
   profile,
   competitions = [],
@@ -131,6 +302,17 @@ export default function HomeScreen({
   const firstName = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/)[0]
     : (user?.email ? user.email.split('@')[0] : 'there');
+
+  const [isHomeLoading, setIsHomeLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsHomeLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const showRailLoading = isHomeLoading || competitionsLoading;
 
   // Navigation helpers
   const handleNavigate = (targetScreen) => {
@@ -229,7 +411,7 @@ export default function HomeScreen({
   const displayedSquads = allFilteredSquads.slice(0, CARDS_PER_RAIL);
 
   // Subline calculation
-  const subline = competitionsLoading
+  const subline = showRailLoading
     ? 'Syncing live competitions from premier campuses…'
     : hasFilter
     ? `${compTotal} competitions and ${squadTotal} squads match your Browse filter — ${filterChips.map(c => c.toLowerCase()).join(' · ')}.`
@@ -329,7 +511,7 @@ export default function HomeScreen({
               whiteSpace: 'nowrap'
             }}
           >
-            {competitionsLoading ? '...' : bookmarkTotal}
+            {showRailLoading ? '...' : bookmarkTotal}
           </span>
           <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
             Soonest deadline first · filters don't apply
@@ -355,9 +537,9 @@ export default function HomeScreen({
         </div>
 
         <div className="rail">
-          {competitionsLoading ? (
+          {showRailLoading ? (
             <>
-              <RailCardSkeleton />
+              <RailPunLoadingCard badge="SYNCING DEADLINES" category="bookmarks" />
               <RailCardSkeleton />
               <RailCardSkeleton />
             </>
@@ -788,7 +970,7 @@ export default function HomeScreen({
               whiteSpace: 'nowrap'
             }}
           >
-            {competitionsLoading ? 'Loading...' : `${compTotal} match`}
+            {showRailLoading ? 'Loading...' : `${compTotal} match`}
           </span>
           <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
             Closing soonest first
@@ -814,9 +996,9 @@ export default function HomeScreen({
         </div>
 
         <div className="rail">
-          {competitionsLoading ? (
+          {showRailLoading ? (
             <>
-              <RailCardSkeleton />
+              <RailPunLoadingCard badge="FETCHING COMPS" category="comps" />
               <RailCardSkeleton />
               <RailCardSkeleton />
             </>
@@ -1110,7 +1292,7 @@ export default function HomeScreen({
               whiteSpace: 'nowrap'
             }}
           >
-            {squadTotal} match
+            {showRailLoading ? 'Loading...' : `${squadTotal} match`}
           </span>
           <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
             Recruiting now
@@ -1136,7 +1318,13 @@ export default function HomeScreen({
         </div>
 
         <div className="rail">
-          {displayedSquads.length === 0 ? (
+          {showRailLoading ? (
+            <>
+              <RailPunLoadingCard badge="SCOUTING SQUADS" category="squads" />
+              <RailSquadCardSkeleton />
+              <RailSquadCardSkeleton />
+            </>
+          ) : displayedSquads.length === 0 ? (
             <div
               style={{
                 flex: '1 1 100%',

@@ -13,7 +13,6 @@ import RequestsScreen from './components/RequestsScreen';
 import ProfileScreen from './components/ProfileScreen';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
-import FunLoadingScreen from './components/FunLoadingScreen';
 
 import {
   describeFilter,
@@ -101,7 +100,6 @@ function OneStopInner() {
   // Competitions State (100% real data fetched from Unstop crawler)
   const [competitions, setCompetitions] = useState([]);
   const [competitionsLoading, setCompetitionsLoading] = useState(true);
-  const [showBootScreen, setShowBootScreen] = useState(true);
 
   // Bookmarks State (String-normalized, zero mock IDs)
   const [localBookmarks, setLocalBookmarks] = useState(() => {
@@ -931,15 +929,6 @@ function OneStopInner() {
 
       {/* Supabase Auth Modal */}
       <AuthModal />
-
-      {/* Fun Sarcastic Boot Screen */}
-      {showBootScreen && (
-        <FunLoadingScreen
-          isReady={!competitionsLoading}
-          minDurationMs={2500}
-          onComplete={() => setShowBootScreen(false)}
-        />
-      )}
     </div>
   );
 }

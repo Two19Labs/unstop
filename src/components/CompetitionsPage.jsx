@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import InstitutionLogo from './InstitutionLogo';
-import FunLoadingScreen, { BROWSE_PUNS } from './FunLoadingScreen';
+import SectionLoadingWidget from './SectionLoadingWidget';
+import { BROWSE_PUNS } from './FunLoadingScreen';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
@@ -444,6 +445,53 @@ function getCardCircuit(comp) {
   if (isIIMorIITorPremierComp(comp)) return { type: 'iim-iit', label: 'IIMs, IITs & Premier Colleges' };
   if (isCorporateOrGlobalComp(comp)) return { type: 'corporate-global', label: 'Corporate & Global' };
   return { type: 'others', label: 'Others' };
+}
+
+function CompCardSkeleton() {
+  return (
+    <article className="cc-card cc-card-skeleton" aria-hidden="true">
+      <div className="cc-card-inner">
+        {/* Top Bar: Logo + Host name + Bookmark button placeholder */}
+        <div className="cc-card-top-bar">
+          <div className="cc-host-identity">
+            <div className="skeleton-box" style={{ width: '36px', height: '36px', borderRadius: '8px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
+              <div className="skeleton-box" style={{ height: '12px', width: '75%', borderRadius: '4px' }} />
+              <div className="skeleton-box" style={{ height: '10px', width: '40%', borderRadius: '4px' }} />
+            </div>
+          </div>
+          <div className="skeleton-box" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+        </div>
+
+        {/* Title */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '4px 0' }}>
+          <div className="skeleton-box" style={{ height: '16px', width: '92%', borderRadius: '4px' }} />
+          <div className="skeleton-box" style={{ height: '16px', width: '65%', borderRadius: '4px' }} />
+        </div>
+
+        {/* Prize Bar */}
+        <div className="skeleton-box" style={{ height: '28px', width: '100%', borderRadius: '8px' }} />
+
+        {/* Specs Chips */}
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div className="skeleton-box" style={{ height: '22px', width: '70px', borderRadius: '20px' }} />
+          <div className="skeleton-box" style={{ height: '22px', width: '85px', borderRadius: '20px' }} />
+        </div>
+
+        {/* Metrics Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '22px' }}>
+          <div className="skeleton-box" style={{ height: '14px', width: '110px', borderRadius: '4px' }} />
+          <div className="skeleton-box" style={{ height: '20px', width: '74px', borderRadius: '20px' }} />
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
+          <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+          <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export default function CompetitionsPage({
@@ -967,21 +1015,6 @@ export default function CompetitionsPage({
 
   return (
     <div className="case-comps-standalone-page">
-      {/* Fun Sarcastic Collegiate Loading / Fetching Screen */}
-      {showFetchingScreen && (
-        <FunLoadingScreen
-          isReady={!loading}
-          minDurationMs={2500}
-          badge={bookmarkedOnly ? "SYNCING SAVED CHALLENGES" : "FETCHING LIVE LISTINGS"}
-          headline={bookmarkedOnly ? "OneStop Saved" : "OneStop Browse"}
-          customPuns={BROWSE_PUNS}
-          tickerItems={bookmarkedOnly
-            ? ["Direct Unstop Sync", "Countdown Verification", "Squad Matching"]
-            : ["Live Unstop Crawl", "Real-time Verification", "Zero Placeholders"]
-          }
-          onComplete={() => setShowFetchingScreen(false)}
-        />
-      )}
       <div className="case-comps-container">
         {/* Top Header */}
         <header className="cc-header">
@@ -1367,12 +1400,29 @@ export default function CompetitionsPage({
             </div>
           )}
 
-      {/* ── Competitions Grid ── */}
-      {loading ? (
-        <div className="cc-loading-state">
-          <div className="cc-spinner"></div>
-          <p className="cc-loading-title">Fetching live competitions from Unstop...</p>
-          <p className="cc-loading-subtitle">Pulling direct listings across DU, IIMs, IITs & premier colleges</p>
+      {/* ── Competitions Section Loading: Little loading thing + Skeletons ── */}
+      {(showFetchingScreen || loading) ? (
+        <div className="cc-section-loading-wrapper">
+          <SectionLoadingWidget
+            badge={bookmarkedOnly ? "SYNCING SAVED CHALLENGES" : "FETCHING LIVE LISTINGS"}
+            headline={bookmarkedOnly ? "OneStop Saved" : "OneStop Browse"}
+            customPuns={BROWSE_PUNS}
+            minDurationMs={2500}
+            isReady={!loading}
+            onComplete={() => setShowFetchingScreen(false)}
+            tickerItems={bookmarkedOnly
+              ? ["Direct Unstop Sync", "Countdown Verification", "Squad Matching"]
+              : ["Live Unstop Crawl", "Real-time Verification", "Zero Placeholders"]
+            }
+          />
+          <div className="cc-grid" aria-hidden="true">
+            <CompCardSkeleton />
+            <CompCardSkeleton />
+            <CompCardSkeleton />
+            <CompCardSkeleton />
+            <CompCardSkeleton />
+            <CompCardSkeleton />
+          </div>
         </div>
       ) : fetchError ? (
         <div className="cc-empty-state error">

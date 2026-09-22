@@ -5,7 +5,60 @@ import { SKILLS, DISCIPLINES, initialsOf, isMockPost } from '../data/initialData
 import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
 import InstitutionLogo from './InstitutionLogo';
-import FunLoadingScreen, { SQUAD_PUNS } from './FunLoadingScreen';
+import SectionLoadingWidget from './SectionLoadingWidget';
+import { SQUAD_PUNS } from './FunLoadingScreen';
+
+function SquadCardSkeleton() {
+  return (
+    <div
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid #E7E6E2',
+        borderRadius: '13px',
+        padding: '17px 19px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        position: 'relative'
+      }}
+      aria-hidden="true"
+    >
+      {/* Row 1: Spots Left Badge + Time Placeholder */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+        <div className="skeleton-box" style={{ height: '20px', width: '85px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '12px', width: '45px', borderRadius: '4px' }} />
+      </div>
+
+      {/* Row 2: Host Logo & Competition Title */}
+      <div style={{ display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr)', alignItems: 'center', gap: '10px' }}>
+        <div className="skeleton-box" style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div className="skeleton-box" style={{ height: '15px', width: '90%', borderRadius: '4px' }} />
+          <div className="skeleton-box" style={{ height: '11px', width: '55%', borderRadius: '4px' }} />
+        </div>
+      </div>
+
+      {/* Row 3: Creator / Lead info */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="skeleton-box" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
+        <div className="skeleton-box" style={{ height: '12px', width: '130px', borderRadius: '4px' }} />
+      </div>
+
+      {/* Row 4: Skills Chips */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div className="skeleton-box" style={{ height: '22px', width: '70px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '22px', width: '85px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '22px', width: '60px', borderRadius: '20px' }} />
+      </div>
+
+      {/* Row 5: Action Buttons */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '6px' }}>
+        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+      </div>
+    </div>
+  );
+}
 
 const POPULAR_COLLEGE_FILTERS = [
   'SSCBS',
@@ -202,18 +255,6 @@ export default function TeamFinderScreen({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-      {/* Fun Sarcastic Collegiate Squad Loading Screen */}
-      {showSquadLoader && (
-        <FunLoadingScreen
-          isReady={true}
-          minDurationMs={2500}
-          badge="SCOUTING SQUADS"
-          headline="Team Finder"
-          customPuns={SQUAD_PUNS}
-          tickerItems={["Collegiate Network", "WhatsApp Handshake", "Zero Ghosting"]}
-          onComplete={() => setShowSquadLoader(false)}
-        />
-      )}
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
@@ -507,14 +548,42 @@ export default function TeamFinderScreen({
         </div>
       </div>
 
-      {/* Squad Cards Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: '14px'
-        }}
-      >
+      {/* Squad Cards Section */}
+      {showSquadLoader ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <SectionLoadingWidget
+            badge="SCOUTING SQUADS"
+            headline="Team Finder"
+            customPuns={SQUAD_PUNS}
+            minDurationMs={2500}
+            isReady={true}
+            tickerItems={["Collegiate Network", "WhatsApp Handshake", "Zero Ghosting"]}
+            onComplete={() => setShowSquadLoader(false)}
+          />
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '14px'
+            }}
+          >
+            <SquadCardSkeleton />
+            <SquadCardSkeleton />
+            <SquadCardSkeleton />
+            <SquadCardSkeleton />
+            <SquadCardSkeleton />
+            <SquadCardSkeleton />
+          </div>
+        </div>
+      ) : (
+        <>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '14px'
+            }}
+          >
         {visiblePosts.map((post) => {
           const left = post.displaySpotsLeft;
           const isFull = !post.isOpen || left <= 0;
@@ -1016,6 +1085,8 @@ export default function TeamFinderScreen({
           </div>
         </div>
       )}
+    </>
+  )}
 
       {/* IN-CARD APPLICANT REVIEW MODAL (SSCBS OS Core Parity) */}
       {reviewTargetPost && (

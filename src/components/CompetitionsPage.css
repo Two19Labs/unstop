@@ -2624,3 +2624,30 @@
   position: relative;
   padding-top: 8px;
 }
+
+/* ── Section Loading Wrapper & Skeletons in Competitions Directory ── */
+.cc-section-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.cc-card-skeleton {
+  pointer-events: none;
+  border-color: var(--border, #E7E6E2) !important;
+  background: var(--surface, #FFFFFF) !important;
+  box-shadow: none !important;
+}
+
+.cc-card-skeleton .skeleton-box {
+  background: linear-gradient(90deg, #ECEBE6 25%, #F7F6F3 50%, #ECEBE6 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite ease-in-out;
+}
+
+[data-theme='dark'] .cc-card-skeleton .skeleton-box {
+  background: linear-gradient(90deg, #2A2A2A 25%, #383838 50%, #2A2A2A 75%);
+  background-size: 200% 100%;
+}
