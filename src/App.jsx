@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { AuthProvider, useAuth, formatWhatsAppUrl, sanitizeIndianPhone } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
-import BrowseScreen from './components/BrowseScreen';
 import CompetitionsPage from './components/CompetitionsPage';
 import { BellIcon } from './components/icons';
 import DetailDrawer from './components/DetailDrawer';
@@ -760,10 +759,8 @@ function OneStopInner() {
               aria-label="Notifications"
             >
               <BellIcon size={18} />
-              {pendingInboxCount > 0 ? (
+              {pendingInboxCount > 0 && (
                 <span className="cc-header-notif-badge">{pendingInboxCount}</span>
-              ) : (
-                <span className="cc-header-notif-badge">5</span>
               )}
             </button>
           }
@@ -840,7 +837,7 @@ function OneStopInner() {
       <DetailDrawer
         item={selectedDetailComp}
         onClose={() => setDetailCompId(null)}
-        isBookmarked={detailCompId ? bookmarks.includes(detailCompId) : false}
+        isBookmarked={detailCompId ? bookmarks.includes(String(detailCompId)) : false}
         onToggleBookmark={handleToggleBookmark}
         onOpenPostSquad={(comp) => {
           setDetailCompId(null);

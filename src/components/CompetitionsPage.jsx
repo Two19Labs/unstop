@@ -748,7 +748,7 @@ export default function CompetitionsPage({
     const iimIitPremier = competitions.filter((c) => isIIMorIITorPremierComp(c)).length;
     const corporateGlobal = competitions.filter((c) => isCorporateOrGlobalComp(c)).length;
     const others = competitions.filter((c) => !isDUComp(c) && !isIIMorIITorPremierComp(c) && !isCorporateOrGlobalComp(c)).length;
-    const bookmarked = competitions.filter((c) => bookmarkedIds.includes(c.id)).length;
+    const bookmarked = competitions.filter((c) => bookmarkedIds.includes(String(c.id))).length;
     const cases = competitions.filter((c) => c.category === 'case').length;
     const hackathons = competitions.filter((c) => c.category === 'hackathon').length;
     const writing = competitions.filter((c) => c.category === 'writing').length;
@@ -923,7 +923,7 @@ export default function CompetitionsPage({
 
       // Bookmarked filter
       if (bookmarkedOnly) {
-        if (!bookmarkedIds.includes(comp.id)) return false;
+        if (!bookmarkedIds.includes(String(comp.id))) return false;
       }
 
       // Discipline track filter (multi-select)
@@ -1446,7 +1446,7 @@ export default function CompetitionsPage({
             const circuit = getCardCircuit(comp);
             const countdown = getCountdownDetails(comp.deadline, comp.remainDaysText, nowMs);
             const isSolo = comp.maxTeam === 1 || (comp.teamSizeDisplay && comp.teamSizeDisplay.toLowerCase().startsWith('solo'));
-            const isBookmarked = bookmarkedIds.includes(comp.id);
+            const isBookmarked = bookmarkedIds.includes(String(comp.id));
 
             return (
               <article

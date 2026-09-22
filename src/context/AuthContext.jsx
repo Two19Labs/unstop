@@ -230,9 +230,16 @@ export function AuthProvider({ children }) {
                 postId: a.post_id,
                 who: a.applicant_name,
                 meta: a.applicant_college,
+                applicant_name: a.applicant_name,
+                applicant_college: a.applicant_college,
+                applicant_year: a.applicant_year || 'UG 2nd Year',
+                applicant_course: a.applicant_course || '',
                 skills: a.highlighted_skills || [],
+                highlighted_skills: a.highlighted_skills || [],
                 pitch: a.pitch_note,
-                phone: a.applicant_phone
+                pitch_note: a.pitch_note,
+                phone: a.applicant_phone,
+                applicant_phone: a.applicant_phone
               };
             });
           setSquadApps(cleanApps);
@@ -728,6 +735,8 @@ export function AuthProvider({ children }) {
       applicant_email: applicantEmail,
       applicant_phone: appData.applicant_phone || profile?.phone || '',
       applicant_college: appData.applicant_college || profile?.college || '',
+      applicant_course: appData.applicant_course || profile?.course || 'General',
+      applicant_year: normalizeYear(appData.applicant_year || profile?.year || profile?.batch || 'UG 2nd Year'),
       pitch_note: appData.pitch_note || '',
       highlighted_skills: appData.highlighted_skills || [],
       status: 'pending',
@@ -751,9 +760,16 @@ export function AuthProvider({ children }) {
         postId: data.post_id,
         who: data.applicant_name,
         meta: data.applicant_college,
+        applicant_name: data.applicant_name,
+        applicant_college: data.applicant_college,
+        applicant_year: data.applicant_year || 'UG 2nd Year',
+        applicant_course: data.applicant_course || '',
         skills: data.highlighted_skills || [],
+        highlighted_skills: data.highlighted_skills || [],
         pitch: data.pitch_note,
-        phone: data.applicant_phone
+        pitch_note: data.pitch_note,
+        phone: data.applicant_phone,
+        applicant_phone: data.applicant_phone
       };
 
       setSquadApps(prev => [normalizedApp, ...prev].filter(a => !isMockApp(a)));
