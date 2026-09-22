@@ -686,7 +686,18 @@ function OneStopInner() {
   };
 
   // Derived Counts for Sidebar Badges
-  const totalNewAlerts = 0;
+  const totalNewAlerts = useMemo(() => {
+    try {
+      const stored = localStorage.getItem('onestop_saved_alerts');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          return parsed.reduce((acc, a) => acc + (a.fresh || 0), 0);
+        }
+      }
+    } catch (e) {}
+    return 0;
+  }, []);
   const pendingInboxCount = applications.filter(a => a.dir === 'in' && a.status === 'pending').length;
 
   // Detail Drawer Target Competition
@@ -771,6 +782,15 @@ function OneStopInner() {
               onRejectApp={handleDeclineApp}
               onGoRequests={() => handleNavigate('requests')}
               onGoBrowse={() => handleNavigate('browse')}
+              onApplyFilterAndBrowse={(f) => {
+                handleUpdateFilters(f);
+                handleNavigate('browse');
+              }}
+              onOpenDetail={(id) => setDetailCompId(id)}
+              onFindTeammates={handleFindTeammates}
+              bookmarks={bookmarks}
+              onToggleBookmark={handleToggleBookmark}
+              user={user}
             />
           )}
 
