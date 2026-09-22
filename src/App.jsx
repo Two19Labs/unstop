@@ -790,6 +790,7 @@ function OneStopInner() {
       {/* Main Screen Content */}
       {isBrowseMode ? (
         <CompetitionsPage
+          key={screen}
           onBack={() => handleNavigate('home')}
           onNavigate={handleNavigate}
           onFindTeammates={handleFindTeammates}
@@ -840,6 +841,7 @@ function OneStopInner() {
 
           {screen === 'teams' && (
             <TeamFinderScreen
+              key="teams"
               posts={posts}
               competitions={visibleCompetitions}
               profile={profile}

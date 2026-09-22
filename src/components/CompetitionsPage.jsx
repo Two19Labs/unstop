@@ -470,6 +470,7 @@ export default function CompetitionsPage({
 
   const [competitions, setCompetitions] = useState(() => (Array.isArray(initialCompetitions) && initialCompetitions.length > 0 ? initialCompetitions : []));
   const [loading, setLoading] = useState(() => !(Array.isArray(initialCompetitions) && initialCompetitions.length > 0));
+  const [showFetchingScreen, setShowFetchingScreen] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
@@ -646,8 +647,11 @@ export default function CompetitionsPage({
     return () => clearInterval(timer);
   }, []);
 
-  const fetchOpportunities = useCallback(async () => {
+  const fetchOpportunities = useCallback(async (isManualTrigger = false) => {
     setLoading(true);
+    if (isManualTrigger) {
+      setShowFetchingScreen(true);
+    }
     setFetchError(null);
 
     try {
@@ -963,6 +967,21 @@ export default function CompetitionsPage({
 
   return (
     <div className="case-comps-standalone-page">
+      {/* Fun Sarcastic Collegiate Loading / Fetching Screen */}
+      {showFetchingScreen && (
+        <FunLoadingScreen
+          isReady={!loading}
+          minDurationMs={3300}
+          badge={bookmarkedOnly ? "SYNCING SAVED CHALLENGES" : "FETCHING LIVE LISTINGS"}
+          headline={bookmarkedOnly ? "OneStop Saved" : "OneStop Browse"}
+          customPuns={BROWSE_PUNS}
+          tickerItems={bookmarkedOnly
+            ? ["Direct Unstop Sync", "Countdown Verification", "Squad Matching"]
+            : ["Live Unstop Crawl", "Real-time Verification", "Zero Placeholders"]
+          }
+          onComplete={() => setShowFetchingScreen(false)}
+        />
+      )}
       <div className="case-comps-container">
         {/* Top Header */}
         <header className="cc-header">
@@ -1362,7 +1381,7 @@ export default function CompetitionsPage({
           </div>
           <h3 className="cc-empty-title">Could not load live competitions</h3>
           <p className="cc-empty-desc">{fetchError}</p>
-          <button className="cc-empty-btn" onClick={() => fetchOpportunities(false)}>
+          <button className="cc-empty-btn" onClick={() => fetchOpportunities(true)}>
             Retry Connection to Unstop
           </button>
         </div>

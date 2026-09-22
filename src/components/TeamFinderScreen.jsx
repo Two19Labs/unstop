@@ -5,6 +5,7 @@ import { SKILLS, DISCIPLINES, initialsOf, isMockPost } from '../data/initialData
 import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
 import InstitutionLogo from './InstitutionLogo';
+import FunLoadingScreen, { SQUAD_PUNS } from './FunLoadingScreen';
 
 const POPULAR_COLLEGE_FILTERS = [
   'SSCBS',
@@ -39,6 +40,7 @@ export default function TeamFinderScreen({
   onRemoveApp
 }) {
   const [tq, setTq] = useState('');
+  const [showSquadLoader, setShowSquadLoader] = useState(true);
   const [tScope, setTScope] = useState('all'); // 'all' | 'open' | 'mine' | 'match'
   const [tSkills, setTSkills] = useState([]);
   const [tDisc, setTDisc] = useState([]);
@@ -200,6 +202,18 @@ export default function TeamFinderScreen({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+      {/* Fun Sarcastic Collegiate Squad Loading Screen */}
+      {showSquadLoader && (
+        <FunLoadingScreen
+          isReady={true}
+          minDurationMs={2600}
+          badge="SCOUTING SQUADS"
+          headline="Team Finder"
+          customPuns={SQUAD_PUNS}
+          tickerItems={["Collegiate Network", "WhatsApp Handshake", "Zero Ghosting"]}
+          onComplete={() => setShowSquadLoader(false)}
+        />
+      )}
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
