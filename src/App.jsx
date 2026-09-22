@@ -936,7 +936,7 @@ function OneStopInner() {
       {showBootScreen && (
         <FunLoadingScreen
           isReady={!competitionsLoading}
-          minDurationMs={3400}
+          minDurationMs={2500}
           onComplete={() => setShowBootScreen(false)}
         />
       )}

@@ -206,7 +206,7 @@ export default function TeamFinderScreen({
       {showSquadLoader && (
         <FunLoadingScreen
           isReady={true}
-          minDurationMs={2600}
+          minDurationMs={2500}
           badge="SCOUTING SQUADS"
           headline="Team Finder"
           customPuns={SQUAD_PUNS}

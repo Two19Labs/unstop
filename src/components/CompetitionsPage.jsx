@@ -971,7 +971,7 @@ export default function CompetitionsPage({
       {showFetchingScreen && (
         <FunLoadingScreen
           isReady={!loading}
-          minDurationMs={3300}
+          minDurationMs={2500}
           badge={bookmarkedOnly ? "SYNCING SAVED CHALLENGES" : "FETCHING LIVE LISTINGS"}
           headline={bookmarkedOnly ? "OneStop Saved" : "OneStop Browse"}
           customPuns={BROWSE_PUNS}

@@ -74,7 +74,7 @@ export const SARCASTIC_PUNS = GENERAL_PUNS;
 
 export default function FunLoadingScreen({
   isReady = true,
-  minDurationMs = 3300,
+  minDurationMs = 2500,
   onComplete,
   badge = "FETCHING COMPETITIONS",
   headline = "OneStop",
@@ -100,20 +100,20 @@ export default function FunLoadingScreen({
       const elapsed = Date.now() - startTime;
       const pct = Math.min(96, Math.floor((elapsed / minDurationMs) * 96));
       setProgress(pct);
-    }, 45);
+    }, 35);
 
     return () => clearInterval(interval);
   }, [minDurationMs]);
 
-  // Rotate puns every 1050ms with a quick cross-fade
+  // Rotate puns every 820ms with a quick cross-fade for 2.5s screen
   useEffect(() => {
     const interval = setInterval(() => {
       setFadeState('out');
       setTimeout(() => {
         setPunIndex((prev) => (prev + 1) % punsList.length);
         setFadeState('in');
-      }, 160);
-    }, 1050);
+      }, 140);
+    }, 820);
 
     return () => clearInterval(interval);
   }, [punsList.length]);
