@@ -465,10 +465,28 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
     const isPGOnly = !undergradOk;
     const isMBAorPG = isPGOnly || (item.filters || []).some(f => /mba|postgraduate/i.test(f.name || '')) || /\b(mba|pgdm|iim|b-school)\b/i.test(combined);
 
+    let circuitVal = 'DU Circuit';
+    if (isDU) circuitVal = 'DU Circuit';
+    else if (isIIMorIITorPremier) circuitVal = 'IIM / IIT';
+    else circuitVal = 'Corporate';
+
+    let disciplineVal = categoryLabel || 'Case';
+    if (disciplineVal.includes('Hackathon') || disciplineVal.includes('Tech')) disciplineVal = 'Hackathon';
+    else if (disciplineVal.includes('Quiz')) disciplineVal = 'Quiz';
+    else if (disciplineVal.includes('Simul')) disciplineVal = 'Simulation';
+    else if (disciplineVal.includes('Writ') || disciplineVal.includes('Paper')) disciplineVal = 'Writing';
+    else if (disciplineVal.includes('Debate') || disciplineVal.includes('MUN')) disciplineVal = 'Debate & MUN';
+    else disciplineVal = 'Case';
+
     return {
       id: item.id || item.short_id,
       title: item.title,
+      host: orgName,
       orgName,
+      circuit: circuitVal,
+      discipline: disciplineVal,
+      days: daysRemainingNum,
+      fee: isFree ? 'Free' : (item.fee || 'Free'),
       orgLogo: item.organisation?.logoUrl2 || item.organisation?.logoUrl || null,
       bannerUrl: item.logoUrl2 || null,
       unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
