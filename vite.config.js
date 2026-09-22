@@ -44,6 +44,9 @@ export default defineConfig({
           if (id.includes('node_modules/@supabase')) {
             return 'vendor-supabase';
           }
+          if (id.includes('node_modules/posthog-js')) {
+            return 'vendor-posthog';
+          }
         },
       },
     },

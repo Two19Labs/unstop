@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import { normalizeYear } from '../data/colleges';
 import { isMockPost, isMockApp, isMockBookmark } from '../data/initialData';
+import { identifyUser, setPersonProperties, resetUser, trackEvent } from '../lib/posthog';
 
 const AuthContext = createContext(null);
 
@@ -143,28 +144,35 @@ export function AuthProvider({ children }) {
       const localLastUpdated = localStorage.getItem(`onestop_profile_last_updated_${userId}`);
       const lastUpdatedAt = data?.profile_last_updated_at || meta?.profile_last_updated_at || localLastUpdated || null;
       const educationLevel = data?.education_level || meta?.education_level || 'undergraduate';
+      const resolvedProfile = data ? {
+        ...data,
+        education_level: educationLevel,
+        course: data.course || meta.course || '',
+        year: data.year || meta.year || 'UG 2nd Year',
+        bio: data.bio || meta.bio || '',
+        profile_last_updated_at: lastUpdatedAt,
+      } : (meta.full_name ? {
+        id: userId,
+        email: authData?.user?.email,
+        full_name: meta.full_name,
+        education_level: educationLevel,
+        college: meta.college || '',
+        phone: meta.phone || '',
+        course: meta.course || '',
+        year: meta.year || 'UG 2nd Year',
+        bio: meta.bio || '',
+        profile_last_updated_at: lastUpdatedAt,
+      } : null);
 
-      if (!error && data) {
-        setProfile({
-          ...data,
-          education_level: educationLevel,
-          course: data.course || meta.course || '',
-          year: data.year || meta.year || 'UG 2nd Year',
-          bio: data.bio || meta.bio || '',
-          profile_last_updated_at: lastUpdatedAt,
-        });
-      } else if (meta.full_name) {
-        setProfile({
-          id: userId,
-          email: authData?.user?.email,
-          full_name: meta.full_name,
-          education_level: educationLevel,
-          college: meta.college || '',
-          phone: meta.phone || '',
-          course: meta.course || '',
-          year: meta.year || 'UG 2nd Year',
-          bio: meta.bio || '',
-          profile_last_updated_at: lastUpdatedAt,
+      if (resolvedProfile) {
+        setProfile(resolvedProfile);
+        setPersonProperties({
+          name: resolvedProfile.full_name,
+          email: resolvedProfile.email || authData?.user?.email,
+          college: resolvedProfile.college,
+          year: resolvedProfile.year,
+          course: resolvedProfile.course,
+          education_level: resolvedProfile.education_level,
         });
       }
     } catch (err) {
@@ -270,6 +278,7 @@ export function AuthProvider({ children }) {
       setUser(currentUser);
       userRef.current = currentUser;
       if (currentUser) {
+        identifyUser(currentUser.id, { email: currentUser.email });
         fetchUserProfile(currentUser.id);
         fetchUserBookmarks(currentUser.id);
         refreshSquadData(currentUser);
@@ -290,10 +299,12 @@ export function AuthProvider({ children }) {
         userRef.current = currentUser;
 
         if (currentUser) {
+          identifyUser(currentUser.id, { email: currentUser.email });
           await fetchUserProfile(currentUser.id);
           await fetchUserBookmarks(currentUser.id);
           refreshSquadData(currentUser);
         } else {
+          resetUser();
           setProfile(null);
           setBookmarks([]);
           setSquadApps([]);
@@ -369,13 +380,17 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
     }
+    trackEvent('auth_google_initiated');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: window.location.origin,
       },
     });
-    if (error) throw error;
+    if (error) {
+      trackEvent('auth_google_failed', { error: error.message });
+      throw error;
+    }
     return data;
   };
 
@@ -383,11 +398,16 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
     }
+    trackEvent('auth_sign_in_attempted', { method: 'password' });
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) throw error;
+    if (error) {
+      trackEvent('auth_sign_in_failed', { method: 'password', error: error.message });
+      throw error;
+    }
+    trackEvent('auth_sign_in_success', { method: 'password' });
     return data;
   };
 
@@ -395,6 +415,7 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
     }
+    trackEvent('auth_sign_up_attempted', { college });
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -407,11 +428,17 @@ export function AuthProvider({ children }) {
         },
       },
     });
-    if (error) throw error;
+    if (error) {
+      trackEvent('auth_sign_up_failed', { error: error.message });
+      throw error;
+    }
+    trackEvent('auth_sign_up_success', { college, hasPhone: Boolean(phone) });
     return data;
   };
 
   const signOut = async () => {
+    trackEvent('auth_sign_out');
+    resetUser();
     if (supabase) {
       try {
         await supabase.auth.signOut();
@@ -435,10 +462,15 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
     }
+    trackEvent('auth_password_reset_requested');
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}`,
     });
-    if (error) throw error;
+    if (error) {
+      trackEvent('auth_password_reset_failed', { error: error.message });
+      throw error;
+    }
+    trackEvent('auth_password_reset_success');
     return data;
   };
 
@@ -569,6 +601,20 @@ export function AuthProvider({ children }) {
       updated_at: nowIso,
     };
     setProfile(merged);
+    setPersonProperties({
+      name: trimmedName,
+      college: trimmedCollege,
+      course: trimmedCourse,
+      year: selectedYear,
+      education_level: selectedEducationLevel,
+    });
+    trackEvent('profile_updated', {
+      college: trimmedCollege,
+      year: selectedYear,
+      education_level: selectedEducationLevel,
+      hasBio: Boolean(trimmedBio),
+      hasPhone: Boolean(cleanPhone),
+    });
     try {
       localStorage.setItem('onestop_user_profile', JSON.stringify(merged));
     } catch (e) {}
@@ -582,6 +628,10 @@ export function AuthProvider({ children }) {
     const nextBookmarks = isCurrentlySaved
       ? bookmarks.filter(id => String(id) !== sCompId)
       : [...bookmarks, sCompId];
+
+    trackEvent(isCurrentlySaved ? 'competition_unbookmarked' : 'competition_bookmarked', {
+      competition_id: sCompId,
+    });
 
     // Optimistic UI update
     setBookmarks(nextBookmarks);
@@ -659,6 +709,14 @@ export function AuthProvider({ children }) {
 
       setSquadPosts(prev => [data, ...prev].filter(p => !isMockPost(p)));
       localStorage.setItem('onestop_posts', JSON.stringify([data, ...squadPosts].filter(p => !isMockPost(p))));
+      trackEvent('squad_post_created', {
+        post_id: data.id,
+        competition_name: postData.competition_name,
+        spots: postData.spots_left,
+        total_members: payload.total_members,
+        skills_looking_for: postData.skills_looking_for || [],
+        college: payload.college,
+      });
       return data;
     }
 
@@ -706,6 +764,13 @@ export function AuthProvider({ children }) {
         console.error('Error updating squad post in Supabase:', error);
         throw error;
       }
+
+      trackEvent('squad_post_edited', {
+        post_id: postId,
+        competition_name: updatePayload.competition_name,
+        spots_left: updatePayload.spots_left,
+        total_members: updatePayload.total_members,
+      });
 
       setSquadPosts(prev => prev.map(p => p.id === postId ? data : p));
       return data;
@@ -774,6 +839,11 @@ export function AuthProvider({ children }) {
 
       setSquadApps(prev => [normalizedApp, ...prev].filter(a => !isMockApp(a)));
       localStorage.setItem('onestop_applications', JSON.stringify([normalizedApp, ...squadApps].filter(a => !isMockApp(a))));
+      trackEvent('squad_apply_submitted', {
+        post_id: appData.post_id,
+        applicant_name: applicantName,
+        skills_count: (appData.highlighted_skills || []).length,
+      });
       return normalizedApp;
     }
 
@@ -832,6 +902,12 @@ export function AuthProvider({ children }) {
       );
     }
 
+    trackEvent('squad_application_status_updated', {
+      app_id: appId,
+      status: newStatus,
+      post_id: targetPostId,
+    });
+
     if (supabase && user) {
       try {
         const { error: appErr } = await supabase
@@ -880,6 +956,8 @@ export function AuthProvider({ children }) {
     if (!user) throw new Error('Please sign in to re-apply.');
     const prevApps = squadApps;
 
+    trackEvent('squad_application_reapplied', { app_id: appId });
+
     setSquadApps(prev =>
       prev.map(app =>
         app.id === appId
@@ -909,6 +987,7 @@ export function AuthProvider({ children }) {
   // Toggle open/closed status of a squad post
   const togglePostOpen = async (postId, currentIsOpen) => {
     const nextIsOpen = !currentIsOpen;
+    trackEvent('squad_post_visibility_toggled', { post_id: postId, is_open: nextIsOpen });
     setSquadPosts(prev =>
       prev.map(post => (post.id === postId ? { ...post, is_open: nextIsOpen } : post))
     );
@@ -929,6 +1008,7 @@ export function AuthProvider({ children }) {
 
   // Delete a squad post
   const deleteSquadPost = async (postId) => {
+    trackEvent('squad_post_deleted', { post_id: postId });
     setSquadPosts(prev => prev.filter(p => p.id !== postId));
     setSquadApps(prev => prev.filter(a => a.post_id !== postId));
 
@@ -948,6 +1028,7 @@ export function AuthProvider({ children }) {
 
   // Withdraw / Delete an application from Supabase
   const withdrawApplication = async (appId) => {
+    trackEvent('squad_application_withdrawn', { app_id: appId });
     setSquadApps(prev => prev.filter(a => a.id !== appId));
     if (supabase && user) {
       try {

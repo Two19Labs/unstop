@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { CloseIcon, UsersIcon, CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
+import { trackEvent } from '../lib/posthog';
 import './AuthModal.css';
 
 // Official Google "G" SVG Icon
@@ -58,6 +59,12 @@ export default function AuthModal() {
     }
     setErrorMsg(null);
     setSuccessMsg(null);
+    if (authModalOpen) {
+      trackEvent('auth_modal_opened', {
+        title: authModalConfig?.title || 'Sign In',
+        initialTab: authModalConfig?.initialTab || 'signin',
+      });
+    }
   }, [authModalConfig, authModalOpen]);
 
   // Clean up timeouts on unmount

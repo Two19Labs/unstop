@@ -25,7 +25,7 @@ export default function Sidebar({
     },
     {
       id: 'saved',
-      label: 'Bookmarks',
+      label: 'Bookmarked',
       badge: bookmarksCount > 0 ? String(bookmarksCount) : null,
       accentBadge: false
     },

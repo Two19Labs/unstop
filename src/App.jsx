@@ -23,6 +23,7 @@ import {
   isMockAlert,
   isMockBookmark
 } from './data/initialData';
+import { trackScreenView, trackEvent } from './lib/posthog';
 
 import './App.css';
 
@@ -68,6 +69,11 @@ function OneStopInner() {
 
   // Screen State: 'home' | 'browse' | 'saved' | 'teams' | 'requests' | 'profile'
   const [screen, setScreen] = useState('home');
+
+  // Track virtual pageviews / screen transitions in PostHog
+  useEffect(() => {
+    trackScreenView(screen);
+  }, [screen]);
 
   // Toast System (Declared early so all callbacks can access flash safely)
   const [toastMessage, setToastMessage] = useState(null);
@@ -274,6 +280,24 @@ function OneStopInner() {
   const [applyTargetPost, setApplyTargetPost] = useState(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // Track competition detail drawer views
+  useEffect(() => {
+    if (detailCompId && competitions.length > 0) {
+      const comp = competitions.find(c => String(c.id) === String(detailCompId));
+      if (comp) {
+        trackEvent('competition_detail_opened', {
+          competition_id: comp.id,
+          title: comp.title,
+          host: comp.host || comp.orgName,
+          circuit: comp.circuit,
+          discipline: comp.discipline,
+          fee: comp.fee,
+          prize: comp.prize,
+        });
+      }
+    }
+  }, [detailCompId, competitions]);
+
   // Fetch Live Competitions strictly from /api/competitions (Unstop ingestion)
   useEffect(() => {
     let isMounted = true;
@@ -362,6 +386,10 @@ function OneStopInner() {
 
   // Find Teammates Button from Competition Card
   const handleFindTeammates = (comp) => {
+    trackEvent('find_teammates_clicked', {
+      competition_id: comp?.id,
+      competition_title: comp?.title,
+    });
     if (!user) {
       openAuthModal({
         title: 'Sign In to Post a Squad',
@@ -378,6 +406,10 @@ function OneStopInner() {
 
   // Open Create Squad Modal
   const handleOpenCreateSquad = (comp = null) => {
+    trackEvent('create_squad_modal_opened', {
+      competition_id: comp?.id,
+      competition_title: comp?.title,
+    });
     if (!user) {
       openAuthModal({
         title: 'Sign In to Post a Squad',
@@ -524,6 +556,10 @@ function OneStopInner() {
 
   // Request to Join Application
   const handleOpenApply = (post) => {
+    trackEvent('apply_modal_opened', {
+      post_id: post?.id,
+      competition_name: post?.competition_name,
+    });
     if (!user) {
       openAuthModal({
         title: 'Sign In to Apply',
@@ -681,6 +717,12 @@ function OneStopInner() {
     const comp = appOrPost?.competition_name || appOrPost?.displayTitle || appOrPost?.title || 'Competition';
     const message = `Hey ${name ? name.split(' ')[0] : ''}! Connecting regarding our squad for "${comp}".`;
     const waUrl = formatWhatsAppUrl(rawPhone, message);
+
+    trackEvent('whatsapp_chat_opened', {
+      competition_name: comp,
+      has_phone: Boolean(rawPhone),
+      is_applicant: Boolean(appOrPost?.applicant_name),
+    });
 
     if (!waUrl || waUrl === '#') {
       flash('No phone number shared for this squad.');

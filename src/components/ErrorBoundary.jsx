@@ -1,5 +1,5 @@
-// src/components/ErrorBoundary.jsx
 import React from 'react';
+import { captureException } from '../lib/posthog';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -13,6 +13,7 @@ export default class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught an unhandled exception:', error, errorInfo);
+    captureException(error, errorInfo);
   }
 
   handleReload = () => {

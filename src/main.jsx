@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { isMockPost, isMockApp, isMockAlert, isMockBookmark } from './data/initialData';
+import { initPostHog, posthog } from './lib/posthog';
+import { PostHogProvider } from 'posthog-js/react';
 import './index.css';
 
 // Unconditional Strict Purge of any sandbox/demo/mock data from localStorage
@@ -103,10 +105,15 @@ try {
   console.warn('Storage sanitization warning:', e);
 }
 
+// Initialize PostHog analytics (gracefully degrades if no API key present)
+initPostHog();
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <PostHogProvider client={posthog}>
+        <App />
+      </PostHogProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

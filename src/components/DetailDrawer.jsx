@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { initialsOf, formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
 import InstitutionLogo from './InstitutionLogo';
+import { trackEvent } from '../lib/posthog';
 
 export default function DetailDrawer({
   item,
@@ -208,6 +209,13 @@ export default function DetailDrawer({
             href={item.unstopUrl || 'https://unstop.com'}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              trackEvent('competition_unstop_outbound_clicked', {
+                competition_id: item.id,
+                title: item.title,
+                unstop_url: item.unstopUrl || 'https://unstop.com',
+              });
+            }}
             style={{
               border: '1px solid #E7E6E2',
               borderRadius: '9px',

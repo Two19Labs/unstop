@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import InstitutionLogo from './InstitutionLogo';
+import FunLoadingScreen, { BROWSE_PUNS } from './FunLoadingScreen';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
@@ -472,18 +473,7 @@ export default function CompetitionsPage({
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
-  const [internalBookmarkedOnly, setInternalBookmarkedOnly] = useState(Boolean(propBookmarkedOnly));
-  const bookmarkedOnly = propBookmarkedOnly !== undefined ? propBookmarkedOnly : internalBookmarkedOnly;
-  const setBookmarkedOnly = useCallback(
-    (val) => {
-      const nextVal = typeof val === 'function' ? val(bookmarkedOnly) : val;
-      if (propSetBookmarkedOnly) {
-        propSetBookmarkedOnly(nextVal);
-      }
-      setInternalBookmarkedOnly(nextVal);
-    },
-    [bookmarkedOnly, propSetBookmarkedOnly]
-  );
+  const bookmarkedOnly = Boolean(propBookmarkedOnly);
   const [selectedTracks, setSelectedTracks] = useState(() => initialPrefs?.selectedTracks || []); // [] = All tracks; otherwise: 'case' | 'hackathon' | 'writing' | 'quiz' | 'simulation' | 'debate'
   const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
   const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
@@ -782,26 +772,13 @@ export default function CompetitionsPage({
 
   const handleSelectCircuit = useCallback((circuitKey) => {
     setSelectedCircuits([circuitKey]);
-    setBookmarkedOnly(false);
     scrollToRepository();
-  }, [scrollToRepository, setBookmarkedOnly]);
+  }, [scrollToRepository]);
 
   const handleSelectTrack = useCallback((trackKey) => {
     setSelectedTracks([trackKey]);
-    setBookmarkedOnly(false);
     scrollToRepository();
-  }, [scrollToRepository, setBookmarkedOnly]);
-
-  const handleQuickFilter = useCallback((type) => {
-    if (type === 'urgent') {
-      setSortBy('closing-soonest');
-    } else if (type === 'free') {
-      setFeeFilter('free');
-    } else if (type === 'bookmarked') {
-      setBookmarkedOnly(true);
-    }
-    scrollToRepository();
-  }, [scrollToRepository, setBookmarkedOnly]);
+  }, [scrollToRepository]);
 
   const toggleSection = (sectionKey) => {
     setOpenSections((prev) => ({
@@ -813,7 +790,6 @@ export default function CompetitionsPage({
   const toggleCircuit = (circuitKey) => {
     if (circuitKey === 'all') {
       setSelectedCircuits([]);
-      setBookmarkedOnly(false);
       return;
     }
     setSelectedCircuits((prev) => {
@@ -855,10 +831,6 @@ export default function CompetitionsPage({
     }
   };
 
-  const toggleBookmarkedOnly = () => {
-    setBookmarkedOnly((prev) => !prev);
-  };
-
   const getCircuitLabel = (id) => {
     const found = CIRCUIT_OPTIONS.find((c) => c.id === id);
     return found ? found.label : id;
@@ -890,7 +862,6 @@ export default function CompetitionsPage({
     setTeamFilter('all');
     setFeeFilter('all');
     setSortBy('closing-soonest');
-    setBookmarkedOnly(false);
     try {
       const userKey = user?.email ? `${FILTER_PREFS_KEY}_${user.email.toLowerCase()}` : null;
       if (userKey) localStorage.removeItem(userKey);
@@ -898,7 +869,7 @@ export default function CompetitionsPage({
     } catch (err) {
       console.error('Error clearing filter preferences:', err);
     }
-  }, [setBookmarkedOnly, user?.email]);
+  }, [user?.email]);
 
   // Filtering & Sorting
   const filteredCompetitions = useMemo(() => {
@@ -1003,14 +974,16 @@ export default function CompetitionsPage({
             )}
             <div className="cc-header-info">
               <div className="cc-title-row">
-                <h1 className="cc-title">Competitions</h1>
+                <h1 className="cc-title">{bookmarkedOnly ? 'Bookmarked' : 'Competitions'}</h1>
                 <div className="cc-unstop-pill-badge" title="Live synced from Unstop. Undergrad eligibility only.">
                   <span className="cc-unstop-pulse-dot" />
                   <span className="cc-unstop-pill-text">UNSTOP ONLY</span>
                 </div>
               </div>
               <p className="cc-subtitle">
-                It's competitions season! Find opportunities relevant to CBS folks right here, synced with and pulled from Unstop, all filterable! :)
+                {bookmarkedOnly
+                  ? 'All your saved competitions in one place. Synced and updated live.'
+                  : "It's competitions season! Find opportunities relevant to CBS folks right here, synced with and pulled from Unstop, all filterable! :)"}
               </p>
             </div>
           </div>
@@ -1262,7 +1235,7 @@ export default function CompetitionsPage({
               <input
                 type="text"
                 className="cc-search-input"
-                placeholder="Search competitions, IIM, IIT, XLRI, ISB, prizes..."
+                placeholder={bookmarkedOnly ? "Search your bookmarked competitions..." : "Search competitions, IIM, IIT, XLRI, ISB, prizes..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -1275,34 +1248,6 @@ export default function CompetitionsPage({
                   ✕
                 </button>
               )}
-            </div>
-
-            {/* Dedicated Section Tabs: All vs Bookmarked (Section of its own next to searchbar) */}
-            <div className="cc-section-tabs" role="tablist" aria-label="Competitions view section">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={!bookmarkedOnly}
-                className={`cc-section-tab ${!bookmarkedOnly ? 'active' : ''}`}
-                onClick={() => setBookmarkedOnly(false)}
-              >
-                <span>All</span>
-                <span className="cc-section-tab-count">{competitions.length}</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={bookmarkedOnly}
-                className={`cc-section-tab cc-section-tab-bookmark ${bookmarkedOnly ? 'active' : ''}`}
-                onClick={() => setBookmarkedOnly((prev) => !prev)}
-                title={bookmarkedOnly ? 'Showing bookmarked competitions (click to show all)' : 'Show bookmarked competitions'}
-              >
-                <BookmarkIcon size={14} filled={bookmarkedOnly || metrics.bookmarked > 0} />
-                <span>Bookmarked</span>
-                <span className={`cc-section-tab-count ${metrics.bookmarked > 0 ? 'has-count' : ''}`}>
-                  {metrics.bookmarked}
-                </span>
-              </button>
             </div>
 
             <div className="cc-top-actions">
@@ -1427,18 +1372,22 @@ export default function CompetitionsPage({
             {bookmarkedOnly ? <BookmarkIcon size={36} filled={false} /> : <TrophyIcon size={36} />}
           </div>
           <h3 className="cc-empty-title">
-            {bookmarkedOnly ? 'No bookmarked competitions match' : 'No competitions match your filter'}
+            {bookmarkedOnly
+              ? (bookmarkedIds.length === 0 ? 'No bookmarked competitions yet' : 'No bookmarked competitions match')
+              : 'No competitions match your filter'}
           </h3>
           <p className="cc-empty-desc">
             {bookmarkedOnly
-              ? 'Click the bookmark button on any competition card to save it here and keep track of deadlines and teams!'
+              ? (bookmarkedIds.length === 0
+                  ? "You haven't bookmarked any competitions yet. Discover competitions in Browse and bookmark them to keep track of deadlines!"
+                  : 'No saved competitions match these specific filters. Clear some filters to see the rest of your bookmarks.')
               : 'Try searching a different keyword, selecting additional filters, or resetting criteria.'}
           </p>
           <button
             className="cc-empty-btn"
-            onClick={handleResetFilters}
+            onClick={bookmarkedOnly && bookmarkedIds.length === 0 ? () => onNavigate && onNavigate('browse') : handleResetFilters}
           >
-            {bookmarkedOnly ? 'Explore All Competitions' : 'Clear All Filters'}
+            {bookmarkedOnly ? (bookmarkedIds.length === 0 ? 'Browse Competitions' : 'Clear All Filters') : 'Clear All Filters'}
           </button>
         </div>
       ) : (

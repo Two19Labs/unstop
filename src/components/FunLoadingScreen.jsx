@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import OneStopLogo from './OneStopLogo';
 import './FunLoadingScreen.css';
 
-const SARCASTIC_PUNS = [
+export const GENERAL_PUNS = [
   "Aligning the BCG matrix with our broken sleep schedules...",
   "Fixing the 1-pixel font margin error on slide 47 of the pitch deck...",
   "Convincing the team that 'Market Research' isn't just scrolling Reddit at 3 AM...",
@@ -15,37 +15,97 @@ const SARCASTIC_PUNS = [
   "Praying the Unstop submission server doesn't crash at 11:58 PM...",
   "Inserting buzzwords: 'Synergistic paradigm shift with high-conviction scalability'...",
   "Debating whether a 2:00 AM WhatsApp brainstorm counts as team synergy...",
-  "Scouting premier DU, IIT & IIM opportunities with 0% mock data..."
+  "Scouting premier DU, IIT & IIM opportunities with 0% mock data...",
+  "Pretending we understood the judge's question about DCF sensitivity analysis...",
+  "Calling a basic Canva gradient 'Proprietary Visual Architecture'...",
+  "Re-reading the problem statement 10 minutes before submission because nobody read it...",
+  "Calculating how to turn 3 bullet points into a 20-slide executive summary...",
+  "Running a Monte Carlo simulation on whether our teammate will respond to WhatsApp...",
+  "Explaining our 'Go-To-Market' strategy: 'Virality on Instagram Reels and vibes'...",
+  "Checking if winning 3rd place covers the cost of midnight caffeine runs...",
+  "Synchronizing with live Unstop servers before the caffeine wears off...",
+  "Pasting Porter's Five Forces into a deck that definitely didn't ask for Porter's Five Forces...",
+  "Extracting high-stakes competitions from premier campuses across India...",
+  "Convincing ourselves that our 4-member squad is 'lean, agile, and disruptive'...",
+  "Refactoring slide headers to start with action verbs so judges feel intimidated...",
+  "Negotiating equity split on a case competition idea that doesn't exist yet...",
+  "Translating 'we have no idea' into 'preliminary exploratory heuristics'...",
+  "Filtering out phantom hackathons to deliver 100% genuine campus challenges...",
+  "Re-exporting pitch deck as PDF because PowerPoint font embedding failed again...",
+  "Asking ChatGPT to 'make this sound like McKinsey wrote it during a panic attack'...",
+  "Double-checking team registration numbers so we don't end up solo by accident...",
+  "Practicing hand gestures in the mirror for the online presentation round...",
+  "Googling 'what is EBITDA' in an incognito tab while nodding thoughtfully...",
+  "Converting coffee directly into slide animations and financial projections...",
+  "Wrangling live competition APIs across North Campus, Powai, and Ahmedabad...",
+  "Reminding everyone that 'submission deadline is 11:59:59 PM, NOT 12:00:00 AM'...",
+  "Polishing executive summary until it shines brighter than our future careers..."
 ];
 
+export const BROWSE_PUNS = [
+  "Synchronizing with live Unstop servers across premier engineering & B-school campuses...",
+  "Scouting national case competitions, hackathons, and corporate challenges...",
+  "Filtering out phantom links — delivering 100% verified campus competitions...",
+  "Aggressively indexing prize pools to fund the squad's caffeine addiction...",
+  "Aligning competition deadlines with our broken collegiate sleep schedules...",
+  "Extracting live criteria from DU, IIT Bombay, IIM Ahmedabad, XLRI, and BITS...",
+  "Parsing competition decks before Unstop's submission counter ticks down...",
+  "Consultant voice activated: 'Benchmarking the highest-yield collegiate comps'...",
+  "Verifying that submission deadlines aren't actually 11:59 PM tonight...",
+  "Pasting Porter's Five Forces into memory caches while listings download...",
+  "Checking if top 3 cash awards justify staying up till 4:30 AM on a Tuesday...",
+  "Translating complex challenge rubrics into actionable student wins..."
+];
+
+export const SQUAD_PUNS = [
+  "Scouting collegiate squads across DU, IITs, IIMs, and top universities...",
+  "Running Monte Carlo simulations on whether your prospective teammate replies to WhatsApp...",
+  "Debating whether a 2:00 AM brainstorm session qualifies as genuine team synergy...",
+  "Negotiating equity split on a 24-hour hackathon idea that doesn't exist yet...",
+  "Double-checking squad spots so nobody is accidentally left to solo a 5-round case...",
+  "Convincing the group that 4 generalists and 0 coders is a 'lean and agile' formation...",
+  "Rehearsing synchronized head nods for the squad's upcoming presentation round...",
+  "Verifying phone numbers for instant, zero-spam WhatsApp team handshakes...",
+  "Filtering out teammates who claim 'I specialize in ideation and vibes'...",
+  "Matching complementary skillsets: 1 financial modeler + 3 emotional support slides..."
+];
+
+export const SARCASTIC_PUNS = GENERAL_PUNS;
+
 export default function FunLoadingScreen({
-  isReady = false,
-  minDurationMs = 3400,
-  onComplete
+  isReady = true,
+  minDurationMs = 3300,
+  onComplete,
+  badge = "FETCHING COMPETITIONS",
+  headline = "OneStop",
+  customPuns = null,
+  tickerItems = ["Live Ingestion", "Adrenaline: 99%", "Zero Sandboxes"],
+  allowSkip = true
 }) {
   const [punIndex, setPunIndex] = useState(0);
   const [fadeState, setFadeState] = useState('in'); // 'in' | 'out'
-  const [progress, setProgress] = useState(10);
+  const [progress, setProgress] = useState(12);
   const [isDismissing, setIsDismissing] = useState(false);
 
   // Shuffle or randomize puns for uniqueness on each load
   const punsList = useMemo(() => {
-    return [...SARCASTIC_PUNS].sort(() => 0.5 - Math.random());
-  }, []);
+    const pool = Array.isArray(customPuns) && customPuns.length > 0 ? customPuns : GENERAL_PUNS;
+    return [...pool].sort(() => 0.5 - Math.random());
+  }, [customPuns]);
 
   // Smooth progress bar animation
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      const pct = Math.min(95, Math.floor((elapsed / minDurationMs) * 95));
+      const pct = Math.min(96, Math.floor((elapsed / minDurationMs) * 96));
       setProgress(pct);
-    }, 50);
+    }, 45);
 
     return () => clearInterval(interval);
   }, [minDurationMs]);
 
-  // Rotate puns every 950ms with a quick cross-fade
+  // Rotate puns every 1050ms with a quick cross-fade
   useEffect(() => {
     const interval = setInterval(() => {
       setFadeState('out');
@@ -98,14 +158,16 @@ export default function FunLoadingScreen({
       <div className="fun-loading-glow fun-loading-glow-2" />
 
       {/* Top right skip button */}
-      <button
-        type="button"
-        className="fun-loading-skip-btn"
-        onClick={handleSkip}
-        title="Skip intro loading"
-      >
-        Skip ➔
-      </button>
+      {allowSkip && (
+        <button
+          type="button"
+          className="fun-loading-skip-btn"
+          onClick={handleSkip}
+          title="Skip loading screen"
+        >
+          Skip ➔
+        </button>
+      )}
 
       {/* Center Card */}
       <div className="fun-loading-card">
@@ -117,8 +179,8 @@ export default function FunLoadingScreen({
 
         {/* Brand Title */}
         <div className="fun-loading-header">
-          <span className="fun-loading-brand">OneStop</span>
-          <span className="fun-loading-badge">BOOTING ARTIFACTS</span>
+          <span className="fun-loading-brand">{headline}</span>
+          <span className="fun-loading-badge">{badge}</span>
         </div>
 
         {/* Rotating Pun Text */}
@@ -138,14 +200,15 @@ export default function FunLoadingScreen({
 
         {/* Collegiate Micro-Ticker */}
         <div className="fun-loading-ticker">
-          <span className="ticker-item">
-            <span className="ticker-dot green" />
-            Live Ingestion
-          </span>
-          <span className="ticker-sep">·</span>
-          <span className="ticker-item">Adrenaline: 99%</span>
-          <span className="ticker-sep">·</span>
-          <span className="ticker-item">Zero Sandboxes</span>
+          {tickerItems.map((item, idx) => (
+            <React.Fragment key={idx}>
+              {idx > 0 && <span className="ticker-sep">·</span>}
+              <span className="ticker-item">
+                {idx === 0 && <span className="ticker-dot green" />}
+                {item}
+              </span>
+            </React.Fragment>
+          ))}
         </div>
       </div>
     </div>
