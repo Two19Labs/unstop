@@ -55,9 +55,64 @@ function formatRelativeTime(timestamp) {
   return `${Math.floor(days / 7)}w ago`;
 }
 
+function RailCardSkeleton() {
+  return (
+    <div
+      className="home-rail-card home-rail-card-skeleton"
+      style={{
+        flex: '0 0 302px',
+        width: '302px',
+        padding: '16px 17px 17px',
+        gap: '12px',
+        boxSizing: 'border-box'
+      }}
+      aria-hidden="true"
+    >
+      {/* Top Bar: Logo + Host name + Bookmark button placeholder */}
+      <div style={{ display: 'grid', gridTemplateColumns: '36px minmax(0, 1fr) 28px', alignItems: 'start', gap: '10px' }}>
+        <div className="skeleton-box" style={{ width: '36px', height: '36px', borderRadius: '8px' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '2px' }}>
+          <div className="skeleton-box" style={{ height: '12px', width: '75%', borderRadius: '4px' }} />
+          <div className="skeleton-box" style={{ height: '10px', width: '45%', borderRadius: '4px' }} />
+        </div>
+        <div className="skeleton-box" style={{ width: '28px', height: '28px', borderRadius: '8px' }} />
+      </div>
+
+      {/* Title */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '2px 0' }}>
+        <div className="skeleton-box" style={{ height: '16px', width: '90%', borderRadius: '4px' }} />
+        <div className="skeleton-box" style={{ height: '16px', width: '60%', borderRadius: '4px' }} />
+      </div>
+
+      {/* Prize Bar */}
+      <div className="skeleton-box" style={{ height: '28px', width: '100%', borderRadius: '8px' }} />
+
+      {/* Specs Chips */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div className="skeleton-box" style={{ height: '22px', width: '68px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '22px', width: '76px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '22px', width: '84px', borderRadius: '20px' }} />
+      </div>
+
+      {/* Metrics Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '22px' }}>
+        <div className="skeleton-box" style={{ height: '14px', width: '110px', borderRadius: '4px' }} />
+        <div className="skeleton-box" style={{ height: '20px', width: '74px', borderRadius: '20px' }} />
+      </div>
+
+      {/* Action Buttons */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
+        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+      </div>
+    </div>
+  );
+}
+
 export default function HomeScreen({
   profile,
   competitions = [],
+  competitionsLoading = false,
   savedFilter = null,
   onResetFilter,
   applications = [],
@@ -174,7 +229,9 @@ export default function HomeScreen({
   const displayedSquads = allFilteredSquads.slice(0, CARDS_PER_RAIL);
 
   // Subline calculation
-  const subline = hasFilter
+  const subline = competitionsLoading
+    ? 'Syncing live competitions from premier campuses…'
+    : hasFilter
     ? `${compTotal} competitions and ${squadTotal} squads match your Browse filter — ${filterChips.map(c => c.toLowerCase()).join(' · ')}.`
     : `${compTotal} competitions and ${squadTotal} squads open right now.`;
 
@@ -272,7 +329,7 @@ export default function HomeScreen({
               whiteSpace: 'nowrap'
             }}
           >
-            {bookmarkTotal}
+            {competitionsLoading ? '...' : bookmarkTotal}
           </span>
           <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
             Soonest deadline first · filters don't apply
@@ -298,7 +355,13 @@ export default function HomeScreen({
         </div>
 
         <div className="rail">
-          {displayedBookmarks.length === 0 ? (
+          {competitionsLoading ? (
+            <>
+              <RailCardSkeleton />
+              <RailCardSkeleton />
+              <RailCardSkeleton />
+            </>
+          ) : displayedBookmarks.length === 0 ? (
             <div
               style={{
                 flex: '1 1 100%',
@@ -725,7 +788,7 @@ export default function HomeScreen({
               whiteSpace: 'nowrap'
             }}
           >
-            {compTotal} match
+            {competitionsLoading ? 'Loading...' : `${compTotal} match`}
           </span>
           <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
             Closing soonest first
@@ -751,7 +814,13 @@ export default function HomeScreen({
         </div>
 
         <div className="rail">
-          {displayedComps.length === 0 ? (
+          {competitionsLoading ? (
+            <>
+              <RailCardSkeleton />
+              <RailCardSkeleton />
+              <RailCardSkeleton />
+            </>
+          ) : displayedComps.length === 0 ? (
             <div
               style={{
                 flex: '1 1 100%',
