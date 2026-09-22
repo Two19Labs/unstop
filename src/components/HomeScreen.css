@@ -71,12 +71,45 @@
   display: flex;
   flex-direction: column;
   scroll-snap-align: start;
-  transition: border-color 150ms ease;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
   box-sizing: border-box;
 }
 
 .home-rail-card:hover {
   border-color: #D6D4CE;
+}
+
+/* Urgency-based card themes (< 6h = red, < 24h = yellow, >= 24h = blue) */
+.home-rail-card.card-urgency-red {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: linear-gradient(180deg, rgba(254, 242, 242, 0.65) 0%, #FFFFFF 42%);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
+}
+
+.home-rail-card.card-urgency-red:hover {
+  border-color: rgba(239, 68, 68, 0.75);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15);
+}
+
+.home-rail-card.card-urgency-yellow {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: linear-gradient(180deg, rgba(254, 252, 232, 0.70) 0%, #FFFFFF 42%);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+}
+
+.home-rail-card.card-urgency-yellow:hover {
+  border-color: rgba(245, 158, 11, 0.75);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);
+}
+
+.home-rail-card.card-urgency-blue {
+  border-color: #E7E6E2;
+  background: #FFFFFF;
+}
+
+.home-rail-card.card-urgency-blue:hover {
+  border-color: #D6D4CE;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .home-btn-hover:hover {

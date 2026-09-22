@@ -1,6 +1,6 @@
 // src/components/HomeScreen.jsx — OneStop Home Filter-Driven Rails
 import React, { useMemo } from 'react';
-import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
+import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown, getUrgencyLevel } from '../data/initialData';
 import './HomeScreen.css';
 
 const CARDS_PER_RAIL = 3;
@@ -299,13 +299,11 @@ export default function HomeScreen({
           ) : (
             displayedBookmarks.map(b => {
               const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
-              const isUrgent = b.deadline
-                ? (new Date(b.deadline).getTime() - Date.now() <= 3 * 24 * 60 * 60 * 1000)
-                : (b.days ?? 999) <= 3;
+              const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
               return (
                 <div
                   key={b.id}
-                  className="home-rail-card"
+                  className={`home-rail-card card-urgency-${urgencyLevel}`}
                   onClick={() => onOpenDetail && onOpenDetail(b.id)}
                   style={{
                     flex: '0 0 268px',
@@ -390,22 +388,33 @@ export default function HomeScreen({
                     <span
                       title={b.deadline ? `Exact Deadline: ${formatDeadlineDateTime(b.deadline)}` : undefined}
                       style={
-                        isUrgent
+                        urgencyLevel === 'red'
                           ? {
-                              border: '1px solid rgba(15,63,254,0.35)',
+                              border: '1px solid rgba(239, 68, 68, 0.40)',
                               borderRadius: '20px',
-                              background: 'rgba(15,63,254,0.08)',
-                              color: '#0F3FFE',
+                              background: 'rgba(239, 68, 68, 0.10)',
+                              color: '#DC2626',
+                              padding: '3px 9px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap'
+                            }
+                          : urgencyLevel === 'yellow'
+                          ? {
+                              border: '1px solid rgba(245, 158, 11, 0.40)',
+                              borderRadius: '20px',
+                              background: 'rgba(245, 158, 11, 0.12)',
+                              color: '#B45309',
                               padding: '3px 9px',
                               fontSize: '12px',
                               fontWeight: 600,
                               whiteSpace: 'nowrap'
                             }
                           : {
-                              border: '1px solid #E7E6E2',
+                              border: '1px solid rgba(15, 63, 254, 0.35)',
                               borderRadius: '20px',
-                              background: '#FFFFFF',
-                              color: '#55534D',
+                              background: 'rgba(15, 63, 254, 0.08)',
+                              color: '#0F3FFE',
                               padding: '3px 9px',
                               fontSize: '12px',
                               fontWeight: 600,
@@ -525,15 +534,13 @@ export default function HomeScreen({
               const isFree = c.fee === 'Free';
               const deadlineFormatted = formatDeadlineDateTime(c.deadline);
               const countdownText = formatDeadlineCountdown(c.deadline, c.remainDaysText, c.days);
-              const isUrgent = c.deadline
-                ? (new Date(c.deadline).getTime() - Date.now() <= 3 * 24 * 60 * 60 * 1000)
-                : (c.days ?? 999) <= 3;
+              const urgencyLevel = getUrgencyLevel(c.deadline, c.remainDaysText, c.days);
               const regsText = c.regs ? Number(c.regs).toLocaleString('en-IN') : '0';
 
               return (
                 <div
                   key={c.id}
-                  className="home-rail-card"
+                  className={`home-rail-card card-urgency-${urgencyLevel}`}
                   onClick={() => onOpenDetail && onOpenDetail(c.id)}
                   style={{
                     flex: '0 0 302px',
@@ -634,22 +641,33 @@ export default function HomeScreen({
                     <span
                       title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
                       style={
-                        isUrgent
+                        urgencyLevel === 'red'
                           ? {
-                              border: '1px solid rgba(15,63,254,0.35)',
+                              border: '1px solid rgba(239, 68, 68, 0.40)',
                               borderRadius: '20px',
-                              background: 'rgba(15,63,254,0.08)',
-                              color: '#0F3FFE',
+                              background: 'rgba(239, 68, 68, 0.10)',
+                              color: '#DC2626',
+                              padding: '4px 10px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap'
+                            }
+                          : urgencyLevel === 'yellow'
+                          ? {
+                              border: '1px solid rgba(245, 158, 11, 0.40)',
+                              borderRadius: '20px',
+                              background: 'rgba(245, 158, 11, 0.12)',
+                              color: '#B45309',
                               padding: '4px 10px',
                               fontSize: '12px',
                               fontWeight: 600,
                               whiteSpace: 'nowrap'
                             }
                           : {
-                              border: '1px solid #E7E6E2',
+                              border: '1px solid rgba(15, 63, 254, 0.35)',
                               borderRadius: '20px',
-                              background: '#FFFFFF',
-                              color: '#55534D',
+                              background: 'rgba(15, 63, 254, 0.08)',
+                              color: '#0F3FFE',
                               padding: '4px 10px',
                               fontSize: '12px',
                               fontWeight: 600,

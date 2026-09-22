@@ -165,3 +165,42 @@ export function formatDeadlineCountdown(deadlineStr, fallbackRemainText, fallbac
   return fallbackRemainText || 'Ongoing';
 }
 
+export function getUrgencyLevel(deadlineStr, fallbackRemainText, fallbackDays) {
+  if (deadlineStr) {
+    const d = new Date(deadlineStr);
+    const now = Date.now();
+    const diffMs = d.getTime() - now;
+    if (!isNaN(diffMs)) {
+      const hoursLeft = diffMs / (1000 * 60 * 60);
+      if (hoursLeft < 6) return 'red';
+      if (hoursLeft < 24) return 'yellow';
+      return 'blue';
+    }
+  }
+
+  if (fallbackRemainText) {
+    const text = String(fallbackRemainText).toLowerCase();
+    if (text.includes('min') || text.includes('ending') || text.includes('ended')) {
+      return 'red';
+    }
+    const hMatch = text.match(/(\d+)\s*hour/);
+    if (hMatch) {
+      const h = parseInt(hMatch[1], 10);
+      if (h < 6) return 'red';
+      if (h < 24) return 'yellow';
+      return 'blue';
+    }
+    const dMatch = text.match(/(\d+)\s*day/);
+    if (dMatch) {
+      return 'blue';
+    }
+  }
+
+  if (fallbackDays !== undefined && fallbackDays !== null) {
+    if (fallbackDays <= 0) return 'red';
+    return 'blue';
+  }
+
+  return 'blue';
+}
+
