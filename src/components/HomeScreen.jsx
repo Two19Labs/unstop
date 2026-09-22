@@ -2,9 +2,42 @@
 import React, { useMemo } from 'react';
 import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown, getUrgencyLevel } from '../data/initialData';
 import InstitutionLogo from './InstitutionLogo';
+import {
+  TrophyIcon,
+  UsersIcon,
+  CalendarIcon,
+  FlameIcon,
+  ClockIcon,
+  ExternalLinkIcon
+} from './icons';
 import './HomeScreen.css';
 
 const CARDS_PER_RAIL = 3;
+
+function getUrgencyConfig(urgencyLevel) {
+  if (urgencyLevel === 'red') {
+    return {
+      border: '1px solid rgba(239, 68, 68, 0.40)',
+      background: 'rgba(239, 68, 68, 0.10)',
+      color: '#DC2626',
+      dotColor: '#EF4444'
+    };
+  }
+  if (urgencyLevel === 'yellow') {
+    return {
+      border: '1px solid rgba(245, 158, 11, 0.40)',
+      background: 'rgba(245, 158, 11, 0.12)',
+      color: '#B45309',
+      dotColor: '#F59E0B'
+    };
+  }
+  return {
+    border: '1px solid rgba(15, 63, 254, 0.35)',
+    background: 'rgba(15, 63, 254, 0.08)',
+    color: '#0F3FFE',
+    dotColor: '#0F3FFE'
+  };
+}
 
 function formatRelativeTime(timestamp) {
   if (!timestamp) return 'recently';
@@ -300,156 +333,291 @@ export default function HomeScreen({
           ) : (
             <>
               {displayedBookmarks.map(b => {
-              const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
-              const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
-              return (
-                <div
-                  key={b.id}
-                  className={`home-rail-card card-urgency-${urgencyLevel}`}
-                  onClick={() => onOpenDetail && onOpenDetail(b.id)}
-                  style={{
-                    flex: '0 0 268px',
-                    width: '268px',
-                    padding: '14px 15px 15px',
-                    gap: '11px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <div style={{ display: 'grid', gridTemplateColumns: '34px minmax(0, 1fr) auto', alignItems: 'start', gap: '10px' }}>
-                    <InstitutionLogo
-                      logo={b.logo || b.orgLogo}
-                      name={b.host}
-                      size={34}
-                      borderRadius={8}
-                      fontSize={11}
-                    />
-                    <span style={{ fontSize: '12px', fontWeight: 500, color: '#55534D', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty' }}>
-                      {b.host}
-                    </span>
-                    <button
-                      title="Remove bookmark"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleBookmark(b.id);
-                      }}
-                      className="home-btn-remove"
+                const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
+                const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
+                const urgencyConfig = getUrgencyConfig(urgencyLevel);
+                const deadlineFormatted = formatDeadlineDateTime(b.deadline);
+                const isFree = b.isFree ?? (typeof b.fee === 'string' ? b.fee.toLowerCase().includes('free') : true);
+                const registeredCount = Number(b.regs || b.registeredCount || 0);
+                const feeText = isFree ? 'Free Entry' : (b.fee ? (b.fee.toLowerCase().includes('entry') ? b.fee : `${b.fee} Entry`) : 'Paid');
+                const teamText = b.team || b.teamSizeDisplay || 'Solo / Team';
+                const prizeText = (b.prize || b.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool');
+
+                return (
+                  <div
+                    key={b.id}
+                    className={`home-rail-card card-urgency-${urgencyLevel}`}
+                    onClick={() => onOpenDetail && onOpenDetail(b.id)}
+                    style={{
+                      flex: '0 0 302px',
+                      width: '302px',
+                      padding: '16px 17px 17px',
+                      gap: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {/* Top Bar: Host Profile & Remove Bookmark Button */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '36px minmax(0, 1fr) auto', alignItems: 'start', gap: '10px' }}>
+                      <InstitutionLogo
+                        logo={b.logo || b.orgLogo}
+                        name={b.host}
+                        size={36}
+                        borderRadius={8}
+                        fontSize={12}
+                      />
+                      <div style={{ minWidth: 0 }}>
+                        <span
+                          title={b.host}
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#55534D',
+                            lineHeight: 1.35,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textWrap: 'pretty'
+                          }}
+                        >
+                          {b.host}
+                        </span>
+                      </div>
+                      <button
+                        title="Remove bookmark"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleBookmark(b.id);
+                        }}
+                        className="home-btn-remove"
+                        style={{
+                          border: '1px solid #E7E6E2',
+                          borderRadius: '8px',
+                          background: '#F2F1ED',
+                          color: '#55534D',
+                          width: '28px',
+                          height: '28px',
+                          flex: 'none',
+                          fontSize: '14px',
+                          lineHeight: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {/* Competition Title */}
+                    <h3
+                      title={b.title}
                       style={{
-                        border: '1px solid #E7E6E2',
-                        borderRadius: '8px',
-                        background: '#F2F1ED',
+                        margin: 0,
+                        fontSize: '16px',
+                        fontWeight: 700,
+                        lineHeight: 1.35,
+                        letterSpacing: '-0.01em',
                         color: '#1A1A19',
-                        width: '28px',
-                        height: '28px',
-                        flex: 'none',
-                        fontSize: '13px',
-                        lineHeight: 1,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: '42px',
+                        textWrap: 'pretty'
+                      }}
+                    >
+                      {b.title}
+                    </h3>
+
+                    {/* Featured Prize & Entry Bar */}
+                    <div
+                      style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer'
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        background: 'rgba(16, 185, 129, 0.08)',
+                        border: '1px solid rgba(16, 185, 129, 0.22)',
+                        borderRadius: '10px',
+                        padding: '8px 12px'
                       }}
                     >
-                      ×
-                    </button>
-                  </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0, flex: 1 }}>
+                        <TrophyIcon size={14} color="#059669" />
+                        <span
+                          title={prizeText}
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            color: '#047857',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
+                          {prizeText}
+                        </span>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 7px',
+                          borderRadius: '5px',
+                          letterSpacing: '0.2px',
+                          flexShrink: 0,
+                          background: isFree ? '#FFFFFF' : '#F2F1ED',
+                          color: isFree ? '#059669' : '#55534D',
+                          border: isFree ? '1px solid rgba(16, 185, 129, 0.32)' : '1px solid #E7E6E2'
+                        }}
+                      >
+                        {feeText}
+                      </span>
+                    </div>
 
-                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.01em', textWrap: 'pretty', color: '#1A1A19' }}>
-                    {b.title}
-                  </h3>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                      background: '#F9F9F7',
-                      border: '1px solid #EFEEEA',
-                      borderRadius: '9px',
-                      padding: '8px 10px'
-                    }}
-                  >
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19', minWidth: 0, lineHeight: 1.35, textWrap: 'pretty' }}>
-                      {b.prize}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', color: '#75736C' }}>{b.discipline}</span>
-                    <span
-                      title={b.deadline ? `Exact Deadline: ${formatDeadlineDateTime(b.deadline)}` : undefined}
-                      style={
-                        urgencyLevel === 'red'
-                          ? {
-                              border: '1px solid rgba(239, 68, 68, 0.40)',
-                              borderRadius: '20px',
-                              background: 'rgba(239, 68, 68, 0.10)',
-                              color: '#DC2626',
-                              padding: '3px 9px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap'
-                            }
-                          : urgencyLevel === 'yellow'
-                          ? {
-                              border: '1px solid rgba(245, 158, 11, 0.40)',
-                              borderRadius: '20px',
-                              background: 'rgba(245, 158, 11, 0.12)',
-                              color: '#B45309',
-                              padding: '3px 9px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap'
-                            }
-                          : {
-                              border: '1px solid rgba(15, 63, 254, 0.35)',
-                              borderRadius: '20px',
-                              background: 'rgba(15, 63, 254, 0.08)',
-                              color: '#0F3FFE',
-                              padding: '3px 9px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap'
-                            }
-                      }
+                    {/* Metadata: Format & Exact Deadline (Specs Row) */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '12px',
+                        color: '#55534D',
+                        fontWeight: 600,
+                        minHeight: '20px',
+                        flexWrap: 'wrap'
+                      }}
                     >
-                      {countdownText}
-                    </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }} title={teamText}>
+                        <UsersIcon size={13} color="#55534D" />
+                        <span>{teamText}</span>
+                      </div>
+                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#C9C7C1', flexShrink: 0 }} />
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                        title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
+                      >
+                        <CalendarIcon size={13} color="#55534D" />
+                        <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : (b.mode || 'Online')}</span>
+                      </div>
+                    </div>
+
+                    {/* Social Proof & Deadline Status (Metrics Row) */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '22px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#75736C' }}>
+                        {registeredCount > 0 ? (
+                          <>
+                            <FlameIcon size={13} color="#f97316" />
+                            <span>
+                              <strong style={{ color: '#1A1A19' }}>{registeredCount.toLocaleString()}</strong> registrations
+                            </span>
+                          </>
+                        ) : (
+                          <span style={{ color: '#0F3FFE', fontWeight: 600, fontSize: '11px' }}>Recently Listed</span>
+                        )}
+                      </div>
+
+                      <span
+                        title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          border: urgencyConfig.border,
+                          borderRadius: '20px',
+                          background: urgencyConfig.background,
+                          color: urgencyConfig.color,
+                          padding: '3px 9px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: urgencyConfig.dotColor,
+                            display: 'inline-block'
+                          }}
+                        />
+                        <ClockIcon size={11} color={urgencyConfig.color} />
+                        <span>{countdownText}</span>
+                      </span>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
+                      <a
+                        href={b.unstopUrl || 'https://unstop.com'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="home-btn-primary-hover"
+                        style={{
+                          border: '1px solid #0F3FFE',
+                          borderRadius: '9px',
+                          background: '#0F3FFE',
+                          color: '#FFFFFF',
+                          padding: '9px 10px',
+                          textAlign: 'center',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '5px',
+                          textDecoration: 'none'
+                        }}
+                      >
+                        <span>Apply</span>
+                        <ExternalLinkIcon size={12} color="#FFFFFF" />
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onSquadUp) onSquadUp(b);
+                          else if (onFindTeammates) onFindTeammates(b);
+                        }}
+                        className="home-btn-hover"
+                        style={{
+                          border: '1px solid #E7E6E2',
+                          borderRadius: '9px',
+                          background: '#FFFFFF',
+                          color: '#1A1A19',
+                          padding: '9px 10px',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <UsersIcon size={13} color="#1A1A19" />
+                        <span>Squad up</span>
+                      </button>
+                    </div>
                   </div>
+                );
+              })}
 
-                  <a
-                    href={b.unstopUrl || 'https://unstop.com'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="home-btn-primary-hover"
-                    style={{
-                      marginTop: 'auto',
-                      border: '1px solid #0F3FFE',
-                      borderRadius: '9px',
-                      background: '#0F3FFE',
-                      color: '#FFFFFF',
-                      padding: '9px 12px',
-                      textAlign: 'center',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      display: 'block'
-                    }}
-                  >
-                    Apply on Unstop
-                  </a>
-                </div>
-              );
-            })}
-
-            {/* 4th Card: More Bookmarks */}
-            {(bookmarkTotal > displayedBookmarks.length || bookmarkTotal >= 3) && (
-              <div
-                className="home-rail-card home-more-card"
-                onClick={() => handleNavigate('saved')}
-                style={{
-                  flex: '0 0 268px',
-                  width: '268px',
+              {/* 4th Card: More Bookmarks */}
+              {(bookmarkTotal > displayedBookmarks.length || bookmarkTotal >= 3) && (
+                <div
+                  className="home-rail-card home-more-card"
+                  onClick={() => handleNavigate('saved')}
+                  style={{
+                    flex: '0 0 302px',
+                    width: '302px',
                   padding: '16px 17px 17px',
                   gap: '12px',
                   cursor: 'pointer',
@@ -617,11 +785,15 @@ export default function HomeScreen({
             </div>
           ) : (
             displayedComps.map(c => {
-              const isFree = c.fee === 'Free';
+              const isFree = c.fee === 'Free' || c.isFree;
               const deadlineFormatted = formatDeadlineDateTime(c.deadline);
               const countdownText = formatDeadlineCountdown(c.deadline, c.remainDaysText, c.days);
               const urgencyLevel = getUrgencyLevel(c.deadline, c.remainDaysText, c.days);
-              const regsText = c.regs ? Number(c.regs).toLocaleString('en-IN') : '0';
+              const urgencyConfig = getUrgencyConfig(urgencyLevel);
+              const registeredCount = Number(c.regs || c.registeredCount || 0);
+              const feeText = isFree ? 'Free Entry' : (c.fee ? (c.fee.toLowerCase().includes('entry') ? c.fee : `${c.fee} Entry`) : 'Paid');
+              const teamText = c.team || c.teamSizeDisplay || 'Solo / Team';
+              const prizeText = (c.prize || c.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool');
 
               return (
                 <div
@@ -632,10 +804,11 @@ export default function HomeScreen({
                     flex: '0 0 302px',
                     width: '302px',
                     padding: '16px 17px 17px',
-                    gap: '13px',
+                    gap: '12px',
                     cursor: 'pointer'
                   }}
                 >
+                  {/* Top Bar: Host Profile */}
                   <div style={{ display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr)', alignItems: 'start', gap: '11px' }}>
                     <InstitutionLogo
                       logo={c.logo || c.orgLogo}
@@ -649,112 +822,147 @@ export default function HomeScreen({
                     </span>
                   </div>
 
-                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.01em', textWrap: 'pretty', color: '#1A1A19' }}>
+                  {/* Competition Title */}
+                  <h3
+                    title={c.title}
+                    style={{
+                      margin: 0,
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      lineHeight: 1.35,
+                      letterSpacing: '-0.01em',
+                      color: '#1A1A19',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      minHeight: '42px',
+                      textWrap: 'pretty'
+                    }}
+                  >
                     {c.title}
                   </h3>
 
+                  {/* Featured Prize & Entry Bar */}
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      gap: '10px',
-                      background: '#F9F9F7',
-                      border: '1px solid #EFEEEA',
-                      borderRadius: '9px',
-                      padding: '9px 11px'
+                      gap: '8px',
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      border: '1px solid rgba(16, 185, 129, 0.22)',
+                      borderRadius: '10px',
+                      padding: '8px 12px'
                     }}
                   >
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A19', minWidth: 0, lineHeight: 1.35, textWrap: 'pretty' }}>
-                      {c.prize}
-                    </span>
-                    {isFree ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0, flex: 1 }}>
+                      <TrophyIcon size={14} color="#059669" />
                       <span
+                        title={prizeText}
                         style={{
-                          border: '1px solid rgba(23,163,74,0.30)',
-                          borderRadius: '6px',
-                          background: 'rgba(23,163,74,0.08)',
-                          color: '#15803D',
-                          padding: '3px 8px',
-                          fontSize: '11px',
-                          fontWeight: 600,
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: '#047857',
                           whiteSpace: 'nowrap',
-                          flex: 'none'
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
                         }}
                       >
-                        Free entry
+                        {prizeText}
                       </span>
-                    ) : (
-                      <span
-                        style={{
-                          border: '1px solid #E7E6E2',
-                          borderRadius: '6px',
-                          background: '#FFFFFF',
-                          color: '#55534D',
-                          padding: '3px 8px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          flex: 'none'
-                        }}
-                      >
-                        {c.fee} entry
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap', fontSize: '12px', color: '#55534D' }}>
-                    {c.team ? <span>{c.team}</span> : null}
-                    {c.team && (deadlineFormatted || c.mode) ? <span style={{ color: '#C9C7C1' }}>·</span> : null}
-                    <span title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}>
-                      {deadlineFormatted ? `Ends ${deadlineFormatted}` : (c.mode || 'Online')}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '2px 7px',
+                        borderRadius: '5px',
+                        letterSpacing: '0.2px',
+                        flexShrink: 0,
+                        background: isFree ? '#FFFFFF' : '#F2F1ED',
+                        color: isFree ? '#059669' : '#55534D',
+                        border: isFree ? '1px solid rgba(16, 185, 129, 0.32)' : '1px solid #E7E6E2'
+                      }}
+                    >
+                      {feeText}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'space-between', justifyContent: 'space-between', gap: '10px' }}>
-                    <span style={{ fontSize: '12px', color: '#75736C' }}>{regsText} registered</span>
+                  {/* Metadata: Format & Exact Deadline (Specs Row) */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '12px',
+                      color: '#55534D',
+                      fontWeight: 600,
+                      minHeight: '20px',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }} title={teamText}>
+                      <UsersIcon size={13} color="#55534D" />
+                      <span>{teamText}</span>
+                    </div>
+                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#C9C7C1', flexShrink: 0 }} />
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                      title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
+                    >
+                      <CalendarIcon size={13} color="#55534D" />
+                      <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : (c.mode || 'Online')}</span>
+                    </div>
+                  </div>
+
+                  {/* Social Proof & Deadline Status (Metrics Row) */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '22px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#75736C' }}>
+                      {registeredCount > 0 ? (
+                        <>
+                          <FlameIcon size={13} color="#f97316" />
+                          <span>
+                            <strong style={{ color: '#1A1A19' }}>{registeredCount.toLocaleString()}</strong> registrations
+                          </span>
+                        </>
+                      ) : (
+                        <span style={{ color: '#0F3FFE', fontWeight: 600, fontSize: '11px' }}>Recently Listed</span>
+                      )}
+                    </div>
+
                     <span
                       title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
-                      style={
-                        urgencyLevel === 'red'
-                          ? {
-                              border: '1px solid rgba(239, 68, 68, 0.40)',
-                              borderRadius: '20px',
-                              background: 'rgba(239, 68, 68, 0.10)',
-                              color: '#DC2626',
-                              padding: '4px 10px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap'
-                            }
-                          : urgencyLevel === 'yellow'
-                          ? {
-                              border: '1px solid rgba(245, 158, 11, 0.40)',
-                              borderRadius: '20px',
-                              background: 'rgba(245, 158, 11, 0.12)',
-                              color: '#B45309',
-                              padding: '4px 10px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap'
-                            }
-                          : {
-                              border: '1px solid rgba(15, 63, 254, 0.35)',
-                              borderRadius: '20px',
-                              background: 'rgba(15, 63, 254, 0.08)',
-                              color: '#0F3FFE',
-                              padding: '4px 10px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap'
-                            }
-                      }
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        border: urgencyConfig.border,
+                        borderRadius: '20px',
+                        background: urgencyConfig.background,
+                        color: urgencyConfig.color,
+                        padding: '3px 9px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap'
+                      }}
                     >
-                      {countdownText}
+                      <span
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: urgencyConfig.dotColor,
+                          display: 'inline-block'
+                        }}
+                      />
+                      <ClockIcon size={11} color={urgencyConfig.color} />
+                      <span>{countdownText}</span>
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                  {/* Action Buttons */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
                     <a
                       href={c.unstopUrl || 'https://unstop.com'}
                       target="_blank"
@@ -762,22 +970,27 @@ export default function HomeScreen({
                       onClick={(e) => e.stopPropagation()}
                       className="home-btn-primary-hover"
                       style={{
-                        flex: 1,
                         border: '1px solid #0F3FFE',
                         borderRadius: '9px',
                         background: '#0F3FFE',
                         color: '#FFFFFF',
-                        padding: '10px 12px',
+                        padding: '9px 10px',
                         textAlign: 'center',
                         fontSize: '13px',
                         fontWeight: 600,
                         whiteSpace: 'nowrap',
-                        display: 'block'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px',
+                        textDecoration: 'none'
                       }}
                     >
-                      Apply on Unstop
+                      <span>Apply</span>
+                      <ExternalLinkIcon size={12} color="#FFFFFF" />
                     </a>
                     <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (onSquadUp) onSquadUp(c);
@@ -789,14 +1002,19 @@ export default function HomeScreen({
                         borderRadius: '9px',
                         background: '#FFFFFF',
                         color: '#1A1A19',
-                        padding: '10px 12px',
+                        padding: '9px 10px',
                         fontSize: '13px',
                         fontWeight: 600,
                         whiteSpace: 'nowrap',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '5px'
                       }}
                     >
-                      Squad up
+                      <UsersIcon size={13} color="#1A1A19" />
+                      <span>Squad up</span>
                     </button>
                   </div>
                 </div>
