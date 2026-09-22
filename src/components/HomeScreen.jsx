@@ -14,7 +14,7 @@ export default function HomeScreen({
   onGoRequests,
   onGoBrowse
 }) {
-  const firstName = profile?.name ? profile.name.split(' ')[0] : 'there';
+  const firstName = typeof profile?.name === 'string' && profile.name.trim() ? profile.name.trim().split(/\s+/)[0] : 'there';
   const activeFilter = savedFilter || { disc: [], circ: [], team: 'any', fee: 'any', q: '' };
   const hasFilterActive = (activeFilter.disc && activeFilter.disc.length > 0) ||
     (activeFilter.circ && activeFilter.circ.length > 0) ||

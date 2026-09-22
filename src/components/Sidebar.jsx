@@ -42,8 +42,8 @@ export default function Sidebar({
     }
   ];
 
-  const initials = profile?.name
-    ? profile.name.split(' ').filter(Boolean).map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase() || 'UG'
+  const initials = typeof profile?.name === 'string' && profile.name.trim()
+    ? profile.name.trim().split(/\s+/).filter(Boolean).map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase() || 'UG'
     : 'UG';
 
   const profileName = profile?.name || 'Your Profile';
