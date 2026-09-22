@@ -1,6 +1,6 @@
 // src/components/HomeScreen.jsx — OneStop Home Filter-Driven Rails
 import React, { useMemo } from 'react';
-import { initialsOf, matchListing } from '../data/initialData';
+import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
 import './HomeScreen.css';
 
 const CARDS_PER_RAIL = 3;
@@ -298,8 +298,10 @@ export default function HomeScreen({
             </div>
           ) : (
             displayedBookmarks.map(b => {
-              const isUrgent = (b.days ?? 999) <= 3;
-              const daysText = (b.days ?? 999) === 1 ? '1 day left' : `${b.days} days left`;
+              const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
+              const isUrgent = b.deadline
+                ? (new Date(b.deadline).getTime() - Date.now() <= 3 * 24 * 60 * 60 * 1000)
+                : (b.days ?? 999) <= 3;
               return (
                 <div
                   key={b.id}
@@ -386,6 +388,7 @@ export default function HomeScreen({
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     <span style={{ fontSize: '12px', color: '#75736C' }}>{b.discipline}</span>
                     <span
+                      title={b.deadline ? `Exact Deadline: ${formatDeadlineDateTime(b.deadline)}` : undefined}
                       style={
                         isUrgent
                           ? {
@@ -410,7 +413,7 @@ export default function HomeScreen({
                             }
                       }
                     >
-                      {daysText}
+                      {countdownText}
                     </span>
                   </div>
 
@@ -520,8 +523,11 @@ export default function HomeScreen({
           ) : (
             displayedComps.map(c => {
               const isFree = c.fee === 'Free';
-              const isUrgent = (c.days ?? 999) <= 3;
-              const daysText = (c.days ?? 999) === 1 ? '1 day left' : `${c.days} days left`;
+              const deadlineFormatted = formatDeadlineDateTime(c.deadline);
+              const countdownText = formatDeadlineCountdown(c.deadline, c.remainDaysText, c.days);
+              const isUrgent = c.deadline
+                ? (new Date(c.deadline).getTime() - Date.now() <= 3 * 24 * 60 * 60 * 1000)
+                : (c.days ?? 999) <= 3;
               const regsText = c.regs ? Number(c.regs).toLocaleString('en-IN') : '0';
 
               return (
@@ -616,14 +622,17 @@ export default function HomeScreen({
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap', fontSize: '12px', color: '#55534D' }}>
-                    <span>{c.team}</span>
-                    <span style={{ color: '#C9C7C1' }}>·</span>
-                    <span>{c.mode}</span>
+                    {c.team ? <span>{c.team}</span> : null}
+                    {c.team && (deadlineFormatted || c.mode) ? <span style={{ color: '#C9C7C1' }}>·</span> : null}
+                    <span title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}>
+                      {deadlineFormatted ? `Ends ${deadlineFormatted}` : (c.mode || 'Online')}
+                    </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'space-between', justifyContent: 'space-between', gap: '10px' }}>
                     <span style={{ fontSize: '12px', color: '#75736C' }}>{regsText} registered</span>
                     <span
+                      title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
                       style={
                         isUrgent
                           ? {
@@ -648,7 +657,7 @@ export default function HomeScreen({
                             }
                       }
                     >
-                      {daysText}
+                      {countdownText}
                     </span>
                   </div>
 

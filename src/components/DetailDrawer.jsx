@@ -1,6 +1,6 @@
 // src/components/DetailDrawer.jsx
 import React, { useEffect } from 'react';
-import { initialsOf } from '../data/initialData';
+import { initialsOf, formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
 
 export default function DetailDrawer({
   item,
@@ -27,6 +27,9 @@ export default function DetailDrawer({
     ? 'Postgraduate / MBA Exclusive'
     : (item.isMBAorPG ? 'Undergraduate & Postgraduate / MBA' : 'Undergraduate & All Collegiate');
 
+  const deadlineFormatted = formatDeadlineDateTime(item.deadline);
+  const countdownFormatted = formatDeadlineCountdown(item.deadline, item.remainDaysText, item.days);
+
   const facts = [
     { k: 'Host', v: item.host || item.orgName || 'Organizer' },
     { k: 'Circuit', v: item.circuit || 'Collegiate' },
@@ -35,7 +38,8 @@ export default function DetailDrawer({
     { k: 'Format', v: item.mode || 'Online' },
     { k: 'Prize', v: item.prize || 'Recognition' },
     { k: 'Entry', v: item.fee || (item.isFree ? 'Free' : 'Paid') },
-    { k: 'Closes in', v: `${item.days} ${item.days === 1 ? 'day' : 'days'}` }
+    ...(deadlineFormatted ? [{ k: 'Deadline', v: deadlineFormatted }] : []),
+    { k: 'Closes in', v: countdownFormatted }
   ];
 
   const squadNote = squadsCount > 0

@@ -120,3 +120,48 @@ export function isMockBookmark(b) {
   return false;
 }
 
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+export function formatDeadlineDateTime(deadlineStr) {
+  if (!deadlineStr) return null;
+  const d = new Date(deadlineStr);
+  if (isNaN(d.getTime())) return null;
+
+  const day = d.getDate();
+  const month = MONTH_NAMES[d.getMonth()];
+  let hours = d.getHours();
+  const minutes = d.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  const minutesStr = minutes < 10 ? `0${minutes}` : minutes;
+
+  return `${day} ${month}, ${hours}:${minutesStr} ${ampm}`;
+}
+
+export function formatDeadlineCountdown(deadlineStr, fallbackRemainText, fallbackDays) {
+  if (deadlineStr) {
+    const d = new Date(deadlineStr);
+    const now = Date.now();
+    const diffMs = d.getTime() - now;
+    if (!isNaN(diffMs)) {
+      if (diffMs <= 0) return 'Ending soon';
+      const totalMinutes = Math.floor(diffMs / (1000 * 60));
+      const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const days = Math.floor(totalHours / 24);
+
+      if (days >= 2) return `${days} days left`;
+      if (days === 1) return '1 day left';
+      if (totalHours >= 1) return `${totalHours} ${totalHours === 1 ? 'hour' : 'hours'} left`;
+      if (totalMinutes > 0) return `${totalMinutes} ${totalMinutes === 1 ? 'min' : 'mins'} left`;
+      return 'Ending soon';
+    }
+  }
+  if (fallbackRemainText && fallbackRemainText !== 'Ongoing') {
+    return fallbackRemainText;
+  }
+  if (fallbackDays !== undefined && fallbackDays !== null) {
+    return fallbackDays === 1 ? '1 day left' : `${fallbackDays} days left`;
+  }
+  return fallbackRemainText || 'Ongoing';
+}
+
