@@ -769,7 +769,7 @@ function OneStopInner() {
           }
         />
       ) : (
-        <main className="onestop-main">
+        <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
           {screen === 'home' && (
             <HomeScreen
               profile={profile}
@@ -778,19 +778,16 @@ function OneStopInner() {
               onResetFilter={handleResetFilters}
               applications={applications}
               posts={posts}
-              onAcceptApp={handleAcceptApp}
-              onRejectApp={handleDeclineApp}
-              onGoRequests={() => handleNavigate('requests')}
               onGoBrowse={() => handleNavigate('browse')}
-              onApplyFilterAndBrowse={(f) => {
-                handleUpdateFilters(f);
-                handleNavigate('browse');
-              }}
               onOpenDetail={(id) => setDetailCompId(id)}
               onFindTeammates={handleFindTeammates}
+              onSquadUp={handleFindTeammates}
               bookmarks={bookmarks}
               onToggleBookmark={handleToggleBookmark}
               user={user}
+              onNavigate={handleNavigate}
+              onRequestJoin={(post) => handleOpenApply(post)}
+              onOpenWhatsApp={handleOpenWhatsApp}
             />
           )}
 

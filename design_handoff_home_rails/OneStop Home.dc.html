@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #F6F6F4; color: #1A1A19; font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  a { color: #0F3FFE; text-decoration: none; }
+  a:hover { color: #1A1A19; }
+  button { font-family: inherit; border: none; background: none; cursor: pointer; }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: #F6F6F4; color: #1A1A19; display: grid; grid-template-columns: 236px minmax(0, 1fr);">
+
+  <aside style="background: #FFFFFF; border-right: 1px solid #E7E6E2; padding: 20px 14px; display: flex; flex-direction: column; gap: 20px; width: 236px; flex-shrink: 0; position: sticky; top: 0; height: 100vh;">
+    <img src="logo-onestop.png" alt="OneStop" style="height: 26px; width: auto; align-self: flex-start; margin: 2px 8px 0; display: block; cursor: pointer;" />
+
+    <nav style="display: flex; flex-direction: column; gap: 2px;">
+      <button style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: #F2F1ED; color: #1A1A19; padding: 9px 12px; cursor: pointer; font-size: 14px; font-weight: 600;">
+        <span>Home</span>
+      </button>
+      <button style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: transparent; color: #55534D; padding: 9px 12px; cursor: pointer; font-size: 14px; font-weight: 500;" style-hover="background: #F2F1ED;">
+        <span>Browse</span>
+      </button>
+      <button style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: transparent; color: #55534D; padding: 9px 12px; cursor: pointer; font-size: 14px; font-weight: 500;" style-hover="background: #F2F1ED;">
+        <span>Bookmarks</span>
+        <span style="background: #E7E6E2; color: #55534D; border-radius: 20px; padding: 1px 7px; font-size: 11px; font-weight: 700; line-height: 1.4;">{{ bookmarkTotal }}</span>
+      </button>
+      <button style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: transparent; color: #55534D; padding: 9px 12px; cursor: pointer; font-size: 14px; font-weight: 500;" style-hover="background: #F2F1ED;">
+        <span>Team finder</span>
+      </button>
+      <button style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: transparent; color: #55534D; padding: 9px 12px; cursor: pointer; font-size: 14px; font-weight: 500;" style-hover="background: #F2F1ED;">
+        <span>Requests</span>
+        <span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 1px 7px; font-size: 11px; font-weight: 700; line-height: 1.4;">2</span>
+      </button>
+    </nav>
+
+    <div style="margin-top: auto;">
+      <button style="display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; border-radius: 9px; background: transparent; padding: 9px 8px; cursor: pointer;" style-hover="background: #F2F1ED;">
+        <span style="width: 30px; height: 30px; border-radius: 50%; background: #E7E6E2; color: #55534D; display: flex; align-items: center; justify-content: center; flex: none; font-size: 11px; font-weight: 700;">AM</span>
+        <span style="display: flex; flex-direction: column; line-height: 1.3; min-width: 0;">
+          <span style="font-size: 13px; font-weight: 600; color: #1A1A19; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Aarav Mehta</span>
+          <span style="font-size: 11px; color: #75736C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">SRCC, Delhi · 2027</span>
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <main style="min-width: 0; padding: 26px 30px 48px; display: flex; flex-direction: column; gap: 18px;">
+
+    <div>
+      <h1 style="margin: 0; font-size: 25px; font-weight: 700; letter-spacing: -0.02em; color: #1A1A19;">Hi Aarav</h1>
+      <p style="margin: 7px 0 0; font-size: 14px; color: #75736C; text-wrap: pretty;">{{ subline }}</p>
+    </div>
+
+    <sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: center; gap: 11px; flex-wrap: wrap; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 12px 16px;">
+        <span style="font-size: 12px; font-weight: 600; color: #75736C; white-space: nowrap;">Your Browse filter</span>
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <sc-for list="{{ filterChips }}" as="chip" hint-placeholder-count="3">
+            <span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 500; white-space: nowrap;">{{ chip }}</span>
+          </sc-for>
+        </div>
+        <span style="font-size: 12px; color: #75736C; white-space: nowrap;">Everything below follows it</span>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+          <button style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #1A1A19; padding: 7px 12px; font-size: 13px; font-weight: 500; white-space: nowrap;" style-hover="background: #F2F1ED;">Edit in Browse</button>
+          <button style="border: 0; background: transparent; color: #75736C; padding: 7px 4px; font-size: 13px; font-weight: 500; white-space: nowrap;" style-hover="color: #0F3FFE;">Clear</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+
+      <section style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 9px; padding: 0 2px;">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600; color: #1A1A19;">Top competitions</h2>
+          <span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; white-space: nowrap;">{{ compTotal }} match</span>
+          <span style="margin-left: auto; font-size: 12px; color: #75736C; white-space: nowrap;">Closing soonest first</span>
+        </div>
+
+        <sc-for list="{{ comps }}" as="c" hint-placeholder-count="4">
+          <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 17px 17px; display: flex; flex-direction: column; gap: 13px;" style-hover="border-color: #D6D4CE;">
+            <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: start; gap: 11px;">
+              <span style="width: 40px; height: 40px; border-radius: 9px; border: 1px solid #EFEEEA; background-color: #F2F1ED; color: #55534D; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; font-size: 12px; font-weight: 700;">{{ c.initials }}</span>
+              <span style="font-size: 13px; font-weight: 500; color: #55534D; line-height: 1.35; padding-top: 2px; text-wrap: pretty;">{{ c.host }}</span>
+            </div>
+
+            <h3 style="margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; text-wrap: pretty; color: #1A1A19;">{{ c.title }}</h3>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F9F9F7; border: 1px solid #EFEEEA; border-radius: 9px; padding: 9px 11px;">
+              <span style="font-size: 13px; font-weight: 600; color: #1A1A19; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ c.prize }}</span>
+              <sc-if value="{{ c.isFree }}" hint-placeholder-val="{{ true }}">
+                <span style="border: 1px solid rgba(23,163,74,0.30); border-radius: 6px; background: rgba(23,163,74,0.08); color: #15803D; padding: 3px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; flex: none;">Free entry</span>
+              </sc-if>
+              <sc-if value="{{ c.isPaid }}" hint-placeholder-val="{{ false }}">
+                <span style="border: 1px solid #E7E6E2; border-radius: 6px; background: #FFFFFF; color: #55534D; padding: 3px 8px; font-size: 11px; font-weight: 600; white-space: nowrap; flex: none;">{{ c.feeText }}</span>
+              </sc-if>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 12px; color: #55534D;">
+              <span>{{ c.team }}</span>
+              <span style="color: #C9C7C1;">·</span>
+              <span>{{ c.mode }}</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span style="font-size: 12px; color: #75736C;">{{ c.regs }} registered</span>
+              <sc-if value="{{ c.isUrgent }}" hint-placeholder-val="{{ true }}">
+                <span style="border: 1px solid rgba(15,63,254,0.35); border-radius: 20px; background: rgba(15,63,254,0.08); color: #0F3FFE; padding: 4px 10px; font-size: 12px; font-weight: 600; white-space: nowrap;">{{ c.daysText }}</span>
+              </sc-if>
+              <sc-if value="{{ c.isCalm }}" hint-placeholder-val="{{ false }}">
+                <span style="border: 1px solid #E7E6E2; border-radius: 20px; background: #FFFFFF; color: #55534D; padding: 4px 10px; font-size: 12px; font-weight: 600; white-space: nowrap;">{{ c.daysText }}</span>
+              </sc-if>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: auto;">
+              <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" style="flex: 1; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 10px 12px; text-align: center; font-size: 13px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC; color: #FFFFFF;">Apply on Unstop</a>
+              <button style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 10px 14px; font-size: 13px; font-weight: 600; white-space: nowrap;" style-hover="background: #F2F1ED;">Find teammates</button>
+            </div>
+          </div>
+        </sc-for>
+
+        <button style="width: 100%; border: 1px solid #E7E6E2; border-radius: 10px; background: #FFFFFF; color: #1A1A19; padding: 12px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #F2F1ED;">{{ compExploreLabel }}</button>
+      </section>
+
+      <section style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 9px; padding: 0 2px;">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600; color: #1A1A19;">Top squads</h2>
+          <span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; white-space: nowrap;">{{ squadTotal }} match</span>
+          <span style="margin-left: auto; font-size: 12px; color: #75736C; white-space: nowrap;">Recruiting now</span>
+        </div>
+
+        <sc-for list="{{ squads }}" as="s" hint-placeholder-count="4">
+          <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 17px 17px; display: flex; flex-direction: column; gap: 12px;" style-hover="border-color: #D6D4CE;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <sc-if value="{{ s.isUrgent }}" hint-placeholder-val="{{ true }}">
+                <span style="background: rgba(15,63,254,0.08); color: #0F3FFE; border: 1px solid rgba(15,63,254,0.35); border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;">{{ s.spotsText }}</span>
+              </sc-if>
+              <sc-if value="{{ s.isCalm }}" hint-placeholder-val="{{ false }}">
+                <span style="background: rgba(15,63,254,0.07); color: #0F3FFE; border: 1px solid rgba(15,63,254,0.20); border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;">{{ s.spotsText }}</span>
+              </sc-if>
+              <span style="font-size: 12px; color: #75736C; white-space: nowrap;">{{ s.posted }}</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="width: 38px; height: 38px; border-radius: 50%; background: #0F3FFE; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none;">{{ s.leadInitial }}</span>
+              <div style="min-width: 0; flex: 1;">
+                <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                  <span style="font-size: 14px; font-weight: 700; color: #1A1A19;">{{ s.lead }}</span>
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: #16A34A; display: inline-block;"></span>
+                </div>
+                <div style="font-size: 12px; color: #75736C; margin-top: 1px;">{{ s.leadMeta }}</div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid #F0EFEB; padding-top: 10px;">
+              <span style="font-size: 11px; font-weight: 600; color: #75736C; text-transform: uppercase;">Competing in</span>
+              <h3 style="margin: 3px 0 0; font-size: 15px; font-weight: 700; color: #1A1A19; line-height: 1.35; text-wrap: pretty;">{{ s.comp }}</h3>
+              <div style="font-size: 12px; color: #55534D; margin-top: 4px;">{{ s.compHost }}</div>
+            </div>
+
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: #75736C;">Teammates needed with:</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                <sc-for list="{{ s.skills }}" as="skill" hint-placeholder-count="2">
+                  <span style="background: rgba(15,63,254,0.08); color: #0F3FFE; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; white-space: nowrap;">{{ skill }}</span>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #F0EFEB;">
+              <button style="width: 100%; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 10px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC;">Request to join</button>
+            </div>
+          </div>
+        </sc-for>
+
+        <button style="width: 100%; border: 1px solid #E7E6E2; border-radius: 10px; background: #FFFFFF; color: #1A1A19; padding: 12px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #F2F1ED;">{{ squadExploreLabel }}</button>
+      </section>
+
+      <section style="flex: 1 1 300px; max-width: 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 9px; padding: 0 2px;">
+          <h2 style="margin: 0; font-size: 15px; font-weight: 600; color: #1A1A19;">Bookmarks</h2>
+          <span style="background: #E7E6E2; color: #55534D; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; white-space: nowrap;">{{ bookmarkTotal }}</span>
+        </div>
+        <p style="margin: -4px 2px 0; font-size: 12px; color: #75736C;">Every saved competition, soonest deadline first. Filters don't apply here.</p>
+
+        <sc-for list="{{ bookmarks }}" as="b" hint-placeholder-count="4">
+          <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 14px 15px 15px; display: flex; flex-direction: column; gap: 11px;" style-hover="border-color: #D6D4CE;">
+            <div style="display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: start; gap: 10px;">
+              <span style="width: 34px; height: 34px; border-radius: 8px; border: 1px solid #EFEEEA; background-color: #F2F1ED; color: #55534D; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; font-size: 11px; font-weight: 700;">{{ b.initials }}</span>
+              <span style="font-size: 12px; font-weight: 500; color: #55534D; line-height: 1.35; padding-top: 2px; text-wrap: pretty;">{{ b.host }}</span>
+              <button title="Remove bookmark" style="border: 1px solid #E7E6E2; border-radius: 8px; background: #F2F1ED; color: #1A1A19; width: 28px; height: 28px; flex: none; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center;" style-hover="background: #E7E6E2;">×</button>
+            </div>
+
+            <h3 style="margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; text-wrap: pretty; color: #1A1A19;">{{ b.title }}</h3>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #F9F9F7; border: 1px solid #EFEEEA; border-radius: 9px; padding: 8px 10px;">
+              <span style="font-size: 12px; font-weight: 600; color: #1A1A19; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ b.prize }}</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <span style="font-size: 12px; color: #75736C;">{{ b.discipline }}</span>
+              <sc-if value="{{ b.isUrgent }}" hint-placeholder-val="{{ true }}">
+                <span style="border: 1px solid rgba(15,63,254,0.35); border-radius: 20px; background: rgba(15,63,254,0.08); color: #0F3FFE; padding: 3px 9px; font-size: 12px; font-weight: 600; white-space: nowrap;">{{ b.daysText }}</span>
+              </sc-if>
+              <sc-if value="{{ b.isCalm }}" hint-placeholder-val="{{ false }}">
+                <span style="border: 1px solid #E7E6E2; border-radius: 20px; background: #FFFFFF; color: #55534D; padding: 3px 9px; font-size: 12px; font-weight: 600; white-space: nowrap;">{{ b.daysText }}</span>
+              </sc-if>
+            </div>
+
+            <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 9px 12px; text-align: center; font-size: 13px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC; color: #FFFFFF;">Apply on Unstop</a>
+          </div>
+        </sc-for>
+
+        <button style="width: 100%; border: 1px solid #E7E6E2; border-radius: 10px; background: #FFFFFF; color: #1A1A19; padding: 12px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #F2F1ED;">{{ bookmarkExploreLabel }}</button>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;cardsPerColumn&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4,&quot;min&quot;:2,&quot;max&quot;:6,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Columns&quot;},&quot;showFilterStrip&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Columns&quot;},&quot;showSquadSkills&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Columns&quot;}}">
+const COMPS = [
+  { title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', prize: '₹1,50,000 prize pool', fee: 'Free', team: '2–4 members', mode: 'Online', days: 2, regs: 1842, discipline: 'Case' },
+  { title: 'Prayaas Case Challenge', host: 'Shri Ram College of Commerce', prize: '₹1,00,000 + PPI shortlist', fee: 'Free', team: '3–4 members', mode: 'Hybrid', days: 3, regs: 2310, discipline: 'Case' },
+  { title: 'Beyond Boundaries — Strategy Sprint', host: 'Shaheed Sukhdev College of Business Studies', prize: '₹75,000 prize pool', fee: 'Free', team: '2–3 members', mode: 'Online', days: 6, regs: 1127, discipline: 'Case' },
+  { title: 'Vichaar — Social Impact Case Comp', host: 'Hansraj College, University of Delhi', prize: '₹60,000 prize pool', fee: '₹200', team: '2–4 members', mode: 'Online', days: 9, regs: 864, discipline: 'Case' },
+  { title: 'Arthaneeti Policy Case Lab', host: 'Lady Shri Ram College for Women', prize: '₹50,000 prize pool', fee: 'Free', team: '2–4 members', mode: 'Online', days: 12, regs: 640, discipline: 'Case' },
+  { title: 'Consult-a-thon', host: 'Kirori Mal College', prize: '₹40,000 prize pool', fee: 'Free', team: '3–4 members', mode: 'Offline', days: 15, regs: 512, discipline: 'Case' }
+];
+
+const SQUADS = [
+  { lead: 'Ananya Rao', leadMeta: 'Lady Shri Ram College · 2027', comp: 'Kurukshetra 2026 — National Case Challenge', compHost: 'Hindu College, University of Delhi', spots: 2, posted: '4h ago', skills: ['Finance modelling', 'Deck design'] },
+  { lead: 'Kabir Sethi', leadMeta: 'Shri Ram College of Commerce · 2026', comp: 'Prayaas Case Challenge', compHost: 'Shri Ram College of Commerce', spots: 1, posted: '9h ago', skills: ['Market research', 'Valuation'] },
+  { lead: 'Nikhil Arora', leadMeta: 'SSCBS · 2027', comp: 'Beyond Boundaries — Strategy Sprint', compHost: 'Shaheed Sukhdev College of Business Studies', spots: 3, posted: 'Yesterday', skills: ['Public speaking', 'Deck design'] },
+  { lead: 'Meher Gill', leadMeta: 'Hindu College · 2028', comp: 'Kurukshetra 2026 — National Case Challenge', compHost: 'Hindu College, University of Delhi', spots: 1, posted: '2 days ago', skills: ['Copywriting', 'Market research'] },
+  { lead: 'Devansh Iyer', leadMeta: 'Hansraj College · 2027', comp: 'Vichaar — Social Impact Case Comp', compHost: 'Hansraj College, University of Delhi', spots: 2, posted: '3 days ago', skills: ['ML / Data', 'Deck design'] }
+];
+
+const BOOKMARKS = [
+  { title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', prize: '₹1,50,000 prize pool', days: 2, discipline: 'Case' },
+  { title: 'Tata Crucible Campus Quiz', host: 'Tata Group', prize: '₹5,00,000 prize pool', days: 4, discipline: 'Quiz' },
+  { title: "L'Oréal Brandstorm 2026", host: "L'Oréal", prize: 'Paris global finals', days: 11, discipline: 'Case' },
+  { title: 'Bain Business Bowl', host: 'Bain & Company', prize: '₹3,00,000 + interview fast-track', days: 17, discipline: 'Case' },
+  { title: 'Smart India Hackathon — Campus Round', host: 'Ministry of Education', prize: '₹1,00,000 prize pool', days: 23, discipline: 'Hackathon' },
+  { title: 'HUL Lime Season 17', host: 'Hindustan Unilever', prize: 'PPI + ₹2,00,000', days: 31, discipline: 'Case' }
+];
+
+function initialsOf(host = '') {
+  const skip = { '&': 1, and: 1, company: 1, college: 1, of: 1, institute: 1, university: 1, for: 1, the: 1 };
+  const words = host.split(/[\s.,]+/).filter(w => w && !skip[w.toLowerCase()]);
+  if (!words.length) return '··';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words.slice(0, 2).map(w => w.charAt(0)).join('').toUpperCase();
+}
+
+class Component extends DCLogic {
+  renderVals() {
+    const n = Math.max(1, Math.min(6, this.props.cardsPerColumn ?? 4));
+    const chips = ['Case', 'DU Circuit', 'Free entry'];
+
+    const comps = COMPS.slice(0, n).map(c => {
+      const isFree = c.fee === 'Free';
+      return {
+        ...c,
+        initials: initialsOf(c.host),
+        isFree,
+        isPaid: !isFree,
+        feeText: c.fee + ' entry',
+        regs: c.regs.toLocaleString('en-IN'),
+        isUrgent: c.days <= 3,
+        isCalm: c.days > 3,
+        daysText: c.days === 1 ? '1 day left' : c.days + ' days left'
+      };
+    });
+
+    const squads = SQUADS.slice(0, n).map(s => ({
+      ...s,
+      leadInitial: s.lead.charAt(0).toUpperCase(),
+      spotsText: s.spots === 1 ? '1 spot left' : s.spots + ' spots left',
+      isUrgent: s.spots <= 1,
+      isCalm: s.spots > 1,
+      skills: (this.props.showSquadSkills ?? true) ? s.skills : []
+    }));
+
+    const bookmarks = BOOKMARKS.slice(0, n).map(b => ({
+      ...b,
+      initials: initialsOf(b.host),
+      isUrgent: b.days <= 3,
+      isCalm: b.days > 3,
+      daysText: b.days === 1 ? '1 day left' : b.days + ' days left'
+    }));
+
+    return {
+      showFilters: this.props.showFilterStrip ?? true,
+      filterChips: chips,
+      subline: `${COMPS.length} competitions and ${SQUADS.length} squads match your Browse filter — ${chips.join(' · ').toLowerCase()}.`,
+      comps,
+      squads,
+      bookmarks,
+      compTotal: COMPS.length,
+      squadTotal: SQUADS.length,
+      bookmarkTotal: BOOKMARKS.length,
+      compExploreLabel: `Explore all ${COMPS.length} competitions →`,
+      squadExploreLabel: `Explore all ${SQUADS.length} squads →`,
+      bookmarkExploreLabel: `Open all ${BOOKMARKS.length} bookmarks →`
+    };
+  }
+}
+
+</script>
+</body>
+</html>

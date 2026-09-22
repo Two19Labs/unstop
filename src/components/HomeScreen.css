@@ -1,0 +1,115 @@
+/* src/components/HomeScreen.css — OneStop Home Filter-Driven Rails */
+
+.home-container {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: 100%;
+}
+
+.home-section {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.home-section-header {
+  padding: 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-greeting-block {
+  padding: 0 30px;
+}
+
+.home-filter-strip {
+  margin: 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex-wrap: wrap;
+  background: #FFFFFF;
+  border: 1px solid #E7E6E2;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.rail {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 4px 30px 14px;
+  align-items: stretch;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rail::-webkit-scrollbar {
+  height: 8px;
+}
+
+.rail::-webkit-scrollbar-track {
+  background: #EFEEEA;
+  border-radius: 20px;
+}
+
+.rail::-webkit-scrollbar-thumb {
+  background: #D6D4CE;
+  border-radius: 20px;
+}
+
+.rail::-webkit-scrollbar-thumb:hover {
+  background: #C0BEB7;
+}
+
+.home-rail-card {
+  background: #FFFFFF;
+  border: 1px solid #E7E6E2;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  scroll-snap-align: start;
+  transition: border-color 150ms ease;
+  box-sizing: border-box;
+}
+
+.home-rail-card:hover {
+  border-color: #D6D4CE;
+}
+
+.home-btn-hover:hover {
+  background-color: #F2F1ED !important;
+}
+
+.home-btn-primary-hover:hover {
+  background-color: #0C33CC !important;
+  border-color: #0C33CC !important;
+  color: #FFFFFF !important;
+}
+
+.home-btn-remove:hover {
+  background-color: #E7E6E2 !important;
+}
+
+.home-clear-btn:hover {
+  color: #0F3FFE !important;
+}
+
+@media (max-width: 768px) {
+  .home-greeting-block,
+  .home-filter-strip,
+  .home-section-header {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .home-filter-strip {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  .rail {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

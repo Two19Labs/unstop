@@ -22,6 +22,11 @@
   position: relative;
 }
 
+.onestop-main.onestop-main-home {
+  padding: 26px 0 48px;
+  overflow-x: hidden;
+}
+
 /* Mobile Header bar (hidden on desktop) */
 .mobile-topbar {
   display: none;
@@ -87,6 +92,10 @@
     padding: 18px 16px 36px;
   }
 
+  .onestop-main.onestop-main-home {
+    padding: 18px 0 36px;
+  }
+
   .browse-grid-container {
     grid-template-columns: 1fr !important;
   }
@@ -95,5 +104,9 @@
 @media (max-width: 480px) {
   .onestop-main {
     padding: 14px 12px 28px;
+  }
+
+  .onestop-main.onestop-main-home {
+    padding: 14px 0 28px;
   }
 }
