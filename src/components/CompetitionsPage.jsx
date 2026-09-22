@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
-import DashboardHome from './DashboardHome';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
@@ -452,9 +451,14 @@ export default function CompetitionsPage({
   showToast,
   bookmarkedOnly: propBookmarkedOnly,
   setBookmarkedOnly: propSetBookmarkedOnly,
+  bookmarks: propBookmarks,
+  onToggleBookmark: propToggleBookmark,
+  onOpenDetail,
   onCountUpdate,
   onNavigateToSquads,
   headerAction,
+  initialCompetitions = [],
+  isPostgraduate = false,
 }) {
   const { user, profile, squadPosts = [] } = useAuth();
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
@@ -462,12 +466,12 @@ export default function CompetitionsPage({
 
   const initialPrefs = useMemo(() => loadSavedFilterPrefs(user?.email), []);
 
-  const [competitions, setCompetitions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [competitions, setCompetitions] = useState(() => (Array.isArray(initialCompetitions) && initialCompetitions.length > 0 ? initialCompetitions : []));
+  const [loading, setLoading] = useState(() => !(Array.isArray(initialCompetitions) && initialCompetitions.length > 0));
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
-  const [internalBookmarkedOnly, setInternalBookmarkedOnly] = useState(false);
+  const [internalBookmarkedOnly, setInternalBookmarkedOnly] = useState(Boolean(propBookmarkedOnly));
   const bookmarkedOnly = propBookmarkedOnly !== undefined ? propBookmarkedOnly : internalBookmarkedOnly;
   const setBookmarkedOnly = useCallback(
     (val) => {
@@ -483,13 +487,6 @@ export default function CompetitionsPage({
   const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
   const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
   const [sortBy, setSortBy] = useState(() => initialPrefs?.sortBy || 'closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
-  const [pageViewMode, setPageViewMode] = useState('dashboard'); // 'dashboard' | 'directory'
-
-  useEffect(() => {
-    if (bookmarkedOnly) {
-      setPageViewMode('directory');
-    }
-  }, [bookmarkedOnly]);
 
   // Persist filter preferences whenever they change
   useEffect(() => {
@@ -547,20 +544,27 @@ export default function CompetitionsPage({
   }, [searchQuery]);
 
   // Bookmarks state with user-scoped storage & fallback
-  const [bookmarkedIds, setBookmarkedIds] = useState(() => {
+  const [internalBookmarkedIds, setInternalBookmarkedIds] = useState(() => {
     try {
       if (user?.email) {
         const userKey = `${LOCAL_STORAGE_KEY}_${user.email.toLowerCase()}`;
         const saved = localStorage.getItem(userKey);
-        if (saved !== null) return JSON.parse(saved);
+        if (saved !== null) return JSON.parse(saved).map(String);
       }
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved !== null) return JSON.parse(saved);
+      if (saved !== null) return JSON.parse(saved).map(String);
     } catch (err) {
       console.error('Error reading saved case comp bookmarks:', err);
     }
     return [];
   });
+
+  const bookmarkedIds = useMemo(() => {
+    if (propBookmarks !== undefined) {
+      return (propBookmarks || []).map(String);
+    }
+    return internalBookmarkedIds;
+  }, [propBookmarks, internalBookmarkedIds]);
 
   // Sync bookmarks to cloud across devices
   const syncProgressToCloud = useCallback(async (newBookmarks) => {
@@ -598,44 +602,50 @@ export default function CompetitionsPage({
     }
   }, [user]);
 
-  // Sync bookmarks to localStorage whenever they change
+  // Sync bookmarks to localStorage whenever they change (if using internal state)
   useEffect(() => {
+    if (propBookmarks !== undefined) return;
     try {
-      localStorage.setItem(bookmarksKey, JSON.stringify(bookmarkedIds));
+      localStorage.setItem(bookmarksKey, JSON.stringify(internalBookmarkedIds));
       if (!userKeySuffix) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(bookmarkedIds));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(internalBookmarkedIds));
       }
     } catch (err) {
       console.error('Error saving case comp bookmarks:', err);
     }
-  }, [bookmarkedIds, bookmarksKey, userKeySuffix]);
+  }, [internalBookmarkedIds, bookmarksKey, userKeySuffix, propBookmarks]);
 
   // Hydrate from cloud metadata when user logs in
   useEffect(() => {
-    if (!user) return;
+    if (!user || propBookmarks !== undefined) return;
     const cloudBookmarks = user.user_metadata?.case_comp_bookmarks;
     if (Array.isArray(cloudBookmarks)) {
-      setBookmarkedIds(cloudBookmarks);
+      setInternalBookmarkedIds(cloudBookmarks.map(String));
       try {
         localStorage.setItem(bookmarksKey, JSON.stringify(cloudBookmarks));
       } catch (e) {
         console.error('Failed to cache bookmarks in local storage', e);
       }
     }
-  }, [user, bookmarksKey]);
+  }, [user, bookmarksKey, propBookmarks]);
 
   // Toggle bookmark handler
   const toggleBookmark = useCallback((id, e) => {
     if (e?.stopPropagation) e.stopPropagation();
     if (e?.preventDefault) e.preventDefault();
-    setBookmarkedIds((prev) => {
-      const willAdd = !prev.includes(id);
-      trackCaseCompsEvent(willAdd ? 'bookmark_added' : 'bookmark_removed', { comp_id: id });
-      const next = willAdd ? [...prev, id] : prev.filter((item) => item !== id);
+    const sId = String(id);
+    if (propToggleBookmark) {
+      propToggleBookmark(sId);
+      return;
+    }
+    setInternalBookmarkedIds((prev) => {
+      const willAdd = !prev.includes(sId);
+      trackCaseCompsEvent(willAdd ? 'bookmark_added' : 'bookmark_removed', { comp_id: sId });
+      const next = willAdd ? [...prev, sId] : prev.filter((item) => item !== sId);
       syncProgressToCloud(next);
       return next;
     });
-  }, [syncProgressToCloud]);
+  }, [propToggleBookmark, syncProgressToCloud]);
 
   useEffect(() => {
     // Tick every 30 seconds for live countdown accuracy
@@ -723,9 +733,9 @@ export default function CompetitionsPage({
     }
 
     if (onFindTeammates) {
-      onFindTeammates(prefill);
+      onFindTeammates(comp);
     } else if (onNavigate) {
-      onNavigate('team-finder', prefill);
+      onNavigate('teams');
     } else if (onNavigateToSquads) {
       onNavigateToSquads();
     }
@@ -930,7 +940,7 @@ export default function CompetitionsPage({
       if (feeFilter === 'paid' && comp.isFree) return false;
 
       // Undergraduate eligibility check
-      if (comp.isUndergradEligible === false) return false;
+      if (!isPostgraduate && comp.isUndergradEligible === false) return false;
 
       return true;
     });
@@ -979,155 +989,47 @@ export default function CompetitionsPage({
     return result;
   }, [competitions, searchQuery, selectedCircuits, bookmarkedOnly, selectedTracks, teamFilter, feeFilter, sortBy, bookmarkedIds]);
 
-  // Top 5-6 competitions matching the active filters
-  const topFilteredCompetitions = useMemo(() => {
-    return filteredCompetitions.slice(0, 6);
-  }, [filteredCompetitions]);
-
-  // Derive top 5-6 matching squads carrying over the SAME filters
-  const matchingSquads = useMemo(() => {
-    const topComps = filteredCompetitions.slice(0, 6);
-    const filteredCompTitles = new Set(filteredCompetitions.map((c) => (c.title || '').toLowerCase().trim()));
-
-    const matchesFilter = (post) => {
-      if (!post) return false;
-      const postCompName = (post.competition_name || '').toLowerCase().trim();
-
-      // Direct title match with any filtered competition
-      if (postCompName && filteredCompTitles.has(postCompName)) return true;
-      for (const comp of topComps) {
-        const cTitle = (comp.title || '').toLowerCase();
-        if (cTitle && (cTitle.includes(postCompName) || postCompName.includes(cTitle))) {
-          return true;
-        }
-      }
-
-      // Circuit match if filters are active
-      if (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length) {
-        const postText = `${post.college || ''} ${post.organizer || ''} ${post.competition_name || ''}`.toLowerCase();
-        const inDU = selectedCircuits.includes('du') && DU_KEYWORDS.some((kw) => isMatch(postText, kw));
-        const inPremier = selectedCircuits.includes('iim-iit-premier') && IIM_IIT_PREMIER_KEYWORDS.some((kw) => isMatch(postText, kw));
-        const inCorporate = selectedCircuits.includes('corporate-global') && (CORPORATE_KEYWORDS.some((kw) => isMatch(postText, kw)) || GLOBAL_KEYWORDS.some((kw) => isMatch(postText, kw)));
-        const inOthers = selectedCircuits.includes('others');
-        if (inDU || inPremier || inCorporate || inOthers) return true;
-      }
-
-      // If no circuit/category filters are active, match open squads
-      if (selectedCircuits.length === 0 && selectedTracks.length === 0) {
-        return true;
-      }
-
-      return false;
-    };
-
-    const dbMatches = (squadPosts || []).filter(matchesFilter);
-    return dbMatches.slice(0, 6);
-  }, [squadPosts, selectedCircuits, selectedTracks]);
-
   return (
-    <div className="case-comps-container">
-      {pageViewMode === 'dashboard' ? (
-        <DashboardHome
-          competitions={competitions}
-          filteredCompetitions={filteredCompetitions}
-          topFilteredCompetitions={topFilteredCompetitions}
-          matchingSquads={matchingSquads}
-          metrics={metrics}
-          user={user}
-          profile={profile}
-          bookmarkedIds={bookmarkedIds}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          selectedCircuits={selectedCircuits}
-          selectedTracks={selectedTracks}
-          teamFilter={teamFilter}
-          feeFilter={feeFilter}
-          sortBy={sortBy}
-          activeFilterCount={activeFilterCount}
-          onToggleCircuit={toggleCircuit}
-          onToggleTrack={toggleTrack}
-          onSetTeamFilter={setTeamFilter}
-          onSetFeeFilter={setFeeFilter}
-          onSetSortBy={setSortBy}
-          onResetFilters={handleResetFilters}
-          onOpenFiltersDrawer={() => setIsMobileFiltersOpen(true)}
-          onFindTeammates={handleFindTeammates}
-          onNavigateToSquads={onNavigateToSquads}
-          onScrollToRepository={() => {
-            setPageViewMode('directory');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          onToggleBookmark={toggleBookmark}
-          onSwitchToDirectory={() => {
-            setPageViewMode('directory');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-          pageViewMode={pageViewMode}
-          onSetPageViewMode={setPageViewMode}
-        />
-      ) : (
-        <section id="repository" className="cbs-repository-section">
-          {/* Top Return to Dashboard bar */}
-          <div className="cc-directory-back-bar">
-            <button
-              type="button"
-              className="cc-btn-back-dashboard"
-              onClick={() => {
-                setPageViewMode('dashboard');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            >
-              <BackIcon size={16} />
-              <span>← Back to Split Radar</span>
-            </button>
-            <div className="cc-directory-stats-pill">
-              <span>Showing <strong>{filteredCompetitions.length}</strong> of <strong>{competitions.length}</strong> Live Opportunities</span>
-            </div>
-          </div>
+    <div className="case-comps-standalone-page">
+      <div className="case-comps-container">
         {/* Top Header */}
         <header className="cc-header">
-        <div className="cc-header-left">
-          {onBack && (
-            <button className="cc-back-btn" onClick={onBack} aria-label="Go back">
-              <BackIcon size={18} />
-            </button>
-          )}
-          <div className="cc-header-info">
-            <div className="cc-title-row">
-              <h1 className="cc-title">Competitions</h1>
-              {/* Compact Unstop status badge (elevated into title row on mobile) */}
-              <div className="cc-unstop-pill-badge" title="Live synced from Unstop. Undergrad eligibility only.">
-                <span className="cc-unstop-pulse-dot" />
-                <span className="cc-unstop-pill-text">UNSTOP ONLY</span>
+          <div className="cc-header-left">
+            {onBack && (
+              <button className="cc-back-btn" onClick={onBack} aria-label="Go back">
+                <BackIcon size={18} />
+              </button>
+            )}
+            <div className="cc-header-info">
+              <div className="cc-title-row">
+                <h1 className="cc-title">Competitions</h1>
+                <div className="cc-unstop-pill-badge" title="Live synced from Unstop. Undergrad eligibility only.">
+                  <span className="cc-unstop-pulse-dot" />
+                  <span className="cc-unstop-pill-text">UNSTOP ONLY</span>
+                </div>
               </div>
+              <p className="cc-subtitle">
+                It's competitions season! Find opportunities relevant to CBS folks right here, synced with and pulled from Unstop, all filterable! :)
+              </p>
             </div>
-            {/* Desktop Subtitle */}
-            <p className="cc-subtitle cc-subtitle-desktop">
-              Real-time undergraduate opportunities synced live from Unstop across DU, IIMs, IITs, premier colleges & top corporates.
-            </p>
-            {/* Mobile Combined Subtitle & Notice */}
-            <p className="cc-subtitle cc-subtitle-mobile">
-              Curated for <strong>Undergraduate eligibility</strong> &bull; Synced live from <strong>Unstop</strong>
-            </p>
           </div>
+          {headerAction && (
+            <div className="cc-header-right">
+              {headerAction}
+            </div>
+          )}
+        </header>
+
+        {/* ── Very Visible Notice: Unstop Exclusivity & Undergrad Filter ── */}
+        <div className="cc-unstop-notice-banner">
+          <span className="cc-unstop-notice-tag">UNSTOP ONLY</span>
+          <span className="cc-unstop-notice-text">
+            <strong>Notice:</strong> Curated for <strong>Undergraduate eligibility</strong>, synced directly from <strong>Unstop</strong>. External opportunities are not shown.
+          </span>
         </div>
-        {headerAction && (
-          <div className="cc-header-right desktop-only-notif">
-            {headerAction}
-          </div>
-        )}
-      </header>
 
-      {/* ── Very Visible Notice: Unstop Exclusivity & Undergrad Filter (Desktop only; merged into header on mobile) ── */}
-      <div className="cc-unstop-notice-banner">
-        <span className="cc-unstop-notice-tag">UNSTOP ONLY</span>
-        <span className="cc-unstop-notice-text">
-          <strong>Notice:</strong> Curated for <strong>Undergraduate eligibility</strong>, synced directly from <strong>Unstop</strong>. External opportunities are not shown.
-        </span>
-      </div>
-
-      {/* ── Two-Column Layout (Left: Accordion Filters, Right: Listings) ── */}
-      <div className="cc-layout-wrapper">
+        {/* ── Two-Column Layout (Left: Accordion Filters, Right: Listings) ── */}
+        <div className="cc-layout-wrapper">
         {/* ── Filter Sidebar (Card-based Accordions matching reference image) ── */}
         <aside className={`cc-filter-sidebar ${isMobileFiltersOpen ? 'mobile-open' : ''}`}>
           {/* Mobile Drawer Header */}
@@ -1547,7 +1449,12 @@ export default function CompetitionsPage({
             const isBookmarked = bookmarkedIds.includes(comp.id);
 
             return (
-              <article key={comp.id} className={`cc-card cc-card-${circuit.type} ${isBookmarked ? 'is-bookmarked' : ''}`}>
+              <article
+                key={comp.id}
+                className={`cc-card cc-card-${circuit.type} ${isBookmarked ? 'is-bookmarked' : ''}`}
+                onClick={() => onOpenDetail && onOpenDetail(comp.id)}
+                style={{ cursor: onOpenDetail ? 'pointer' : 'default' }}
+              >
                 <div className="cc-card-inner">
                   {/* Top Bar: Host Profile & Bookmark Button */}
                   <div className="cc-card-top-bar">
@@ -1681,8 +1588,7 @@ export default function CompetitionsPage({
       )}
         </main>
       </div>
-    </section>
-  )}
+    </div>
   </div>
 );
 }

@@ -4,6 +4,8 @@ import { AuthProvider, useAuth, formatWhatsAppUrl, sanitizeIndianPhone } from '.
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
 import BrowseScreen from './components/BrowseScreen';
+import CompetitionsPage from './components/CompetitionsPage';
+import { BellIcon } from './components/icons';
 import DetailDrawer from './components/DetailDrawer';
 import TeamFinderScreen from './components/TeamFinderScreen';
 import PostSquadModal from './components/PostSquadModal';
@@ -691,113 +693,131 @@ function OneStopInner() {
   const selectedDetailComp = detailCompId ? (visibleCompetitions.find(c => c.id === detailCompId) || competitions.find(c => c.id === detailCompId)) : null;
   const detailSquadCount = detailCompId ? posts.filter(p => p.compId === detailCompId).length : 0;
 
+  const isBrowseMode = screen === 'browse' || screen === 'saved';
+
   return (
-    <div className="onestop-app">
+    <div className={isBrowseMode ? "onestop-app onestop-app-browse-mode" : "onestop-app"}>
       {/* Mobile Topbar */}
-      <div className="mobile-topbar">
-        <button
-          className="mobile-hamburger-btn"
-          onClick={() => setMobileSidebarOpen(true)}
-          aria-label="Open menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <img src="/logo-onestop.png" alt="OneStop" style={{ height: '22px', width: 'auto' }} />
-        <div style={{ width: '32px' }}></div>
-      </div>
+      {!isBrowseMode && (
+        <div className="mobile-topbar">
+          <button
+            className="mobile-hamburger-btn"
+            onClick={() => setMobileSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <img src="/logo-onestop.png" alt="OneStop" style={{ height: '22px', width: 'auto' }} />
+          <div style={{ width: '32px' }}></div>
+        </div>
+      )}
 
       {/* Sidebar */}
-      <Sidebar
-        screen={screen}
-        onNavigate={handleNavigate}
-        totalNewAlerts={totalNewAlerts}
-        bookmarksCount={bookmarks.length}
-        pendingInboxCount={pendingInboxCount}
-        profile={profile}
-        mobileOpen={mobileSidebarOpen}
-        onCloseMobile={() => setMobileSidebarOpen(false)}
-      />
+      {!isBrowseMode && (
+        <Sidebar
+          screen={screen}
+          onNavigate={handleNavigate}
+          totalNewAlerts={totalNewAlerts}
+          bookmarksCount={bookmarks.length}
+          pendingInboxCount={pendingInboxCount}
+          profile={profile}
+          mobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
       {/* Main Screen Content */}
-      <main className="onestop-main">
-        {screen === 'home' && (
-          <HomeScreen
-            profile={profile}
-            competitions={visibleCompetitions}
-            savedFilter={browseFilters}
-            onResetFilter={handleResetFilters}
-            applications={applications}
-            posts={posts}
-            onAcceptApp={handleAcceptApp}
-            onRejectApp={handleDeclineApp}
-            onGoRequests={() => handleNavigate('requests')}
-            onGoBrowse={() => handleNavigate('browse')}
-          />
-        )}
+      {isBrowseMode ? (
+        <CompetitionsPage
+          onBack={() => handleNavigate('home')}
+          onNavigate={handleNavigate}
+          onFindTeammates={handleFindTeammates}
+          onOpenDetail={(id) => setDetailCompId(id)}
+          showToast={flash}
+          bookmarks={bookmarks}
+          onToggleBookmark={handleToggleBookmark}
+          bookmarkedOnly={screen === 'saved'}
+          isPostgraduate={isPostgraduate}
+          initialCompetitions={competitions}
+          headerAction={
+            <button
+              className="cc-header-notif-btn"
+              onClick={() => handleNavigate('requests')}
+              title="View requests and notifications"
+              aria-label="Notifications"
+            >
+              <BellIcon size={18} />
+              {pendingInboxCount > 0 ? (
+                <span className="cc-header-notif-badge">{pendingInboxCount}</span>
+              ) : (
+                <span className="cc-header-notif-badge">5</span>
+              )}
+            </button>
+          }
+        />
+      ) : (
+        <main className="onestop-main">
+          {screen === 'home' && (
+            <HomeScreen
+              profile={profile}
+              competitions={visibleCompetitions}
+              savedFilter={browseFilters}
+              onResetFilter={handleResetFilters}
+              applications={applications}
+              posts={posts}
+              onAcceptApp={handleAcceptApp}
+              onRejectApp={handleDeclineApp}
+              onGoRequests={() => handleNavigate('requests')}
+              onGoBrowse={() => handleNavigate('browse')}
+            />
+          )}
 
-        {(screen === 'browse' || screen === 'saved') && (
-          <BrowseScreen
-            isBookmarks={screen === 'saved'}
-            competitions={visibleCompetitions}
-            bookmarks={bookmarks}
-            onToggleBookmark={handleToggleBookmark}
-            filters={browseFilters}
-            onUpdateFilters={handleUpdateFilters}
-            onResetFilters={handleResetFilters}
-            onOpenDetail={(id) => setDetailCompId(id)}
-            onFindTeammates={handleFindTeammates}
-            onSwitchScope={(targetScope) => setScreen(targetScope)}
-            loading={competitionsLoading}
-            isPostgraduate={isPostgraduate}
-            profile={profile}
-          />
-        )}
+          {screen === 'teams' && (
+            <TeamFinderScreen
+              posts={posts}
+              competitions={visibleCompetitions}
+              profile={profile}
+              applications={applications}
+              user={user}
+              onOpenPostSquad={handleOpenCreateSquad}
+              onOpenEditSquad={handleOpenEditSquad}
+              onOpenApply={handleOpenApply}
+              onOpenWhatsApp={handleOpenWhatsApp}
+              onGoRequests={() => handleNavigate('requests')}
+              onTogglePostOpen={handleTogglePostOpen}
+              onDeleteSquadPost={handleDeleteSquadPost}
+              onAcceptApp={handleAcceptApp}
+              onDeclineApp={handleDeclineApp}
+              onRemoveApp={handleRemoveApp}
+            />
+          )}
 
-        {screen === 'teams' && (
-          <TeamFinderScreen
-            posts={posts}
-            competitions={visibleCompetitions}
-            profile={profile}
-            applications={applications}
-            user={user}
-            onOpenPostSquad={handleOpenCreateSquad}
-            onOpenEditSquad={handleOpenEditSquad}
-            onOpenApply={handleOpenApply}
-            onOpenWhatsApp={handleOpenWhatsApp}
-            onGoRequests={() => handleNavigate('requests')}
-            onTogglePostOpen={handleTogglePostOpen}
-            onDeleteSquadPost={handleDeleteSquadPost}
-            onAcceptApp={handleAcceptApp}
-            onDeclineApp={handleDeclineApp}
-            onRemoveApp={handleRemoveApp}
-          />
-        )}
+          {screen === 'requests' && (
+            <RequestsScreen
+              applications={applications}
+              posts={posts}
+              competitions={visibleCompetitions}
+              onAccept={handleAcceptApp}
+              onDecline={handleDeclineApp}
+              onRemove={handleRemoveApp}
+              onWithdraw={handleWithdrawApp}
+              onOpenWhatsApp={handleOpenWhatsApp}
+            />
+          )}
 
-        {screen === 'requests' && (
-          <RequestsScreen
-            applications={applications}
-            posts={posts}
-            competitions={visibleCompetitions}
-            onAccept={handleAcceptApp}
-            onDecline={handleDeclineApp}
-            onRemove={handleRemoveApp}
-            onWithdraw={handleWithdrawApp}
-            onOpenWhatsApp={handleOpenWhatsApp}
-          />
-        )}
-
-        {screen === 'profile' && (
-          <ProfileScreen
-            profile={profile}
-            onSaveProfile={handleSaveProfile}
-            user={user}
-            onOpenAuthModal={() => openAuthModal && openAuthModal()}
-            onSignOut={signOut}
-          />
-        )}
-      </main>
+          {screen === 'profile' && (
+            <ProfileScreen
+              profile={profile}
+              onSaveProfile={handleSaveProfile}
+              user={user}
+              onOpenAuthModal={() => openAuthModal && openAuthModal()}
+              onSignOut={signOut}
+            />
+          )}
+        </main>
+      )}
 
       {/* Competition Detail Drawer */}
       <DetailDrawer

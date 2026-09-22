@@ -10,6 +10,12 @@
   grid-template-columns: 236px minmax(0, 1fr);
 }
 
+.onestop-app.onestop-app-browse-mode {
+  display: block;
+  grid-template-columns: none;
+  width: 100%;
+}
+
 .onestop-main {
   min-width: 0;
   padding: 26px 30px 48px;
