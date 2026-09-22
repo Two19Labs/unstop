@@ -4,6 +4,7 @@ import { SKILLS } from '../data/initialData';
 import { sanitizeIndianPhone } from '../context/AuthContext';
 import SearchableCollegeSelect from './SearchableCollegeSelect';
 import { YEAR_OPTIONS, normalizeYear } from '../data/colleges';
+import InstitutionLogo from './InstitutionLogo';
 
 export default function PostSquadModal({
   isOpen,
@@ -136,6 +137,7 @@ export default function PostSquadModal({
     let compTitle = '';
     let compHost = '';
     let compLink = '';
+    let compLogo = editingPost?.compLogo || editingPost?.logo || null;
     let finalCompId = null;
 
     if (mode === 'unstop') {
@@ -148,6 +150,7 @@ export default function PostSquadModal({
       compHost = match.host || match.orgName || '';
       compLink = match.unstopUrl || '';
       finalCompId = match.id;
+      compLogo = match.logo || match.orgLogo || null;
     } else {
       if (!customTitle.trim()) {
         setFormError('Please enter the competition name.');
@@ -177,6 +180,8 @@ export default function PostSquadModal({
       compId: finalCompId,
       competition_name: compTitle,
       organizer: compHost,
+      compLogo,
+      logo: compLogo,
       competition_link: compLink,
       phone_number: cleanPhone,
       spots: spotsNum,
@@ -363,6 +368,24 @@ export default function PostSquadModal({
                   </option>
                 ))}
               </select>
+
+              {selectedCompId && (() => {
+                const sel = competitions.find(c => String(c.id) === String(selectedCompId));
+                if (!sel) return null;
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', background: '#F8F8F6', borderRadius: '8px', border: '1px solid #EFEEEA', marginTop: '4px' }}>
+                    <InstitutionLogo logo={sel.logo || sel.orgLogo} name={sel.host || sel.orgName} size={28} borderRadius={6} fontSize={10} />
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A19', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {sel.title}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#75736C' }}>
+                        {sel.host || sel.orgName}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

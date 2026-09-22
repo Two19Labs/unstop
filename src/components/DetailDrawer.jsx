@@ -1,6 +1,7 @@
 // src/components/DetailDrawer.jsx
 import React, { useEffect } from 'react';
 import { initialsOf, formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
+import InstitutionLogo from './InstitutionLogo';
 
 export default function DetailDrawer({
   item,
@@ -113,29 +114,13 @@ export default function DetailDrawer({
 
         {/* Body Overview */}
         <div style={{ padding: '20px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-          <span
-            style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '10px',
-              border: '1px solid #EFEEEA',
-              backgroundColor: item.logo ? '#FFFFFF' : '#F2F1ED',
-              backgroundImage: item.logo ? `url("${item.logo}")` : 'none',
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-              color: '#55534D',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: 'none',
-              fontSize: '14px',
-              fontWeight: 700
-            }}
-          >
-            {!item.logo && <span>{initials}</span>}
-          </span>
+          <InstitutionLogo
+            logo={item.logo || item.orgLogo || item.bannerUrl}
+            name={item.host || item.orgName}
+            size={46}
+            borderRadius={10}
+            fontSize={14}
+          />
 
           <div style={{ minWidth: 0 }}>
             <h2

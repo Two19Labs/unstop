@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
+import InstitutionLogo from './InstitutionLogo';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
@@ -1459,20 +1460,13 @@ export default function CompetitionsPage({
                   {/* Top Bar: Host Profile & Bookmark Button */}
                   <div className="cc-card-top-bar">
                     <div className="cc-host-identity">
-                      {comp.orgLogo ? (
-                        <img
-                          src={comp.orgLogo}
-                          alt=""
-                          className="cc-host-logo"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div className={`cc-host-avatar ${circuit.type}`}>
-                          {(comp.orgName ? comp.orgName.charAt(0) : 'A').toUpperCase()}
-                        </div>
-                      )}
+                      <InstitutionLogo
+                        logo={comp.orgLogo || comp.logo || comp.bannerUrl}
+                        name={comp.orgName || comp.host}
+                        size={36}
+                        borderRadius={8}
+                        fontSize={12}
+                      />
                       <div className="cc-host-meta">
                         <span className="cc-host-name" title={comp.orgName || 'Academic Host'}>
                           {comp.orgName || 'Academic Host'}

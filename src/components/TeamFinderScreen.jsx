@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SKILLS, DISCIPLINES, initialsOf, isMockPost } from '../data/initialData';
 import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
+import InstitutionLogo from './InstitutionLogo';
 
 const POPULAR_COLLEGE_FILTERS = [
   'SSCBS',
@@ -736,16 +737,25 @@ export default function TeamFinderScreen({
                 >
                   {post.displayTitle}
                 </h3>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '4px' }}>
-                  <span style={{ fontSize: '12px', color: '#55534D' }}>
-                    {post.displayHost}
-                  </span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                    <InstitutionLogo
+                      logo={post.displayLogo}
+                      name={post.displayHost}
+                      size={20}
+                      borderRadius={5}
+                      fontSize={9}
+                    />
+                    <span style={{ fontSize: '12px', color: '#55534D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {post.displayHost}
+                    </span>
+                  </div>
                   {post.competition_link && (
                     <a
                       href={post.competition_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ fontSize: '11px', color: '#0F3FFE', textDecoration: 'none', fontWeight: 600 }}
+                      style={{ fontSize: '11px', color: '#0F3FFE', textDecoration: 'none', fontWeight: 600, flexShrink: 0 }}
                     >
                       View link ↗
                     </a>

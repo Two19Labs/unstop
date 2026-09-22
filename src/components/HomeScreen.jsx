@@ -1,6 +1,7 @@
 // src/components/HomeScreen.jsx — OneStop Home Filter-Driven Rails
 import React, { useMemo } from 'react';
 import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown, getUrgencyLevel } from '../data/initialData';
+import InstitutionLogo from './InstitutionLogo';
 import './HomeScreen.css';
 
 const CARDS_PER_RAIL = 3;
@@ -315,24 +316,13 @@ export default function HomeScreen({
                   }}
                 >
                   <div style={{ display: 'grid', gridTemplateColumns: '34px minmax(0, 1fr) auto', alignItems: 'start', gap: '10px' }}>
-                    <span
-                      style={{
-                        width: '34px',
-                        height: '34px',
-                        borderRadius: '8px',
-                        border: '1px solid #EFEEEA',
-                        backgroundColor: '#F2F1ED',
-                        color: '#55534D',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flex: 'none',
-                        fontSize: '11px',
-                        fontWeight: 700
-                      }}
-                    >
-                      {initialsOf(b.host)}
-                    </span>
+                    <InstitutionLogo
+                      logo={b.logo || b.orgLogo}
+                      name={b.host}
+                      size={34}
+                      borderRadius={8}
+                      fontSize={11}
+                    />
                     <span style={{ fontSize: '12px', fontWeight: 500, color: '#55534D', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty' }}>
                       {b.host}
                     </span>
@@ -647,24 +637,13 @@ export default function HomeScreen({
                   }}
                 >
                   <div style={{ display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr)', alignItems: 'start', gap: '11px' }}>
-                    <span
-                      style={{
-                        width: '40px',
-                        height: '40px',
-                        borderRadius: '9px',
-                        border: '1px solid #EFEEEA',
-                        backgroundColor: '#F2F1ED',
-                        color: '#55534D',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flex: 'none',
-                        fontSize: '12px',
-                        fontWeight: 700
-                      }}
-                    >
-                      {initialsOf(c.host)}
-                    </span>
+                    <InstitutionLogo
+                      logo={c.logo || c.orgLogo}
+                      name={c.host}
+                      size={40}
+                      borderRadius={9}
+                      fontSize={12}
+                    />
                     <span style={{ fontSize: '13px', fontWeight: 500, color: '#55534D', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty' }}>
                       {c.host}
                     </span>
@@ -916,6 +895,11 @@ export default function HomeScreen({
               const leadYear = s.year || profile?.batch || 'Undergrad';
               const compTitle = s.competition_name || s.comp || s.title || 'Competition Challenge';
               const compHost = s.organizer || s.compHost || 'Host Institution';
+              const linkedComp = competitions.find(c =>
+                String(c.id) === String(s.compId || s.comp_id) ||
+                (s.competition_name && c.title && c.title.toLowerCase() === s.competition_name.toLowerCase())
+              );
+              const compLogo = s.compLogo || s.logo || (linkedComp ? (linkedComp.logo || linkedComp.orgLogo) : null);
               const skills = Array.isArray(s.skills_looking_for)
                 ? s.skills_looking_for
                 : (Array.isArray(s.want) ? s.want : (Array.isArray(s.skills) ? s.skills : []));
@@ -1028,8 +1012,17 @@ export default function HomeScreen({
                     <h3 style={{ margin: '3px 0 0', fontSize: '15px', fontWeight: 700, color: '#1A1A19', lineHeight: 1.35, textWrap: 'pretty' }}>
                       {compTitle}
                     </h3>
-                    <div style={{ fontSize: '12px', color: '#55534D', marginTop: '4px' }}>
-                      {compHost}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                      <InstitutionLogo
+                        logo={compLogo}
+                        name={compHost}
+                        size={20}
+                        borderRadius={5}
+                        fontSize={9}
+                      />
+                      <span style={{ fontSize: '12px', color: '#55534D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {compHost}
+                      </span>
                     </div>
                   </div>
 
