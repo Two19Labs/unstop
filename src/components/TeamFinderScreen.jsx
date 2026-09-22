@@ -94,7 +94,20 @@ export default function TeamFinderScreen({
 }) {
   const [tq, setTq] = useState('');
   const [showSquadLoader, setShowSquadLoader] = useState(true);
-  const [tScope, setTScope] = useState('all'); // 'all' | 'open' | 'mine' | 'match'
+  const [tScope, setTScope] = useState(() => {
+    try {
+      return localStorage.getItem('onestop_squad_scope') || 'all';
+    } catch {
+      return 'all';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('onestop_squad_scope', tScope);
+    } catch {}
+  }, [tScope]);
+
   const [tSkills, setTSkills] = useState([]);
   const [tDisc, setTDisc] = useState([]);
   const [selectedCollege, setSelectedCollege] = useState('all'); // 'all' | 'my' | specific name

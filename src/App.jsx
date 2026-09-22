@@ -45,6 +45,45 @@ const DEFAULT_FILTERS = {
   sort: 'deadline'
 };
 
+const VALID_SCREENS = ['home', 'browse', 'saved', 'teams', 'requests', 'profile'];
+
+function getInitialScreen() {
+  try {
+    if (typeof window !== 'undefined') {
+      // 1. Check URL hash (e.g. #browse, #/browse, #teams, #/teams, #saved, #requests, #profile)
+      if (window.location.hash) {
+        const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
+        if (VALID_SCREENS.includes(hash)) {
+          return hash;
+        }
+      }
+
+      // 2. Check URL pathname (e.g. /browse, /teams)
+      if (window.location.pathname) {
+        const path = window.location.pathname.replace(/^\//, '').split('/')[0].toLowerCase();
+        if (VALID_SCREENS.includes(path)) {
+          return path;
+        }
+      }
+
+      // 3. Check sessionStorage (preserved on page refresh in the current tab)
+      const sessionSaved = sessionStorage.getItem('onestop_current_screen');
+      if (sessionSaved && VALID_SCREENS.includes(sessionSaved)) {
+        return sessionSaved;
+      }
+
+      // 4. Check localStorage (persisted across sessions)
+      const localSaved = localStorage.getItem('onestop_current_screen');
+      if (localSaved && VALID_SCREENS.includes(localSaved)) {
+        return localSaved;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading initial screen:', e);
+  }
+  return 'home';
+}
+
 function OneStopInner() {
   const {
     user,
@@ -67,7 +106,51 @@ function OneStopInner() {
   } = useAuth();
 
   // Screen State: 'home' | 'browse' | 'saved' | 'teams' | 'requests' | 'profile'
-  const [screen, setScreen] = useState('home');
+  // Initialized from URL hash / pathname / sessionStorage / localStorage so refresh stays on current page
+  const [screen, setScreen] = useState(getInitialScreen);
+
+  // Synchronize screen state to sessionStorage, localStorage, and URL hash
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('onestop_current_screen', screen);
+      localStorage.setItem('onestop_current_screen', screen);
+    } catch (e) {}
+
+    const targetHash = screen === 'home' ? '' : `#${screen}`;
+    const currentHash = window.location.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
+
+    if (screen === 'home') {
+      if (window.location.hash && window.location.hash !== '#') {
+        window.history.replaceState({ screen: 'home' }, '', window.location.pathname + window.location.search);
+      }
+    } else if (currentHash !== screen) {
+      window.history.replaceState({ screen }, '', targetHash);
+    }
+  }, [screen]);
+
+  // Synchronize browser history navigation (Back/Forward)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
+      if (VALID_SCREENS.includes(hash)) {
+        setScreen(hash);
+      } else if (!window.location.hash || window.location.hash === '#') {
+        const path = window.location.pathname.replace(/^\//, '').split('/')[0].toLowerCase();
+        if (VALID_SCREENS.includes(path)) {
+          setScreen(path);
+        } else {
+          setScreen('home');
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
 
   // Track virtual pageviews / screen transitions in PostHog
   useEffect(() => {
@@ -377,7 +460,17 @@ function OneStopInner() {
 
   // Navigation Handler
   const handleNavigate = (newScreen) => {
-    setScreen(newScreen);
+    if (VALID_SCREENS.includes(newScreen)) {
+      if (newScreen !== screen) {
+        const targetHash = newScreen === 'home' ? window.location.pathname + window.location.search : `#${newScreen}`;
+        window.history.pushState({ screen: newScreen }, '', targetHash);
+      }
+      setScreen(newScreen);
+      try {
+        sessionStorage.setItem('onestop_current_screen', newScreen);
+        localStorage.setItem('onestop_current_screen', newScreen);
+      } catch (e) {}
+    }
     setDetailCompId(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
