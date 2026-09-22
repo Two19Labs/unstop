@@ -8,6 +8,7 @@ export default function RequestsScreen({
   competitions = [],
   onAccept,
   onDecline,
+  onRemove,
   onWithdraw,
   onOpenWhatsApp
 }) {
@@ -231,31 +232,55 @@ export default function RequestsScreen({
                 )}
 
                 {app.status === 'accepted' && (
-                  <button
-                    onClick={() => {
-                      if (app.dir === 'out') {
-                        onOpenWhatsApp({
-                          phone: post?.phone_number || post?.leadPhone,
-                          lead: post?.created_by_name || post?.lead
-                        });
-                      } else {
-                        onOpenWhatsApp(app);
-                      }
-                    }}
-                    style={{
-                      border: '1px solid #1A1A19',
-                      borderRadius: '8px',
-                      background: '#1A1A19',
-                      color: '#FFFFFF',
-                      padding: '8px 13px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      fontSize: '13px',
-                      fontWeight: 600
-                    }}
-                  >
-                    Open WhatsApp
-                  </button>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      onClick={() => {
+                        if (app.dir === 'out') {
+                          onOpenWhatsApp({
+                            phone: post?.phone_number || post?.leadPhone,
+                            lead: post?.created_by_name || post?.lead
+                          });
+                        } else {
+                          onOpenWhatsApp(app);
+                        }
+                      }}
+                      style={{
+                        border: '1px solid #16A34A',
+                        borderRadius: '8px',
+                        background: '#16A34A',
+                        color: '#FFFFFF',
+                        padding: '8px 13px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        fontSize: '13px',
+                        fontWeight: 600
+                      }}
+                    >
+                      Open WhatsApp
+                    </button>
+                    {app.dir === 'in' && onRemove && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Remove this member from the squad? This will re-open a spot.')) {
+                            onRemove(app.id);
+                          }
+                        }}
+                        style={{
+                          border: '1px solid #FECACA',
+                          borderRadius: '8px',
+                          background: '#FEF2F2',
+                          color: '#B91C1C',
+                          padding: '8px 12px',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          fontSize: '13px',
+                          fontWeight: 500
+                        }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {app.dir === 'out' && app.status === 'pending' && (

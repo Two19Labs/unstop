@@ -1,37 +1,69 @@
 // src/components/ApplyModal.jsx
 import React, { useState, useEffect } from 'react';
+import { SKILLS } from '../data/initialData';
+import { sanitizeIndianPhone } from '../context/AuthContext';
 
 export default function ApplyModal({
   isOpen,
   onClose,
   post,
-  competition,
+  competition = null,
+  profile = null,
   onSubmitApply
 }) {
   const [pitch, setPitch] = useState('');
+  const [highlightedSkills, setHighlightedSkills] = useState([]);
+  const [phone, setPhone] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setPitch('');
+    setErrorMsg('');
+    const userSkills = profile?.skills || [];
+    setHighlightedSkills(userSkills.slice(0, 3));
+    setPhone(sanitizeIndianPhone(profile?.phone || ''));
+  }, [isOpen, profile]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
     };
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
+    if (isOpen) window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen || !post) return null;
 
-  const compTitle = competition?.title || post.competition_name || 'Competition';
-  const spotsLeft = post.spots_left !== undefined ? post.spots_left : ((post.size || post.total_members || 4) - (post.filled || 1));
+  const compTitle = post.competition_name || competition?.title || post.displayTitle || 'Competition';
+  const leadName = post.created_by_name || post.lead || post.displayLead || 'Squad Lead';
+  const spotsLeft = post.spots_left !== undefined ? post.spots_left : (post.displaySpotsLeft || 1);
   const spotsText = spotsLeft <= 1 ? '1 spot left' : `${spotsLeft} spots left`;
-  const leadName = post.lead || post.created_by_name || 'Squad Lead';
-  const leadText = `${leadName} · ${spotsText}`;
+
+  const toggleSkill = (skill) => {
+    setHighlightedSkills(prev =>
+      prev.includes(skill)
+        ? prev.filter(s => s !== skill)
+        : prev.length < 4 ? [...prev, skill] : prev
+    );
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmitApply(post, pitch.trim());
-    setPitch('');
+    setErrorMsg('');
+
+    if (!pitch.trim()) {
+      setErrorMsg('Please write a brief pitch explaining what you bring to the squad.');
+      return;
+    }
+
+    const cleanPhone = sanitizeIndianPhone(phone);
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      setErrorMsg('Please enter a valid compulsory 10-digit WhatsApp number (e.g. 9876543210).');
+      return;
+    }
+
+    onSubmitApply(post, pitch.trim(), highlightedSkills, cleanPhone);
   };
 
   return (
@@ -40,21 +72,24 @@ export default function ApplyModal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(26,26,25,0.35)',
+        background: 'rgba(26,26,25,0.45)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px',
-        zIndex: 55
+        padding: '16px',
+        zIndex: 60
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: 'min(440px, 100%)',
+          width: 'min(480px, 100%)',
+          maxHeight: '92vh',
+          overflowY: 'auto',
           background: '#FFFFFF',
           border: '1px solid #E7E6E2',
-          borderRadius: '14px'
+          borderRadius: '14px',
+          boxShadow: '0 20px 40px rgba(26,26,25,0.18)'
         }}
       >
         {/* Header */}
@@ -64,73 +99,180 @@ export default function ApplyModal({
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '12px',
-            padding: '15px 20px',
+            padding: '16px 20px',
             borderBottom: '1px solid #E7E6E2'
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#1A1A19' }}>Request to join</h2>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19' }}>
+              Request to join squad
+            </h2>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#75736C' }}>
+              {leadName} · {spotsText}
+            </p>
+          </div>
           <button
+            type="button"
             onClick={onClose}
             style={{
               border: '1px solid #E7E6E2',
               borderRadius: '8px',
               background: '#FFFFFF',
               color: '#75736C',
-              width: '30px',
-              height: '30px',
+              width: '32px',
+              height: '32px',
               cursor: 'pointer',
-              fontSize: '14px',
-              lineHeight: 1,
+              fontSize: '16px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#F2F1ED';
-              e.currentTarget.style.color = '#1A1A19';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#FFFFFF';
-              e.currentTarget.style.color = '#75736C';
             }}
           >
             ×
           </button>
         </div>
 
+        {/* Error */}
+        {errorMsg && (
+          <div
+            style={{
+              margin: '14px 20px 0',
+              padding: '9px 13px',
+              background: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              borderRadius: '8px',
+              fontSize: '13px',
+              color: '#B91C1C'
+            }}
+          >
+            ⚠️ {errorMsg}
+          </div>
+        )}
+
         {/* Form Body */}
-        <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>{compTitle}</p>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#75736C' }}>{leadText}</p>
+        <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {/* Target Competition Card */}
+          <div style={{ background: '#F6F6F4', padding: '12px 14px', borderRadius: '9px', border: '1px solid #EFEEEA' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: '#75736C', textTransform: 'uppercase' }}>
+              Applying for
+            </span>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A19', marginTop: '2px' }}>
+              {compTitle}
+            </div>
+            {post.skills_looking_for && post.skills_looking_for.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '7px' }}>
+                <span style={{ fontSize: '11px', color: '#55534D' }}>Lead wants:</span>
+                {post.skills_looking_for.map((s, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #E7E6E2',
+                      borderRadius: '4px',
+                      padding: '1px 6px',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: '#0F3FFE'
+                    }}
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 500, color: '#75736C' }}>Why you</span>
+          {/* Highlighted Skills */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+                Highlight Your Relevant Skills (Pick up to 3)
+              </span>
+              <span style={{ fontSize: '11px', color: '#75736C' }}>
+                {highlightedSkills.length} selected
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {SKILLS.map((skill) => {
+                const on = highlightedSkills.includes(skill);
+                return (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => toggleSkill(skill)}
+                    style={{
+                      border: `1px solid ${on ? '#0F3FFE' : '#E7E6E2'}`,
+                      borderRadius: '20px',
+                      background: on ? '#0F3FFE' : '#FFFFFF',
+                      color: on ? '#FFFFFF' : '#1A1A19',
+                      padding: '5px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      transition: 'all 120ms ease'
+                    }}
+                  >
+                    {skill}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Pitch */}
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+              Pitch Note *
+            </span>
             <textarea
+              rows="3"
+              placeholder="Why you? Mention relevant past competitions, deck design skills, financial models, or analytical strengths..."
               value={pitch}
               onChange={(e) => setPitch(e.target.value)}
-              rows="3"
-              placeholder="One or two lines — what you bring and any relevant past competitions."
               style={{
                 border: '1px solid #E7E6E2',
-                borderRadius: '9px',
-                background: '#FFFFFF',
-                padding: '10px 12px',
-                fontSize: '14px',
-                lineHeight: 1.5,
-                color: '#1A1A19'
+                borderRadius: '8px',
+                padding: '9px 12px',
+                fontSize: '13px',
+                lineHeight: 1.5
               }}
             />
           </label>
 
-          <p style={{ margin: 0, fontSize: '12px', color: '#75736C', lineHeight: 1.5 }}>
-            Your profile, college, batch and skills go with this request. WhatsApp number is shared only if the lead accepts.
-          </p>
+          {/* WhatsApp Phone */}
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+              Your WhatsApp Phone Number *
+            </span>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: '#75736C', fontWeight: 500 }}>
+                +91
+              </span>
+              <input
+                type="tel"
+                placeholder="9876543210"
+                maxLength={10}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                style={{
+                  width: '100%',
+                  border: '1px solid #E7E6E2',
+                  borderRadius: '8px',
+                  padding: '9px 12px 9px 42px',
+                  fontSize: '14px',
+                  fontFamily: 'monospace'
+                }}
+              />
+            </div>
+            <span style={{ fontSize: '11px', color: '#75736C' }}>
+              Compulsory 10-digit WhatsApp number. Shared with the lead only when your request is accepted.
+            </span>
+          </label>
 
           <button
             type="submit"
             style={{
+              marginTop: '6px',
               border: '1px solid #0F3FFE',
               borderRadius: '9px',
               background: '#0F3FFE',
@@ -144,7 +286,7 @@ export default function ApplyModal({
             onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
             onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
           >
-            Send request
+            Send request to {leadName.split(' ')[0]}
           </button>
         </form>
       </div>

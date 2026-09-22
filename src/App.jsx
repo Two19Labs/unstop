@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth, formatWhatsAppUrl, sanitizeIndianPhone } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
 import BrowseScreen from './components/BrowseScreen';
@@ -52,10 +52,14 @@ function OneStopInner() {
     squadPosts: authSquadPosts,
     squadApps: authSquadApps,
     createSquadPost: authCreatePost,
+    editSquadPost: authEditPost,
+    togglePostOpen: authTogglePostOpen,
+    deleteSquadPost: authDeletePost,
     applyToSquad: authApplySquad,
     updateApplicationStatus: authUpdateAppStatus,
     withdrawApplication: authWithdrawApp,
     updateProfile: authUpdateProfile,
+    refreshSquadData,
     openAuthModal,
     signOut
   } = useAuth();
@@ -75,7 +79,7 @@ function OneStopInner() {
     toastTimeoutRef.current = setTimeout(() => {
       setToastMessage(null);
       toastTimeoutRef.current = null;
-    }, 2600);
+    }, 2800);
   }, []);
 
   useEffect(() => {
@@ -114,7 +118,6 @@ function OneStopInner() {
       return next;
     });
   }, [authToggleBookmark]);
-
 
   // Squad Posts State (100% real Supabase squad posts)
   const [localPosts, setLocalPosts] = useState(() => {
@@ -263,10 +266,10 @@ function OneStopInner() {
   const [detailCompId, setDetailCompId] = useState(null);
   const [postModalOpen, setPostModalOpen] = useState(false);
   const [postModalCompId, setPostModalCompId] = useState(null);
+  const [editingPost, setEditingPost] = useState(null);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [applyTargetPost, setApplyTargetPost] = useState(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
 
   // Fetch Live Competitions strictly from /api/competitions (Unstop ingestion)
   useEffect(() => {
@@ -334,9 +337,7 @@ function OneStopInner() {
     (profile?.year || '').toUpperCase().startsWith('PG') ||
     (profile?.batch || '').toUpperCase().startsWith('PG');
 
-  // Dynamic eligibility filtering based on profile education level:
-  // - Undergraduate: strictly undergraduate-eligible competitions (no MBA/PG only).
-  // - Postgraduate: shows MBA/PG competitions as well as open collegiate challenges.
+  // Dynamic eligibility filtering based on profile education level
   const visibleCompetitions = useMemo(() => {
     if (isPostgraduate) {
       return competitions;
@@ -351,7 +352,6 @@ function OneStopInner() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-
   // Find Teammates Button from Competition Card
   const handleFindTeammates = (comp) => {
     if (!user) {
@@ -362,13 +362,14 @@ function OneStopInner() {
       });
       return;
     }
+    setEditingPost(null);
     setPostModalCompId(comp.id);
     setScreen('teams');
     setPostModalOpen(true);
   };
 
-  // Post a Squad Submission
-  const handleSubmitPost = (draft) => {
+  // Open Create Squad Modal
+  const handleOpenCreateSquad = (comp = null) => {
     if (!user) {
       openAuthModal({
         title: 'Sign In to Post a Squad',
@@ -377,67 +378,167 @@ function OneStopInner() {
       });
       return;
     }
+    setEditingPost(null);
+    setPostModalCompId(comp ? comp.id : null);
+    setPostModalOpen(true);
+  };
+
+  // Open Edit Squad Modal
+  const handleOpenEditSquad = (post) => {
+    if (!user) return;
+    setEditingPost(post);
+    setPostModalCompId(post.compId || null);
+    setPostModalOpen(true);
+  };
+
+  // Post or Edit a Squad Submission
+  const handleSubmitPost = async (draft) => {
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Post a Squad',
+        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
+        initialTab: 'signin',
+      });
+      return;
+    }
+
+    if (draft.isEdit && draft.postId) {
+      // Edit existing post
+      try {
+        if (authEditPost) {
+          await authEditPost(draft.postId, draft);
+        }
+        setLocalPosts(prev => prev.map(p => p.id === draft.postId ? { ...p, ...draft } : p));
+        setPostModalOpen(false);
+        setEditingPost(null);
+        flash('Squad listing updated successfully!');
+        if (refreshSquadData) refreshSquadData();
+      } catch (err) {
+        console.warn('Post update error:', err);
+        flash(err.message || 'Could not update squad');
+      }
+      return;
+    }
+
+    // Create new post
     const creatorName = profile.name || user?.email?.split('@')[0] || 'You';
     const comp = competitions.find(c => String(c.id) === String(draft.compId));
-    const compTitle = comp?.title || 'Competition';
-    const compHost = comp?.host || '';
+    const compTitle = draft.competition_name || comp?.title || 'Competition';
+    const compHost = draft.organizer || comp?.host || comp?.orgName || '';
+    const compLink = draft.competition_link || comp?.unstopUrl || '';
+
     const newPost = {
       id: `post_${Date.now()}`,
       compId: draft.compId,
       competition_name: compTitle,
       organizer: compHost,
-      competition_link: comp?.unstopUrl || '',
+      competition_link: compLink,
       title: `Squad for ${compTitle}`,
       spots: draft.spots,
       spots_left: draft.spots,
       filled: 1,
-      total_members: Math.max(2, draft.spots + 1),
-      size: Math.max(2, draft.spots + 1),
+      total_members: draft.total_members || Math.max(2, draft.spots + 1),
+      size: draft.total_members || Math.max(2, draft.spots + 1),
       posted: 'just now',
       desc: draft.desc,
       description: draft.desc,
-      want: draft.skills,
-      skills_looking_for: draft.skills,
+      want: draft.skills_looking_for || draft.skills,
+      skills_looking_for: draft.skills_looking_for || draft.skills,
+      skills_have: draft.skills_have || [],
       lead: creatorName,
       created_by_name: creatorName,
-      leadPhone: profile.phone || '',
-      phone_number: profile.phone || '',
-      college: profile.college || '',
-      year: profile.batch || '',
+      leadPhone: draft.phone_number || profile.phone || '',
+      phone_number: draft.phone_number || profile.phone || '',
+      college: draft.college || profile.college || '',
+      year: draft.year || profile.batch || 'UG 2nd Year',
       mine: true,
+      is_open: true,
       state: 'own'
     };
 
     setLocalPosts(prev => [newPost, ...prev].filter(p => !isMockPost(p)));
     setPostModalOpen(false);
+    setEditingPost(null);
     setScreen('teams');
-    flash('Squad posted');
+    flash('Squad posted successfully!');
 
     if (user && authCreatePost) {
-      authCreatePost({
-        competition_name: compTitle,
-        organizer: compHost,
-        competition_link: comp?.unstopUrl || '',
-        title: `Squad for ${compTitle}`,
-        description: draft.desc,
-        skills_looking_for: draft.skills,
-        spots_left: draft.spots,
-        total_members: Math.max(2, draft.spots + 1),
-        phone_number: profile.phone || ''
-      }).catch(err => console.warn('Supabase post creation error:', err.message));
+      try {
+        await authCreatePost({
+          competition_name: compTitle,
+          organizer: compHost,
+          competition_link: compLink,
+          title: `Squad for ${compTitle}`,
+          description: draft.desc,
+          skills_looking_for: draft.skills_looking_for || draft.skills,
+          skills_have: draft.skills_have || [],
+          spots_left: draft.spots,
+          total_members: draft.total_members || Math.max(2, draft.spots + 1),
+          phone_number: draft.phone_number || profile.phone || '',
+          college: draft.college || profile.college || '',
+          year: draft.year || profile.batch || 'UG 2nd Year'
+        });
+        if (refreshSquadData) refreshSquadData();
+      } catch (err) {
+        console.warn('Supabase post creation error:', err.message);
+      }
+    }
+  };
+
+  // Toggle Post Open / Closed
+  const handleTogglePostOpen = async (postId, currentIsOpen) => {
+    setLocalPosts(prev => prev.map(p => p.id === postId ? { ...p, is_open: !currentIsOpen } : p));
+    flash(currentIsOpen ? 'Squad closed to new applicants' : 'Squad re-opened');
+    if (authTogglePostOpen) {
+      try {
+        await authTogglePostOpen(postId, currentIsOpen);
+        if (refreshSquadData) refreshSquadData();
+      } catch (e) {
+        console.warn('Toggle open error:', e);
+      }
+    }
+  };
+
+  // Delete Squad Post
+  const handleDeleteSquadPost = async (postId) => {
+    setLocalPosts(prev => prev.filter(p => p.id !== postId));
+    setLocalApplications(prev => prev.filter(a => a.postId !== postId && a.post_id !== postId));
+    flash('Squad listing deleted');
+    if (authDeletePost) {
+      try {
+        await authDeletePost(postId);
+        if (refreshSquadData) refreshSquadData();
+      } catch (e) {
+        console.warn('Delete post error:', e);
+      }
     }
   };
 
   // Request to Join Application
   const handleOpenApply = (post) => {
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Apply',
+        subtitle: 'You must be signed in with your collegiate account to apply to join a squad.',
+        initialTab: 'signin',
+      });
+      return;
+    }
     setApplyTargetPost(post);
     setApplyModalOpen(true);
   };
 
-  const handleSubmitApply = (targetPost, pitchText) => {
+  const handleSubmitApply = async (targetPost, pitchText, highlightedSkills = [], phone = '') => {
     const comp = competitions.find(c => String(c.id) === String(targetPost.compId) || (targetPost.competition_name && c.title === targetPost.competition_name));
     const compTitle = comp ? comp.title : (targetPost.competition_name || 'Competition');
     const applicantName = profile.name || user?.email?.split('@')[0] || 'You';
+    const applicantPhone = phone || profile.phone || '';
+
+    // If phone was just entered, update local profile immediately
+    if (phone && !profile.phone) {
+      handleSaveProfile({ ...profile, phone });
+    }
+
     const newApp = {
       id: `app_${Date.now()}`,
       postId: targetPost.id,
@@ -445,11 +546,12 @@ function OneStopInner() {
       who: applicantName,
       applicant_name: applicantName,
       meta: compTitle,
-      phone: profile.phone || '',
-      applicant_phone: profile.phone || '',
+      phone: applicantPhone,
+      applicant_phone: applicantPhone,
       applicant_college: profile.college || '',
-      skills: profile.skills || [],
-      highlighted_skills: profile.skills || [],
+      applicant_year: profile.batch || 'UG 2nd Year',
+      skills: highlightedSkills.length > 0 ? highlightedSkills : (profile.skills || []),
+      highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : (profile.skills || []),
       pitch: pitchText,
       pitch_note: pitchText,
       status: 'pending',
@@ -465,18 +567,25 @@ function OneStopInner() {
     flash(`Request sent to ${leadFirst}`);
 
     if (user && authApplySquad) {
-      authApplySquad({
-        post_id: targetPost.id,
-        applicant_name: applicantName,
-        applicant_phone: profile.phone,
-        pitch_note: pitchText,
-        highlighted_skills: profile.skills
-      }).catch(err => console.warn('Supabase apply error:', err.message));
+      try {
+        await authApplySquad({
+          post_id: targetPost.id,
+          applicant_name: applicantName,
+          applicant_phone: applicantPhone,
+          applicant_college: profile.college || '',
+          applicant_year: profile.batch || 'UG 2nd Year',
+          pitch_note: pitchText,
+          highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : profile.skills
+        });
+        if (refreshSquadData) refreshSquadData();
+      } catch (err) {
+        console.warn('Supabase apply error:', err.message);
+      }
     }
   };
 
   // Applications Actions
-  const handleAcceptApp = (appId) => {
+  const handleAcceptApp = async (appId) => {
     const targetApp = applications.find(a => a.id === appId);
     setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'accepted' } : a));
 
@@ -487,46 +596,90 @@ function OneStopInner() {
           const nextFilled = (p.filled || 1) + 1;
           const curSpots = p.spots_left !== undefined ? p.spots_left : (p.spots !== undefined ? p.spots : (p.size || p.total_members || 4) - (p.filled || 1));
           const nextSpots = Math.max(0, curSpots - 1);
-          return { ...p, filled: nextFilled, spots: nextSpots, spots_left: nextSpots };
+          return { ...p, filled: nextFilled, spots: nextSpots, spots_left: nextSpots, is_open: nextSpots > 0 };
         }
         return p;
       }));
     }
 
-    flash('Accepted — WhatsApp number shared');
+    flash('Accepted — WhatsApp chat ready');
 
     if (user && authUpdateAppStatus) {
-      authUpdateAppStatus(appId, 'accepted').catch(err => console.warn('Supabase accept error:', err.message));
+      try {
+        await authUpdateAppStatus(appId, 'accepted');
+        if (refreshSquadData) refreshSquadData();
+      } catch (err) {
+        console.warn('Supabase accept error:', err.message);
+      }
     }
   };
 
-  const handleDeclineApp = (appId) => {
+  const handleDeclineApp = async (appId) => {
     setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'rejected' } : a));
+    flash('Application declined');
     if (user && authUpdateAppStatus) {
-      authUpdateAppStatus(appId, 'rejected').catch(err => console.warn('Supabase decline error:', err.message));
+      try {
+        await authUpdateAppStatus(appId, 'rejected');
+        if (refreshSquadData) refreshSquadData();
+      } catch (err) {
+        console.warn('Supabase decline error:', err.message);
+      }
     }
   };
 
-  const handleWithdrawApp = (appId) => {
+  const handleRemoveApp = async (appId) => {
+    setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'removed' } : a));
+    const targetApp = applications.find(a => a.id === appId);
+    if (targetApp) {
+      const targetPostId = targetApp.postId || targetApp.post_id;
+      setLocalPosts(prev => prev.map(p => {
+        if (p.id === targetPostId) {
+          const curSpots = p.spots_left !== undefined ? p.spots_left : (p.spots !== undefined ? p.spots : 1);
+          const nextSpots = Math.min(p.total_members || 4, curSpots + 1);
+          return { ...p, spots: nextSpots, spots_left: nextSpots, is_open: true };
+        }
+        return p;
+      }));
+    }
+
+    flash('Member removed — spot re-opened');
+    if (user && authUpdateAppStatus) {
+      try {
+        await authUpdateAppStatus(appId, 'removed');
+        if (refreshSquadData) refreshSquadData();
+      } catch (err) {
+        console.warn('Remove member error:', err.message);
+      }
+    }
+  };
+
+  const handleWithdrawApp = async (appId) => {
     setLocalApplications(prev => prev.filter(a => a.id !== appId));
     if (authWithdrawApp) {
-      authWithdrawApp(appId).catch(err => console.warn('Supabase withdraw error:', err.message));
+      try {
+        await authWithdrawApp(appId);
+        if (refreshSquadData) refreshSquadData();
+      } catch (e) {
+        console.warn('Supabase withdraw error:', e.message);
+      }
     }
     flash('Request withdrawn');
   };
 
-  // WhatsApp Handshake Launcher (strictly real phone numbers)
+  // WhatsApp Handshake Launcher (strictly real phone numbers with prefilled message)
   const handleOpenWhatsApp = (appOrPost) => {
     const rawPhone = appOrPost?.phone || appOrPost?.phone_number || appOrPost?.leadPhone || appOrPost?.applicant_phone || '';
-    const cleanDigits = String(rawPhone).replace(/\D/g, '').slice(-10);
+    const name = appOrPost?.created_by_name || appOrPost?.lead || appOrPost?.applicant_name || appOrPost?.who || '';
+    const comp = appOrPost?.competition_name || appOrPost?.displayTitle || appOrPost?.title || 'Competition';
+    const message = `Hey ${name ? name.split(' ')[0] : ''}! Connecting regarding our squad for "${comp}".`;
+    const waUrl = formatWhatsAppUrl(rawPhone, message);
 
-    if (!cleanDigits || cleanDigits.length !== 10) {
+    if (!waUrl || waUrl === '#') {
       flash('No phone number shared for this squad.');
       return;
     }
 
     flash('Opening WhatsApp…');
-    const waUrl = `https://wa.me/91${cleanDigits}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -609,31 +762,16 @@ function OneStopInner() {
             profile={profile}
             applications={applications}
             user={user}
-            onOpenPostSquad={(comp) => {
-              if (!user) {
-                openAuthModal({
-                  title: 'Sign In to Post a Squad',
-                  subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
-                  initialTab: 'signin',
-                });
-                return;
-              }
-              setPostModalCompId(comp ? comp.id : null);
-              setPostModalOpen(true);
-            }}
-            onOpenApply={(post) => {
-              if (!user) {
-                openAuthModal({
-                  title: 'Sign In to Apply',
-                  subtitle: 'You must be signed in with your collegiate account to apply to join a squad.',
-                  initialTab: 'signin',
-                });
-                return;
-              }
-              handleOpenApply(post);
-            }}
+            onOpenPostSquad={handleOpenCreateSquad}
+            onOpenEditSquad={handleOpenEditSquad}
+            onOpenApply={handleOpenApply}
             onOpenWhatsApp={handleOpenWhatsApp}
             onGoRequests={() => handleNavigate('requests')}
+            onTogglePostOpen={handleTogglePostOpen}
+            onDeleteSquadPost={handleDeleteSquadPost}
+            onAcceptApp={handleAcceptApp}
+            onDeclineApp={handleDeclineApp}
+            onRemoveApp={handleRemoveApp}
           />
         )}
 
@@ -644,6 +782,7 @@ function OneStopInner() {
             competitions={visibleCompetitions}
             onAccept={handleAcceptApp}
             onDecline={handleDeclineApp}
+            onRemove={handleRemoveApp}
             onWithdraw={handleWithdrawApp}
             onOpenWhatsApp={handleOpenWhatsApp}
           />
@@ -668,21 +807,23 @@ function OneStopInner() {
         onToggleBookmark={handleToggleBookmark}
         onOpenPostSquad={(comp) => {
           setDetailCompId(null);
-          setPostModalCompId(comp.id);
-          setPostModalOpen(true);
+          handleOpenCreateSquad(comp);
         }}
         squadsCount={detailSquadCount}
       />
 
-      {/* Post a Squad Modal */}
+      {/* Post or Edit a Squad Modal */}
       <PostSquadModal
         isOpen={postModalOpen}
         onClose={() => {
           setPostModalOpen(false);
           setPostModalCompId(null);
+          setEditingPost(null);
         }}
         competitions={competitions}
         initialCompId={postModalCompId}
+        editingPost={editingPost}
+        profile={profile}
         onSubmitPost={handleSubmitPost}
       />
 
@@ -695,6 +836,7 @@ function OneStopInner() {
         }}
         post={applyTargetPost}
         competition={applyTargetPost ? competitions.find(c => c.id === applyTargetPost.compId) : null}
+        profile={profile}
         onSubmitApply={handleSubmitApply}
       />
 

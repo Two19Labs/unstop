@@ -40,7 +40,12 @@ export default function BrowseScreen({
   // 2. Sort competitions
   const matched = pool.slice().sort((x, y) => {
     if (sort === 'popular') return (y.regs || y.registeredCount || 0) - (x.regs || x.registeredCount || 0);
-    if (sort === 'new') return Number(y.id) - Number(x.id);
+    if (sort === 'new') {
+      const numY = Number(y.id);
+      const numX = Number(x.id);
+      if (!isNaN(numY) && !isNaN(numX)) return numY - numX;
+      return (y.regs || 0) - (x.regs || 0);
+    }
     return (x.days || 999) - (y.days || 999);
   });
 

@@ -1021,55 +1021,8 @@ export default function CompetitionsPage({
     };
 
     const dbMatches = (squadPosts || []).filter(matchesFilter);
-
-    // Contextual seed squads matching top filtered competitions to guarantee 5-6 slots
-    const seedSquadsForFilteredComps = [];
-    const rolePools = [
-      { lead: 'Aditya S.', college: 'SSCBS', year: 'UG 2nd Year', skills: ['Deck Specialist', 'Financial Modeling'], phone: '9810123456' },
-      { lead: 'Rhea M.', college: 'SRCC', year: 'UG 3rd Year', skills: ['Market Strategy', 'Pitch / Speaker'], phone: '9871234567' },
-      { lead: 'Aryan K.', college: 'IIT Delhi', year: 'UG 2nd Year', skills: ['Fullstack Dev', 'AI/ML Integration'], phone: '9899123456' },
-      { lead: 'Tanvi G.', college: 'Hindu College', year: 'UG 2nd Year', skills: ['Valuation & DCF', 'Policy Research'], phone: '9910234567' },
-      { lead: 'Kabir V.', college: 'St. Stephen’s', year: 'UG 3rd Year', skills: ['Case Solving', 'Deck Specialist'], phone: '9811345678' },
-      { lead: 'Sanya D.', college: 'LSR', year: 'UG 2nd Year', skills: ['Data Analytics', 'Risk Simulation'], phone: '9873456789' },
-    ];
-
-    topComps.forEach((comp, idx) => {
-      const existing = dbMatches.find(
-        (p) => (p.competition_name || '').toLowerCase() === (comp.title || '').toLowerCase()
-      );
-      if (!existing) {
-        const persona = rolePools[idx % rolePools.length];
-        const isTech = comp.category === 'hackathon';
-        const isFin = comp.category === 'simulation' || (comp.title || '').toLowerCase().includes('finance');
-
-        let skillsLooking = persona.skills;
-        if (isTech) {
-          skillsLooking = ['React / Frontend', 'Backend API & Cloud'];
-        } else if (isFin) {
-          skillsLooking = ['Financial Modeling', 'Valuation & DCF'];
-        }
-
-        seedSquadsForFilteredComps.push({
-          id: `seed-squad-${comp.id || idx}`,
-          competition_name: comp.title,
-          organizer: comp.orgName,
-          circuitLabel: getCardCircuit(comp).label,
-          circuitType: getCardCircuit(comp).type,
-          student_name: persona.lead,
-          college: persona.college,
-          year: persona.year,
-          spots_left: Math.max(1, (comp.maxTeam || 3) - 1),
-          total_members: comp.maxTeam || 3,
-          skills_looking_for: skillsLooking,
-          phone_number: persona.phone,
-          isSeed: true,
-          unstopUrl: comp.unstopUrl,
-        });
-      }
-    });
-
-    return [...dbMatches, ...seedSquadsForFilteredComps].slice(0, 6);
-  }, [filteredCompetitions, squadPosts, selectedCircuits, selectedTracks]);
+    return dbMatches.slice(0, 6);
+  }, [squadPosts, selectedCircuits, selectedTracks]);
 
   return (
     <div className="case-comps-container">

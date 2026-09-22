@@ -495,7 +495,7 @@ export default function DashboardHome({
                             <span className="t19-verified-dot" title="Verified undergraduate" />
                           </div>
                           <span className="t19-host-college">
-                            {squad.college || 'SSCBS'} · {normalizeYear(squad.year)}
+                            {squad.college || 'Collegiate'} · {normalizeYear(squad.year)}
                           </span>
                         </div>
                       </div>

@@ -658,6 +658,55 @@ export function AuthProvider({ children }) {
     throw new Error('Backend database not connected.');
   };
 
+  // Squad Post Editor (Strict Authentication & Ownership Required)
+  const editSquadPost = async (postId, updatedData) => {
+    if (!user) {
+      throw new Error('Please sign in to edit your squad opening.');
+    }
+
+    const currentPost = squadPosts.find(p => p.id === postId);
+    if (!currentPost) throw new Error('Squad post not found.');
+
+    const acceptedEmails = Array.isArray(currentPost.accepted_emails) ? currentPost.accepted_emails : [];
+    const spotsLeft = Number(updatedData.spots_left !== undefined ? updatedData.spots_left : (currentPost.spots_left || 1));
+    const totalMembers = Number(updatedData.total_members !== undefined ? updatedData.total_members : (currentPost.total_members || 4));
+
+    const updatePayload = {
+      competition_name: updatedData.competition_name || currentPost.competition_name,
+      organizer: updatedData.organizer !== undefined ? updatedData.organizer : currentPost.organizer,
+      competition_link: updatedData.competition_link !== undefined ? updatedData.competition_link : currentPost.competition_link,
+      phone_number: updatedData.phone_number !== undefined ? updatedData.phone_number : currentPost.phone_number,
+      title: updatedData.title || currentPost.title,
+      description: updatedData.description !== undefined ? updatedData.description : currentPost.description,
+      skills_have: updatedData.skills_have !== undefined ? updatedData.skills_have : (currentPost.skills_have || []),
+      skills_looking_for: updatedData.skills_looking_for !== undefined ? updatedData.skills_looking_for : (currentPost.skills_looking_for || []),
+      total_members: totalMembers,
+      spots_left: spotsLeft,
+      initial_open_spots: spotsLeft + acceptedEmails.length,
+      is_open: spotsLeft > 0,
+      updated_at: new Date().toISOString()
+    };
+
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('squad_posts')
+        .update(updatePayload)
+        .eq('id', postId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating squad post in Supabase:', error);
+        throw error;
+      }
+
+      setSquadPosts(prev => prev.map(p => p.id === postId ? data : p));
+      return data;
+    }
+
+    throw new Error('Backend database not connected.');
+  };
+
   // Submit Application (Strict Authentication Required)
   const applyToSquad = async (appData) => {
     if (!user) {
@@ -928,6 +977,7 @@ export function AuthProvider({ children }) {
         squadPosts,
         squadApps,
         createSquadPost,
+        editSquadPost,
         applyToSquad,
         updateApplicationStatus,
         withdrawApplication,
