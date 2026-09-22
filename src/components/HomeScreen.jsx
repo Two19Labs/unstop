@@ -16,6 +16,75 @@ import './HomeScreen.css';
 
 const CARDS_PER_RAIL = 3;
 
+function parsePrizeAmount(prizesStr) {
+  if (!prizesStr) return 0;
+  const str = String(prizesStr).toLowerCase().replace(/,/g, '');
+  if (str.includes('lakh')) {
+    const m = str.match(/([\d.]+)\s*lakh/);
+    if (m) return parseFloat(m[1]) * 100000;
+  }
+  if (str.includes('crore')) {
+    const m = str.match(/([\d.]+)\s*crore/);
+    if (m) return parseFloat(m[1]) * 10000000;
+  }
+  const match = str.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+}
+
+function getDeadlineTimestamp(comp) {
+  if (!comp) return Infinity;
+  if (comp.deadline) {
+    const t = new Date(comp.deadline).getTime();
+    if (!isNaN(t)) return t;
+  }
+  if (comp.days !== undefined && comp.days !== null) {
+    return Date.now() + Number(comp.days) * 24 * 60 * 60 * 1000;
+  }
+  return Infinity;
+}
+
+export function sortCompetitions(list, sortBy = 'closing-soonest') {
+  const arr = [...list];
+  arr.sort((a, b) => {
+    switch (sortBy) {
+      case 'title-asc':
+        return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
+      case 'title-desc':
+        return (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' });
+      case 'closing-soonest': {
+        const timeA = getDeadlineTimestamp(a);
+        const timeB = getDeadlineTimestamp(b);
+        if (timeA !== timeB) return timeA - timeB;
+        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
+      }
+      case 'closing-latest': {
+        const timeA = getDeadlineTimestamp(a);
+        const timeB = getDeadlineTimestamp(b);
+        if (timeA === Infinity && timeB === Infinity) return 0;
+        if (timeA === Infinity) return 1;
+        if (timeB === Infinity) return -1;
+        if (timeA !== timeB) return timeB - timeA;
+        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
+      }
+      case 'prize-highest': {
+        const prizeA = parsePrizeAmount(a.prize || a.prizes);
+        const prizeB = parsePrizeAmount(b.prize || b.prizes);
+        if (prizeA !== prizeB) return prizeB - prizeA;
+        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
+      }
+      case 'popular':
+        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
+      default: {
+        const timeA = getDeadlineTimestamp(a);
+        const timeB = getDeadlineTimestamp(b);
+        if (timeA !== timeB) return timeA - timeB;
+        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
+      }
+    }
+  });
+  return arr;
+}
+
 function getUrgencyConfig(urgencyLevel) {
   if (urgencyLevel === 'red') {
     return {
@@ -285,6 +354,8 @@ export default function HomeScreen({
   competitions = [],
   competitionsLoading = false,
   savedFilter = null,
+  browseSort = null,
+  onUpdateSort,
   onResetFilter,
   applications = [],
   posts = [],
@@ -313,6 +384,19 @@ export default function HomeScreen({
   }, []);
 
   const showRailLoading = isHomeLoading || competitionsLoading;
+
+  // Active sort order (defaults to last chosen sort filter in Browse tab)
+  const effectiveSort = browseSort || (() => {
+    try {
+      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
+      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.sortBy === 'string') return parsed.sortBy;
+      }
+    } catch (e) {}
+    return 'closing-soonest';
+  })();
 
   // Navigation helpers
   const handleNavigate = (targetScreen) => {
@@ -363,12 +447,11 @@ export default function HomeScreen({
   const bookmarkTotal = allBookmarkComps.length;
   const displayedBookmarks = allBookmarkComps.slice(0, CARDS_PER_RAIL);
 
-  // 2. Top Competitions Rail (Matches saved Browse filter, closing soonest first)
+  // 2. Top Competitions Rail (Matches saved Browse filter, sorted according to last chosen Browse sort)
   const allFilteredComps = useMemo(() => {
-    return competitions
-      .filter(c => matchListing(c, savedFilter || {}))
-      .sort((a, b) => (a.days ?? 999) - (b.days ?? 999));
-  }, [competitions, savedFilter]);
+    const filtered = competitions.filter(c => matchListing(c, savedFilter || {}));
+    return sortCompetitions(filtered, effectiveSort);
+  }, [competitions, savedFilter, effectiveSort]);
 
   const compTotal = allFilteredComps.length;
   const displayedComps = allFilteredComps.slice(0, CARDS_PER_RAIL);
@@ -972,9 +1055,39 @@ export default function HomeScreen({
           >
             {showRailLoading ? 'Loading...' : `${compTotal} match`}
           </span>
-          <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
-            Closing soonest first
-          </span>
+          {/* Dynamic Sort selector synced with Browse */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
+              Sort:
+            </span>
+            <select
+              value={effectiveSort}
+              onChange={(e) => {
+                const nextSort = e.target.value;
+                if (onUpdateSort) onUpdateSort(nextSort);
+              }}
+              style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#1A1A19',
+                background: '#FFFFFF',
+                border: '1px solid #E7E6E2',
+                borderRadius: '7px',
+                padding: '2px 8px',
+                cursor: 'pointer',
+                outline: 'none',
+                fontFamily: 'inherit'
+              }}
+              title="Change sort order (syncs with Browse tab)"
+            >
+              <option value="closing-soonest">Closing soonest first</option>
+              <option value="closing-latest">Closing latest first</option>
+              <option value="prize-highest">Highest prize pool</option>
+              <option value="popular">Most registered (popular)</option>
+              <option value="title-asc">Title: A → Z</option>
+              <option value="title-desc">Title: Z → A</option>
+            </select>
+          </div>
           <button
             onClick={() => handleNavigate('browse')}
             className="home-btn-hover"

@@ -352,6 +352,31 @@ function OneStopInner() {
     } catch (e) {}
   }, []);
 
+  // Browse Sort State (Synchronized between Browse and Home rails)
+  const [browseSort, setBrowseSort] = useState(() => {
+    try {
+      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
+      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.sortBy === 'string') return parsed.sortBy;
+      }
+    } catch (e) {}
+    return 'closing-soonest';
+  });
+
+  const handleUpdateSort = useCallback((newSort) => {
+    setBrowseSort(newSort);
+    try {
+      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
+      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
+      const prefs = raw ? JSON.parse(raw) : {};
+      prefs.sortBy = newSort;
+      if (userKey) localStorage.setItem(userKey, JSON.stringify(prefs));
+      localStorage.setItem('onestop_user_filter_prefs', JSON.stringify(prefs));
+    } catch (e) {}
+  }, [user]);
+
   // Drawer and Modal States
   const [detailCompId, setDetailCompId] = useState(null);
   const [postModalOpen, setPostModalOpen] = useState(false);
@@ -892,6 +917,8 @@ function OneStopInner() {
           bookmarkedOnly={screen === 'saved'}
           isPostgraduate={isPostgraduate}
           initialCompetitions={competitions}
+          externalSortBy={browseSort}
+          onSortChange={handleUpdateSort}
           headerAction={
             <button
               className="cc-header-notif-btn"
@@ -914,6 +941,8 @@ function OneStopInner() {
               competitions={visibleCompetitions}
               competitionsLoading={competitionsLoading}
               savedFilter={browseFilters}
+              browseSort={browseSort}
+              onUpdateSort={handleUpdateSort}
               onResetFilter={handleResetFilters}
               applications={applications}
               posts={posts}

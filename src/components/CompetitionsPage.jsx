@@ -509,6 +509,8 @@ export default function CompetitionsPage({
   headerAction,
   initialCompetitions = [],
   isPostgraduate = false,
+  externalSortBy,
+  onSortChange,
 }) {
   const { user, profile, squadPosts = [] } = useAuth();
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
@@ -526,7 +528,14 @@ export default function CompetitionsPage({
   const [selectedTracks, setSelectedTracks] = useState(() => initialPrefs?.selectedTracks || []); // [] = All tracks; otherwise: 'case' | 'hackathon' | 'writing' | 'quiz' | 'simulation' | 'debate'
   const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
   const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
-  const [sortBy, setSortBy] = useState(() => initialPrefs?.sortBy || 'closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
+  const [sortBy, setSortBy] = useState(() => externalSortBy || initialPrefs?.sortBy || 'closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
+
+  // Keep in sync with externalSortBy prop
+  useEffect(() => {
+    if (externalSortBy && externalSortBy !== sortBy) {
+      setSortBy(externalSortBy);
+    }
+  }, [externalSortBy]);
 
   // Persist filter preferences whenever they change
   useEffect(() => {
@@ -543,10 +552,13 @@ export default function CompetitionsPage({
         localStorage.setItem(userKey, JSON.stringify(prefs));
       }
       localStorage.setItem(FILTER_PREFS_KEY, JSON.stringify(prefs));
+      if (onSortChange) {
+        onSortChange(sortBy);
+      }
     } catch (err) {
       console.error('Error saving filter preferences:', err);
     }
-  }, [selectedCircuits, selectedTracks, teamFilter, feeFilter, sortBy, user?.email]);
+  }, [selectedCircuits, selectedTracks, teamFilter, feeFilter, sortBy, user?.email, onSortChange]);
 
   // Sync saved filter preferences when user signs in
   useEffect(() => {
