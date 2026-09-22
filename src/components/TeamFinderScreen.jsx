@@ -6,6 +6,8 @@ export default function TeamFinderScreen({
   posts = [],
   competitions = [],
   profile,
+  applications = [],
+  user = null,
   onOpenPostSquad,
   onOpenApply,
   onOpenWhatsApp,
@@ -23,7 +25,7 @@ export default function TeamFinderScreen({
   const cleanPosts = posts.filter(p => !isMockPost(p));
 
   const normalizedPosts = cleanPosts.map((p) => {
-    const comp = competitions.find(c => c.id === p.compId || (p.competition_name && c.title && c.title.toLowerCase() === p.competition_name.toLowerCase())) || null;
+    const comp = competitions.find(c => String(c.id) === String(p.compId) || (p.competition_name && c.title && c.title.toLowerCase() === p.competition_name.toLowerCase())) || null;
     const title = p.competition_name || comp?.title || p.title || 'Competition';
     const host = p.organizer || comp?.host || 'Host Institution';
     const logo = comp?.logo || null;
@@ -34,8 +36,28 @@ export default function TeamFinderScreen({
     const filledCount = p.filled !== undefined ? p.filled : Math.max(1, totalMembers - spotsLeft);
     const lead = p.created_by_name || p.lead || 'Student Lead';
     const leadMeta = [lead, p.college, p.year].filter(Boolean).join(' · ');
-    const isMine = Boolean(p.mine || (profile?.name && lead === profile.name));
+    const isMine = Boolean(
+      p.mine ||
+      (user && p.user_id && p.user_id === user.id) ||
+      (user && p.created_by_email && p.created_by_email === user.email) ||
+      (profile?.name && lead === profile.name)
+    );
     const discipline = comp?.discipline || 'General';
+
+    // Compute live application state from Supabase applications
+    const myApp = applications.find(a =>
+      (String(a.postId) === String(p.id) || String(a.post_id) === String(p.id)) &&
+      (a.dir === 'out' || (user && a.applicant_id === user.id))
+    );
+
+    let postState = p.state || 'open';
+    if (isMine) {
+      postState = 'own';
+    } else if (myApp) {
+      postState = myApp.status === 'accepted' ? 'accepted' : 'requested';
+    } else if (spotsLeft <= 0) {
+      postState = 'full';
+    }
 
     return {
       ...p,
@@ -50,6 +72,7 @@ export default function TeamFinderScreen({
       displayLead: lead,
       displayLeadMeta: leadMeta,
       isMine,
+      state: postState,
       discipline,
       rawComp: comp
     };

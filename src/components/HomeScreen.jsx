@@ -5,10 +5,8 @@ import { initialsOf, describeFilter, filterName, matchListing } from '../data/in
 export default function HomeScreen({
   profile,
   competitions = [],
-  alerts = [],
-  onOpenAlert,
-  onDeleteAlert,
-  onAddAlert,
+  savedFilter = null,
+  onResetFilter,
   applications = [],
   posts = [],
   onAcceptApp,
@@ -17,18 +15,36 @@ export default function HomeScreen({
   onGoBrowse
 }) {
   const firstName = profile?.name ? profile.name.split(' ')[0] : 'there';
-  const totalNew = alerts.reduce((acc, a) => acc + (a.fresh || 0), 0);
-  const closingIn72h = competitions.filter(c => c.days <= 3).length;
+  const activeFilter = savedFilter || { disc: [], circ: [], team: 'any', fee: 'any', q: '' };
+  const hasFilterActive = (activeFilter.disc && activeFilter.disc.length > 0) ||
+    (activeFilter.circ && activeFilter.circ.length > 0) ||
+    (activeFilter.team && activeFilter.team !== 'any') ||
+    (activeFilter.fee && activeFilter.fee !== 'any') ||
+    Boolean(activeFilter.q && activeFilter.q.trim());
+
+  const matchedComps = competitions
+    .filter(i => matchListing(i, activeFilter))
+    .sort((x, y) => (x.days || 999) - (y.days || 999));
+  const soonest = matchedComps[0];
+  const closingIn72h = competitions.filter(c => (c.days || 999) <= 3).length;
 
   const inboxAll = applications.filter(a => a.dir === 'in' && a.status === 'pending');
   const outPending = applications.filter(a => a.dir === 'out' && a.status === 'pending').length;
 
   const tiles = [
-    { label: 'New for you', value: String(totalNew), color: totalNew > 0 ? '#0F3FFE' : '#1A1A19' },
+    {
+      label: hasFilterActive ? 'Matches for you' : 'Open opportunities',
+      value: String(hasFilterActive ? matchedComps.length : competitions.length),
+      color: '#0F3FFE'
+    },
     { label: 'Closing in 72h', value: String(closingIn72h), color: '#1A1A19' },
     { label: 'Applicants waiting', value: String(inboxAll.length), color: inboxAll.length > 0 ? '#0F3FFE' : '#1A1A19' },
     { label: 'Your requests out', value: String(outPending), color: '#1A1A19' }
   ];
+
+  const subline = hasFilterActive
+    ? `${matchedComps.length} competition${matchedComps.length === 1 ? '' : 's'} match your auto-saved filter (${describeFilter(activeFilter)}).`
+    : 'Showing all live collegiate opportunities. Filters selected in Browse auto-save here.';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -37,9 +53,7 @@ export default function HomeScreen({
           Hi {firstName}
         </h1>
         <p style={{ margin: '7px 0 0', fontSize: '14px', color: '#75736C' }}>
-          {totalNew > 0
-            ? `${totalNew} new competition${totalNew === 1 ? '' : 's'} matched your saved filters since you last looked.`
-            : 'Nothing new against your saved filters today.'}
+          {subline}
         </p>
       </div>
 
@@ -197,7 +211,7 @@ export default function HomeScreen({
         </div>
       )}
 
-      {/* Saved Filters Card */}
+      {/* Saved Filter Card */}
       <div style={{ background: '#FFFFFF', border: '1px solid #E7E6E2', borderRadius: '12px', overflow: 'hidden' }}>
         <div
           style={{
@@ -209,149 +223,149 @@ export default function HomeScreen({
             borderBottom: '1px solid #E7E6E2'
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1A1A19' }}>Saved filters</h2>
-          <button
-            onClick={onAddAlert || onGoBrowse}
-            style={{
-              border: '1px solid #E7E6E2',
-              borderRadius: '8px',
-              background: '#FFFFFF',
-              color: '#1A1A19',
-              padding: '6px 11px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 500
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#F2F1ED')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
-          >
-            Add new
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1A1A19' }}>Your saved filter</h2>
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#0F3FFE',
+                background: '#EEF2FF',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                border: '1px solid #DBEAFE'
+              }}
+            >
+              ✓ Auto-saved
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {hasFilterActive && onResetFilter && (
+              <button
+                onClick={onResetFilter}
+                style={{
+                  border: '1px solid #E7E6E2',
+                  borderRadius: '8px',
+                  background: '#FFFFFF',
+                  color: '#75736C',
+                  padding: '6px 11px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 500
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#F2F1ED'; e.currentTarget.style.color = '#1A1A19'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#75736C'; }}
+              >
+                Clear filter
+              </button>
+            )}
+            <button
+              onClick={onGoBrowse}
+              style={{
+                border: '1px solid #0F3FFE',
+                borderRadius: '8px',
+                background: '#0F3FFE',
+                color: '#FFFFFF',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
+            >
+              Open in Browse →
+            </button>
+          </div>
         </div>
 
-        {alerts.length === 0 ? (
-          <div style={{ padding: '32px 18px', textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>No saved filters yet</p>
-            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#75736C' }}>
-              Set filters in Browse and save them — new matches show up here.
-            </p>
-          </div>
-        ) : (
-          alerts.map((al) => {
-            const hits = competitions
-              .filter(i => matchListing(i, { ...al, q: '' }))
-              .sort((x, y) => x.days - y.days);
-            const soonest = hits[0];
-            const name = filterName(al);
-            const rule = `${describeFilter(al)} · ${hits.length} open`;
-            const hasFresh = (al.fresh || 0) > 0;
-            const soonestText = soonest
-              ? `Closing soonest: ${soonest.title} — ${soonest.days} ${soonest.days === 1 ? 'day' : 'days'}`
-              : 'Nothing open against this filter right now.';
-            const initials = soonest ? initialsOf(soonest.host) : '··';
-
-            return (
-              <div
-                key={al.id}
-                onClick={() => onOpenAlert(al)}
+        {hasFilterActive ? (
+          <div
+            onClick={onGoBrowse}
+            style={{
+              padding: '16px 18px',
+              cursor: 'pointer',
+              transition: 'background 120ms ease'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#FAFAF8')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '15px', fontWeight: 600, color: '#1A1A19' }}>
+                {filterName(activeFilter)}
+              </span>
+              <span
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) auto',
-                  alignItems: 'center',
-                  gap: '16px',
-                  padding: '14px 18px',
-                  borderBottom: '1px solid #F0EFEB',
-                  cursor: 'pointer',
-                  transition: 'background 120ms ease'
+                  background: matchedComps.length > 0 ? '#0F3FFE' : '#F2F1ED',
+                  color: matchedComps.length > 0 ? '#FFFFFF' : '#75736C',
+                  borderRadius: '20px',
+                  padding: '2px 9px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap'
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#FAFAF8')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>{name}</span>
-                    <span
-                      style={{
-                        background: hasFresh ? '#0F3FFE' : '#FFFFFF',
-                        color: hasFresh ? '#FFFFFF' : '#75736C',
-                        border: `1px solid ${hasFresh ? '#0F3FFE' : '#E7E6E2'}`,
-                        borderRadius: '20px',
-                        padding: '2px 9px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {hasFresh ? `${al.fresh} new` : 'No change'}
-                    </span>
-                  </div>
+                {matchedComps.length} matching
+              </span>
+            </div>
 
-                  <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#75736C' }}>{rule}</p>
+            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#75736C' }}>
+              {describeFilter(activeFilter)}
+              {activeFilter.q ? ` · Query: "${activeFilter.q}"` : ''}
+            </p>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginTop: '7px' }}>
-                    {soonest && (
-                      <span
-                        style={{
-                          width: '26px',
-                          height: '26px',
-                          borderRadius: '7px',
-                          border: '1px solid #EFEEEA',
-                          backgroundColor: soonest.logo ? '#FFFFFF' : '#F2F1ED',
-                          backgroundImage: soonest.logo ? `url("${soonest.logo}")` : 'none',
-                          backgroundSize: 'contain',
-                          backgroundRepeat: 'no-repeat',
-                          backgroundPosition: 'center',
-                          color: '#55534D',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flex: 'none',
-                          fontSize: '10px',
-                          fontWeight: 700
-                        }}
-                      >
-                        {!soonest.logo && <span>{initials}</span>}
-                      </span>
-                    )}
-                    <p style={{ margin: 0, fontSize: '13px', color: '#1A1A19' }}>{soonestText}</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteAlert(al.id);
-                  }}
-                  title="Stop alerting"
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', marginTop: '10px' }}>
+              {soonest && (
+                <span
                   style={{
-                    border: '1px solid #E7E6E2',
-                    borderRadius: '8px',
-                    background: '#FFFFFF',
-                    color: '#75736C',
-                    width: '30px',
-                    height: '30px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    lineHeight: 1,
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '7px',
+                    border: '1px solid #EFEEEA',
+                    backgroundColor: soonest.logo ? '#FFFFFF' : '#F2F1ED',
+                    backgroundImage: soonest.logo ? `url("${soonest.logo}")` : 'none',
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                    color: '#55534D',
+                    overflow: 'hidden',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#F2F1ED';
-                    e.currentTarget.style.color = '#1A1A19';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#FFFFFF';
-                    e.currentTarget.style.color = '#75736C';
+                    justifyContent: 'center',
+                    flex: 'none',
+                    fontSize: '10px',
+                    fontWeight: 700
                   }}
                 >
-                  ×
-                </button>
-              </div>
-            );
-          })
+                  {!soonest.logo && <span>{initialsOf(soonest.host)}</span>}
+                </span>
+              )}
+              <p style={{ margin: 0, fontSize: '13px', color: '#1A1A19' }}>
+                {soonest
+                  ? `Closing soonest: ${soonest.title} — ${soonest.days} ${soonest.days === 1 ? 'day' : 'days'}`
+                  : 'Nothing open against this filter right now.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div
+            onClick={onGoBrowse}
+            style={{
+              padding: '28px 18px',
+              textAlign: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>
+              Showing all competitions
+            </p>
+            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#75736C' }}>
+              Any filters you select in Browse will automatically save here. Click to customize.
+            </p>
+          </div>
         )}
       </div>
     </div>

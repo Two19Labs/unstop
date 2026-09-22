@@ -22,10 +22,10 @@ export default function BrowseScreen({
   onResetFilters,
   onOpenDetail,
   onFindTeammates,
-  onSaveFilter,
-  alreadySaved = false,
   onSwitchScope,
-  loading = false
+  loading = false,
+  isPostgraduate = false,
+  profile
 }) {
   const { disc = [], circ = [], team = 'any', fee = 'any', q = '', sort = 'deadline' } = filters;
 
@@ -53,7 +53,9 @@ export default function BrowseScreen({
   const title = isBookmarks ? 'Bookmarks' : 'Browse';
   const subline = isBookmarks
     ? `${bookmarks.length} saved · bookmarks stay until you remove them`
-    : 'Undergraduate-eligible only. MBA-only, PG-exclusive and expired listings are purged.';
+    : (isPostgraduate
+        ? 'Undergraduate & Postgraduate / MBA challenges. Expired listings are purged.'
+        : 'Undergraduate-eligible only. MBA-only, PG-exclusive and expired listings are purged.');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -80,7 +82,7 @@ export default function BrowseScreen({
       >
         <span
           style={{
-            background: '#0F3FFE',
+            background: isPostgraduate ? '#4338CA' : '#0F3FFE',
             color: '#FFFFFF',
             borderRadius: '5px',
             padding: '3px 8px',
@@ -90,10 +92,12 @@ export default function BrowseScreen({
             whiteSpace: 'nowrap'
           }}
         >
-          UNSTOP ONLY
+          {isPostgraduate ? 'UNSTOP · UG + PG' : 'UNSTOP ONLY'}
         </span>
         <span style={{ fontSize: '13px', color: '#55534D' }}>
-          Curated for undergraduate eligibility, synced directly from Unstop. External opportunities are not shown.
+          {isPostgraduate
+            ? 'Curated for Undergraduate & Postgraduate / MBA eligibility, synced directly from Unstop.'
+            : 'Curated for undergraduate eligibility, synced directly from Unstop. External opportunities are not shown.'}
         </span>
       </div>
 
@@ -504,21 +508,11 @@ export default function BrowseScreen({
               </span>
             </div>
 
-            <button
-              onClick={onSaveFilter}
-              style={{
-                border: 0,
-                background: 'none',
-                color: alreadySaved ? '#75736C' : '#0F3FFE',
-                padding: 0,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                fontSize: '13px',
-                fontWeight: 600
-              }}
-            >
-              {alreadySaved ? 'Filter saved' : 'Save filter & alert me'}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ fontSize: '12px', color: '#16A34A', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '11px' }}>✓</span> Auto-saved
+              </span>
+            </div>
           </div>
 
           {/* Cards Grid */}
@@ -620,6 +614,28 @@ export default function BrowseScreen({
                       {isBookmarkedItem ? '×' : '+'}
                     </button>
                   </div>
+
+                  {/* MBA / PG Badge if applicable */}
+                  {(item.isPGOnly || item.isMBAorPG) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span
+                        style={{
+                          background: item.isPGOnly ? 'rgba(88, 28, 135, 0.08)' : 'rgba(79, 70, 229, 0.08)',
+                          border: `1px solid ${item.isPGOnly ? 'rgba(88, 28, 135, 0.22)' : 'rgba(79, 70, 229, 0.22)'}`,
+                          color: item.isPGOnly ? '#6B21A8' : '#4338CA',
+                          borderRadius: '5px',
+                          padding: '2px 7px',
+                          fontSize: '10.5px',
+                          fontWeight: 700,
+                          letterSpacing: '0.03em',
+                          textTransform: 'uppercase',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {item.isPGOnly ? '🏛️ MBA / PG Exclusive' : '🎓 MBA / PG'}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Title */}
                   <h3

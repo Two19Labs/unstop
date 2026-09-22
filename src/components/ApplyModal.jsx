@@ -22,10 +22,11 @@ export default function ApplyModal({
 
   if (!isOpen || !post) return null;
 
-  const compTitle = competition?.title || 'Competition';
-  const spotsLeft = (post.size || 4) - (post.filled || 1);
+  const compTitle = competition?.title || post.competition_name || 'Competition';
+  const spotsLeft = post.spots_left !== undefined ? post.spots_left : ((post.size || post.total_members || 4) - (post.filled || 1));
   const spotsText = spotsLeft <= 1 ? '1 spot left' : `${spotsLeft} spots left`;
-  const leadText = `${post.lead} · ${spotsText}`;
+  const leadName = post.lead || post.created_by_name || 'Squad Lead';
+  const leadText = `${leadName} · ${spotsText}`;
 
   const handleSubmit = (e) => {
     e.preventDefault();

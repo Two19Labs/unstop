@@ -142,10 +142,12 @@ export function AuthProvider({ children }) {
       const meta = authData?.user?.user_metadata || {};
       const localLastUpdated = localStorage.getItem(`onestop_profile_last_updated_${userId}`);
       const lastUpdatedAt = data?.profile_last_updated_at || meta?.profile_last_updated_at || localLastUpdated || null;
+      const educationLevel = data?.education_level || meta?.education_level || 'undergraduate';
 
       if (!error && data) {
         setProfile({
           ...data,
+          education_level: educationLevel,
           course: data.course || meta.course || '',
           year: data.year || meta.year || 'UG 2nd Year',
           bio: data.bio || meta.bio || '',
@@ -156,6 +158,7 @@ export function AuthProvider({ children }) {
           id: userId,
           email: authData?.user?.email,
           full_name: meta.full_name,
+          education_level: educationLevel,
           college: meta.college || '',
           phone: meta.phone || '',
           course: meta.course || '',
@@ -178,7 +181,7 @@ export function AuthProvider({ children }) {
         .eq('user_id', userId);
 
       if (!error && Array.isArray(data)) {
-        const ids = data.map(b => b.comp_id).filter(id => !isMockBookmark(id));
+        const ids = data.map(b => String(b.comp_id)).filter(id => !isMockBookmark(id));
         setBookmarks(ids);
         localStorage.setItem('onestop_bookmarks', JSON.stringify(ids));
       }
@@ -187,8 +190,8 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // 3. Sync Squad Data from Supabase
-  const refreshSquadData = useCallback(async () => {
+  // 3. Sync Squad Data from Supabase with Normalized Application Fields
+  const refreshSquadData = useCallback(async (targetUser = null) => {
     if (!supabase) return;
 
     // Fetch squad posts
@@ -208,7 +211,7 @@ export function AuthProvider({ children }) {
     }
 
     // Fetch applications if user is signed in
-    const activeUser = userRef.current;
+    const activeUser = targetUser || userRef.current;
     if (activeUser) {
       try {
         const { data: apps, error: appErr } = await supabase
@@ -217,13 +220,29 @@ export function AuthProvider({ children }) {
           .order('created_at', { ascending: false });
 
         if (!appErr && Array.isArray(apps)) {
-          const cleanApps = apps.filter(a => !isMockApp(a));
+          const cleanApps = apps
+            .filter(a => !isMockApp(a))
+            .map(a => {
+              const isApplicant = a.applicant_id === activeUser.id;
+              return {
+                ...a,
+                dir: isApplicant ? 'out' : 'in',
+                postId: a.post_id,
+                who: a.applicant_name,
+                meta: a.applicant_college,
+                skills: a.highlighted_skills || [],
+                pitch: a.pitch_note,
+                phone: a.applicant_phone
+              };
+            });
           setSquadApps(cleanApps);
           localStorage.setItem('onestop_applications', JSON.stringify(cleanApps));
         }
       } catch (e) {
         console.warn('Could not sync squad apps from Supabase:', e.message);
       }
+    } else {
+      setSquadApps([]);
     }
   }, []);
 
@@ -242,9 +261,11 @@ export function AuthProvider({ children }) {
       setSession(currentSession);
       const currentUser = currentSession?.user || null;
       setUser(currentUser);
+      userRef.current = currentUser;
       if (currentUser) {
         fetchUserProfile(currentUser.id);
         fetchUserBookmarks(currentUser.id);
+        refreshSquadData(currentUser);
       }
       setAuthLoading(false);
     }).catch((err) => {
@@ -259,13 +280,16 @@ export function AuthProvider({ children }) {
         setSession(newSession);
         const currentUser = newSession?.user || null;
         setUser(currentUser);
+        userRef.current = currentUser;
 
         if (currentUser) {
           await fetchUserProfile(currentUser.id);
           await fetchUserBookmarks(currentUser.id);
-          refreshSquadData();
+          refreshSquadData(currentUser);
         } else {
           setProfile(null);
+          setBookmarks([]);
+          setSquadApps([]);
         }
         setAuthLoading(false);
       }
@@ -388,9 +412,16 @@ export function AuthProvider({ children }) {
         console.warn('Sign out error:', err);
       }
     }
+    userRef.current = null;
     setUser(null);
     setSession(null);
     setProfile(null);
+    setBookmarks([]);
+    setSquadApps([]);
+    try {
+      localStorage.removeItem('onestop_applications');
+      localStorage.removeItem('onestop_bookmarks');
+    } catch (e) {}
   };
 
   const resetPassword = async (email) => {
@@ -405,7 +436,7 @@ export function AuthProvider({ children }) {
   };
 
   // Profile Update (Database & Auth Metadata with 24-Hour Cooldown)
-  const updateProfile = async ({ fullName, college, course, year, phone, bio }) => {
+  const updateProfile = async ({ fullName, college, course, year, phone, bio, education_level }) => {
     if (!user || !supabase) {
       throw new Error('You must be signed in to update your profile.');
     }
@@ -422,6 +453,9 @@ export function AuthProvider({ children }) {
     const trimmedCourse = (course || '').trim();
     const selectedYear = normalizeYear(year);
     const trimmedBio = (bio || '').trim();
+    const selectedEducationLevel = selectedYear.startsWith('PG') || (education_level || profile?.education_level || user?.user_metadata?.education_level || 'undergraduate').toLowerCase().includes('post')
+      ? 'postgraduate'
+      : 'undergraduate';
 
     // Check if any field has actually changed
     const prevName = (profile?.full_name || user?.user_metadata?.full_name || '').trim();
@@ -430,6 +464,9 @@ export function AuthProvider({ children }) {
     const prevYear = normalizeYear(profile?.year || user?.user_metadata?.year);
     const prevPhone = sanitizeIndianPhone(profile?.phone || user?.user_metadata?.phone || '');
     const prevBio = (profile?.bio || user?.user_metadata?.bio || '').trim();
+    const prevEducationLevel = prevYear.startsWith('PG') || (profile?.education_level || user?.user_metadata?.education_level || 'undergraduate').toLowerCase().includes('post')
+      ? 'postgraduate'
+      : 'undergraduate';
 
     const hasChanged =
       trimmedName !== prevName ||
@@ -437,7 +474,8 @@ export function AuthProvider({ children }) {
       trimmedCourse !== prevCourse ||
       selectedYear !== prevYear ||
       cleanPhone !== prevPhone ||
-      trimmedBio !== prevBio;
+      trimmedBio !== prevBio ||
+      selectedEducationLevel !== prevEducationLevel;
 
     // If nothing has changed, do not start/reset cooldown
     if (!hasChanged && (profile?.profile_last_updated_at || user?.user_metadata?.profile_last_updated_at)) {
@@ -453,6 +491,7 @@ export function AuthProvider({ children }) {
         college: trimmedCollege,
         course: trimmedCourse,
         year: selectedYear,
+        education_level: selectedEducationLevel,
         phone: cleanPhone,
         bio: trimmedBio,
         profile_last_updated_at: nowIso,
@@ -474,6 +513,7 @@ export function AuthProvider({ children }) {
       college: trimmedCollege,
       course: trimmedCourse,
       year: selectedYear,
+      education_level: selectedEducationLevel,
       phone: cleanPhone,
       bio: trimmedBio,
       profile_last_updated_at: nowIso,
@@ -486,7 +526,8 @@ export function AuthProvider({ children }) {
         .upsert(profileRecord, { onConflict: 'id' });
 
       if (upsertErr) {
-        console.warn('Full profile upsert error, attempting basic fields:', upsertErr.message);
+        console.warn('Full profile upsert error, attempting standard fields:', upsertErr.message);
+        // Fallback omitting education_level if the column does not yet exist in PostgreSQL table
         await supabase
           .from('profiles')
           .upsert({
@@ -494,7 +535,11 @@ export function AuthProvider({ children }) {
             email: user.email,
             full_name: trimmedName,
             college: trimmedCollege,
+            course: trimmedCourse,
+            year: selectedYear,
             phone: cleanPhone,
+            bio: trimmedBio,
+            profile_last_updated_at: nowIso,
             updated_at: nowIso,
           }, { onConflict: 'id' });
       }
@@ -510,21 +555,26 @@ export function AuthProvider({ children }) {
       college: trimmedCollege,
       course: trimmedCourse,
       year: selectedYear,
+      education_level: selectedEducationLevel,
       phone: cleanPhone,
       bio: trimmedBio,
       profile_last_updated_at: nowIso,
       updated_at: nowIso,
     };
     setProfile(merged);
+    try {
+      localStorage.setItem('onestop_user_profile', JSON.stringify(merged));
+    } catch (e) {}
     return merged;
   };
 
-  // Bookmark Toggle with Live Database Sync
+  // Bookmark Toggle with Live Database Sync (String-Normalized IDs)
   const toggleBookmark = async (compId) => {
-    const isCurrentlySaved = bookmarks.includes(compId);
+    const sCompId = String(compId);
+    const isCurrentlySaved = bookmarks.some(id => String(id) === sCompId);
     const nextBookmarks = isCurrentlySaved
-      ? bookmarks.filter(id => id !== compId)
-      : [...bookmarks, compId];
+      ? bookmarks.filter(id => String(id) !== sCompId)
+      : [...bookmarks, sCompId];
 
     // Optimistic UI update
     setBookmarks(nextBookmarks);
@@ -538,11 +588,11 @@ export function AuthProvider({ children }) {
             .from('bookmarks')
             .delete()
             .eq('user_id', user.id)
-            .eq('comp_id', compId);
+            .eq('comp_id', sCompId);
         } else {
           await supabase
             .from('bookmarks')
-            .insert([{ user_id: user.id, comp_id: compId }]);
+            .insert([{ user_id: user.id, comp_id: sCompId }]);
         }
       } catch (err) {
         console.warn('Could not sync bookmark to Supabase:', err.message);
@@ -550,7 +600,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const isBookmarked = (compId) => bookmarks.includes(compId);
+  const isBookmarked = (compId) => bookmarks.some(id => String(id) === String(compId));
 
   // Squad Post Creator (Strict Authentication Required)
   const createSquadPost = async (postData) => {
@@ -646,9 +696,20 @@ export function AuthProvider({ children }) {
         throw error;
       }
 
-      setSquadApps(prev => [data, ...prev].filter(a => !isMockApp(a)));
-      localStorage.setItem('onestop_applications', JSON.stringify([data, ...squadApps].filter(a => !isMockApp(a))));
-      return data;
+      const normalizedApp = {
+        ...data,
+        dir: 'out',
+        postId: data.post_id,
+        who: data.applicant_name,
+        meta: data.applicant_college,
+        skills: data.highlighted_skills || [],
+        pitch: data.pitch_note,
+        phone: data.applicant_phone
+      };
+
+      setSquadApps(prev => [normalizedApp, ...prev].filter(a => !isMockApp(a)));
+      localStorage.setItem('onestop_applications', JSON.stringify([normalizedApp, ...squadApps].filter(a => !isMockApp(a))));
+      return normalizedApp;
     }
 
     throw new Error('Backend database not connected.');
@@ -820,6 +881,23 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Withdraw / Delete an application from Supabase
+  const withdrawApplication = async (appId) => {
+    setSquadApps(prev => prev.filter(a => a.id !== appId));
+    if (supabase && user) {
+      try {
+        const { error } = await supabase
+          .from('squad_applications')
+          .delete()
+          .eq('id', appId);
+        if (error) throw error;
+      } catch (err) {
+        console.error('Could not withdraw application from Supabase:', err);
+        refreshSquadData();
+      }
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -852,6 +930,7 @@ export function AuthProvider({ children }) {
         createSquadPost,
         applyToSquad,
         updateApplicationStatus,
+        withdrawApplication,
         reapplyToSquad,
         togglePostOpen,
         deleteSquadPost,

@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
@@ -30,7 +30,17 @@ const EMPTY_PROFILE = {
   batch: '',
   course: '',
   phone: '',
-  skills: []
+  skills: [],
+  education_level: 'undergraduate'
+};
+
+const DEFAULT_FILTERS = {
+  disc: [],
+  circ: [],
+  team: 'any',
+  fee: 'any',
+  q: '',
+  sort: 'deadline'
 };
 
 function OneStopInner() {
@@ -44,6 +54,7 @@ function OneStopInner() {
     createSquadPost: authCreatePost,
     applyToSquad: authApplySquad,
     updateApplicationStatus: authUpdateAppStatus,
+    withdrawApplication: authWithdrawApp,
     updateProfile: authUpdateProfile,
     openAuthModal,
     signOut
@@ -56,48 +67,31 @@ function OneStopInner() {
   const [competitions, setCompetitions] = useState([]);
   const [competitionsLoading, setCompetitionsLoading] = useState(true);
 
-  // Bookmarks State (100% real user data, zero mock IDs)
+  // Bookmarks State (String-normalized, zero mock IDs)
   const [localBookmarks, setLocalBookmarks] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_bookmarks');
-      return saved ? JSON.parse(saved).filter(b => !isMockBookmark(b)) : [];
+      return saved ? JSON.parse(saved).filter(b => !isMockBookmark(b)).map(String) : [];
     } catch {
       return [];
     }
   });
 
-  const bookmarks = (authBookmarks && authBookmarks.length > 0 ? authBookmarks : localBookmarks).filter(b => !isMockBookmark(b));
+  const bookmarks = (user ? (authBookmarks || []) : localBookmarks).filter(b => !isMockBookmark(b)).map(String);
 
   const handleToggleBookmark = useCallback((compId) => {
+    const sCompId = String(compId);
     if (authToggleBookmark) {
-      authToggleBookmark(compId);
+      authToggleBookmark(sCompId);
     }
     setLocalBookmarks(prev => {
-      const cleanPrev = prev.filter(b => !isMockBookmark(b));
-      const next = cleanPrev.includes(compId) ? cleanPrev.filter(id => id !== compId) : [...cleanPrev, compId];
+      const cleanPrev = prev.filter(b => !isMockBookmark(b)).map(String);
+      const next = cleanPrev.includes(sCompId) ? cleanPrev.filter(id => id !== sCompId) : [...cleanPrev, sCompId];
       localStorage.setItem('onestop_bookmarks', JSON.stringify(next));
       return next;
     });
   }, [authToggleBookmark]);
 
-  // Saved Filter Alerts State (100% real user alerts, zero mock alerts)
-  const [alerts, setAlerts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_saved_alerts');
-      return saved ? JSON.parse(saved).filter(a => !isMockAlert(a)) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    try {
-      const clean = alerts.filter(a => !isMockAlert(a));
-      localStorage.setItem('onestop_saved_alerts', JSON.stringify(clean));
-    } catch (e) {
-      console.warn('Failed to save alerts to local storage:', e);
-    }
-  }, [alerts]);
 
   // Squad Posts State (100% real Supabase squad posts)
   const [localPosts, setLocalPosts] = useState(() => {
@@ -127,7 +121,7 @@ function OneStopInner() {
     }
   });
 
-  const applications = (authSquadApps && authSquadApps.length > 0 ? authSquadApps : localApplications).filter(a => !isMockApp(a));
+  const applications = (user ? (authSquadApps || []) : localApplications).filter(a => !isMockApp(a));
 
   useEffect(() => {
     try {
@@ -135,7 +129,7 @@ function OneStopInner() {
     } catch (e) {}
   }, [applications]);
 
-  // Profile State (100% real user profile, zero fake data)
+  // Profile State (zero mock data)
   const [profile, setProfile] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_user_profile');
@@ -148,19 +142,26 @@ function OneStopInner() {
   // Sync profile when Supabase profile loads
   useEffect(() => {
     if (authProfile && (authProfile.full_name || authProfile.name)) {
-      setProfile(prev => ({
-        ...prev,
-        name: authProfile.full_name || authProfile.name || '',
-        college: authProfile.college || prev.college || '',
-        course: authProfile.course || prev.course || '',
-        batch: authProfile.year || prev.batch || '',
-        phone: authProfile.phone || prev.phone || '',
-        skills: authProfile.skills || prev.skills || []
-      }));
+      setProfile(prev => {
+        const yr = authProfile.year || prev.year || prev.batch || 'UG 2nd Year';
+        const isPg = yr.startsWith('PG') || (authProfile.education_level || '').toLowerCase().includes('post');
+        return {
+          ...prev,
+          name: authProfile.full_name || authProfile.name || '',
+          college: authProfile.college || prev.college || '',
+          course: '',
+          year: yr,
+          batch: yr,
+          phone: authProfile.phone || prev.phone || '',
+          skills: authProfile.skills || prev.skills || [],
+          education_level: isPg ? 'postgraduate' : 'undergraduate',
+        };
+      });
     } else if (user && user.email && !profile.name) {
       setProfile(prev => ({
         ...prev,
-        name: user.email.split('@')[0]
+        name: user.email.split('@')[0],
+        education_level: prev.education_level || 'undergraduate',
       }));
     }
   }, [authProfile, user]);
@@ -171,29 +172,69 @@ function OneStopInner() {
 
     if (user && authUpdateProfile) {
       try {
+        const yr = updatedData.year || updatedData.batch || 'UG 2nd Year';
+        const isPg = yr.startsWith('PG') || (updatedData.education_level || '').toLowerCase().includes('post');
         await authUpdateProfile({
           fullName: updatedData.name,
           college: updatedData.college,
-          course: updatedData.course,
-          year: updatedData.batch,
-          phone: updatedData.phone
+          course: '',
+          year: yr,
+          phone: updatedData.phone,
+          education_level: isPg ? 'postgraduate' : 'undergraduate',
         });
+        flash('Profile updated');
       } catch (err) {
-        console.warn('Supabase profile sync warning:', err.message);
+        console.warn('Supabase profile sync error:', err.message);
+        flash(err.message || 'Could not update profile');
+        return;
       }
+    } else {
+      flash('Profile updated');
     }
-    flash('Profile updated');
-  }, [user, authUpdateProfile]);
+  }, [user, authUpdateProfile, flash]);
 
-  // Browse Filters State
-  const [browseFilters, setBrowseFilters] = useState({
-    disc: [],
-    circ: [],
-    team: 'any',
-    fee: 'any',
-    q: '',
-    sort: 'deadline'
+  // Browse Filters State (Auto-saved automatically on every filter change)
+  const [browseFilters, setBrowseFilters] = useState(() => {
+    try {
+      const saved = localStorage.getItem('onestop_browse_filters');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          disc: Array.isArray(parsed.disc) ? parsed.disc : [],
+          circ: Array.isArray(parsed.circ) ? parsed.circ : [],
+          team: parsed.team || 'any',
+          fee: parsed.fee || 'any',
+          q: typeof parsed.q === 'string' ? parsed.q : '',
+          sort: parsed.sort || 'deadline'
+        };
+      }
+    } catch (e) {}
+    return DEFAULT_FILTERS;
   });
+
+  // Auto-save whenever browseFilters changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('onestop_browse_filters', JSON.stringify(browseFilters));
+    } catch (e) {}
+  }, [browseFilters]);
+
+  const handleUpdateFilters = useCallback((changes) => {
+    setBrowseFilters(prev => {
+      const next = { ...prev, ...changes };
+      try {
+        localStorage.setItem('onestop_browse_filters', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setBrowseFilters(DEFAULT_FILTERS);
+    try {
+      localStorage.setItem('onestop_browse_filters', JSON.stringify(DEFAULT_FILTERS));
+    } catch (e) {}
+  }, []);
 
   // Drawer and Modal States
   const [detailCompId, setDetailCompId] = useState(null);
@@ -265,7 +306,11 @@ function OneStopInner() {
               tags: [disciplineVal, circuitVal],
               regs: c.registeredCount || 0,
               logo: c.orgLogo || null,
-              unstopUrl: c.unstopUrl || 'https://unstop.com'
+              unstopUrl: c.unstopUrl || 'https://unstop.com',
+              isUndergradEligible: c.isUndergradEligible !== false,
+              isPGOnly: Boolean(c.isPGOnly),
+              isMBAorPG: Boolean(c.isMBAorPG),
+              targetLevel: c.targetLevel || (c.isPGOnly ? 'pg' : 'ug')
             };
           });
 
@@ -283,6 +328,21 @@ function OneStopInner() {
     };
   }, []);
 
+  const isPostgraduate =
+    (profile?.education_level || '').toLowerCase() === 'postgraduate' ||
+    (profile?.year || '').toUpperCase().startsWith('PG') ||
+    (profile?.batch || '').toUpperCase().startsWith('PG');
+
+  // Dynamic eligibility filtering based on profile education level:
+  // - Undergraduate: strictly undergraduate-eligible competitions (no MBA/PG only).
+  // - Postgraduate: shows MBA/PG competitions as well as open collegiate challenges.
+  const visibleCompetitions = useMemo(() => {
+    if (isPostgraduate) {
+      return competitions;
+    }
+    return competitions.filter(c => c.isUndergradEligible !== false && !c.isPGOnly);
+  }, [competitions, isPostgraduate]);
+
   // Navigation Handler
   const handleNavigate = (newScreen) => {
     setScreen(newScreen);
@@ -290,47 +350,17 @@ function OneStopInner() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Saved Filter Alert Actions
-  const currentFilterDesc = describeFilter(browseFilters);
-  const alreadySaved = alerts.some(a => describeFilter(a) === currentFilterDesc);
-
-  const handleSaveFilter = () => {
-    if (alreadySaved) {
-      flash('Already saved');
-      return;
-    }
-    const newAlert = {
-      id: `a${Date.now()}`,
-      disc: browseFilters.disc,
-      circ: browseFilters.circ,
-      team: browseFilters.team,
-      fee: browseFilters.fee,
-      win: 'any',
-      fresh: 0
-    };
-    setAlerts(prev => [...prev, newAlert]);
-    flash('Saved — you will be alerted on new matches');
-  };
-
-  const handleDeleteAlert = (alertId) => {
-    setAlerts(prev => prev.filter(a => a.id !== alertId));
-    flash('Alert removed');
-  };
-
-  const handleOpenAlert = (alertItem) => {
-    setBrowseFilters({
-      disc: alertItem.disc || [],
-      circ: alertItem.circ || [],
-      team: alertItem.team || 'any',
-      fee: alertItem.fee || 'any',
-      q: '',
-      sort: 'deadline'
-    });
-    setScreen('browse');
-  };
 
   // Find Teammates Button from Competition Card
   const handleFindTeammates = (comp) => {
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Post a Squad',
+        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
+        initialTab: 'signin',
+      });
+      return;
+    }
     setPostModalCompId(comp.id);
     setScreen('teams');
     setPostModalOpen(true);
@@ -338,8 +368,16 @@ function OneStopInner() {
 
   // Post a Squad Submission
   const handleSubmitPost = (draft) => {
+    if (!user) {
+      openAuthModal({
+        title: 'Sign In to Post a Squad',
+        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
+        initialTab: 'signin',
+      });
+      return;
+    }
     const creatorName = profile.name || user?.email?.split('@')[0] || 'You';
-    const comp = competitions.find(c => c.id === draft.compId);
+    const comp = competitions.find(c => String(c.id) === String(draft.compId));
     const compTitle = comp?.title || 'Competition';
     const compHost = comp?.host || '';
     const newPost = {
@@ -396,7 +434,7 @@ function OneStopInner() {
   };
 
   const handleSubmitApply = (targetPost, pitchText) => {
-    const comp = competitions.find(c => c.id === targetPost.compId || (targetPost.competition_name && c.title === targetPost.competition_name));
+    const comp = competitions.find(c => String(c.id) === String(targetPost.compId) || (targetPost.competition_name && c.title === targetPost.competition_name));
     const compTitle = comp ? comp.title : (targetPost.competition_name || 'Competition');
     const applicantName = profile.name || user?.email?.split('@')[0] || 'You';
     const newApp = {
@@ -442,11 +480,13 @@ function OneStopInner() {
     setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'accepted' } : a));
 
     if (targetApp) {
+      const targetPostId = targetApp.postId || targetApp.post_id;
       setLocalPosts(prev => prev.map(p => {
-        if (p.id === targetApp.postId) {
+        if (p.id === targetPostId) {
           const nextFilled = (p.filled || 1) + 1;
-          const nextSpots = Math.max(0, (p.size || 4) - nextFilled);
-          return { ...p, filled: nextFilled, spots: nextSpots };
+          const curSpots = p.spots_left !== undefined ? p.spots_left : (p.spots !== undefined ? p.spots : (p.size || p.total_members || 4) - (p.filled || 1));
+          const nextSpots = Math.max(0, curSpots - 1);
+          return { ...p, filled: nextFilled, spots: nextSpots, spots_left: nextSpots };
         }
         return p;
       }));
@@ -468,12 +508,15 @@ function OneStopInner() {
 
   const handleWithdrawApp = (appId) => {
     setLocalApplications(prev => prev.filter(a => a.id !== appId));
+    if (authWithdrawApp) {
+      authWithdrawApp(appId).catch(err => console.warn('Supabase withdraw error:', err.message));
+    }
     flash('Request withdrawn');
   };
 
   // WhatsApp Handshake Launcher (strictly real phone numbers)
   const handleOpenWhatsApp = (appOrPost) => {
-    const rawPhone = appOrPost.phone || appOrPost.leadPhone || appOrPost.applicant_phone || appOrPost.phone_number || '';
+    const rawPhone = appOrPost?.phone || appOrPost?.phone_number || appOrPost?.leadPhone || appOrPost?.applicant_phone || '';
     const cleanDigits = String(rawPhone).replace(/\D/g, '').slice(-10);
 
     if (!cleanDigits || cleanDigits.length !== 10) {
@@ -487,11 +530,11 @@ function OneStopInner() {
   };
 
   // Derived Counts for Sidebar Badges
-  const totalNewAlerts = alerts.reduce((acc, a) => acc + (a.fresh || 0), 0);
+  const totalNewAlerts = 0;
   const pendingInboxCount = applications.filter(a => a.dir === 'in' && a.status === 'pending').length;
 
   // Detail Drawer Target Competition
-  const selectedDetailComp = detailCompId ? competitions.find(c => c.id === detailCompId) : null;
+  const selectedDetailComp = detailCompId ? (visibleCompetitions.find(c => c.id === detailCompId) || competitions.find(c => c.id === detailCompId)) : null;
   const detailSquadCount = detailCompId ? posts.filter(p => p.compId === detailCompId).length : 0;
 
   return (
@@ -528,14 +571,9 @@ function OneStopInner() {
         {screen === 'home' && (
           <HomeScreen
             profile={profile}
-            competitions={competitions}
-            alerts={alerts}
-            onOpenAlert={handleOpenAlert}
-            onDeleteAlert={handleDeleteAlert}
-            onAddAlert={() => {
-              setScreen('browse');
-              setBrowseFilters({ disc: [], circ: [], team: 'any', fee: 'any', q: '', sort: 'deadline' });
-            }}
+            competitions={visibleCompetitions}
+            savedFilter={browseFilters}
+            onResetFilter={handleResetFilters}
             applications={applications}
             posts={posts}
             onAcceptApp={handleAcceptApp}
@@ -548,31 +586,51 @@ function OneStopInner() {
         {(screen === 'browse' || screen === 'saved') && (
           <BrowseScreen
             isBookmarks={screen === 'saved'}
-            competitions={competitions}
+            competitions={visibleCompetitions}
             bookmarks={bookmarks}
             onToggleBookmark={handleToggleBookmark}
             filters={browseFilters}
-            onUpdateFilters={(changes) => setBrowseFilters(prev => ({ ...prev, ...changes }))}
-            onResetFilters={() => setBrowseFilters({ disc: [], circ: [], team: 'any', fee: 'any', q: '', sort: 'deadline' })}
+            onUpdateFilters={handleUpdateFilters}
+            onResetFilters={handleResetFilters}
             onOpenDetail={(id) => setDetailCompId(id)}
             onFindTeammates={handleFindTeammates}
-            onSaveFilter={handleSaveFilter}
-            alreadySaved={alreadySaved}
             onSwitchScope={(targetScope) => setScreen(targetScope)}
             loading={competitionsLoading}
+            isPostgraduate={isPostgraduate}
+            profile={profile}
           />
         )}
 
         {screen === 'teams' && (
           <TeamFinderScreen
             posts={posts}
-            competitions={competitions}
+            competitions={visibleCompetitions}
             profile={profile}
+            applications={applications}
+            user={user}
             onOpenPostSquad={(comp) => {
+              if (!user) {
+                openAuthModal({
+                  title: 'Sign In to Post a Squad',
+                  subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
+                  initialTab: 'signin',
+                });
+                return;
+              }
               setPostModalCompId(comp ? comp.id : null);
               setPostModalOpen(true);
             }}
-            onOpenApply={handleOpenApply}
+            onOpenApply={(post) => {
+              if (!user) {
+                openAuthModal({
+                  title: 'Sign In to Apply',
+                  subtitle: 'You must be signed in with your collegiate account to apply to join a squad.',
+                  initialTab: 'signin',
+                });
+                return;
+              }
+              handleOpenApply(post);
+            }}
             onOpenWhatsApp={handleOpenWhatsApp}
             onGoRequests={() => handleNavigate('requests')}
           />
@@ -582,7 +640,7 @@ function OneStopInner() {
           <RequestsScreen
             applications={applications}
             posts={posts}
-            competitions={competitions}
+            competitions={visibleCompetitions}
             onAccept={handleAcceptApp}
             onDecline={handleDeclineApp}
             onWithdraw={handleWithdrawApp}

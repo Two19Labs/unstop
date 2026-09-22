@@ -23,9 +23,14 @@ export default function DetailDrawer({
   const initials = initialsOf(item.host || item.orgName || 'Host');
   const disciplineCircuit = `${item.discipline || 'Competition'} · ${item.circuit || 'All Circuits'}`;
 
+  const eligibilityDisplay = item.isPGOnly
+    ? 'Postgraduate / MBA Exclusive'
+    : (item.isMBAorPG ? 'Undergraduate & Postgraduate / MBA' : 'Undergraduate & All Collegiate');
+
   const facts = [
     { k: 'Host', v: item.host || item.orgName || 'Organizer' },
     { k: 'Circuit', v: item.circuit || 'Collegiate' },
+    { k: 'Eligibility', v: eligibilityDisplay },
     { k: 'Team size', v: item.team || (item.minTeam === item.maxTeam ? `${item.minTeam}` : `${item.minTeam}–${item.maxTeam}`) },
     { k: 'Format', v: item.mode || 'Online' },
     { k: 'Prize', v: item.prize || 'Recognition' },

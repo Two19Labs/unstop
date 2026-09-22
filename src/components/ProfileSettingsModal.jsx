@@ -90,6 +90,7 @@ export default function ProfileSettingsModal() {
     setSuccessMsg(null);
 
     try {
+      const isPg = (year || '').startsWith('PG');
       await updateProfile({
         fullName: fullName.trim(),
         college: college.trim(),
@@ -97,6 +98,7 @@ export default function ProfileSettingsModal() {
         year,
         phone: phone.trim(),
         bio: bio.trim(),
+        education_level: isPg ? 'postgraduate' : 'undergraduate',
       });
       setSuccessMsg('Profile updated successfully!');
       if (successTimerRef.current) clearTimeout(successTimerRef.current);

@@ -101,7 +101,7 @@ export default function RequestsScreen({
       <div style={{ background: '#FFFFFF', border: '1px solid #E7E6E2', borderRadius: '12px', overflow: 'hidden' }}>
         {currentRows.map((app) => {
           const post = postMap.get(app.postId || app.post_id);
-          const comp = post ? (competitions.find(c => c.id === post.compId || (post.competition_name && c.title === post.competition_name)) || null) : null;
+          const comp = post ? (competitions.find(c => String(c.id) === String(post.compId) || (post.competition_name && c.title === post.competition_name)) || null) : null;
           const look = getStatusLook(app.status);
 
           const applicantName = app.applicant_name || app.who || 'Applicant';
@@ -232,7 +232,16 @@ export default function RequestsScreen({
 
                 {app.status === 'accepted' && (
                   <button
-                    onClick={() => onOpenWhatsApp(app)}
+                    onClick={() => {
+                      if (app.dir === 'out') {
+                        onOpenWhatsApp({
+                          phone: post?.phone_number || post?.leadPhone,
+                          lead: post?.created_by_name || post?.lead
+                        });
+                      } else {
+                        onOpenWhatsApp(app);
+                      }
+                    }}
                     style={{
                       border: '1px solid #1A1A19',
                       borderRadius: '8px',
