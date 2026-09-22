@@ -112,6 +112,28 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* "More" Card at the end of rails */
+.home-more-card {
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+  user-select: none;
+}
+
+.home-more-card:hover {
+  border-color: #0F3FFE !important;
+  box-shadow: 0 6px 20px rgba(15, 63, 254, 0.12) !important;
+  transform: translateY(-2px);
+}
+
+.home-more-btn {
+  transition: all 150ms ease;
+}
+
+.home-more-card:hover .home-more-btn {
+  background-color: #0F3FFE !important;
+  border-color: #0F3FFE !important;
+  color: #FFFFFF !important;
+}
+
 .home-btn-hover:hover {
   background-color: #F2F1ED !important;
 }

@@ -297,7 +297,8 @@ export default function HomeScreen({
               </button>
             </div>
           ) : (
-            displayedBookmarks.map(b => {
+            <>
+              {displayedBookmarks.map(b => {
               const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
               const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
               return (
@@ -449,8 +450,103 @@ export default function HomeScreen({
                   </a>
                 </div>
               );
-            })
-          )}
+            })}
+
+            {/* 4th Card: More Bookmarks */}
+            {(bookmarkTotal > displayedBookmarks.length || bookmarkTotal >= 3) && (
+              <div
+                className="home-rail-card home-more-card"
+                onClick={() => handleNavigate('saved')}
+                style={{
+                  flex: '0 0 268px',
+                  width: '268px',
+                  padding: '16px 17px 17px',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF9F6 100%)',
+                  border: '1px solid #E7E6E2',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '9px',
+                      background: 'rgba(15, 63, 254, 0.08)',
+                      border: '1px solid rgba(15, 63, 254, 0.20)',
+                      color: '#0F3FFE',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flex: 'none'
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                    </svg>
+                  </div>
+                  <span
+                    style={{
+                      background: 'rgba(15, 63, 254, 0.08)',
+                      color: '#0F3FFE',
+                      border: '1px solid rgba(15, 63, 254, 0.25)',
+                      borderRadius: '20px',
+                      padding: '3px 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {bookmarkTotal > displayedBookmarks.length
+                      ? `+${bookmarkTotal - displayedBookmarks.length} more`
+                      : `${bookmarkTotal} saved`}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: 'auto 0' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#0F3FFE' }}>
+                    Saved List
+                  </span>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+                    More Bookmarks
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12.5px', color: '#75736C', lineHeight: 1.45 }}>
+                    Explore all your bookmarked competitions, review upcoming deadlines, and organize your squad entries.
+                  </p>
+                </div>
+
+                <div
+                  className="home-more-btn"
+                  style={{
+                    marginTop: 'auto',
+                    border: '1px solid #0F3FFE',
+                    borderRadius: '9px',
+                    background: 'rgba(15, 63, 254, 0.06)',
+                    color: '#0F3FFE',
+                    padding: '9px 12px',
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>Explore all ({bookmarkTotal})</span>
+                  <span style={{ fontSize: '14px', lineHeight: 1 }}>→</span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
         </div>
       </section>
 
