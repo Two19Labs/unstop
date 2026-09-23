@@ -15,6 +15,7 @@ import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
 import ThemeToggle from './components/ThemeToggle';
 import OneStopLogo from './components/OneStopLogo';
+import Footer from './components/Footer';
 
 import {
   describeFilter,
@@ -1000,73 +1001,77 @@ function OneStopInner() {
               onToggleBookmark={handleToggleBookmark}
             />
           </div>
-          {screen === 'home' && (
-            <HomeScreen
-              profile={profile}
-              competitions={visibleCompetitions}
-              competitionsLoading={competitionsLoading}
-              savedFilter={browseFilters}
-              browseSort={browseSort}
-              onUpdateSort={handleUpdateSort}
-              onResetFilter={handleResetFilters}
-              applications={applications}
-              posts={posts}
-              onGoBrowse={() => handleNavigate('browse')}
-              onOpenDetail={(id) => setDetailCompId(id)}
-              onFindTeammates={handleFindTeammates}
-              onSquadUp={handleFindTeammates}
-              bookmarks={bookmarks}
-              onToggleBookmark={handleToggleBookmark}
-              user={user}
-              onNavigate={handleNavigate}
-              onRequestJoin={(post) => handleOpenApply(post)}
-              onOpenWhatsApp={handleOpenWhatsApp}
-            />
-          )}
+          <div className="onestop-screen-content">
+            {screen === 'home' && (
+              <HomeScreen
+                profile={profile}
+                competitions={visibleCompetitions}
+                competitionsLoading={competitionsLoading}
+                savedFilter={browseFilters}
+                browseSort={browseSort}
+                onUpdateSort={handleUpdateSort}
+                onResetFilter={handleResetFilters}
+                applications={applications}
+                posts={posts}
+                onGoBrowse={() => handleNavigate('browse')}
+                onOpenDetail={(id) => setDetailCompId(id)}
+                onFindTeammates={handleFindTeammates}
+                onSquadUp={handleFindTeammates}
+                bookmarks={bookmarks}
+                onToggleBookmark={handleToggleBookmark}
+                user={user}
+                onNavigate={handleNavigate}
+                onRequestJoin={(post) => handleOpenApply(post)}
+                onOpenWhatsApp={handleOpenWhatsApp}
+              />
+            )}
 
-          {screen === 'teams' && (
-            <TeamFinderScreen
-              key="teams"
-              posts={posts}
-              competitions={visibleCompetitions}
-              profile={profile}
-              applications={applications}
-              user={user}
-              onOpenPostSquad={handleOpenCreateSquad}
-              onOpenEditSquad={handleOpenEditSquad}
-              onOpenApply={handleOpenApply}
-              onOpenWhatsApp={handleOpenWhatsApp}
-              onGoRequests={() => handleNavigate('requests')}
-              onTogglePostOpen={handleTogglePostOpen}
-              onDeleteSquadPost={handleDeleteSquadPost}
-              onAcceptApp={handleAcceptApp}
-              onDeclineApp={handleDeclineApp}
-              onRemoveApp={handleRemoveApp}
-            />
-          )}
+            {screen === 'teams' && (
+              <TeamFinderScreen
+                key="teams"
+                posts={posts}
+                competitions={visibleCompetitions}
+                profile={profile}
+                applications={applications}
+                user={user}
+                onOpenPostSquad={handleOpenCreateSquad}
+                onOpenEditSquad={handleOpenEditSquad}
+                onOpenApply={handleOpenApply}
+                onOpenWhatsApp={handleOpenWhatsApp}
+                onGoRequests={() => handleNavigate('requests')}
+                onTogglePostOpen={handleTogglePostOpen}
+                onDeleteSquadPost={handleDeleteSquadPost}
+                onAcceptApp={handleAcceptApp}
+                onDeclineApp={handleDeclineApp}
+                onRemoveApp={handleRemoveApp}
+              />
+            )}
 
-          {screen === 'requests' && (
-            <RequestsScreen
-              applications={applications}
-              posts={posts}
-              competitions={visibleCompetitions}
-              onAccept={handleAcceptApp}
-              onDecline={handleDeclineApp}
-              onRemove={handleRemoveApp}
-              onWithdraw={handleWithdrawApp}
-              onOpenWhatsApp={handleOpenWhatsApp}
-            />
-          )}
+            {screen === 'requests' && (
+              <RequestsScreen
+                applications={applications}
+                posts={posts}
+                competitions={visibleCompetitions}
+                onAccept={handleAcceptApp}
+                onDecline={handleDeclineApp}
+                onRemove={handleRemoveApp}
+                onWithdraw={handleWithdrawApp}
+                onOpenWhatsApp={handleOpenWhatsApp}
+              />
+            )}
 
-          {screen === 'profile' && (
-            <ProfileScreen
-              profile={profile}
-              onSaveProfile={handleSaveProfile}
-              user={user}
-              onOpenAuthModal={() => openAuthModal && openAuthModal()}
-              onSignOut={signOut}
-            />
-          )}
+            {screen === 'profile' && (
+              <ProfileScreen
+                profile={profile}
+                onSaveProfile={handleSaveProfile}
+                user={user}
+                onOpenAuthModal={() => openAuthModal && openAuthModal()}
+                onSignOut={signOut}
+              />
+            )}
+          </div>
+
+          <Footer />
         </main>
       )}
 

@@ -4,6 +4,7 @@ import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import InstitutionLogo from './InstitutionLogo';
 import SectionLoadingWidget from './SectionLoadingWidget';
 import { BROWSE_PUNS } from './FunLoadingScreen';
+import Footer from './Footer';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
@@ -1617,6 +1618,7 @@ export default function CompetitionsPage({
         </main>
       </div>
     </div>
+    <Footer />
   </div>
 );
 }

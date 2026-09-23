@@ -1,0 +1,75 @@
+/* src/components/Footer.css  -  OneStop Site Footer */
+
+.onestop-site-footer {
+  margin-top: auto;
+  padding: 40px 20px 24px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.onestop-footer-text {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans, 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-secondary, #55534D);
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
+.onestop-footer-heart {
+  color: var(--urgency-red, #DC2626);
+  display: inline-block;
+  font-size: 13.5px;
+  margin: 0 1px;
+  vertical-align: baseline;
+  user-select: none;
+}
+
+.onestop-footer-link {
+  color: var(--primary, #0F3FFE);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  font-weight: 500;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.onestop-footer-link:hover {
+  opacity: 0.8;
+  color: var(--primary-hover, #0C33CC);
+}
+
+.onestop-footer-dot {
+  color: var(--ink-muted, #75736C);
+  padding: 0 3px;
+}
+
+[data-theme='dark'] .onestop-footer-text {
+  color: var(--ink-secondary, #9DA3AE);
+}
+
+[data-theme='dark'] .onestop-footer-heart {
+  color: var(--urgency-red, #F87171);
+}
+
+[data-theme='dark'] .onestop-footer-link {
+  color: var(--primary, #3B6BFF);
+}
+
+[data-theme='dark'] .onestop-footer-link:hover {
+  color: var(--primary-hover, #5982FF);
+}
+
+@media (max-width: 640px) {
+  .onestop-site-footer {
+    padding: 32px 14px 20px;
+  }
+  .onestop-footer-text {
+    font-size: 12.5px;
+  }
+}
