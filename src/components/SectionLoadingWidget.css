@@ -1,14 +1,14 @@
 /* src/components/SectionLoadingWidget.css */
 
 .section-loading-widget {
-  background: #FFFFFF;
-  border: 1px solid #E7E6E2;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 1px 3px rgba(26, 26, 25, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: opacity 220ms ease, transform 220ms ease;
   margin-bottom: 18px;
   box-sizing: border-box;
@@ -37,14 +37,14 @@
 .section-loading-title {
   font-size: 13.5px;
   font-weight: 700;
-  color: #1A1A19;
+  color: var(--ink);
   letter-spacing: -0.01em;
 }
 
 .section-loading-badge {
-  background: rgba(15, 63, 254, 0.08);
-  color: #0F3FFE;
-  border: 1px solid rgba(15, 63, 254, 0.22);
+  background: var(--primary-tint-8);
+  color: var(--primary);
+  border: 1px solid var(--primary-tint-18);
   border-radius: 20px;
   padding: 2px 8px;
   font-size: 10px;
@@ -65,7 +65,7 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: #75736C;
+  color: var(--ink-muted);
 }
 
 .ticker-live-dot {
@@ -84,13 +84,13 @@
 }
 
 .ticker-dot-sep {
-  color: #C0BEB7;
+  color: var(--divider-dot);
 }
 
 .section-loading-skip-btn {
-  border: 1px solid #E7E6E2;
-  background: #F9F9F8;
-  color: #55534D;
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
   border-radius: 6px;
   padding: 3px 8px;
   font-size: 11px;
@@ -100,8 +100,8 @@
 }
 
 .section-loading-skip-btn:hover {
-  background: #ECEBE7;
-  color: #1A1A19;
+  background: var(--surface-muted);
+  color: var(--ink);
 }
 
 .section-loading-main {
@@ -128,7 +128,7 @@
 }
 
 .section-circular-track {
-  stroke: #ECEBE7;
+  stroke: var(--line);
 }
 
 .section-circular-head {
@@ -151,7 +151,7 @@
   margin: 0;
   font-size: 13.5px;
   font-style: italic;
-  color: #374151;
+  color: var(--ink-secondary);
   font-weight: 500;
   line-height: 1.45;
 }

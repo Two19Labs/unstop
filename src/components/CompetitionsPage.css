@@ -5,13 +5,10 @@
 
 :root {
   --bg: var(--canvas, #FAF8F5);
-  --surface: #FFFFFF;
   --border: var(--line, #E7E6E2);
-  --ink: #1A1A19;
   --ink-dim: var(--ink-secondary, #55534D);
-  --ink-muted: #75736C;
-  --accent: #0F3FFE;
-  --accent-tint: rgba(15, 63, 254, 0.08);
+  --accent: var(--primary, #0F3FFE);
+  --accent-tint: var(--primary-tint-8, rgba(15, 63, 254, 0.08));
   --maroon: #71222c;
   --gold: #b08d3e;
   --gold-text: #8a6c2a;
@@ -22,6 +19,11 @@
 }
 
 [data-theme='dark'] {
+  --bg: var(--canvas, #0F1013);
+  --border: var(--line, #262830);
+  --ink-dim: var(--ink-secondary, #9DA3AE);
+  --accent: var(--primary, #3B6BFF);
+  --accent-tint: var(--primary-tint-8, rgba(59, 107, 255, 0.12));
   --maroon: #d98a94;
   --gold: #c9a558;
   --gold-text: #c9a558;

@@ -1083,10 +1083,10 @@ export default function HomeScreen({
                         }}
                         className="home-btn-hover"
                         style={{
-                          border: '1px solid #E7E6E2',
+                          border: '1px solid var(--line)',
                           borderRadius: '9px',
-                          background: '#FFFFFF',
-                          color: '#1A1A19',
+                          background: 'var(--surface)',
+                          color: 'var(--ink)',
                           padding: '9px 10px',
                           fontSize: '13px',
                           fontWeight: 600,
@@ -1098,7 +1098,7 @@ export default function HomeScreen({
                           gap: '5px'
                         }}
                       >
-                        <UsersIcon size={13} color="#1A1A19" />
+                        <UsersIcon size={13} color="var(--ink)" />
                         <span>Squad up</span>
                       </button>
                     </div>
@@ -1114,90 +1114,90 @@ export default function HomeScreen({
                   style={{
                     flex: '0 0 302px',
                     width: '302px',
-                  padding: '16px 17px 17px',
-                  gap: '12px',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF9F6 100%)',
-                  border: '1px solid #E7E6E2',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    padding: '16px 17px 17px',
+                    gap: '12px',
+                    cursor: 'pointer',
+                    background: 'linear-gradient(180deg, var(--surface) 0%, var(--surface-sunken) 100%)',
+                    border: '1px solid var(--line)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '9px',
+                        background: 'rgba(15, 63, 254, 0.08)',
+                        border: '1px solid rgba(15, 63, 254, 0.20)',
+                        color: 'var(--primary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flex: 'none'
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+                      </svg>
+                    </div>
+                    <span
+                      style={{
+                        background: 'rgba(15, 63, 254, 0.08)',
+                        color: 'var(--primary)',
+                        border: '1px solid rgba(15, 63, 254, 0.25)',
+                        borderRadius: '20px',
+                        padding: '3px 10px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        letterSpacing: '0.02em',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {bookmarkTotal > displayedBookmarks.length
+                        ? `+${bookmarkTotal - displayedBookmarks.length} more`
+                        : `${bookmarkTotal} saved`}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: 'auto 0' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--primary)' }}>
+                      Saved List
+                    </span>
+                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+                      More Bookmarks
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--ink-muted)', lineHeight: 1.45 }}>
+                      Explore all your bookmarked competitions, review upcoming deadlines, and organize your squad entries.
+                    </p>
+                  </div>
+
                   <div
+                    className="home-more-btn"
                     style={{
-                      width: '36px',
-                      height: '36px',
+                      marginTop: 'auto',
+                      border: '1px solid var(--primary)',
                       borderRadius: '9px',
-                      background: 'rgba(15, 63, 254, 0.08)',
-                      border: '1px solid rgba(15, 63, 254, 0.20)',
-                      color: '#0F3FFE',
+                      background: 'rgba(15, 63, 254, 0.06)',
+                      color: 'var(--primary)',
+                      padding: '9px 12px',
+                      textAlign: 'center',
+                      fontSize: '13px',
+                      fontWeight: 600,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      flex: 'none'
+                      gap: '6px'
                     }}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
-                    </svg>
+                    <span>Explore all ({bookmarkTotal})</span>
+                    <span style={{ fontSize: '14px', lineHeight: 1 }}>→</span>
                   </div>
-                  <span
-                    style={{
-                      background: 'rgba(15, 63, 254, 0.08)',
-                      color: '#0F3FFE',
-                      border: '1px solid rgba(15, 63, 254, 0.25)',
-                      borderRadius: '20px',
-                      padding: '3px 10px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      letterSpacing: '0.02em',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {bookmarkTotal > displayedBookmarks.length
-                      ? `+${bookmarkTotal - displayedBookmarks.length} more`
-                      : `${bookmarkTotal} saved`}
-                  </span>
                 </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: 'auto 0' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#0F3FFE' }}>
-                    Saved List
-                  </span>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
-                    More Bookmarks
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '12.5px', color: '#75736C', lineHeight: 1.45 }}>
-                    Explore all your bookmarked competitions, review upcoming deadlines, and organize your squad entries.
-                  </p>
-                </div>
-
-                <div
-                  className="home-more-btn"
-                  style={{
-                    marginTop: 'auto',
-                    border: '1px solid #0F3FFE',
-                    borderRadius: '9px',
-                    background: 'rgba(15, 63, 254, 0.06)',
-                    color: '#0F3FFE',
-                    padding: '9px 12px',
-                    textAlign: 'center',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <span>Explore all ({bookmarkTotal})</span>
-                  <span style={{ fontSize: '14px', lineHeight: 1 }}>→</span>
-                </div>
-              </div>
             )}
           </>
         )}
@@ -1207,12 +1207,12 @@ export default function HomeScreen({
       {/* 4. Top Competitions Rail */}
       <section className="home-section">
         <div className="home-section-header">
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1A1A19' }}>
+          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
             Top competitions
           </h2>
           <span
             style={{
-              background: '#0F3FFE',
+              background: 'var(--primary)',
               color: '#FFFFFF',
               borderRadius: '20px',
               padding: '2px 9px',
@@ -1225,19 +1225,19 @@ export default function HomeScreen({
           </span>
           {/* Read-only indicators for Sort and Filters last chosen in Browse */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
-              Sort: <strong style={{ color: '#1A1A19', fontWeight: 600 }}>{SORT_LABELS[effectiveSort] || 'Closing soonest first'}</strong>
+            <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
+              Sort: <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>{SORT_LABELS[effectiveSort] || 'Closing soonest first'}</strong>
             </span>
             {filterChips.length > 0 && (
               <>
-                <span style={{ color: '#C9C7C1' }}>·</span>
-                <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>Filters:</span>
+                <span style={{ color: 'var(--line)' }}>·</span>
+                <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Filters:</span>
                 {filterChips.slice(0, 3).map((chip, idx) => (
                   <span
                     key={idx}
                     style={{
                       background: 'rgba(15, 63, 254, 0.08)',
-                      color: '#0F3FFE',
+                      color: 'var(--primary)',
                       border: '1px solid rgba(15, 63, 254, 0.20)',
                       borderRadius: '12px',
                       padding: '1px 8px',
@@ -1250,7 +1250,7 @@ export default function HomeScreen({
                   </span>
                 ))}
                 {filterChips.length > 3 && (
-                  <span style={{ fontSize: '11px', color: '#75736C', fontWeight: 600 }}>
+                  <span style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600 }}>
                     +{filterChips.length - 3} more
                   </span>
                 )}
@@ -1262,10 +1262,10 @@ export default function HomeScreen({
             className="home-btn-hover"
             style={{
               marginLeft: 'auto',
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '9px',
-              background: '#FFFFFF',
-              color: '#1A1A19',
+              background: 'var(--surface)',
+              color: 'var(--ink)',
               padding: '8px 13px',
               fontSize: '13px',
               fontWeight: 600,
@@ -1288,8 +1288,8 @@ export default function HomeScreen({
             <div
               style={{
                 flex: '1 1 100%',
-                background: '#FFFFFF',
-                border: '1px dashed #D6D4CE',
+                background: 'var(--surface)',
+                border: '1px dashed var(--line)',
                 borderRadius: '12px',
                 padding: '22px',
                 display: 'flex',
@@ -1298,7 +1298,7 @@ export default function HomeScreen({
                 gap: '16px'
               }}
             >
-              <span style={{ fontSize: '13px', color: '#75736C' }}>
+              <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>
                 No competitions match your filter.
               </span>
               <button
@@ -1306,7 +1306,7 @@ export default function HomeScreen({
                 style={{
                   border: 0,
                   background: 'transparent',
-                  color: '#0F3FFE',
+                  color: 'var(--primary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -1351,7 +1351,7 @@ export default function HomeScreen({
                       borderRadius={9}
                       fontSize={12}
                     />
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: '#55534D', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink-secondary)', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty' }}>
                       {c.host}
                     </span>
                   </div>
@@ -1365,7 +1365,7 @@ export default function HomeScreen({
                       fontWeight: 700,
                       lineHeight: 1.35,
                       letterSpacing: '-0.01em',
-                      color: '#1A1A19',
+                      color: 'var(--ink)',
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
@@ -1414,9 +1414,9 @@ export default function HomeScreen({
                         borderRadius: '5px',
                         letterSpacing: '0.2px',
                         flexShrink: 0,
-                        background: isFree ? '#FFFFFF' : '#F2F1ED',
-                        color: isFree ? '#059669' : '#55534D',
-                        border: isFree ? '1px solid rgba(16, 185, 129, 0.32)' : '1px solid #E7E6E2'
+                        background: isFree ? 'var(--surface)' : 'var(--surface-muted)',
+                        color: isFree ? '#10B981' : 'var(--ink-secondary)',
+                        border: isFree ? '1px solid rgba(16, 185, 129, 0.32)' : '1px solid var(--line)'
                       }}
                     >
                       {feeText}
@@ -1430,38 +1430,38 @@ export default function HomeScreen({
                       alignItems: 'center',
                       gap: '8px',
                       fontSize: '12px',
-                      color: '#55534D',
+                      color: 'var(--ink-secondary)',
                       fontWeight: 600,
                       minHeight: '20px',
                       flexWrap: 'wrap'
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }} title={teamText}>
-                      <UsersIcon size={13} color="#55534D" />
+                      <UsersIcon size={13} color="var(--ink-secondary)" />
                       <span>{teamText}</span>
                     </div>
-                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#C9C7C1', flexShrink: 0 }} />
+                    <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--line)', flexShrink: 0 }} />
                     <div
                       style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                       title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
                     >
-                      <CalendarIcon size={13} color="#55534D" />
+                      <CalendarIcon size={13} color="var(--ink-secondary)" />
                       <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : (c.mode || 'Online')}</span>
                     </div>
                   </div>
 
                   {/* Social Proof & Deadline Status (Metrics Row) */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '22px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#75736C' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--ink-muted)' }}>
                       {registeredCount > 0 ? (
                         <>
                           <FlameIcon size={13} color="#f97316" />
                           <span>
-                            <strong style={{ color: '#1A1A19' }}>{registeredCount.toLocaleString()}</strong> registrations
+                            <strong style={{ color: 'var(--ink)' }}>{registeredCount.toLocaleString()}</strong> registrations
                           </span>
                         </>
                       ) : (
-                        <span style={{ color: '#0F3FFE', fontWeight: 600, fontSize: '11px' }}>Recently Listed</span>
+                        <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '11px' }}>Recently Listed</span>
                       )}
                     </div>
 
@@ -1532,10 +1532,10 @@ export default function HomeScreen({
                       }}
                       className="home-btn-hover"
                       style={{
-                        border: '1px solid #E7E6E2',
+                        border: '1px solid var(--line)',
                         borderRadius: '9px',
-                        background: '#FFFFFF',
-                        color: '#1A1A19',
+                        background: 'var(--surface)',
+                        color: 'var(--ink)',
                         padding: '9px 10px',
                         fontSize: '13px',
                         fontWeight: 600,
@@ -1547,7 +1547,7 @@ export default function HomeScreen({
                         gap: '5px'
                       }}
                     >
-                      <UsersIcon size={13} color="#1A1A19" />
+                      <UsersIcon size={13} color="var(--ink)" />
                       <span>Squad up</span>
                     </button>
                   </div>
@@ -1566,8 +1566,8 @@ export default function HomeScreen({
                   padding: '16px 17px 17px',
                   gap: '12px',
                   cursor: 'pointer',
-                  background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF9F6 100%)',
-                  border: '1px solid #E7E6E2',
+                  background: 'linear-gradient(180deg, var(--surface) 0%, var(--surface-sunken) 100%)',
+                  border: '1px solid var(--line)',
                   borderRadius: '12px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1583,19 +1583,19 @@ export default function HomeScreen({
                       borderRadius: '9px',
                       background: 'rgba(15, 63, 254, 0.08)',
                       border: '1px solid rgba(15, 63, 254, 0.20)',
-                      color: '#0F3FFE',
+                      color: 'var(--primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flex: 'none'
                     }}
                   >
-                    <TrophyIcon size={18} color="#0F3FFE" />
+                    <TrophyIcon size={18} color="var(--primary)" />
                   </div>
                   <span
                     style={{
                       background: 'rgba(15, 63, 254, 0.08)',
-                      color: '#0F3FFE',
+                      color: 'var(--primary)',
                       border: '1px solid rgba(15, 63, 254, 0.25)',
                       borderRadius: '20px',
                       padding: '3px 10px',
@@ -1612,13 +1612,13 @@ export default function HomeScreen({
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: 'auto 0' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#0F3FFE' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--primary)' }}>
                     {hasFilter ? 'Filtered Directory' : 'All Competitions'}
                   </span>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
                     More Competitions
                   </h3>
-                  <p style={{ margin: 0, fontSize: '12.5px', color: '#75736C', lineHeight: 1.45 }}>
+                  <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--ink-muted)', lineHeight: 1.45 }}>
                     {hasFilter
                       ? `Explore all ${compTotal} competitions matching your filters, check eligibility, and submit your entries.`
                       : `Explore all ${compTotal} live campus competitions, filter by track, and find your next challenge.`}
@@ -1629,10 +1629,10 @@ export default function HomeScreen({
                   className="home-more-btn"
                   style={{
                     marginTop: 'auto',
-                    border: '1px solid #0F3FFE',
+                    border: '1px solid var(--primary)',
                     borderRadius: '9px',
                     background: 'rgba(15, 63, 254, 0.06)',
-                    color: '#0F3FFE',
+                    color: 'var(--primary)',
                     padding: '9px 12px',
                     textAlign: 'center',
                     fontSize: '13px',
@@ -1656,12 +1656,12 @@ export default function HomeScreen({
       {/* 5. Top Squads Rail */}
       <section className="home-section">
         <div className="home-section-header">
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1A1A19' }}>
+          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
             Top squads
           </h2>
           <span
             style={{
-              background: '#0F3FFE',
+              background: 'var(--primary)',
               color: '#FFFFFF',
               borderRadius: '20px',
               padding: '2px 9px',
@@ -1672,7 +1672,7 @@ export default function HomeScreen({
           >
             {showRailLoading ? 'Loading...' : `${squadTotal} match`}
           </span>
-          <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
             Recruiting now
           </span>
           <button
@@ -1680,10 +1680,10 @@ export default function HomeScreen({
             className="home-btn-hover"
             style={{
               marginLeft: 'auto',
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '9px',
-              background: '#FFFFFF',
-              color: '#1A1A19',
+              background: 'var(--surface)',
+              color: 'var(--ink)',
               padding: '8px 13px',
               fontSize: '13px',
               fontWeight: 600,
@@ -1706,8 +1706,8 @@ export default function HomeScreen({
             <div
               style={{
                 flex: '1 1 100%',
-                background: '#FFFFFF',
-                border: '1px dashed #D6D4CE',
+                background: 'var(--surface)',
+                border: '1px dashed var(--line)',
                 borderRadius: '12px',
                 padding: '22px',
                 display: 'flex',
@@ -1716,7 +1716,7 @@ export default function HomeScreen({
                 gap: '16px'
               }}
             >
-              <span style={{ fontSize: '13px', color: '#75736C' }}>
+              <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>
                 No squads recruiting for these competitions yet.
               </span>
               <button
@@ -1724,7 +1724,7 @@ export default function HomeScreen({
                 style={{
                   border: 0,
                   background: 'transparent',
-                  color: '#0F3FFE',
+                  color: 'var(--primary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -1814,7 +1814,7 @@ export default function HomeScreen({
                     >
                       {spotsText}
                     </span>
-                    <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
                       {postedText}
                     </span>
                   </div>
@@ -1825,7 +1825,7 @@ export default function HomeScreen({
                         width: '38px',
                         height: '38px',
                         borderRadius: '50%',
-                        background: '#0F3FFE',
+                        background: 'var(--primary)',
                         color: '#FFFFFF',
                         display: 'flex',
                         alignItems: 'center',
@@ -1839,7 +1839,7 @@ export default function HomeScreen({
                     </span>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A19' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>
                           {leadName}
                         </span>
                         <span
@@ -1852,17 +1852,17 @@ export default function HomeScreen({
                           }}
                         />
                       </div>
-                      <div style={{ fontSize: '12px', color: '#75736C', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {leadCollege} · {leadYear}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ borderTop: '1px solid #F0EFEB', paddingTop: '10px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#75736C', textTransform: 'uppercase' }}>
+                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)', textTransform: 'uppercase' }}>
                       Competing in
                     </span>
-                    <h3 style={{ margin: '3px 0 0', fontSize: '15px', fontWeight: 700, color: '#1A1A19', lineHeight: 1.35, textWrap: 'pretty' }}>
+                    <h3 style={{ margin: '3px 0 0', fontSize: '15px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.35, textWrap: 'pretty' }}>
                       {compTitle}
                     </h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
@@ -1873,14 +1873,14 @@ export default function HomeScreen({
                         borderRadius={5}
                         fontSize={9}
                       />
-                      <span style={{ fontSize: '12px', color: '#55534D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--ink-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {compHost}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#75736C' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)' }}>
                       Teammates needed with:
                     </span>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
@@ -1890,7 +1890,7 @@ export default function HomeScreen({
                             key={sIdx}
                             style={{
                               background: 'rgba(15,63,254,0.08)',
-                              color: '#0F3FFE',
+                              color: 'var(--primary)',
                               borderRadius: '6px',
                               padding: '3px 8px',
                               fontSize: '11px',
@@ -1902,22 +1902,22 @@ export default function HomeScreen({
                           </span>
                         ))
                       ) : (
-                        <span style={{ fontSize: '12px', color: '#75736C' }}>All roles welcome</span>
+                        <span style={{ fontSize: '12px', color: 'var(--ink-muted)' }}>All roles welcome</span>
                       )}
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #F0EFEB' }}>
+                  <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
                     {isMine ? (
                       <button
                         onClick={() => handleNavigate('requests')}
                         className="home-btn-hover"
                         style={{
                           width: '100%',
-                          border: '1px solid #E7E6E2',
+                          border: '1px solid var(--line)',
                           borderRadius: '9px',
-                          background: '#FFFFFF',
-                          color: '#1A1A19',
+                          background: 'var(--surface)',
+                          color: 'var(--ink)',
                           padding: '10px 14px',
                           fontSize: '13px',
                           fontWeight: 600,
@@ -1932,9 +1932,9 @@ export default function HomeScreen({
                         className="home-btn-primary-hover"
                         style={{
                           width: '100%',
-                          border: '1px solid #1A1A19',
+                          border: '1px solid #16A34A',
                           borderRadius: '9px',
-                          background: '#1A1A19',
+                          background: '#16A34A',
                           color: '#FFFFFF',
                           padding: '10px 14px',
                           fontSize: '13px',
@@ -1949,10 +1949,10 @@ export default function HomeScreen({
                         disabled
                         style={{
                           width: '100%',
-                          border: '1px solid #E7E6E2',
+                          border: '1px solid var(--line)',
                           borderRadius: '9px',
-                          background: '#F9F9F7',
-                          color: '#75736C',
+                          background: 'var(--surface-muted)',
+                          color: 'var(--ink-muted)',
                           padding: '10px 14px',
                           fontSize: '13px',
                           fontWeight: 600,

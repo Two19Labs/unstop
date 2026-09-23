@@ -33,25 +33,25 @@ export default function RequestsScreen({
       case 'accepted':
         return {
           label: 'Accepted',
-          bg: 'rgba(23,163,74,0.09)',
-          color: '#15803D',
-          border: 'rgba(23,163,74,0.35)'
+          bg: 'rgba(22,163,74,0.15)',
+          color: '#16A34A',
+          border: 'rgba(22,163,74,0.35)'
         };
       case 'rejected':
       case 'declined':
         return {
           label: 'Declined',
-          bg: '#F2F1ED',
-          color: '#55534D',
-          border: '#E7E6E2'
+          bg: 'var(--surface-muted)',
+          color: 'var(--ink-secondary)',
+          border: 'var(--line)'
         };
       case 'pending':
       default:
         return {
           label: 'Pending',
-          bg: '#FFFFFF',
-          color: '#75736C',
-          border: '#E7E6E2'
+          bg: 'var(--surface-sunken)',
+          color: 'var(--ink-muted)',
+          border: 'var(--line)'
         };
     }
   };
@@ -60,10 +60,10 @@ export default function RequestsScreen({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '17px' }}>
       {/* Header */}
       <div>
-        <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: '#1A1A19' }}>
+        <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
           Requests
         </h1>
-        <p style={{ margin: '7px 0 0', fontSize: '14px', color: '#75736C' }}>
+        <p style={{ margin: '7px 0 0', fontSize: '14px', color: 'var(--ink-muted)' }}>
           Applications to your squads, and the ones you have sent out.
         </p>
       </div>
@@ -80,10 +80,10 @@ export default function RequestsScreen({
               key={t.id}
               onClick={() => setReqTab(t.id)}
               style={{
-                border: `1px solid ${on ? '#0F3FFE' : '#E7E6E2'}`,
+                border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
                 borderRadius: '20px',
-                background: on ? '#0F3FFE' : '#FFFFFF',
-                color: on ? '#FFFFFF' : '#1A1A19',
+                background: on ? 'var(--primary)' : 'var(--surface)',
+                color: on ? '#FFFFFF' : 'var(--ink)',
                 padding: '8px 15px',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
@@ -99,7 +99,7 @@ export default function RequestsScreen({
       </div>
 
       {/* Requests Card */}
-      <div style={{ background: '#FFFFFF', border: '1px solid #E7E6E2', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '12px', overflow: 'hidden' }}>
         {currentRows.map((app) => {
           const post = postMap.get(app.postId || app.post_id);
           const comp = post ? (competitions.find(c => String(c.id) === String(post.compId) || (post.competition_name && c.title === post.competition_name)) || null) : null;
@@ -127,12 +127,12 @@ export default function RequestsScreen({
                 alignItems: 'start',
                 gap: '16px',
                 padding: '15px 18px',
-                borderBottom: '1px solid #F0EFEB'
+                borderBottom: '1px solid var(--line)'
               }}
             >
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>{whoTitle}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>{whoTitle}</span>
                   <span
                     style={{
                       background: look.bg,
@@ -149,16 +149,16 @@ export default function RequestsScreen({
                   </span>
                 </div>
 
-                <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#75736C' }}>{subline}</p>
+                <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--ink-muted)' }}>{subline}</p>
 
                 {pitch && (
                   <p
                     style={{
                       margin: '9px 0 0',
                       fontSize: '13px',
-                      color: '#55534D',
+                      color: 'var(--ink)',
                       lineHeight: 1.5,
-                      borderLeft: '2px solid #E7E6E2',
+                      borderLeft: '2px solid var(--line)',
                       paddingLeft: '11px'
                     }}
                   >
@@ -172,12 +172,12 @@ export default function RequestsScreen({
                       <span
                         key={idx}
                         style={{
-                          background: '#F2F1ED',
+                          background: 'var(--surface-muted)',
                           borderRadius: '6px',
                           padding: '3px 8px',
                           fontSize: '11px',
                           fontWeight: 500,
-                          color: '#55534D',
+                          color: 'var(--ink-secondary)',
                           whiteSpace: 'nowrap'
                         }}
                       >
@@ -195,9 +195,9 @@ export default function RequestsScreen({
                     <button
                       onClick={() => onAccept(app.id)}
                       style={{
-                        border: '1px solid #0F3FFE',
+                        border: '1px solid var(--primary)',
                         borderRadius: '8px',
-                        background: '#0F3FFE',
+                        background: 'var(--primary)',
                         color: '#FFFFFF',
                         padding: '8px 13px',
                         cursor: 'pointer',
@@ -206,25 +206,23 @@ export default function RequestsScreen({
                         fontWeight: 600
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => onDecline(app.id)}
                       style={{
-                        border: '1px solid #E7E6E2',
+                        border: '1px solid var(--line)',
                         borderRadius: '8px',
-                        background: '#FFFFFF',
-                        color: '#55534D',
+                        background: 'var(--surface)',
+                        color: 'var(--ink-secondary)',
                         padding: '8px 13px',
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         fontSize: '13px',
                         fontWeight: 500
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#F2F1ED')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
                     >
                       Decline
                     </button>
@@ -266,10 +264,10 @@ export default function RequestsScreen({
                           }
                         }}
                         style={{
-                          border: '1px solid #FECACA',
+                          border: '1px solid rgba(239, 68, 68, 0.4)',
                           borderRadius: '8px',
-                          background: '#FEF2F2',
-                          color: '#B91C1C',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          color: '#F87171',
                           padding: '8px 12px',
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',
@@ -287,18 +285,16 @@ export default function RequestsScreen({
                   <button
                     onClick={() => onWithdraw(app.id)}
                     style={{
-                      border: '1px solid #E7E6E2',
+                      border: '1px solid var(--line)',
                       borderRadius: '8px',
-                      background: '#FFFFFF',
-                      color: '#55534D',
+                      background: 'var(--surface)',
+                      color: 'var(--ink-secondary)',
                       padding: '8px 13px',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
                       fontSize: '13px',
                       fontWeight: 500
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#F2F1ED')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
                   >
                     Withdraw
                   </button>
@@ -311,8 +307,8 @@ export default function RequestsScreen({
         {/* Empty State */}
         {currentRows.length === 0 && (
           <div style={{ padding: '38px 18px', textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#1A1A19' }}>Nothing here</p>
-            <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#75736C' }}>
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>Nothing here</p>
+            <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--ink-muted)' }}>
               {reqTab === 'in'
                 ? 'No one has applied to your squads yet.'
                 : 'You have not requested to join any squad yet.'}

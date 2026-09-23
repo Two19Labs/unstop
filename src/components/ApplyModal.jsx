@@ -72,7 +72,7 @@ export default function ApplyModal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(26,26,25,0.45)',
+        background: 'var(--scrim)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -86,10 +86,10 @@ export default function ApplyModal({
           width: 'min(480px, 100%)',
           maxHeight: '92vh',
           overflowY: 'auto',
-          background: '#FFFFFF',
-          border: '1px solid #E7E6E2',
+          background: 'var(--surface)',
+          border: '1px solid var(--line)',
           borderRadius: '14px',
-          boxShadow: '0 20px 40px rgba(26,26,25,0.18)'
+          boxShadow: '0 20px 40px rgba(0,0,0,0.25)'
         }}
       >
         {/* Header */}
@@ -100,14 +100,14 @@ export default function ApplyModal({
             justifyContent: 'space-between',
             gap: '12px',
             padding: '16px 20px',
-            borderBottom: '1px solid #E7E6E2'
+            borderBottom: '1px solid var(--line)'
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19' }}>
+            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
               Request to join squad
             </h2>
-            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#75736C' }}>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-secondary)' }}>
               {leadName} · {spotsText}
             </p>
           </div>
@@ -115,17 +115,18 @@ export default function ApplyModal({
             type="button"
             onClick={onClose}
             style={{
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '8px',
-              background: '#FFFFFF',
-              color: '#75736C',
+              background: 'var(--surface-sunken)',
+              color: 'var(--ink-secondary)',
               width: '32px',
               height: '32px',
               cursor: 'pointer',
               fontSize: '16px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              transition: 'all 120ms ease'
             }}
           >
             ×
@@ -138,11 +139,11 @@ export default function ApplyModal({
             style={{
               margin: '14px 20px 0',
               padding: '9px 13px',
-              background: '#FEF2F2',
-              border: '1px solid #FCA5A5',
+              background: 'rgba(220, 38, 38, 0.12)',
+              border: '1px solid rgba(220, 38, 38, 0.35)',
               borderRadius: '8px',
               fontSize: '13px',
-              color: '#B91C1C'
+              color: 'var(--urgency-red)'
             }}
           >
             ⚠️ {errorMsg}
@@ -152,27 +153,27 @@ export default function ApplyModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {/* Target Competition Card */}
-          <div style={{ background: '#F6F6F4', padding: '12px 14px', borderRadius: '9px', border: '1px solid #EFEEEA' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#75736C', textTransform: 'uppercase' }}>
+          <div style={{ background: 'var(--surface-sunken)', padding: '12px 14px', borderRadius: '9px', border: '1px solid var(--line)' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-secondary)', textTransform: 'uppercase' }}>
               Applying for
             </span>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A19', marginTop: '2px' }}>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', marginTop: '2px' }}>
               {compTitle}
             </div>
             {post.skills_looking_for && post.skills_looking_for.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '7px' }}>
-                <span style={{ fontSize: '11px', color: '#55534D' }}>Lead wants:</span>
+                <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>Lead wants:</span>
                 {post.skills_looking_for.map((s, idx) => (
                   <span
                     key={idx}
                     style={{
-                      background: '#FFFFFF',
-                      border: '1px solid #E7E6E2',
+                      background: 'var(--surface)',
+                      border: '1px solid var(--line)',
                       borderRadius: '4px',
                       padding: '1px 6px',
                       fontSize: '11px',
                       fontWeight: 500,
-                      color: '#0F3FFE'
+                      color: 'var(--primary)'
                     }}
                   >
                     {s}
@@ -185,10 +186,10 @@ export default function ApplyModal({
           {/* Highlighted Skills */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
                 Highlight Your Relevant Skills (Pick up to 3)
               </span>
-              <span style={{ fontSize: '11px', color: '#75736C' }}>
+              <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
                 {highlightedSkills.length} selected
               </span>
             </div>
@@ -201,10 +202,10 @@ export default function ApplyModal({
                     type="button"
                     onClick={() => toggleSkill(skill)}
                     style={{
-                      border: `1px solid ${on ? '#0F3FFE' : '#E7E6E2'}`,
+                      border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
                       borderRadius: '20px',
-                      background: on ? '#0F3FFE' : '#FFFFFF',
-                      color: on ? '#FFFFFF' : '#1A1A19',
+                      background: on ? 'var(--primary)' : 'var(--surface-sunken)',
+                      color: on ? '#FFFFFF' : 'var(--ink)',
                       padding: '5px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
@@ -221,7 +222,7 @@ export default function ApplyModal({
 
           {/* Pitch */}
           <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
               Pitch Note *
             </span>
             <textarea
@@ -230,8 +231,10 @@ export default function ApplyModal({
               value={pitch}
               onChange={(e) => setPitch(e.target.value)}
               style={{
-                border: '1px solid #E7E6E2',
+                border: '1px solid var(--line)',
                 borderRadius: '8px',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
                 padding: '9px 12px',
                 fontSize: '13px',
                 lineHeight: 1.5
@@ -241,11 +244,11 @@ export default function ApplyModal({
 
           {/* WhatsApp Phone */}
           <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
               Your WhatsApp Phone Number *
             </span>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: '#75736C', fontWeight: 500 }}>
+              <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: 'var(--ink-secondary)', fontWeight: 500 }}>
                 +91
               </span>
               <input
@@ -256,15 +259,17 @@ export default function ApplyModal({
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                 style={{
                   width: '100%',
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
                   padding: '9px 12px 9px 42px',
                   fontSize: '14px',
                   fontFamily: 'monospace'
                 }}
               />
             </div>
-            <span style={{ fontSize: '11px', color: '#75736C' }}>
+            <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
               Compulsory 10-digit WhatsApp number. Shared with the lead only when your request is accepted.
             </span>
           </label>
@@ -273,9 +278,9 @@ export default function ApplyModal({
             type="submit"
             style={{
               marginTop: '6px',
-              border: '1px solid #0F3FFE',
+              border: '1px solid var(--primary)',
               borderRadius: '9px',
-              background: '#0F3FFE',
+              background: 'var(--primary)',
               color: '#FFFFFF',
               padding: '13px',
               cursor: 'pointer',
@@ -283,8 +288,8 @@ export default function ApplyModal({
               fontWeight: 600,
               transition: 'background 120ms ease'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--primary-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
           >
             Send request to {leadName.split(' ')[0]}
           </button>

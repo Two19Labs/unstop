@@ -54,7 +54,7 @@ export default function DetailDrawer({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(26,26,25,0.35)',
+        background: 'var(--scrim)',
         display: 'flex',
         justifyContent: 'flex-end',
         zIndex: 50
@@ -66,8 +66,8 @@ export default function DetailDrawer({
           width: 'min(460px, 100%)',
           height: '100%',
           overflowY: 'auto',
-          background: '#FFFFFF',
-          borderLeft: '1px solid #E7E6E2',
+          background: 'var(--surface)',
+          borderLeft: '1px solid var(--line)',
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -80,17 +80,17 @@ export default function DetailDrawer({
             justifyContent: 'space-between',
             gap: '12px',
             padding: '15px 20px',
-            borderBottom: '1px solid #E7E6E2'
+            borderBottom: '1px solid var(--line)'
           }}
         >
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#75736C' }}>{disciplineCircuit}</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink-secondary)' }}>{disciplineCircuit}</span>
           <button
             onClick={onClose}
             style={{
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '8px',
-              background: '#FFFFFF',
-              color: '#75736C',
+              background: 'var(--surface-sunken)',
+              color: 'var(--ink-secondary)',
               width: '30px',
               height: '30px',
               cursor: 'pointer',
@@ -98,15 +98,16 @@ export default function DetailDrawer({
               lineHeight: 1,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              transition: 'all 120ms ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#F2F1ED';
-              e.currentTarget.style.color = '#1A1A19';
+              e.currentTarget.style.background = 'var(--surface-muted)';
+              e.currentTarget.style.color = 'var(--ink)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#FFFFFF';
-              e.currentTarget.style.color = '#75736C';
+              e.currentTarget.style.background = 'var(--surface-sunken)';
+              e.currentTarget.style.color = 'var(--ink-secondary)';
             }}
           >
             ×
@@ -132,22 +133,22 @@ export default function DetailDrawer({
                 lineHeight: 1.25,
                 letterSpacing: '-0.02em',
                 textWrap: 'pretty',
-                color: '#1A1A19'
+                color: 'var(--ink)'
               }}
             >
               {item.title}
             </h2>
-            <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#75736C' }}>
+            <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--ink-secondary)' }}>
               {item.host || item.orgName}
             </p>
-            <p style={{ margin: '10px 0 0', fontSize: '14px', lineHeight: 1.55, color: '#55534D' }}>
+            <p style={{ margin: '10px 0 0', fontSize: '14px', lineHeight: 1.55, color: 'var(--ink-secondary)' }}>
               {item.desc || 'No additional description provided for this listing.'}
             </p>
           </div>
         </div>
 
         {/* Fact Table */}
-        <div style={{ borderTop: '1px solid #E7E6E2' }}>
+        <div style={{ borderTop: '1px solid var(--line)' }}>
           {facts.map((f, i) => (
             <div
               key={i}
@@ -156,11 +157,11 @@ export default function DetailDrawer({
                 gridTemplateColumns: '108px minmax(0, 1fr)',
                 gap: '14px',
                 padding: '12px 20px',
-                borderBottom: '1px solid #F0EFEB'
+                borderBottom: '1px solid var(--line-light)'
               }}
             >
-              <span style={{ fontSize: '13px', color: '#75736C' }}>{f.k}</span>
-              <span style={{ fontSize: '13px', fontWeight: 500, color: '#1A1A19' }}>{f.v}</span>
+              <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>{f.k}</span>
+              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{f.v}</span>
             </div>
           ))}
         </div>
@@ -170,9 +171,9 @@ export default function DetailDrawer({
           <button
             onClick={() => onOpenPostSquad(item)}
             style={{
-              border: '1px solid #0F3FFE',
+              border: '1px solid var(--primary)',
               borderRadius: '9px',
-              background: '#0F3FFE',
+              background: 'var(--primary)',
               color: '#FFFFFF',
               padding: '13px',
               cursor: 'pointer',
@@ -180,8 +181,8 @@ export default function DetailDrawer({
               fontWeight: 600,
               transition: 'background 120ms ease'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--primary-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
           >
             Post a squad for this
           </button>
@@ -189,18 +190,18 @@ export default function DetailDrawer({
           <button
             onClick={() => onToggleBookmark(item.id)}
             style={{
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '9px',
-              background: '#FFFFFF',
-              color: '#1A1A19',
+              background: 'var(--surface)',
+              color: 'var(--ink)',
               padding: '13px',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: 500,
               transition: 'background 120ms ease'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#F2F1ED')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
           >
             {isBookmarked ? 'Remove bookmark' : 'Bookmark'}
           </button>
@@ -217,22 +218,23 @@ export default function DetailDrawer({
               });
             }}
             style={{
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '9px',
-              color: '#1A1A19',
+              background: 'var(--surface)',
+              color: 'var(--ink)',
               padding: '13px',
               textAlign: 'center',
               fontSize: '14px',
               fontWeight: 500,
               transition: 'background 120ms ease'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#F2F1ED')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
           >
             Open on Unstop
           </a>
 
-          <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#75736C', lineHeight: 1.5 }}>
+          <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--ink-muted)', lineHeight: 1.5 }}>
             {squadNote}
           </p>
         </div>

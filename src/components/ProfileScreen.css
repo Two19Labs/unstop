@@ -783,3 +783,275 @@
 .profile-readiness-check.missing {
   color: #CFCDC7;
 }
+
+/* ==========================================================================
+   Dark Theme Rules for Profile Screen
+   ========================================================================== */
+
+[data-theme='dark'] .profile-header-titles h1 {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-header-titles p {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-status-pill.guest {
+  background: var(--surface-muted);
+  color: var(--ink-secondary);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-cooldown-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #FCD34D;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .profile-cooldown-banner strong {
+  color: #FBBF24;
+}
+
+[data-theme='dark'] .profile-cooldown-timer {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FDE68A;
+}
+
+[data-theme='dark'] .profile-card {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .profile-card-title {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-card-badge.mba {
+  background: rgba(59, 107, 255, 0.15);
+  color: var(--primary);
+  border-color: rgba(59, 107, 255, 0.35);
+}
+
+[data-theme='dark'] .profile-card-badge.ug {
+  background: var(--surface-muted);
+  color: var(--ink-secondary);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-card-subtitle {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-year-btn {
+  background: var(--surface-sunken);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-year-btn.selected {
+  border-color: var(--primary);
+  background: rgba(59, 107, 255, 0.12);
+}
+
+[data-theme='dark'] .profile-year-radio {
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-year-btn.selected .profile-year-radio {
+  border-color: var(--primary);
+}
+
+[data-theme='dark'] .profile-year-radio-dot {
+  background: var(--primary);
+}
+
+[data-theme='dark'] .profile-year-label {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-year-btn.selected .profile-year-label {
+  color: var(--primary);
+}
+
+[data-theme='dark'] .profile-year-tag.selected {
+  background: rgba(59, 107, 255, 0.2);
+  color: var(--primary);
+}
+
+[data-theme='dark'] .profile-year-tag.unselected {
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-eligibility-callout {
+  color: var(--ink-secondary);
+  background: var(--surface-sunken);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-label {
+  color: var(--ink-secondary);
+}
+
+[data-theme='dark'] .profile-input {
+  border-color: var(--line);
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-input:disabled {
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-input-help {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-skill-chip {
+  border-color: var(--line);
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-skill-chip.selected {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #FFFFFF;
+}
+
+[data-theme='dark'] .profile-skill-chip:not(.selected):hover:not(:disabled) {
+  border-color: var(--line);
+  background: var(--surface-muted);
+}
+
+[data-theme='dark'] .profile-action-bar {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .profile-save-btn:disabled {
+  border-color: var(--line);
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-preview-card {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme='dark'] .profile-preview-top-badge {
+  border-bottom-color: var(--line);
+}
+
+[data-theme='dark'] .profile-preview-lead-tag {
+  color: var(--primary);
+  background: rgba(59, 107, 255, 0.15);
+}
+
+[data-theme='dark'] .profile-preview-name {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-preview-college {
+  color: var(--ink-secondary);
+}
+
+[data-theme='dark'] .profile-preview-standing-badge {
+  background: var(--surface-muted);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-preview-standing-badge.pg {
+  background: rgba(59, 107, 255, 0.15);
+  color: var(--primary);
+  border-color: rgba(59, 107, 255, 0.35);
+}
+
+[data-theme='dark'] .profile-preview-contact-box {
+  background: var(--surface-sunken);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-preview-contact-desc {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-preview-skills-label {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-preview-skill-tag {
+  background: var(--surface-muted);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-preview-empty-skills {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-preview-footer-note {
+  color: var(--ink-muted);
+  border-top-color: var(--line);
+}
+
+[data-theme='dark'] .profile-sync-card {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .profile-sync-title {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-sync-desc {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-sync-btn-outline {
+  border-color: var(--line);
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
+}
+
+[data-theme='dark'] .profile-sync-btn-outline:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-readiness-card {
+  background: var(--surface-sunken);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-readiness-title {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-readiness-score {
+  color: var(--primary);
+  background: rgba(59, 107, 255, 0.15);
+}
+
+[data-theme='dark'] .profile-readiness-bar-track {
+  background: var(--line);
+}
+
+[data-theme='dark'] .profile-readiness-item {
+  color: var(--ink-secondary);
+}
+
+[data-theme='dark'] .profile-readiness-item.done {
+  color: var(--ink);
+}
+
+[data-theme='dark'] .profile-readiness-check.missing {
+  color: var(--line);
+}

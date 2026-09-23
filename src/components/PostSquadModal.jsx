@@ -201,7 +201,7 @@ export default function PostSquadModal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(26,26,25,0.45)',
+        background: 'var(--scrim)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -215,10 +215,10 @@ export default function PostSquadModal({
           width: 'min(540px, 100%)',
           maxHeight: '92vh',
           overflowY: 'auto',
-          background: '#FFFFFF',
-          border: '1px solid #E7E6E2',
+          background: 'var(--surface)',
+          border: '1px solid var(--line)',
           borderRadius: '14px',
-          boxShadow: '0 20px 40px rgba(26,26,25,0.18)'
+          boxShadow: '0 20px 40px rgba(0,0,0,0.25)'
         }}
       >
         {/* Modal Header */}
@@ -229,18 +229,18 @@ export default function PostSquadModal({
             justifyContent: 'space-between',
             gap: '12px',
             padding: '16px 20px',
-            borderBottom: '1px solid #E7E6E2',
+            borderBottom: '1px solid var(--line)',
             position: 'sticky',
             top: 0,
-            background: '#FFFFFF',
+            background: 'var(--surface)',
             zIndex: 2
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#1A1A19' }}>
+            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--ink)' }}>
               {editingPost ? 'Edit squad listing' : 'Post a squad'}
             </h2>
-            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#75736C' }}>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-secondary)' }}>
               SSCBS OS Teammate Matching Engine · Open for all colleges & universities
             </p>
           </div>
@@ -249,17 +249,18 @@ export default function PostSquadModal({
             type="button"
             onClick={onClose}
             style={{
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '8px',
-              background: '#FFFFFF',
-              color: '#75736C',
+              background: 'var(--surface-sunken)',
+              color: 'var(--ink-secondary)',
               width: '32px',
               height: '32px',
               cursor: 'pointer',
               fontSize: '16px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              transition: 'all 120ms ease'
             }}
           >
             ×
@@ -272,11 +273,11 @@ export default function PostSquadModal({
             style={{
               margin: '14px 20px 0',
               padding: '10px 14px',
-              background: '#FEF2F2',
-              border: '1px solid #FCA5A5',
+              background: 'rgba(220, 38, 38, 0.12)',
+              border: '1px solid rgba(220, 38, 38, 0.35)',
               borderRadius: '8px',
               fontSize: '13px',
-              color: '#B91C1C',
+              color: 'var(--urgency-red)',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
@@ -291,23 +292,23 @@ export default function PostSquadModal({
         <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Mode Switcher */}
           <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19', display: 'block', marginBottom: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', display: 'block', marginBottom: '6px' }}>
               Competition Source
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', background: '#F6F6F4', padding: '3px', borderRadius: '9px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', background: 'var(--surface-sunken)', padding: '3px', borderRadius: '9px', border: '1px solid var(--line)' }}>
               <button
                 type="button"
                 onClick={() => setMode('unstop')}
                 style={{
                   border: 0,
                   borderRadius: '7px',
-                  background: mode === 'unstop' ? '#FFFFFF' : 'transparent',
-                  color: mode === 'unstop' ? '#0F3FFE' : '#55534D',
+                  background: mode === 'unstop' ? 'var(--surface)' : 'transparent',
+                  color: mode === 'unstop' ? 'var(--primary)' : 'var(--ink-secondary)',
                   fontWeight: mode === 'unstop' ? 700 : 500,
                   padding: '8px 10px',
                   fontSize: '13px',
                   cursor: 'pointer',
-                  boxShadow: mode === 'unstop' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                  boxShadow: mode === 'unstop' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                 }}
               >
                 Live Unstop List ({competitions.length})
@@ -318,13 +319,13 @@ export default function PostSquadModal({
                 style={{
                   border: 0,
                   borderRadius: '7px',
-                  background: mode === 'custom' ? '#FFFFFF' : 'transparent',
-                  color: mode === 'custom' ? '#0F3FFE' : '#55534D',
+                  background: mode === 'custom' ? 'var(--surface)' : 'transparent',
+                  color: mode === 'custom' ? 'var(--primary)' : 'var(--ink-secondary)',
                   fontWeight: mode === 'custom' ? 700 : 500,
                   padding: '8px 10px',
                   fontSize: '13px',
                   cursor: 'pointer',
-                  boxShadow: mode === 'custom' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                  boxShadow: mode === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                 }}
               >
                 + Custom Competition
@@ -335,15 +336,17 @@ export default function PostSquadModal({
           {/* Unstop Selection */}
           {mode === 'unstop' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>Select Competition</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Select Competition</span>
               <input
                 type="text"
                 placeholder="Type to filter competitions..."
                 value={compSearch}
                 onChange={(e) => setCompSearch(e.target.value)}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
                   padding: '8px 12px',
                   fontSize: '13px',
                   marginBottom: '4px'
@@ -353,17 +356,17 @@ export default function PostSquadModal({
                 value={selectedCompId}
                 onChange={(e) => setSelectedCompId(e.target.value)}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '9px',
-                  background: '#FFFFFF',
+                  background: 'var(--surface)',
                   padding: '10px 12px',
                   fontSize: '14px',
-                  color: '#1A1A19',
+                  color: 'var(--ink)',
                   width: '100%'
                 }}
               >
                 {filteredComps.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>
                     {c.title} — {c.host || c.orgName}
                   </option>
                 ))}
@@ -373,13 +376,13 @@ export default function PostSquadModal({
                 const sel = competitions.find(c => String(c.id) === String(selectedCompId));
                 if (!sel) return null;
                 return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', background: '#F8F8F6', borderRadius: '8px', border: '1px solid #EFEEEA', marginTop: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', background: 'var(--surface-sunken)', borderRadius: '8px', border: '1px solid var(--line)', marginTop: '4px' }}>
                     <InstitutionLogo logo={sel.logo || sel.orgLogo} name={sel.host || sel.orgName} size={28} borderRadius={6} fontSize={10} />
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#1A1A19', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {sel.title}
                       </div>
-                      <div style={{ fontSize: '11px', color: '#75736C' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
                         {sel.host || sel.orgName}
                       </div>
                     </div>
@@ -390,15 +393,17 @@ export default function PostSquadModal({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>Competition Name *</span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Competition Name *</span>
                 <input
                   type="text"
                   placeholder="e.g. HUL L.I.M.E, Harvard Case Competition, Local Hackathon..."
                   value={customTitle}
                   onChange={(e) => setCustomTitle(e.target.value)}
                   style={{
-                    border: '1px solid #E7E6E2',
+                    border: '1px solid var(--line)',
                     borderRadius: '8px',
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
                     padding: '9px 12px',
                     fontSize: '14px'
                   }}
@@ -407,30 +412,34 @@ export default function PostSquadModal({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#75736C' }}>Organizer / Host</span>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-secondary)' }}>Organizer / Host</span>
                   <input
                     type="text"
                     placeholder="e.g. IIM Bangalore, Bain & Co..."
                     value={customHost}
                     onChange={(e) => setCustomHost(e.target.value)}
                     style={{
-                      border: '1px solid #E7E6E2',
+                      border: '1px solid var(--line)',
                       borderRadius: '8px',
+                      background: 'var(--surface)',
+                      color: 'var(--ink)',
                       padding: '8px 12px',
                       fontSize: '13px'
                     }}
                   />
                 </label>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#75736C' }}>Competition URL</span>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-secondary)' }}>Competition URL</span>
                   <input
                     type="text"
                     placeholder="https://..."
                     value={customLink}
                     onChange={(e) => setCustomLink(e.target.value)}
                     style={{
-                      border: '1px solid #E7E6E2',
+                      border: '1px solid var(--line)',
                       borderRadius: '8px',
+                      background: 'var(--surface)',
+                      color: 'var(--ink)',
                       padding: '8px 12px',
                       fontSize: '13px'
                     }}
@@ -443,7 +452,7 @@ export default function PostSquadModal({
           {/* Spots & Total Members */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>Open Spots Needed</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Open Spots Needed</span>
               <input
                 type="number"
                 min="1"
@@ -451,8 +460,10 @@ export default function PostSquadModal({
                 value={spots}
                 onChange={(e) => setSpots(e.target.value)}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
                   padding: '9px 12px',
                   fontSize: '14px'
                 }}
@@ -460,7 +471,7 @@ export default function PostSquadModal({
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>Total Squad Size</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Total Squad Size</span>
               <input
                 type="number"
                 min="2"
@@ -468,8 +479,10 @@ export default function PostSquadModal({
                 value={totalMembers}
                 onChange={(e) => setTotalMembers(e.target.value)}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
                   padding: '9px 12px',
                   fontSize: '14px'
                 }}
@@ -480,8 +493,8 @@ export default function PostSquadModal({
           {/* Skills Looking For */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>Skills Needed (Looking for)</span>
-              <span style={{ fontSize: '11px', color: '#75736C' }}>{skillsLooking.length} selected</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Skills Needed (Looking for)</span>
+              <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>{skillsLooking.length} selected</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {SKILLS.map((skill) => {
@@ -492,10 +505,10 @@ export default function PostSquadModal({
                     type="button"
                     onClick={() => toggleSkillLooking(skill)}
                     style={{
-                      border: `1px solid ${on ? '#0F3FFE' : '#E7E6E2'}`,
+                      border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
                       borderRadius: '20px',
-                      background: on ? '#0F3FFE' : '#FFFFFF',
-                      color: on ? '#FFFFFF' : '#1A1A19',
+                      background: on ? 'var(--primary)' : 'var(--surface-sunken)',
+                      color: on ? '#FFFFFF' : 'var(--ink)',
                       padding: '5px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
@@ -524,8 +537,10 @@ export default function PostSquadModal({
                 }}
                 style={{
                   flex: 1,
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
                   padding: '7px 11px',
                   fontSize: '12px'
                 }}
@@ -534,10 +549,10 @@ export default function PostSquadModal({
                 type="button"
                 onClick={() => handleAddCustomSkill('looking')}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
-                  background: '#F6F6F4',
-                  color: '#1A1A19',
+                  background: 'var(--surface-muted)',
+                  color: 'var(--ink)',
                   padding: '7px 12px',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -551,7 +566,7 @@ export default function PostSquadModal({
 
           {/* Skills Host Brings */}
           <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19', display: 'block', marginBottom: '6px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', display: 'block', marginBottom: '6px' }}>
               Skills You Bring (Optional)
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -563,10 +578,10 @@ export default function PostSquadModal({
                     type="button"
                     onClick={() => toggleSkillHave(skill)}
                     style={{
-                      border: `1px solid ${on ? '#15803D' : '#E7E6E2'}`,
+                      border: `1px solid ${on ? 'var(--success)' : 'var(--line)'}`,
                       borderRadius: '20px',
-                      background: on ? '#15803D' : '#FFFFFF',
-                      color: on ? '#FFFFFF' : '#1A1A19',
+                      background: on ? 'var(--success)' : 'var(--surface-sunken)',
+                      color: on ? '#FFFFFF' : 'var(--ink)',
                       padding: '5px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
@@ -583,15 +598,17 @@ export default function PostSquadModal({
 
           {/* Description */}
           <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>Pitch & Approach</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Pitch & Approach</span>
             <textarea
               rows="3"
               placeholder="What are your goals, work style, or past competition experience?"
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               style={{
-                border: '1px solid #E7E6E2',
+                border: '1px solid var(--line)',
                 borderRadius: '8px',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
                 padding: '9px 12px',
                 fontSize: '13px',
                 lineHeight: 1.5
@@ -602,11 +619,11 @@ export default function PostSquadModal({
           {/* WhatsApp Phone & College */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
                 WhatsApp Number *
               </span>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: '#75736C', fontWeight: 500 }}>
+                <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: 'var(--ink-secondary)', fontWeight: 500 }}>
                   +91
                 </span>
                 <input
@@ -617,27 +634,31 @@ export default function PostSquadModal({
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                   style={{
                     width: '100%',
-                    border: '1px solid #E7E6E2',
+                    border: '1px solid var(--line)',
                     borderRadius: '8px',
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
                     padding: '9px 12px 9px 42px',
                     fontSize: '14px',
                     fontFamily: 'monospace'
                   }}
                 />
               </div>
-              <span style={{ fontSize: '11px', color: '#75736C' }}>Shared with teammates once accepted</span>
+              <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>Shared with teammates once accepted</span>
             </label>
 
             <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>Host College</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Host College</span>
               <input
                 type="text"
                 placeholder="e.g. SSCBS, SRCC, IIT Delhi..."
                 value={college}
                 onChange={(e) => setCollege(e.target.value)}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
                   padding: '9px 12px',
                   fontSize: '13px'
                 }}
@@ -650,9 +671,9 @@ export default function PostSquadModal({
             type="submit"
             style={{
               marginTop: '4px',
-              border: '1px solid #0F3FFE',
+              border: '1px solid var(--primary)',
               borderRadius: '9px',
-              background: '#0F3FFE',
+              background: 'var(--primary)',
               color: '#FFFFFF',
               padding: '13px',
               cursor: 'pointer',
@@ -660,8 +681,8 @@ export default function PostSquadModal({
               fontWeight: 600,
               transition: 'background 120ms ease'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--primary-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
           >
             {editingPost ? 'Save changes' : 'Post squad'}
           </button>

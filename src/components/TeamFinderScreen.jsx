@@ -12,8 +12,8 @@ function SquadCardSkeleton() {
   return (
     <div
       style={{
-        background: '#FFFFFF',
-        border: '1px solid #E7E6E2',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
         borderRadius: '13px',
         padding: '17px 19px',
         display: 'flex',
@@ -272,14 +272,14 @@ export default function TeamFinderScreen({
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: '#1A1A19' }}>
+            <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
               Team finder
             </h1>
             <span
               style={{
-                background: '#EEF2FF',
-                color: '#4338CA',
-                border: '1px solid #C7D2FE',
+                background: 'rgba(59, 107, 255, 0.1)',
+                color: 'var(--primary)',
+                border: '1px solid rgba(59, 107, 255, 0.3)',
                 borderRadius: '6px',
                 padding: '2px 8px',
                 fontSize: '11px',
@@ -290,7 +290,7 @@ export default function TeamFinderScreen({
               ALL COLLEGES & UNIVERSITIES
             </span>
           </div>
-          <p style={{ margin: '7px 0 0', fontSize: '14px', color: '#75736C' }}>
+          <p style={{ margin: '7px 0 0', fontSize: '14px', color: 'var(--ink-muted)' }}>
             SSCBS OS Architecture · Recruit teammates for any competition or apply to open squads. Instant WhatsApp handshake upon acceptance.
           </p>
         </div>
@@ -320,8 +320,8 @@ export default function TeamFinderScreen({
       {/* Main Filter Suite */}
       <div
         style={{
-          background: '#FFFFFF',
-          border: '1px solid #E7E6E2',
+          background: 'var(--surface)',
+          border: '1px solid var(--line)',
           borderRadius: '14px',
           padding: '16px 18px',
           display: 'flex',
@@ -338,20 +338,20 @@ export default function TeamFinderScreen({
             style={{
               flex: 1,
               minWidth: '220px',
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '9px',
-              background: '#FFFFFF',
+              background: 'var(--surface-sunken)',
               padding: '10px 14px',
               fontSize: '14px',
-              color: '#1A1A19'
+              color: 'var(--ink)'
             }}
           />
 
           <div
             style={{
               display: 'flex',
-              background: '#F6F6F4',
-              border: '1px solid #EFEEEA',
+              background: 'var(--surface-sunken)',
+              border: '1px solid var(--line)',
               borderRadius: '9px',
               padding: '3px',
               gap: '3px',
@@ -375,21 +375,21 @@ export default function TeamFinderScreen({
                     gap: '7px',
                     border: 0,
                     borderRadius: '7px',
-                    background: on ? '#FFFFFF' : 'transparent',
-                    color: on ? '#1A1A19' : '#55534D',
+                    background: on ? 'var(--surface)' : 'transparent',
+                    color: on ? 'var(--ink)' : 'var(--ink-secondary)',
                     padding: '8px 13px',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
                     fontSize: '13px',
                     fontWeight: on ? 600 : 500,
-                    boxShadow: on ? '0 1px 2px rgba(26,26,25,0.10)' : 'none'
+                    boxShadow: on ? '0 1px 2px rgba(0,0,0,0.15)' : 'none'
                   }}
                 >
                   <span>{t.label}</span>
                   <span
                     style={{
-                      background: on ? '#0F3FFE' : '#E7E6E2',
-                      color: on ? '#FFFFFF' : '#55534D',
+                      background: on ? 'var(--primary)' : 'var(--surface-muted)',
+                      color: on ? '#FFFFFF' : 'var(--ink-secondary)',
                       borderRadius: '20px',
                       padding: '1px 7px',
                       fontSize: '11px',
@@ -405,13 +405,13 @@ export default function TeamFinderScreen({
         </div>
 
         {/* College Filter Rail (Built for ALL Colleges) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '7px', paddingTop: '10px', borderTop: '1px solid #F0EFEB' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '7px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
               Filter by College / University
             </span>
             {userCollege && (
-              <span style={{ fontSize: '11px', color: '#75736C' }}>
+              <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>
                 Your campus: <strong>{userCollege}</strong>
               </span>
             )}
@@ -421,10 +421,10 @@ export default function TeamFinderScreen({
             <button
               onClick={() => setSelectedCollege('all')}
               style={{
-                border: `1px solid ${selectedCollege === 'all' ? '#0F3FFE' : '#E7E6E2'}`,
+                border: `1px solid ${selectedCollege === 'all' ? 'var(--primary)' : 'var(--line)'}`,
                 borderRadius: '20px',
-                background: selectedCollege === 'all' ? '#0F3FFE' : '#FFFFFF',
-                color: selectedCollege === 'all' ? '#FFFFFF' : '#1A1A19',
+                background: selectedCollege === 'all' ? 'var(--primary)' : 'var(--surface)',
+                color: selectedCollege === 'all' ? '#FFFFFF' : 'var(--ink)',
                 padding: '5px 12px',
                 cursor: 'pointer',
                 fontSize: '12px',
@@ -438,10 +438,10 @@ export default function TeamFinderScreen({
               <button
                 onClick={() => setSelectedCollege('my')}
                 style={{
-                  border: `1px solid ${selectedCollege === 'my' ? '#0F3FFE' : '#C7D2FE'}`,
+                  border: `1px solid ${selectedCollege === 'my' ? 'var(--primary)' : 'rgba(59, 107, 255, 0.3)'}`,
                   borderRadius: '20px',
-                  background: selectedCollege === 'my' ? '#0F3FFE' : '#EEF2FF',
-                  color: selectedCollege === 'my' ? '#FFFFFF' : '#4338CA',
+                  background: selectedCollege === 'my' ? 'var(--primary)' : 'rgba(59, 107, 255, 0.1)',
+                  color: selectedCollege === 'my' ? '#FFFFFF' : 'var(--primary)',
                   padding: '5px 12px',
                   cursor: 'pointer',
                   fontSize: '12px',
@@ -459,10 +459,10 @@ export default function TeamFinderScreen({
                   key={col}
                   onClick={() => setSelectedCollege(on ? 'all' : col)}
                   style={{
-                    border: `1px solid ${on ? '#0F3FFE' : '#E7E6E2'}`,
+                    border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
                     borderRadius: '20px',
-                    background: on ? '#0F3FFE' : '#FFFFFF',
-                    color: on ? '#FFFFFF' : '#1A1A19',
+                    background: on ? 'var(--primary)' : 'var(--surface)',
+                    color: on ? '#FFFFFF' : 'var(--ink)',
                     padding: '5px 12px',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -478,8 +478,8 @@ export default function TeamFinderScreen({
 
         {/* Skills Needed Chips */}
         {activeSkills.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid #F0EFEB' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
               Skill needed
             </span>
             {activeSkills.map((skill) => {
@@ -489,10 +489,10 @@ export default function TeamFinderScreen({
                   key={skill}
                   onClick={() => toggleSkill(skill)}
                   style={{
-                    border: `1px solid ${on ? '#0F3FFE' : '#E7E6E2'}`,
+                    border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
                     borderRadius: '20px',
-                    background: on ? '#0F3FFE' : '#FFFFFF',
-                    color: on ? '#FFFFFF' : '#1A1A19',
+                    background: on ? 'var(--primary)' : 'var(--surface)',
+                    color: on ? '#FFFFFF' : 'var(--ink)',
                     padding: '4px 11px',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -510,7 +510,7 @@ export default function TeamFinderScreen({
         {/* Categories / Disciplines */}
         {activeDisciplines.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A19' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
               Category
             </span>
             {activeDisciplines.map((d) => {
@@ -520,10 +520,10 @@ export default function TeamFinderScreen({
                   key={d}
                   onClick={() => toggleDisc(d)}
                   style={{
-                    border: `1px solid ${on ? '#0F3FFE' : '#E7E6E2'}`,
+                    border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
                     borderRadius: '20px',
-                    background: on ? '#0F3FFE' : '#FFFFFF',
-                    color: on ? '#FFFFFF' : '#1A1A19',
+                    background: on ? 'var(--primary)' : 'var(--surface)',
+                    color: on ? '#FFFFFF' : 'var(--ink)',
                     padding: '4px 11px',
                     cursor: 'pointer',
                     fontSize: '12px',
@@ -538,8 +538,8 @@ export default function TeamFinderScreen({
         )}
 
         {/* Reset Row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #F0EFEB' }}>
-          <span style={{ fontSize: '13px', color: '#55534D' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
+          <span style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>
             Showing <strong>{visiblePosts.length}</strong> {visiblePosts.length === 1 ? 'squad' : 'squads'}
           </span>
           <button
@@ -547,14 +547,14 @@ export default function TeamFinderScreen({
             style={{
               border: 0,
               background: 'none',
-              color: '#75736C',
+              color: 'var(--ink-muted)',
               padding: 0,
               cursor: 'pointer',
               fontSize: '13px',
               fontWeight: 500
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#0F3FFE')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#75736C')}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--primary)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-muted)')}
           >
             Clear all filters
           </button>
@@ -608,24 +608,24 @@ export default function TeamFinderScreen({
             <div
               key={post.id}
               style={{
-                background: '#FFFFFF',
-                border: post.isMine ? '1px solid #C7D2FE' : '1px solid #E7E6E2',
+                background: 'var(--surface)',
+                border: post.isMine ? '1px solid var(--primary)' : '1px solid var(--line)',
                 borderRadius: '13px',
                 padding: '17px 19px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px',
                 position: 'relative',
-                boxShadow: post.isMine ? '0 2px 8px rgba(79,70,229,0.08)' : '0 1px 3px rgba(0,0,0,0.03)'
+                boxShadow: post.isMine ? '0 2px 8px rgba(15,63,254,0.12)' : '0 1px 3px rgba(0,0,0,0.05)'
               }}
             >
               {/* Row 1: Spots Left Badge + Admin 3-Dots Menu */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                 <span
                   style={{
-                    background: isFull ? '#F2F1ED' : (isUrgent ? '#FEF2F2' : 'rgba(15,63,254,0.07)'),
-                    color: isFull ? '#75736C' : (isUrgent ? '#B91C1C' : '#0F3FFE'),
-                    border: `1px solid ${isFull ? '#E7E6E2' : (isUrgent ? '#FCA5A5' : 'rgba(15,63,254,0.20)')}`,
+                    background: isFull ? 'var(--surface-muted)' : (isUrgent ? 'rgba(239, 68, 68, 0.12)' : 'rgba(15,63,254,0.08)'),
+                    color: isFull ? 'var(--ink-muted)' : (isUrgent ? '#F87171' : 'var(--primary)'),
+                    border: `1px solid ${isFull ? 'var(--line)' : (isUrgent ? 'rgba(239, 68, 68, 0.35)' : 'rgba(15,63,254,0.25)')}`,
                     borderRadius: '20px',
                     padding: '2px 9px',
                     fontSize: '11px',
@@ -641,7 +641,7 @@ export default function TeamFinderScreen({
                   {post.isMine && (
                     <span
                       style={{
-                        background: '#4338CA',
+                        background: 'var(--primary)',
                         color: '#FFFFFF',
                         borderRadius: '4px',
                         padding: '2px 6px',
@@ -664,10 +664,10 @@ export default function TeamFinderScreen({
                           setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id);
                         }}
                         style={{
-                          border: '1px solid #E7E6E2',
+                          border: '1px solid var(--line)',
                           borderRadius: '6px',
-                          background: '#FFFFFF',
-                          color: '#55534D',
+                          background: 'var(--surface)',
+                          color: 'var(--ink-secondary)',
                           width: '28px',
                           height: '28px',
                           cursor: 'pointer',
@@ -689,10 +689,10 @@ export default function TeamFinderScreen({
                             position: 'absolute',
                             right: 0,
                             top: '32px',
-                            background: '#FFFFFF',
-                            border: '1px solid #E7E6E2',
+                            background: 'var(--surface)',
+                            border: '1px solid var(--line)',
                             borderRadius: '9px',
-                            boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
                             zIndex: 20,
                             minWidth: '160px',
                             overflow: 'hidden'
@@ -710,13 +710,13 @@ export default function TeamFinderScreen({
                               padding: '9px 13px',
                               border: 0,
                               background: 'transparent',
-                              color: '#1A1A19',
+                              color: 'var(--ink)',
                               fontSize: '13px',
                               fontWeight: 500,
                               cursor: 'pointer',
-                              borderBottom: '1px solid #F0EFEB'
+                              borderBottom: '1px solid var(--line)'
                             }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = '#F6F6F4')}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
                             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                           >
                             ✏️ Edit listing
@@ -734,13 +734,13 @@ export default function TeamFinderScreen({
                               padding: '9px 13px',
                               border: 0,
                               background: 'transparent',
-                              color: '#1A1A19',
+                              color: 'var(--ink)',
                               fontSize: '13px',
                               fontWeight: 500,
                               cursor: 'pointer',
-                              borderBottom: '1px solid #F0EFEB'
+                              borderBottom: '1px solid var(--line)'
                             }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = '#F6F6F4')}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
                             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                           >
                             {post.is_open !== false ? '🔒 Close listing' : '🔓 Re-open listing'}
@@ -758,12 +758,12 @@ export default function TeamFinderScreen({
                               padding: '9px 13px',
                               border: 0,
                               background: 'transparent',
-                              color: '#DC2626',
+                              color: '#EF4444',
                               fontSize: '13px',
                               fontWeight: 500,
                               cursor: 'pointer'
                             }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = '#FEF2F2')}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)')}
                             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                           >
                             🗑️ Delete squad
@@ -782,7 +782,7 @@ export default function TeamFinderScreen({
                     width: '38px',
                     height: '38px',
                     borderRadius: '50%',
-                    background: '#0F3FFE',
+                    background: 'var(--primary)',
                     color: '#FFFFFF',
                     display: 'flex',
                     alignItems: 'center',
@@ -797,7 +797,7 @@ export default function TeamFinderScreen({
 
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#1A1A19' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>
                       {post.displayLead}
                     </span>
                     <span
@@ -811,15 +811,15 @@ export default function TeamFinderScreen({
                       title="Verified student lead"
                     />
                   </div>
-                  <div style={{ fontSize: '12px', color: '#75736C', marginTop: '1px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '1px' }}>
                     <strong>{post.displayCollege || 'Collegiate'}</strong> · {post.displayYear || 'UG 2nd Year'}
                   </div>
                 </div>
               </div>
 
               {/* Row 3: Competition & Organizer */}
-              <div style={{ borderTop: '1px solid #F0EFEB', paddingTop: '10px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#75736C', textTransform: 'uppercase' }}>
+              <div style={{ borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)', textTransform: 'uppercase' }}>
                   Competing in:
                 </span>
                 <h3
@@ -827,7 +827,7 @@ export default function TeamFinderScreen({
                     margin: '3px 0 0',
                     fontSize: '15px',
                     fontWeight: 700,
-                    color: '#1A1A19',
+                    color: 'var(--ink)',
                     lineHeight: 1.35
                   }}
                 >
@@ -842,7 +842,7 @@ export default function TeamFinderScreen({
                       borderRadius={5}
                       fontSize={9}
                     />
-                    <span style={{ fontSize: '12px', color: '#55534D', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--ink-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {post.displayHost}
                     </span>
                   </div>
@@ -851,7 +851,7 @@ export default function TeamFinderScreen({
                       href={post.competition_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ fontSize: '11px', color: '#0F3FFE', textDecoration: 'none', fontWeight: 600, flexShrink: 0 }}
+                      style={{ fontSize: '11px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, flexShrink: 0 }}
                     >
                       View link ↗
                     </a>
@@ -861,7 +861,7 @@ export default function TeamFinderScreen({
 
               {/* Description */}
               {post.displayDesc && (
-                <p style={{ margin: 0, fontSize: '13px', color: '#55534D', lineHeight: 1.5 }}>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
                   {post.displayDesc}
                 </p>
               )}
@@ -869,7 +869,7 @@ export default function TeamFinderScreen({
               {/* Skills Looking For */}
               {post.displaySkills && post.displaySkills.length > 0 && (
                 <div>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#75736C' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)' }}>
                     Teammates needed with:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
@@ -878,7 +878,7 @@ export default function TeamFinderScreen({
                         key={idx}
                         style={{
                           background: 'rgba(15,63,254,0.08)',
-                          color: '#0F3FFE',
+                          color: 'var(--primary)',
                           borderRadius: '6px',
                           padding: '3px 8px',
                           fontSize: '11px',
@@ -896,7 +896,7 @@ export default function TeamFinderScreen({
               {/* Skills Host Brings */}
               {post.displaySkillsHave && post.displaySkillsHave.length > 0 && (
                 <div>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#15803D' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#10B981' }}>
                     Host brings:
                   </span>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '4px' }}>
@@ -904,8 +904,8 @@ export default function TeamFinderScreen({
                       <span
                         key={idx}
                         style={{
-                          background: 'rgba(21,128,61,0.08)',
-                          color: '#15803D',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          color: '#10B981',
                           borderRadius: '6px',
                           padding: '2px 7px',
                           fontSize: '11px',
@@ -921,17 +921,17 @@ export default function TeamFinderScreen({
               )}
 
               {/* Actions Footer */}
-              <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #F0EFEB' }}>
+              <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
                 {post.isMine ? (
                   <button
                     type="button"
                     onClick={() => setReviewModalPostId(post.id)}
                     style={{
                       width: '100%',
-                      border: '1px solid #0F3FFE',
+                      border: '1px solid var(--primary)',
                       borderRadius: '8px',
-                      background: post.pendingAppsCount > 0 ? '#0F3FFE' : '#EEF2FF',
-                      color: post.pendingAppsCount > 0 ? '#FFFFFF' : '#4338CA',
+                      background: post.pendingAppsCount > 0 ? 'var(--primary)' : 'rgba(59, 107, 255, 0.1)',
+                      color: post.pendingAppsCount > 0 ? '#FFFFFF' : 'var(--primary)',
                       padding: '10px 14px',
                       cursor: 'pointer',
                       fontSize: '13px',
@@ -947,7 +947,7 @@ export default function TeamFinderScreen({
                       <span
                         style={{
                           background: '#FFFFFF',
-                          color: '#0F3FFE',
+                          color: 'var(--primary)',
                           borderRadius: '12px',
                           padding: '1px 7px',
                           fontSize: '11px',
@@ -986,10 +986,10 @@ export default function TeamFinderScreen({
                     disabled
                     style={{
                       width: '100%',
-                      border: '1px solid #E7E6E2',
+                      border: '1px solid var(--line)',
                       borderRadius: '8px',
-                      background: '#F6F6F4',
-                      color: '#75736C',
+                      background: 'var(--surface-muted)',
+                      color: 'var(--ink-muted)',
                       padding: '10px 14px',
                       cursor: 'default',
                       fontSize: '13px',
@@ -1004,10 +1004,10 @@ export default function TeamFinderScreen({
                     disabled
                     style={{
                       width: '100%',
-                      border: '1px solid #E7E6E2',
+                      border: '1px solid var(--line)',
                       borderRadius: '8px',
-                      background: '#F6F6F4',
-                      color: '#9CA3AF',
+                      background: 'var(--surface-muted)',
+                      color: 'var(--ink-muted)',
                       padding: '10px 14px',
                       cursor: 'not-allowed',
                       fontSize: '13px',
@@ -1048,18 +1048,18 @@ export default function TeamFinderScreen({
       {visiblePosts.length === 0 && (
         <div
           style={{
-            background: '#FFFFFF',
-            border: '1px solid #E7E6E2',
+            background: 'var(--surface)',
+            border: '1px solid var(--line)',
             borderRadius: '14px',
             padding: '48px 24px',
             textAlign: 'center'
           }}
         >
           <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔎</div>
-          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#1A1A19' }}>
+          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--ink)' }}>
             No squads match your filters
           </h3>
-          <p style={{ margin: '6px auto 0', fontSize: '14px', color: '#75736C', maxWidth: '420px' }}>
+          <p style={{ margin: '6px auto 0', fontSize: '14px', color: 'var(--ink-muted)', maxWidth: '420px' }}>
             {tScope === 'mine'
               ? 'You have not posted any squad recruitment listings yet. Post one to build a winning team!'
               : 'Try clearing your college or skill filters, or post a squad for this competition yourself.'}
@@ -1068,10 +1068,10 @@ export default function TeamFinderScreen({
             <button
               onClick={handleReset}
               style={{
-                border: '1px solid #E7E6E2',
+                border: '1px solid var(--line)',
                 borderRadius: '8px',
-                background: '#FFFFFF',
-                color: '#1A1A19',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
                 padding: '9px 16px',
                 fontSize: '13px',
                 fontWeight: 600,
@@ -1108,7 +1108,7 @@ export default function TeamFinderScreen({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(26,26,25,0.45)',
+            background: 'rgba(0,0,0,0.65)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1122,10 +1122,10 @@ export default function TeamFinderScreen({
               width: 'min(580px, 100%)',
               maxHeight: '90vh',
               overflowY: 'auto',
-              background: '#FFFFFF',
-              border: '1px solid #E7E6E2',
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
               borderRadius: '14px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.18)'
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
             }}
           >
             {/* Review Header */}
@@ -1135,18 +1135,18 @@ export default function TeamFinderScreen({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '16px 20px',
-                borderBottom: '1px solid #E7E6E2',
+                borderBottom: '1px solid var(--line)',
                 position: 'sticky',
                 top: 0,
-                background: '#FFFFFF',
+                background: 'var(--surface)',
                 zIndex: 2
               }}
             >
               <div>
-                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19' }}>
+                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
                   Review Applicants
                 </h2>
-                <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#75736C' }}>
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-muted)' }}>
                   {reviewTargetPost.displayTitle} · {reviewTargetPost.displaySpotsLeft} open spots
                 </p>
               </div>
@@ -1154,10 +1154,10 @@ export default function TeamFinderScreen({
                 type="button"
                 onClick={() => setReviewModalPostId(null)}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '8px',
-                  background: '#FFFFFF',
-                  color: '#75736C',
+                  background: 'var(--surface)',
+                  color: 'var(--ink-muted)',
                   width: '32px',
                   height: '32px',
                   cursor: 'pointer',
@@ -1176,10 +1176,10 @@ export default function TeamFinderScreen({
               {reviewTargetPost.postApps.length === 0 ? (
                 <div style={{ padding: '32px 16px', textAlign: 'center' }}>
                   <div style={{ fontSize: '28px', marginBottom: '6px' }}>📭</div>
-                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: '#1A1A19' }}>
+                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--ink)' }}>
                     No applications yet
                   </h4>
-                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#75736C' }}>
+                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--ink-muted)' }}>
                     When competitors apply to your squad, their profile, pitch, and contact will appear here.
                   </p>
                 </div>
@@ -1198,8 +1198,8 @@ export default function TeamFinderScreen({
                     <div
                       key={app.id}
                       style={{
-                        background: '#FAFAF9',
-                        border: isAccepted ? '1px solid #86EFAC' : '1px solid #E7E6E2',
+                        background: 'var(--surface-sunken)',
+                        border: isAccepted ? '1px solid #16A34A' : '1px solid var(--line)',
                         borderRadius: '11px',
                         padding: '14px 16px',
                         display: 'flex',
@@ -1211,15 +1211,15 @@ export default function TeamFinderScreen({
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <strong style={{ fontSize: '14px', color: '#1A1A19' }}>
+                            <strong style={{ fontSize: '14px', color: 'var(--ink)' }}>
                               {applicantName}
                             </strong>
                             {isAccepted && (
                               <span
                                 style={{
-                                  background: '#DCFCE7',
-                                  color: '#15803D',
-                                  border: '1px solid #86EFAC',
+                                  background: 'rgba(22, 163, 74, 0.15)',
+                                  color: '#16A34A',
+                                  border: '1px solid rgba(22, 163, 74, 0.35)',
                                   borderRadius: '4px',
                                   padding: '1px 6px',
                                   fontSize: '10px',
@@ -1230,13 +1230,13 @@ export default function TeamFinderScreen({
                               </span>
                             )}
                             {isDeclined && (
-                              <span style={{ fontSize: '11px', color: '#9CA3AF' }}>Declined</span>
+                              <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>Declined</span>
                             )}
                             {isRemoved && (
-                              <span style={{ fontSize: '11px', color: '#9CA3AF' }}>Removed</span>
+                              <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>Removed</span>
                             )}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#75736C', marginTop: '2px' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '2px' }}>
                             {applicantCollege} · {applicantYear}
                           </div>
                         </div>
@@ -1256,7 +1256,7 @@ export default function TeamFinderScreen({
                           style={{
                             border: '1px solid #16A34A',
                             borderRadius: '7px',
-                            background: '#FFFFFF',
+                            background: 'var(--surface)',
                             color: '#16A34A',
                             padding: '6px 11px',
                             fontSize: '12px',
@@ -1266,8 +1266,6 @@ export default function TeamFinderScreen({
                             alignItems: 'center',
                             gap: '5px'
                           }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = '#F0FDF4')}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
                         >
                           💬 WhatsApp
                         </button>
@@ -1277,12 +1275,12 @@ export default function TeamFinderScreen({
                       {pitch && (
                         <div
                           style={{
-                            background: '#FFFFFF',
-                            border: '1px solid #E7E6E2',
+                            background: 'var(--surface)',
+                            border: '1px solid var(--line)',
                             borderRadius: '8px',
                             padding: '9px 12px',
                             fontSize: '13px',
-                            color: '#374151',
+                            color: 'var(--ink)',
                             lineHeight: 1.45
                           }}
                         >
@@ -1297,13 +1295,13 @@ export default function TeamFinderScreen({
                             <span
                               key={idx}
                               style={{
-                                background: '#FFFFFF',
-                                border: '1px solid #E7E6E2',
+                                background: 'var(--surface)',
+                                border: '1px solid var(--line)',
                                 borderRadius: '4px',
                                 padding: '2px 7px',
                                 fontSize: '11px',
                                 fontWeight: 500,
-                                color: '#0F3FFE'
+                                color: 'var(--primary)'
                               }}
                             >
                               {s}
@@ -1339,17 +1337,15 @@ export default function TeamFinderScreen({
                               type="button"
                               onClick={() => onDeclineApp(app.id)}
                               style={{
-                                border: '1px solid #E7E6E2',
+                                border: '1px solid var(--line)',
                                 borderRadius: '7px',
-                                background: '#FFFFFF',
-                                color: '#55534D',
+                                background: 'var(--surface)',
+                                color: 'var(--ink-secondary)',
                                 padding: '8px 14px',
                                 fontSize: '12px',
                                 fontWeight: 500,
                                 cursor: 'pointer'
                               }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = '#F6F6F4')}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
                             >
                               Decline
                             </button>
@@ -1365,10 +1361,10 @@ export default function TeamFinderScreen({
                               }
                             }}
                             style={{
-                              border: '1px solid #FECACA',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
                               borderRadius: '7px',
-                              background: '#FEF2F2',
-                              color: '#B91C1C',
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              color: '#F87171',
                               padding: '6px 12px',
                               fontSize: '12px',
                               fontWeight: 600,
@@ -1395,7 +1391,7 @@ export default function TeamFinderScreen({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(26,26,25,0.45)',
+            background: 'rgba(0,0,0,0.65)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1407,8 +1403,8 @@ export default function TeamFinderScreen({
             onClick={(e) => e.stopPropagation()}
             style={{
               width: 'min(400px, 100%)',
-              background: '#FFFFFF',
-              border: '1px solid #E7E6E2',
+              background: 'var(--surface)',
+              border: '1px solid var(--line)',
               borderRadius: '12px',
               padding: '20px',
               display: 'flex',
@@ -1416,10 +1412,10 @@ export default function TeamFinderScreen({
               gap: '12px'
             }}
           >
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
               Delete squad listing?
             </h3>
-            <p style={{ margin: 0, fontSize: '13px', color: '#55534D', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
               This will permanently remove this squad opening and cancel any pending applications.
             </p>
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '6px' }}>
@@ -1427,10 +1423,10 @@ export default function TeamFinderScreen({
                 type="button"
                 onClick={() => setDeleteConfirmPostId(null)}
                 style={{
-                  border: '1px solid #E7E6E2',
+                  border: '1px solid var(--line)',
                   borderRadius: '7px',
-                  background: '#FFFFFF',
-                  color: '#55534D',
+                  background: 'var(--surface)',
+                  color: 'var(--ink-secondary)',
                   padding: '8px 14px',
                   fontSize: '13px',
                   fontWeight: 500,
