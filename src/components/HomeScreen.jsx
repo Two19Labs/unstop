@@ -1317,7 +1317,8 @@ export default function HomeScreen({
               </button>
             </div>
           ) : (
-            displayedComps.map(c => {
+            <>
+              {displayedComps.map(c => {
               const isFree = c.fee === 'Free' || c.isFree;
               const deadlineFormatted = formatDeadlineDateTime(c.deadline);
               const countdownText = formatDeadlineCountdown(c.deadline, c.remainDaysText, c.days);
@@ -1552,8 +1553,103 @@ export default function HomeScreen({
                   </div>
                 </div>
               );
-            })
-          )}
+            })}
+
+            {/* 4th Card: More Competitions */}
+            {(compTotal > displayedComps.length || compTotal >= 3) && (
+              <div
+                className="home-rail-card home-more-card"
+                onClick={() => handleNavigate('browse')}
+                style={{
+                  flex: '0 0 302px',
+                  width: '302px',
+                  padding: '16px 17px 17px',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF9F6 100%)',
+                  border: '1px solid #E7E6E2',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '9px',
+                      background: 'rgba(15, 63, 254, 0.08)',
+                      border: '1px solid rgba(15, 63, 254, 0.20)',
+                      color: '#0F3FFE',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flex: 'none'
+                    }}
+                  >
+                    <TrophyIcon size={18} color="#0F3FFE" />
+                  </div>
+                  <span
+                    style={{
+                      background: 'rgba(15, 63, 254, 0.08)',
+                      color: '#0F3FFE',
+                      border: '1px solid rgba(15, 63, 254, 0.25)',
+                      borderRadius: '20px',
+                      padding: '3px 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.02em',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {compTotal > displayedComps.length
+                      ? `+${compTotal - displayedComps.length} more`
+                      : `${compTotal} competitions`}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: 'auto 0' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#0F3FFE' }}>
+                    {hasFilter ? 'Filtered Directory' : 'All Competitions'}
+                  </span>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1A1A19', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
+                    More Competitions
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '12.5px', color: '#75736C', lineHeight: 1.45 }}>
+                    {hasFilter
+                      ? `Explore all ${compTotal} competitions matching your filters, check eligibility, and submit your entries.`
+                      : `Explore all ${compTotal} live campus competitions, filter by track, and find your next challenge.`}
+                  </p>
+                </div>
+
+                <div
+                  className="home-more-btn"
+                  style={{
+                    marginTop: 'auto',
+                    border: '1px solid #0F3FFE',
+                    borderRadius: '9px',
+                    background: 'rgba(15, 63, 254, 0.06)',
+                    color: '#0F3FFE',
+                    padding: '9px 12px',
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <span>Explore all ({compTotal})</span>
+                  <span style={{ fontSize: '14px', lineHeight: 1 }}>→</span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
         </div>
       </section>
 

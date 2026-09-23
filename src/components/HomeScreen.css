@@ -30,8 +30,8 @@
   align-items: center;
   gap: 11px;
   flex-wrap: wrap;
-  background: #FFFFFF;
-  border: 1px solid #E7E6E2;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 12px 16px;
 }
@@ -51,22 +51,22 @@
 }
 
 .rail::-webkit-scrollbar-track {
-  background: #EFEEEA;
+  background: var(--line-lighter);
   border-radius: 20px;
 }
 
 .rail::-webkit-scrollbar-thumb {
-  background: #D6D4CE;
+  background: var(--line);
   border-radius: 20px;
 }
 
 .rail::-webkit-scrollbar-thumb:hover {
-  background: #C0BEB7;
+  background: var(--card-hover-border);
 }
 
 .home-rail-card {
-  background: #FFFFFF;
-  border: 1px solid #E7E6E2;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -76,13 +76,13 @@
 }
 
 .home-rail-card:hover {
-  border-color: #D6D4CE;
+  border-color: var(--card-hover-border);
 }
 
 /* Urgency-based card themes (< 6h = red, < 24h = yellow, >= 24h = blue) */
 .home-rail-card.card-urgency-red {
   border-color: rgba(239, 68, 68, 0.45);
-  background: linear-gradient(180deg, rgba(254, 242, 242, 0.65) 0%, #FFFFFF 42%);
+  background: linear-gradient(180deg, rgba(254, 242, 242, 0.65) 0%, var(--surface) 42%);
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.08);
 }
 
@@ -93,7 +93,7 @@
 
 .home-rail-card.card-urgency-yellow {
   border-color: rgba(245, 158, 11, 0.45);
-  background: linear-gradient(180deg, rgba(254, 252, 232, 0.70) 0%, #FFFFFF 42%);
+  background: linear-gradient(180deg, rgba(254, 252, 232, 0.70) 0%, var(--surface) 42%);
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
 }
 
@@ -103,13 +103,21 @@
 }
 
 .home-rail-card.card-urgency-blue {
-  border-color: #E7E6E2;
-  background: #FFFFFF;
+  border-color: var(--line);
+  background: var(--surface);
 }
 
 .home-rail-card.card-urgency-blue:hover {
-  border-color: #D6D4CE;
+  border-color: var(--card-hover-border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .home-rail-card.card-urgency-red {
+  background: linear-gradient(180deg, rgba(239, 68, 68, 0.18) 0%, var(--surface) 45%);
+}
+
+[data-theme='dark'] .home-rail-card.card-urgency-yellow {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, var(--surface) 45%);
 }
 
 /* "More" Card at the end of rails */
@@ -135,7 +143,7 @@
 }
 
 .home-btn-hover:hover {
-  background-color: #F2F1ED !important;
+  background-color: var(--surface-muted) !important;
 }
 
 .home-btn-primary-hover:hover {
@@ -145,11 +153,11 @@
 }
 
 .home-btn-remove:hover {
-  background-color: #E7E6E2 !important;
+  background-color: var(--surface-muted) !important;
 }
 
 .home-clear-btn:hover {
-  color: #0F3FFE !important;
+  color: var(--primary) !important;
 }
 
 /* Skeleton Loaders */
@@ -168,10 +176,15 @@
   }
 }
 
+[data-theme='dark'] .skeleton-box {
+  background: linear-gradient(90deg, #202228 25%, #2B2E37 50%, #202228 75%);
+  background-size: 200% 100%;
+}
+
 .home-rail-card-skeleton {
   pointer-events: none;
-  border-color: #EAE8E2 !important;
-  background: #FFFFFF !important;
+  border-color: var(--line) !important;
+  background: var(--surface) !important;
 }
 
 .home-rail-pun-card {
