@@ -27,13 +27,24 @@
   overflow-x: hidden;
 }
 
+/* Universal Top-Right Action Cluster on Dashboard Screens */
+.onestop-top-actions {
+  position: absolute;
+  top: 22px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 30;
+}
+
 /* Mobile Header bar (hidden on desktop) */
 .mobile-topbar {
   display: none;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background-color: #FFFFFF;
+  background-color: var(--surface);
   border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
@@ -50,7 +61,7 @@
   padding: 6px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #FFFFFF;
+  background: var(--surface);
   cursor: pointer;
 }
 

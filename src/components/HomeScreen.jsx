@@ -85,6 +85,111 @@ export function sortCompetitions(list, sortBy = 'closing-soonest') {
   return arr;
 }
 
+export const SORT_LABELS = {
+  'closing-soonest': 'Closing soonest first',
+  'closing-latest': 'Closing latest first',
+  'prize-highest': 'Highest prize pool',
+  'popular': 'Most registered (popular)',
+  'title-asc': 'Title: A → Z',
+  'title-desc': 'Title: Z → A',
+};
+
+const DU_KEYWORDS = [
+  'delhi university', 'university of delhi', '(du)', 'sscbs', 'shaheed sukhdev',
+  'srcc', 'shri ram college', 'stephen', 'hindu', 'hansraj', 'lsr', 'lady shri ram',
+  'sggscc', 'ramjas', 'kirori mal', 'kmc', 'drc', 'daulat ram', 'gargi', 'venkateswara',
+  'venky', 'sgtb khalsa', 'khalsa', 'keshav mahavidyalaya', 'deen dayal upadhyaya', 'ddu',
+  'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc', 'shaheed bhagat singh',
+  'motilal nehru', 'indraprastha college', 'ipcw', 'maharaja agrasen', 'ramanujan', 'kalindi', 'kamala nehru'
+];
+
+function isMatch(text, kw) {
+  if (kw.length <= 4 && /^[a-z0-9]+$/i.test(kw)) {
+    const regex = new RegExp(`\\b${kw}\\b`, 'i');
+    return regex.test(text);
+  }
+  return text.includes(kw);
+}
+
+function getCompCircuitKey(comp) {
+  if (!comp) return 'others';
+  if (comp.isDU || comp.circuit === 'DU Circuit') return 'du';
+  const combined = `${comp.orgName || comp.host || ''} ${comp.title || ''}`.toLowerCase();
+  if (DU_KEYWORDS.some(kw => isMatch(combined, kw))) return 'du';
+  if (comp.isIIMorIIT || comp.isPremier || comp.isIIMorIITorPremier || comp.isBschool || comp.circuit === 'IIM / IIT') return 'iim-iit-premier';
+  if (comp.isCorporate || comp.isCorporateOrGlobal || comp.circuit === 'Corporate') return 'corporate-global';
+  return 'others';
+}
+
+export function matchCompetition(comp, f = {}) {
+  if (!comp) return false;
+
+  // 1. Circuit filter
+  const selectedCircuits = Array.isArray(f.selectedCircuits)
+    ? f.selectedCircuits
+    : (Array.isArray(f.circ) ? f.circ : []);
+
+  if (selectedCircuits.length > 0 && selectedCircuits.length < 4) {
+    const compCircuitKey = getCompCircuitKey(comp);
+    const matchesCircuit = selectedCircuits.some(cId => {
+      if (cId === 'du' || cId === 'DU Circuit') {
+        return compCircuitKey === 'du' || comp.circuit === 'DU Circuit' || comp.isDU;
+      }
+      if (cId === 'iim-iit-premier' || cId === 'iim-iit-bschool' || cId === 'IIM / IIT') {
+        return compCircuitKey === 'iim-iit-premier' || comp.circuit === 'IIM / IIT' || comp.isIIMorIIT || comp.isPremier;
+      }
+      if (cId === 'corporate-global' || cId === 'Corporate') {
+        return compCircuitKey === 'corporate-global' || comp.circuit === 'Corporate' || comp.isCorporate || comp.isCorporateOrGlobal;
+      }
+      if (cId === 'others') return compCircuitKey === 'others';
+      return comp.circuit === cId;
+    });
+    if (!matchesCircuit) return false;
+  }
+
+  // 2. Discipline / Track filter
+  const selectedTracks = Array.isArray(f.selectedTracks)
+    ? f.selectedTracks
+    : (Array.isArray(f.disc) ? f.disc : []);
+
+  if (selectedTracks.length > 0 && selectedTracks.length < 6) {
+    const compCategory = (comp.category || '').toLowerCase();
+    const compDisc = (comp.discipline || '').toLowerCase();
+    const matchesTrack = selectedTracks.some(tId => {
+      const lower = tId.toLowerCase();
+      if (lower === 'case' || lower === 'case comps') return compCategory === 'case' || compDisc.includes('case');
+      if (lower === 'hackathon' || lower === 'hackathons') return compCategory === 'hackathon' || compDisc.includes('hackathon') || compDisc.includes('tech');
+      if (lower === 'writing' || lower === 'writing & research') return compCategory === 'writing' || compDisc.includes('writ') || compDisc.includes('research') || compDisc.includes('paper');
+      if (lower === 'quiz' || lower === 'quizzes') return compCategory === 'quiz' || compDisc.includes('quiz');
+      if (lower === 'simulation' || lower === 'simulations') return compCategory === 'simulation' || compDisc.includes('simul');
+      if (lower === 'debate' || lower === 'debates') return compCategory === 'debate' || compDisc.includes('debate') || compDisc.includes('mun');
+      return compCategory === lower || compDisc.includes(lower);
+    });
+    if (!matchesTrack) return false;
+  }
+
+  // 3. Team format filter
+  const team = f.teamFilter || f.team;
+  const isSolo = comp.maxTeam === 1 || (comp.team && (String(comp.team).trim().startsWith('1') || String(comp.team).toLowerCase().includes('solo')));
+  if (team === 'solo' && !isSolo) return false;
+  if (team === 'team' && isSolo) return false;
+
+  // 4. Fee filter
+  const fee = f.feeFilter || f.fee;
+  const isFree = comp.fee === 'Free' || comp.isFree;
+  if (fee === 'free' && !isFree) return false;
+  if (fee === 'paid' && isFree) return false;
+
+  // 5. Query filter (if any)
+  const q = f.searchQuery || f.q;
+  if (typeof q === 'string' && q.trim()) {
+    const hay = `${comp.title || ''} ${comp.host || ''} ${comp.orgName || ''} ${comp.discipline || ''} ${comp.circuit || ''}`.toLowerCase();
+    if (!hay.includes(q.trim().toLowerCase())) return false;
+  }
+
+  return true;
+}
+
 function getUrgencyConfig(urgencyLevel) {
   if (urgencyLevel === 'red') {
     return {
@@ -397,8 +502,18 @@ export default function HomeScreen({
 
   const showRailLoading = isHomeLoading || competitionsLoading;
 
+  // Last chosen Browse filter preferences (from props or localStorage fallback)
+  const effectiveFilter = savedFilter || (() => {
+    try {
+      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
+      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return null;
+  })();
+
   // Active sort order (defaults to last chosen sort filter in Browse tab)
-  const effectiveSort = browseSort || (() => {
+  const effectiveSort = browseSort || effectiveFilter?.sortBy || (() => {
     try {
       const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
       const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
@@ -419,31 +534,70 @@ export default function HomeScreen({
     }
   };
 
-  // Derive active filter chips for filter strip and subline
+  // Derive active filter chips for filter strip, header, and subline
   const filterChips = useMemo(() => {
-    if (!savedFilter) return [];
+    if (!effectiveFilter) return [];
     const chips = [];
-    if (Array.isArray(savedFilter.disc) && savedFilter.disc.length > 0) {
-      chips.push(...savedFilter.disc);
+
+    // Tracks / Disciplines
+    const tracks = Array.isArray(effectiveFilter.selectedTracks)
+      ? effectiveFilter.selectedTracks
+      : (Array.isArray(effectiveFilter.disc) ? effectiveFilter.disc : []);
+    if (tracks.length > 0 && tracks.length < 6) {
+      const trackLabels = {
+        case: 'Case Comps',
+        hackathon: 'Hackathons',
+        writing: 'Writing & Research',
+        quiz: 'Quizzes',
+        simulation: 'Simulations',
+        debate: 'Debates'
+      };
+      tracks.forEach(t => {
+        const lower = String(t).toLowerCase();
+        chips.push(trackLabels[lower] || t);
+      });
     }
-    if (Array.isArray(savedFilter.circ) && savedFilter.circ.length > 0) {
-      chips.push(...savedFilter.circ);
+
+    // Circuits
+    const circuits = Array.isArray(effectiveFilter.selectedCircuits)
+      ? effectiveFilter.selectedCircuits
+      : (Array.isArray(effectiveFilter.circ) ? effectiveFilter.circ : []);
+    if (circuits.length > 0 && circuits.length < 4) {
+      const circuitLabels = {
+        'du': 'DU Circuit',
+        'iim-iit-premier': 'IIMs, IITs & Premier',
+        'corporate-global': 'Corporate & Global',
+        'others': 'Others'
+      };
+      circuits.forEach(c => {
+        chips.push(circuitLabels[c] || c);
+      });
     }
-    if (savedFilter.team === 'solo') {
+
+    // Team Format
+    const team = effectiveFilter.teamFilter || effectiveFilter.team;
+    if (team === 'solo') {
       chips.push('Solo');
-    } else if (savedFilter.team === 'team') {
+    } else if (team === 'team') {
       chips.push('Teams (2+)');
     }
-    if (savedFilter.fee === 'free') {
+
+    // Fee
+    const fee = effectiveFilter.feeFilter || effectiveFilter.fee;
+    if (fee === 'free') {
       chips.push('Free entry');
-    } else if (savedFilter.fee === 'paid') {
+    } else if (fee === 'paid') {
       chips.push('Paid entry');
     }
-    if (typeof savedFilter.q === 'string' && savedFilter.q.trim()) {
-      chips.push(`"${savedFilter.q.trim()}"`);
+
+    // Search query
+    const q = effectiveFilter.searchQuery || effectiveFilter.q;
+    if (typeof q === 'string' && q.trim()) {
+      chips.push(`"${q.trim()}"`);
     }
+
     return chips;
-  }, [savedFilter]);
+  }, [effectiveFilter]);
 
   const hasFilter = filterChips.length > 0;
 
@@ -461,9 +615,9 @@ export default function HomeScreen({
 
   // 2. Top Competitions Rail (Matches saved Browse filter, sorted according to last chosen Browse sort)
   const allFilteredComps = useMemo(() => {
-    const filtered = competitions.filter(c => matchListing(c, savedFilter || {}));
+    const filtered = competitions.filter(c => matchCompetition(c, effectiveFilter || {}));
     return sortCompetitions(filtered, effectiveSort);
-  }, [competitions, savedFilter, effectiveSort]);
+  }, [competitions, effectiveFilter, effectiveSort]);
 
   const compTotal = allFilteredComps.length;
   const displayedComps = allFilteredComps.slice(0, CARDS_PER_RAIL);
@@ -486,7 +640,7 @@ export default function HomeScreen({
       );
 
       if (comp) {
-        return matchListing(comp, savedFilter);
+        return matchCompetition(comp, effectiveFilter);
       }
 
       // Fallback evaluation if competition isn't in current list
@@ -494,13 +648,15 @@ export default function HomeScreen({
         title: post.competition_name || post.title || '',
         host: post.organizer || '',
         discipline: post.category || 'Case',
+        category: post.category ? String(post.category).toLowerCase() : 'case',
         circuit: 'DU Circuit',
         days: 7,
-        fee: 'Free'
+        fee: 'Free',
+        isFree: true
       };
-      return matchListing(fallbackComp, savedFilter);
+      return matchCompetition(fallbackComp, effectiveFilter);
     });
-  }, [posts, competitions, savedFilter, hasFilter]);
+  }, [posts, competitions, effectiveFilter, hasFilter]);
 
   const squadTotal = allFilteredSquads.length;
   const displayedSquads = allFilteredSquads.slice(0, CARDS_PER_RAIL);
@@ -1067,38 +1223,39 @@ export default function HomeScreen({
           >
             {showRailLoading ? 'Loading...' : `${compTotal} match`}
           </span>
-          {/* Dynamic Sort selector synced with Browse */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          {/* Read-only indicators for Sort and Filters last chosen in Browse */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
-              Sort:
+              Sort: <strong style={{ color: '#1A1A19', fontWeight: 600 }}>{SORT_LABELS[effectiveSort] || 'Closing soonest first'}</strong>
             </span>
-            <select
-              value={effectiveSort}
-              onChange={(e) => {
-                const nextSort = e.target.value;
-                if (onUpdateSort) onUpdateSort(nextSort);
-              }}
-              style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: '#1A1A19',
-                background: '#FFFFFF',
-                border: '1px solid #E7E6E2',
-                borderRadius: '7px',
-                padding: '2px 8px',
-                cursor: 'pointer',
-                outline: 'none',
-                fontFamily: 'inherit'
-              }}
-              title="Change sort order (syncs with Browse tab)"
-            >
-              <option value="closing-soonest">Closing soonest first</option>
-              <option value="closing-latest">Closing latest first</option>
-              <option value="prize-highest">Highest prize pool</option>
-              <option value="popular">Most registered (popular)</option>
-              <option value="title-asc">Title: A → Z</option>
-              <option value="title-desc">Title: Z → A</option>
-            </select>
+            {filterChips.length > 0 && (
+              <>
+                <span style={{ color: '#C9C7C1' }}>·</span>
+                <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>Filters:</span>
+                {filterChips.slice(0, 3).map((chip, idx) => (
+                  <span
+                    key={idx}
+                    style={{
+                      background: 'rgba(15, 63, 254, 0.08)',
+                      color: '#0F3FFE',
+                      border: '1px solid rgba(15, 63, 254, 0.20)',
+                      borderRadius: '12px',
+                      padding: '1px 8px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {chip}
+                  </span>
+                ))}
+                {filterChips.length > 3 && (
+                  <span style={{ fontSize: '11px', color: '#75736C', fontWeight: 600 }}>
+                    +{filterChips.length - 3} more
+                  </span>
+                )}
+              </>
+            )}
           </div>
           <button
             onClick={() => handleNavigate('browse')}

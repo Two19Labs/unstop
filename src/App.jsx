@@ -13,6 +13,8 @@ import RequestsScreen from './components/RequestsScreen';
 import ProfileScreen from './components/ProfileScreen';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
+import ThemeToggle from './components/ThemeToggle';
+import OneStopLogo from './components/OneStopLogo';
 
 import {
   describeFilter,
@@ -459,6 +461,7 @@ function OneStopInner() {
             else disciplineVal = 'Case';
 
             return {
+              ...c,
               id: c.id,
               title: c.title,
               host: c.orgName || c.host || 'Host Institution',
@@ -914,8 +917,8 @@ function OneStopInner() {
             <span></span>
             <span></span>
           </button>
-          <img src="/logo-onestop.png" alt="OneStop" style={{ height: '22px', width: 'auto' }} />
-          <div style={{ width: '32px' }}></div>
+          <OneStopLogo height={22} style={{ cursor: 'pointer' }} onClick={() => handleNavigate('home')} />
+          <ThemeToggle variant="compact" />
         </div>
       )}
 
@@ -949,22 +952,30 @@ function OneStopInner() {
           initialCompetitions={competitions}
           externalSortBy={browseSort}
           onSortChange={handleUpdateSort}
+          onFilterPrefsChange={handleFilterPrefsChange}
           headerAction={
-            <button
-              className="cc-header-notif-btn"
-              onClick={() => handleNavigate('requests')}
-              title="View requests and notifications"
-              aria-label="Notifications"
-            >
-              <BellIcon size={18} />
-              {pendingInboxCount > 0 && (
-                <span className="cc-header-notif-badge">{pendingInboxCount}</span>
-              )}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ThemeToggle variant="compact" />
+              <button
+                className="cc-header-notif-btn"
+                onClick={() => handleNavigate('requests')}
+                title="View requests and notifications"
+                aria-label="Notifications"
+              >
+                <BellIcon size={18} />
+                {pendingInboxCount > 0 && (
+                  <span className="cc-header-notif-badge">{pendingInboxCount}</span>
+                )}
+              </button>
+            </div>
           }
         />
       ) : (
         <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
+          {/* Top-Right Theme Toggle Action */}
+          <div className="onestop-top-actions">
+            <ThemeToggle variant="compact" />
+          </div>
           {screen === 'home' && (
             <HomeScreen
               profile={profile}

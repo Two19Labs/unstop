@@ -86,7 +86,14 @@ export function AuthProvider({ children }) {
 
   // UI / Theme State
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('onestop_theme') || 'light';
+    try {
+      const saved = localStorage.getItem('onestop_theme');
+      if (saved) return saved;
+      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    } catch (e) {}
+    return 'light';
   });
 
   // Bookmarks State (100% real, zero mock data)

@@ -1,5 +1,7 @@
 // src/components/Sidebar.jsx
 import React from 'react';
+import OneStopLogo from './OneStopLogo';
+import ThemeToggle from './ThemeToggle';
 
 export default function Sidebar({
   screen,
@@ -65,7 +67,7 @@ export default function Sidebar({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(26,26,25,0.35)',
+            background: 'var(--scrim)',
             zIndex: 45
           }}
         />
@@ -73,8 +75,8 @@ export default function Sidebar({
 
       <aside
         style={{
-          background: '#FFFFFF',
-          borderRight: '1px solid #E7E6E2',
+          background: 'var(--surface)',
+          borderRight: '1px solid var(--line)',
           padding: '20px 14px',
           display: 'flex',
           flexDirection: 'column',
@@ -88,23 +90,15 @@ export default function Sidebar({
         }}
         className={`sidebar-root ${mobileOpen ? 'sidebar-mobile-open' : ''}`}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img
-            src="/logo-onestop.png"
-            alt="OneStop"
-            style={{
-              height: '26px',
-              width: 'auto',
-              alignSelf: 'flex-start',
-              margin: '2px 8px 0',
-              display: 'block',
-              cursor: 'pointer'
-            }}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
+          <OneStopLogo
+            height={26}
+            style={{ cursor: 'pointer', margin: '2px 4px 0' }}
             onClick={() => handleNav('home')}
           />
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
           {navItems.map((item) => {
             const isActive = screen === item.id;
             return (
@@ -120,16 +114,16 @@ export default function Sidebar({
                   textAlign: 'left',
                   border: 0,
                   borderRadius: '9px',
-                  background: isActive ? '#F2F1ED' : 'transparent',
-                  color: isActive ? '#1A1A19' : '#55534D',
+                  background: isActive ? 'var(--surface-muted)' : 'transparent',
+                  color: isActive ? 'var(--ink)' : 'var(--ink-secondary)',
                   padding: '9px 12px',
                   cursor: 'pointer',
                   fontSize: '14px',
                   fontWeight: isActive ? 600 : 500,
-                  transition: 'background 120ms ease, color 120ms ease'
+                  transition: 'background-color 120ms ease, color 120ms ease'
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = '#F2F1ED';
+                  if (!isActive) e.currentTarget.style.background = 'var(--surface-muted)';
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) e.currentTarget.style.background = 'transparent';
@@ -139,8 +133,8 @@ export default function Sidebar({
                 {item.badge && (
                   <span
                     style={{
-                      background: item.accentBadge ? '#0F3FFE' : '#E7E6E2',
-                      color: item.accentBadge ? '#FFFFFF' : '#55534D',
+                      background: item.accentBadge ? 'var(--primary)' : 'var(--surface-muted)',
+                      color: item.accentBadge ? '#FFFFFF' : 'var(--ink-secondary)',
                       borderRadius: '20px',
                       padding: '1px 7px',
                       fontSize: '11px',
@@ -157,6 +151,10 @@ export default function Sidebar({
         </nav>
 
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Quick Theme Toggle in Sidebar */}
+          <ThemeToggle variant="sidebar" />
+
+          {/* User Profile Tile */}
           <button
             onClick={() => handleNav('profile')}
             style={{
@@ -165,18 +163,18 @@ export default function Sidebar({
               gap: '10px',
               width: '100%',
               textAlign: 'left',
-              border: 0,
+              border: '1px solid var(--line)',
               borderRadius: '9px',
-              background: screen === 'profile' ? '#F2F1ED' : 'transparent',
-              padding: '9px 8px',
+              background: screen === 'profile' ? 'var(--surface-muted)' : 'var(--surface-sunken)',
+              padding: '9px 10px',
               cursor: 'pointer',
-              transition: 'background 120ms ease'
+              transition: 'background-color 120ms ease, border-color 120ms ease'
             }}
             onMouseEnter={(e) => {
-              if (screen !== 'profile') e.currentTarget.style.background = '#F2F1ED';
+              if (screen !== 'profile') e.currentTarget.style.background = 'var(--surface-muted)';
             }}
             onMouseLeave={(e) => {
-              if (screen !== 'profile') e.currentTarget.style.background = 'transparent';
+              if (screen !== 'profile') e.currentTarget.style.background = 'var(--surface-sunken)';
             }}
           >
             <span
@@ -184,8 +182,8 @@ export default function Sidebar({
                 width: '30px',
                 height: '30px',
                 borderRadius: '50%',
-                background: '#E7E6E2',
-                color: '#55534D',
+                background: 'var(--surface-muted)',
+                color: 'var(--ink-secondary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -201,7 +199,7 @@ export default function Sidebar({
                 style={{
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#1A1A19',
+                  color: 'var(--ink)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
@@ -212,7 +210,7 @@ export default function Sidebar({
               <span
                 style={{
                   fontSize: '11px',
-                  color: '#75736C',
+                  color: 'var(--ink-muted)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
