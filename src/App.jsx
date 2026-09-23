@@ -309,51 +309,42 @@ function OneStopInner() {
     }
   }, [user, authUpdateProfile, flash]);
 
-  // Browse Filters State (Auto-saved automatically on every filter change)
+  // Browse Filters State (Synchronized with CompetitionsPage / onestop_user_filter_prefs)
   const [browseFilters, setBrowseFilters] = useState(() => {
+    try {
+      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
+      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
+      if (raw) {
+        return JSON.parse(raw);
+      }
+    } catch (e) {}
     try {
       const saved = localStorage.getItem('onestop_browse_filters');
       if (saved) {
         const parsed = JSON.parse(saved);
         return {
-          disc: Array.isArray(parsed.disc) ? parsed.disc : [],
-          circ: Array.isArray(parsed.circ) ? parsed.circ : [],
-          team: parsed.team || 'any',
-          fee: parsed.fee || 'any',
-          q: typeof parsed.q === 'string' ? parsed.q : '',
-          sort: parsed.sort || 'deadline'
+          selectedCircuits: Array.isArray(parsed.circ) ? parsed.circ : [],
+          selectedTracks: Array.isArray(parsed.disc) ? parsed.disc : [],
+          teamFilter: parsed.team || 'all',
+          feeFilter: parsed.fee || 'all',
+          sortBy: parsed.sort || 'closing-soonest'
         };
       }
     } catch (e) {}
-    return DEFAULT_FILTERS;
+    return {
+      selectedCircuits: [],
+      selectedTracks: [],
+      teamFilter: 'all',
+      feeFilter: 'all',
+      sortBy: 'closing-soonest'
+    };
   });
-
-  // Auto-save whenever browseFilters changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('onestop_browse_filters', JSON.stringify(browseFilters));
-    } catch (e) {}
-  }, [browseFilters]);
-
-  const handleUpdateFilters = useCallback((changes) => {
-    setBrowseFilters(prev => {
-      const next = { ...prev, ...changes };
-      try {
-        localStorage.setItem('onestop_browse_filters', JSON.stringify(next));
-      } catch (e) {}
-      return next;
-    });
-  }, []);
-
-  const handleResetFilters = useCallback(() => {
-    setBrowseFilters(DEFAULT_FILTERS);
-    try {
-      localStorage.setItem('onestop_browse_filters', JSON.stringify(DEFAULT_FILTERS));
-    } catch (e) {}
-  }, []);
 
   // Browse Sort State (Synchronized between Browse and Home rails)
   const [browseSort, setBrowseSort] = useState(() => {
+    if (browseFilters && typeof browseFilters.sortBy === 'string') {
+      return browseFilters.sortBy;
+    }
     try {
       const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
       const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
@@ -365,15 +356,54 @@ function OneStopInner() {
     return 'closing-soonest';
   });
 
-  const handleUpdateSort = useCallback((newSort) => {
-    setBrowseSort(newSort);
+  // Sync saved filter preferences when user changes
+  useEffect(() => {
     try {
       const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
       const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
-      const prefs = raw ? JSON.parse(raw) : {};
-      prefs.sortBy = newSort;
-      if (userKey) localStorage.setItem(userKey, JSON.stringify(prefs));
-      localStorage.setItem('onestop_user_filter_prefs', JSON.stringify(prefs));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setBrowseFilters(parsed);
+        if (parsed.sortBy) setBrowseSort(parsed.sortBy);
+      }
+    } catch (e) {}
+  }, [user]);
+
+  const handleFilterPrefsChange = useCallback((prefs) => {
+    setBrowseFilters(prefs);
+    if (prefs?.sortBy) {
+      setBrowseSort(prefs.sortBy);
+    }
+  }, []);
+
+  const handleUpdateSort = useCallback((newSort) => {
+    setBrowseSort(newSort);
+    setBrowseFilters(prev => {
+      const next = { ...prev, sortBy: newSort };
+      try {
+        const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
+        if (userKey) localStorage.setItem(userKey, JSON.stringify(next));
+        localStorage.setItem('onestop_user_filter_prefs', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  }, [user]);
+
+  const handleResetFilters = useCallback(() => {
+    const cleanPrefs = {
+      selectedCircuits: [],
+      selectedTracks: [],
+      teamFilter: 'all',
+      feeFilter: 'all',
+      sortBy: 'closing-soonest'
+    };
+    setBrowseFilters(cleanPrefs);
+    setBrowseSort('closing-soonest');
+    try {
+      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
+      if (userKey) localStorage.setItem(userKey, JSON.stringify(cleanPrefs));
+      localStorage.setItem('onestop_user_filter_prefs', JSON.stringify(cleanPrefs));
+      localStorage.setItem('onestop_browse_filters', JSON.stringify(DEFAULT_FILTERS));
     } catch (e) {}
   }, [user]);
 

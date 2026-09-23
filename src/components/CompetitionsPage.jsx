@@ -511,6 +511,7 @@ export default function CompetitionsPage({
   isPostgraduate = false,
   externalSortBy,
   onSortChange,
+  onFilterPrefsChange,
 }) {
   const { user, profile, squadPosts = [] } = useAuth();
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
@@ -555,10 +556,13 @@ export default function CompetitionsPage({
       if (onSortChange) {
         onSortChange(sortBy);
       }
+      if (onFilterPrefsChange) {
+        onFilterPrefsChange(prefs);
+      }
     } catch (err) {
       console.error('Error saving filter preferences:', err);
     }
-  }, [selectedCircuits, selectedTracks, teamFilter, feeFilter, sortBy, user?.email, onSortChange]);
+  }, [selectedCircuits, selectedTracks, teamFilter, feeFilter, sortBy, user?.email, onSortChange, onFilterPrefsChange]);
 
   // Sync saved filter preferences when user signs in
   useEffect(() => {
