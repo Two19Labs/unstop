@@ -35,6 +35,9 @@
 
   --scrim: rgba(26, 26, 25, 0.35);
 
+  --urgency-red: #DC2626;
+  --urgency-yellow: #B45309;
+
   --font-sans: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   --radius-sm: 6px;
@@ -75,6 +78,9 @@
   --success-border: rgba(34, 197, 94, 0.35);
 
   --scrim: rgba(0, 0, 0, 0.72);
+
+  --urgency-red: #F87171;
+  --urgency-yellow: #FBBF24;
 }
 
 *, *::before, *::after {

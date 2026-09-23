@@ -194,24 +194,24 @@ function getUrgencyConfig(urgencyLevel) {
   if (urgencyLevel === 'red') {
     return {
       border: '1px solid rgba(239, 68, 68, 0.40)',
-      background: 'rgba(239, 68, 68, 0.10)',
-      color: '#DC2626',
+      background: 'rgba(239, 68, 68, 0.12)',
+      color: 'var(--urgency-red, #EF4444)',
       dotColor: '#EF4444'
     };
   }
   if (urgencyLevel === 'yellow') {
     return {
       border: '1px solid rgba(245, 158, 11, 0.40)',
-      background: 'rgba(245, 158, 11, 0.12)',
-      color: '#B45309',
+      background: 'rgba(245, 158, 11, 0.14)',
+      color: 'var(--urgency-yellow, #F59E0B)',
       dotColor: '#F59E0B'
     };
   }
   return {
-    border: '1px solid rgba(15, 63, 254, 0.35)',
-    background: 'rgba(15, 63, 254, 0.08)',
-    color: '#0F3FFE',
-    dotColor: '#0F3FFE'
+    border: '1px solid var(--primary-tint-35, rgba(15, 63, 254, 0.35))',
+    background: 'var(--primary-tint-8, rgba(15, 63, 254, 0.08))',
+    color: 'var(--primary, #0F3FFE)',
+    dotColor: 'var(--primary, #0F3FFE)'
   };
 }
 
@@ -378,8 +378,8 @@ function RailPunLoadingCard({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        background: 'linear-gradient(180deg, #FFFFFF 0%, #FAF9F6 100%)',
-        border: '1px solid #E7E6E2',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
         borderRadius: '12px'
       }}
     >
@@ -387,7 +387,7 @@ function RailPunLoadingCard({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <OneStopLogo variant="icon" height={26} />
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A19' }}>OneStop</span>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>OneStop</span>
         </div>
         <span
           style={{
@@ -445,7 +445,7 @@ function RailPunLoadingCard({
             fontSize: '12.5px',
             fontStyle: 'italic',
             fontWeight: 500,
-            color: '#374151',
+            color: 'var(--ink)',
             lineHeight: 1.45,
             flex: 1
           }}
@@ -455,12 +455,12 @@ function RailPunLoadingCard({
       </div>
 
       {/* Bottom: Ticker & Status */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#75736C', paddingTop: '6px', borderTop: '1px solid #F0EFEB' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ink-muted)', paddingTop: '6px', borderTop: '1px solid var(--line)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
           Live Ingestion
         </span>
-        <span style={{ fontWeight: 600, color: '#0F3FFE' }}>Zero Mock Data</span>
+        <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Zero Mock Data</span>
       </div>
     </div>
   );
@@ -672,10 +672,10 @@ export default function HomeScreen({
     <div className="home-container">
       {/* 1. Greeting Section */}
       <div className="home-greeting-block">
-        <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: '#1A1A19' }}>
+        <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
           Hi {firstName}
         </h1>
-        <p style={{ margin: '7px 0 0', fontSize: '14px', color: '#75736C', textWrap: 'pretty' }}>
+        <p style={{ margin: '7px 0 0', fontSize: '14px', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
           {subline}
         </p>
       </div>
@@ -683,7 +683,7 @@ export default function HomeScreen({
       {/* 2. Filter Strip (Visible only when filter is saved) */}
       {hasFilter && (
         <div className="home-filter-strip">
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#75736C', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
             Your Browse filter
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -691,7 +691,7 @@ export default function HomeScreen({
               <span
                 key={idx}
                 style={{
-                  background: '#0F3FFE',
+                  background: 'var(--primary)',
                   color: '#FFFFFF',
                   borderRadius: '20px',
                   padding: '5px 12px',
@@ -704,7 +704,7 @@ export default function HomeScreen({
               </span>
             ))}
           </div>
-          <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
             Every row below follows it
           </span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -712,10 +712,10 @@ export default function HomeScreen({
               onClick={() => handleNavigate('browse')}
               className="home-btn-hover"
               style={{
-                border: '1px solid #E7E6E2',
+                border: '1px solid var(--line)',
                 borderRadius: '8px',
-                background: '#FFFFFF',
-                color: '#1A1A19',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
                 padding: '7px 12px',
                 fontSize: '13px',
                 fontWeight: 500,
@@ -731,7 +731,7 @@ export default function HomeScreen({
               style={{
                 border: 0,
                 background: 'transparent',
-                color: '#75736C',
+                color: 'var(--ink-muted)',
                 padding: '7px 4px',
                 fontSize: '13px',
                 fontWeight: 500,
@@ -748,13 +748,13 @@ export default function HomeScreen({
       {/* 3. Bookmarks Rail */}
       <section className="home-section">
         <div className="home-section-header">
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: '#1A1A19' }}>
+          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
             Bookmarks
           </h2>
           <span
             style={{
-              background: '#E7E6E2',
-              color: '#55534D',
+              background: 'var(--surface-muted)',
+              color: 'var(--ink-secondary)',
               borderRadius: '20px',
               padding: '2px 9px',
               fontSize: '11px',
@@ -764,7 +764,7 @@ export default function HomeScreen({
           >
             {showRailLoading ? '...' : bookmarkTotal}
           </span>
-          <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
             Soonest deadline first · filters don't apply
           </span>
           <button
@@ -772,10 +772,10 @@ export default function HomeScreen({
             className="home-btn-hover"
             style={{
               marginLeft: 'auto',
-              border: '1px solid #E7E6E2',
+              border: '1px solid var(--line)',
               borderRadius: '9px',
-              background: '#FFFFFF',
-              color: '#1A1A19',
+              background: 'var(--surface)',
+              color: 'var(--ink)',
               padding: '8px 13px',
               fontSize: '13px',
               fontWeight: 600,
@@ -798,8 +798,8 @@ export default function HomeScreen({
             <div
               style={{
                 flex: '1 1 100%',
-                background: '#FFFFFF',
-                border: '1px dashed #D6D4CE',
+                background: 'var(--surface)',
+                border: '1px dashed var(--line)',
                 borderRadius: '12px',
                 padding: '22px',
                 display: 'flex',
@@ -808,7 +808,7 @@ export default function HomeScreen({
                 gap: '16px'
               }}
             >
-              <span style={{ fontSize: '13px', color: '#75736C' }}>
+              <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>
                 Nothing saved yet. Bookmark a competition and it shows up here.
               </span>
               <button
@@ -816,7 +816,7 @@ export default function HomeScreen({
                 style={{
                   border: 0,
                   background: 'transparent',
-                  color: '#0F3FFE',
+                  color: 'var(--primary)',
                   fontSize: '13px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -867,7 +867,7 @@ export default function HomeScreen({
                           style={{
                             fontSize: '12px',
                             fontWeight: 600,
-                            color: '#55534D',
+                            color: 'var(--ink-secondary)',
                             lineHeight: 1.35,
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
@@ -887,10 +887,10 @@ export default function HomeScreen({
                         }}
                         className="home-btn-remove"
                         style={{
-                          border: '1px solid #E7E6E2',
+                          border: '1px solid var(--line)',
                           borderRadius: '8px',
-                          background: '#F2F1ED',
-                          color: '#55534D',
+                          background: 'var(--surface-muted)',
+                          color: 'var(--ink-secondary)',
                           width: '28px',
                           height: '28px',
                           flex: 'none',
@@ -915,7 +915,7 @@ export default function HomeScreen({
                         fontWeight: 700,
                         lineHeight: 1.35,
                         letterSpacing: '-0.01em',
-                        color: '#1A1A19',
+                        color: 'var(--ink)',
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
@@ -964,9 +964,9 @@ export default function HomeScreen({
                           borderRadius: '5px',
                           letterSpacing: '0.2px',
                           flexShrink: 0,
-                          background: isFree ? '#FFFFFF' : '#F2F1ED',
-                          color: isFree ? '#059669' : '#55534D',
-                          border: isFree ? '1px solid rgba(16, 185, 129, 0.32)' : '1px solid #E7E6E2'
+                          background: isFree ? 'var(--surface)' : 'var(--surface-muted)',
+                          color: isFree ? '#10B981' : 'var(--ink-secondary)',
+                          border: isFree ? '1px solid rgba(16, 185, 129, 0.32)' : '1px solid var(--line)'
                         }}
                       >
                         {feeText}
@@ -980,38 +980,38 @@ export default function HomeScreen({
                         alignItems: 'center',
                         gap: '8px',
                         fontSize: '12px',
-                        color: '#55534D',
+                        color: 'var(--ink-secondary)',
                         fontWeight: 600,
                         minHeight: '20px',
                         flexWrap: 'wrap'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }} title={teamText}>
-                        <UsersIcon size={13} color="#55534D" />
+                        <UsersIcon size={13} color="var(--ink-secondary)" />
                         <span>{teamText}</span>
                       </div>
-                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#C9C7C1', flexShrink: 0 }} />
+                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--line)', flexShrink: 0 }} />
                       <div
                         style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                         title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
                       >
-                        <CalendarIcon size={13} color="#55534D" />
+                        <CalendarIcon size={13} color="var(--ink-secondary)" />
                         <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : (b.mode || 'Online')}</span>
                       </div>
                     </div>
 
                     {/* Social Proof & Deadline Status (Metrics Row) */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '22px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#75736C' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--ink-muted)' }}>
                         {registeredCount > 0 ? (
                           <>
                             <FlameIcon size={13} color="#f97316" />
                             <span>
-                              <strong style={{ color: '#1A1A19' }}>{registeredCount.toLocaleString()}</strong> registrations
+                              <strong style={{ color: 'var(--ink)' }}>{registeredCount.toLocaleString()}</strong> registrations
                             </span>
                           </>
                         ) : (
-                          <span style={{ color: '#0F3FFE', fontWeight: 600, fontSize: '11px' }}>Recently Listed</span>
+                          <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '11px' }}>Recently Listed</span>
                         )}
                       </div>
 
