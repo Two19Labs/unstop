@@ -491,6 +491,22 @@ export default function HomeScreen({
     ? profile.name.trim().split(/\s+/)[0]
     : (user?.email ? user.email.split('@')[0] : 'there');
 
+  const isPostgraduate =
+    (profile?.education_level || '').toLowerCase() === 'postgraduate' ||
+    (profile?.year || '').toUpperCase().startsWith('PG') ||
+    (profile?.batch || '').toUpperCase().startsWith('PG');
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Good morning';
+    if (hour >= 12 && hour < 17) return 'Good afternoon';
+    if (hour >= 17 && hour < 22) return 'Good evening';
+    return 'Working late';
+  }, []);
+
+  const collegeName = profile?.college?.trim() || 'Shaheed Sukhdev College of Business Studies';
+  const batchStatus = profile?.batch?.trim() || profile?.year?.trim() || (isPostgraduate ? 'Postgraduate Track' : 'UG 2nd Year');
+
   const [isHomeLoading, setIsHomeLoading] = useState(true);
 
   useEffect(() => {
@@ -687,80 +703,87 @@ export default function HomeScreen({
 
   return (
     <div className="home-container" ref={containerRef}>
-      {/* 1. Greeting Section */}
+      {/* 1. Elevated Time-Aware Hero Greeting & Campus Radar */}
       <div className="home-greeting-block">
-        <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-          Hi {firstName}
-        </h1>
-        <p style={{ margin: '7px 0 0', fontSize: '14px', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          {subline}
-        </p>
-      </div>
-
-      {/* 2. Filter Strip (Visible only when filter is saved) */}
-      {hasFilter && (
-        <div className="home-filter-strip">
-          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
-            Your Browse filter
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            {filterChips.map((chip, idx) => (
-              <span
-                key={idx}
-                style={{
-                  background: 'var(--primary)',
-                  color: '#FFFFFF',
-                  borderRadius: '20px',
-                  padding: '5px 12px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {chip}
+        <div className="home-greeting-header-row">
+          <div className="home-greeting-meta">
+            {/* Campus & Academic Track Tag */}
+            <div
+              className="home-campus-tag"
+              onClick={() => handleNavigate('profile')}
+              title="Click to view or edit profile details"
+            >
+              <span className="home-campus-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                </svg>
               </span>
-            ))}
-          </div>
-          <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
-            Every row below follows it
-          </span>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              onClick={() => handleNavigate('browse')}
-              className="home-btn-hover"
-              style={{
-                border: '1px solid var(--line)',
-                borderRadius: '8px',
-                background: 'var(--surface)',
-                color: 'var(--ink)',
-                padding: '7px 12px',
-                fontSize: '13px',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                cursor: 'pointer'
-              }}
-            >
-              Edit in Browse
-            </button>
-            <button
-              onClick={onResetFilter}
-              className="home-clear-btn"
-              style={{
-                border: 0,
-                background: 'transparent',
-                color: 'var(--ink-muted)',
-                padding: '7px 4px',
-                fontSize: '13px',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                cursor: 'pointer'
-              }}
-            >
-              Clear
-            </button>
+              <span className="home-campus-name">
+                {collegeName}
+              </span>
+              <span className="home-campus-divider">·</span>
+              <span className="home-status-badge">
+                <span className="home-status-dot" />
+                {batchStatus}
+              </span>
+            </div>
+
+            {/* Time-aware Greeting */}
+            <h1 className="home-greeting-title">
+              {greeting}, {firstName}
+            </h1>
           </div>
         </div>
-      )}
+
+        {/* Dynamic Pulse Subline tuned to last Browse filters */}
+        <div className="home-pulse-container">
+          <p className="home-pulse-subline">
+            <span className="home-pulse-live-indicator" title="Live radar synced with Unstop">
+              <span className="home-pulse-live-dot" />
+            </span>
+            {showRailLoading ? (
+              <span>Syncing live campus opportunities and squad signals…</span>
+            ) : hasFilter ? (
+              <span>
+                Radar tuned to{' '}
+                <span className="home-pulse-filter-highlight">
+                  {filterChips.join(' · ')}
+                </span>
+                {' '}— tracking <strong>{compTotal}</strong> {compTotal === 1 ? 'competition' : 'competitions'} and{' '}
+                <strong>{squadTotal}</strong> {squadTotal === 1 ? 'squad' : 'squads'} recruiting right now.
+              </span>
+            ) : (
+              <span>
+                Tracking <strong>{compTotal}</strong> live competitions and{' '}
+                <strong>{squadTotal}</strong> open squads recruiting batchmates across premier circuits.
+              </span>
+            )}
+          </p>
+
+          {/* Quick Filter Actions (compact & inline) */}
+          {hasFilter && (
+            <div className="home-pulse-actions">
+              <button
+                type="button"
+                onClick={() => handleNavigate('browse')}
+                className="home-pulse-btn-edit"
+                title="Edit filters in Browse"
+              >
+                Edit in Browse
+              </button>
+              <button
+                type="button"
+                onClick={onResetFilter}
+                className="home-pulse-btn-clear"
+                title="Reset to all competitions"
+              >
+                Clear filter
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* 3. Bookmarks Rail */}
       <section className="home-section">
