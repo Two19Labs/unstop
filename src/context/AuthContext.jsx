@@ -126,6 +126,16 @@ export function AuthProvider({ children }) {
     }
   });
 
+  // Notification States (Cloud-synced across devices via Supabase user_notification_states)
+  const [notificationStates, setNotificationStates] = useState(() => {
+    try {
+      const saved = localStorage.getItem('onestop_user_notification_states');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   // 1. Sync Theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -202,6 +212,31 @@ export function AuthProvider({ children }) {
       }
     } catch (err) {
       console.warn('Bookmarks fetch warning:', err.message);
+    }
+  }, []);
+
+  const fetchNotificationStates = useCallback(async (userId) => {
+    if (!supabase || !userId) return;
+    try {
+      const { data, error } = await supabase
+        .from('user_notification_states')
+        .select('notification_id, is_read, is_dismissed')
+        .eq('user_id', userId);
+
+      if (!error && Array.isArray(data)) {
+        const map = {};
+        data.forEach(row => {
+          map[row.notification_id] = {
+            is_read: Boolean(row.is_read),
+            is_dismissed: Boolean(row.is_dismissed),
+          };
+        });
+        setNotificationStates(map);
+        localStorage.setItem(`onestop_user_notification_states_${userId}`, JSON.stringify(map));
+        localStorage.setItem('onestop_user_notification_states', JSON.stringify(map));
+      }
+    } catch (err) {
+      console.warn('Notification states fetch error:', err.message);
     }
   }, []);
 
@@ -288,6 +323,7 @@ export function AuthProvider({ children }) {
         identifyUser(currentUser.id, { email: currentUser.email });
         fetchUserProfile(currentUser.id);
         fetchUserBookmarks(currentUser.id);
+        fetchNotificationStates(currentUser.id);
         refreshSquadData(currentUser);
       }
       setAuthLoading(false);
@@ -309,12 +345,14 @@ export function AuthProvider({ children }) {
           identifyUser(currentUser.id, { email: currentUser.email });
           await fetchUserProfile(currentUser.id);
           await fetchUserBookmarks(currentUser.id);
+          await fetchNotificationStates(currentUser.id);
           refreshSquadData(currentUser);
         } else {
           resetUser();
           setProfile(null);
           setBookmarks([]);
           setSquadApps([]);
+          setNotificationStates({});
         }
         setAuthLoading(false);
       }
@@ -324,35 +362,48 @@ export function AuthProvider({ children }) {
       isMounted = false;
       subscription?.unsubscribe();
     };
-  }, [fetchUserProfile, fetchUserBookmarks, refreshSquadData]);
+  }, [fetchUserProfile, fetchUserBookmarks, fetchNotificationStates, refreshSquadData]);
 
-  // 5. Initial Squad Data Fetch + Realtime Subscription & Polling Fallback
+  // 5. Initial Squad Data Fetch + Realtime Subscription & Polling Fallback Across Devices
   useEffect(() => {
     refreshSquadData();
 
     if (!supabase) return;
 
-    // Realtime Postgres changes subscription
+    // Realtime Postgres changes subscription across devices
     const channel = supabase
-      .channel('public:squad_realtime_sync')
+      .channel('public:app_realtime_sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, () => {
         refreshSquadData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, () => {
         refreshSquadData();
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookmarks' }, () => {
+        if (userRef.current?.id) fetchUserBookmarks(userRef.current.id);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_notification_states' }, () => {
+        if (userRef.current?.id) fetchNotificationStates(userRef.current.id);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        if (userRef.current?.id) fetchUserProfile(userRef.current.id);
+      })
       .subscribe();
 
     // 30-second interval polling fallback
     const pollInterval = setInterval(() => {
       refreshSquadData();
+      if (userRef.current?.id) {
+        fetchUserBookmarks(userRef.current.id);
+        fetchNotificationStates(userRef.current.id);
+      }
     }, 30000);
 
     return () => {
       clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
-  }, [refreshSquadData]);
+  }, [refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchUserProfile]);
 
   // 6. Local Storage Sync Fallback
   useEffect(() => {
@@ -1051,6 +1102,90 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Cross-device Notification States Actions (Read & Dismissed)
+  const markNotificationRead = useCallback(async (notifId) => {
+    const sId = String(notifId);
+    setNotificationStates(prev => {
+      const next = { ...prev, [sId]: { ...(prev[sId] || {}), is_read: true } };
+      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
+      return next;
+    });
+
+    const activeUser = userRef.current;
+    if (supabase && activeUser?.id) {
+      try {
+        await supabase
+          .from('user_notification_states')
+          .upsert({
+            user_id: activeUser.id,
+            notification_id: sId,
+            is_read: true,
+            is_dismissed: false,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id,notification_id' });
+      } catch (err) {
+        console.warn('Sync notification read error:', err.message);
+      }
+    }
+  }, []);
+
+  const markAllNotificationsRead = useCallback(async (notifIds = []) => {
+    if (!notifIds || !notifIds.length) return;
+    setNotificationStates(prev => {
+      const next = { ...prev };
+      notifIds.forEach(id => {
+        const sId = String(id);
+        next[sId] = { ...(next[sId] || {}), is_read: true };
+      });
+      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
+      return next;
+    });
+
+    const activeUser = userRef.current;
+    if (supabase && activeUser?.id) {
+      try {
+        const rows = notifIds.map(id => ({
+          user_id: activeUser.id,
+          notification_id: String(id),
+          is_read: true,
+          is_dismissed: false,
+          updated_at: new Date().toISOString()
+        }));
+        await supabase
+          .from('user_notification_states')
+          .upsert(rows, { onConflict: 'user_id,notification_id' });
+      } catch (err) {
+        console.warn('Sync all notifications read error:', err.message);
+      }
+    }
+  }, []);
+
+  const dismissNotification = useCallback(async (notifId) => {
+    const sId = String(notifId);
+    setNotificationStates(prev => {
+      const next = { ...prev, [sId]: { ...(prev[sId] || {}), is_dismissed: true, is_read: true } };
+      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
+      return next;
+    });
+
+    const activeUser = userRef.current;
+    if (supabase && activeUser?.id) {
+      try {
+        await supabase
+          .from('user_notification_states')
+          .upsert({
+            user_id: activeUser.id,
+            notification_id: sId,
+            is_read: true,
+            is_dismissed: true,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id,notification_id' });
+      } catch (err) {
+        console.warn('Sync notification dismiss error:', err.message);
+      }
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -1089,6 +1224,10 @@ export function AuthProvider({ children }) {
         togglePostOpen,
         deleteSquadPost,
         refreshSquadData,
+        notificationStates,
+        markNotificationRead,
+        markAllNotificationsRead,
+        dismissNotification,
         hasSupabase: hasValidCredentials,
       }}
     >

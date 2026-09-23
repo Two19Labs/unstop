@@ -8,7 +8,7 @@ export default function SectionLoadingWidget({
   badge = "FETCHING REAL-TIME LISTINGS",
   headline = "OneStop Browse",
   customPuns = null,
-  minDurationMs = 2500,
+  minDurationMs = 1800,
   isReady = true,
   onComplete,
   tickerItems = ["Live Unstop Crawl", "Real-time Verification", "Zero Placeholders"],

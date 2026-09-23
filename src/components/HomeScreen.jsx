@@ -1,5 +1,5 @@
 // src/components/HomeScreen.jsx — OneStop Home Filter-Driven Rails
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown, getUrgencyLevel } from '../data/initialData';
 import InstitutionLogo from './InstitutionLogo';
 import OneStopLogo from './OneStopLogo';
@@ -338,7 +338,7 @@ function RailPunLoadingCard({
   badge = "SYNCING DEADLINES",
   category = "bookmarks",
   customPuns = null,
-  minDurationMs = 2500
+  minDurationMs = 1800
 }) {
   const [progress, setProgress] = useState(15);
 
@@ -496,7 +496,7 @@ export default function HomeScreen({
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsHomeLoading(false);
-    }, 2500);
+    }, 1800);
     return () => clearTimeout(timer);
   }, []);
 
@@ -524,6 +524,23 @@ export default function HomeScreen({
     } catch (e) {}
     return 'closing-soonest';
   })();
+
+  const containerRef = useRef(null);
+
+  // Ensure carousel rails always start at the beginning (scrollLeft = 0) upon opening and loading
+  useEffect(() => {
+    const resetScroll = () => {
+      if (containerRef.current) {
+        const rails = containerRef.current.querySelectorAll('.rail');
+        rails.forEach((rail) => {
+          rail.scrollLeft = 0;
+        });
+      }
+    };
+    resetScroll();
+    const rafId = requestAnimationFrame(resetScroll);
+    return () => cancelAnimationFrame(rafId);
+  }, [showRailLoading, effectiveSort, effectiveFilter]);
 
   // Navigation helpers
   const handleNavigate = (targetScreen) => {
@@ -669,7 +686,7 @@ export default function HomeScreen({
     : `${compTotal} competitions and ${squadTotal} squads open right now.`;
 
   return (
-    <div className="home-container">
+    <div className="home-container" ref={containerRef}>
       {/* 1. Greeting Section */}
       <div className="home-greeting-block">
         <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>

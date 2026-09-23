@@ -4,7 +4,7 @@ import { AuthProvider, useAuth, formatWhatsAppUrl, sanitizeIndianPhone } from '.
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
 import CompetitionsPage from './components/CompetitionsPage';
-import { BellIcon } from './components/icons';
+import NotificationCenter from './components/NotificationCenter';
 import DetailDrawer from './components/DetailDrawer';
 import TeamFinderScreen from './components/TeamFinderScreen';
 import PostSquadModal from './components/PostSquadModal';
@@ -918,7 +918,19 @@ function OneStopInner() {
             <span></span>
           </button>
           <OneStopLogo height={22} style={{ cursor: 'pointer' }} onClick={() => handleNavigate('home')} />
-          <ThemeToggle variant="compact" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ThemeToggle variant="compact" />
+            <NotificationCenter
+              applications={applications}
+              competitions={competitions}
+              bookmarks={bookmarks}
+              posts={posts}
+              profile={profile}
+              onOpenWhatsApp={handleOpenWhatsApp}
+              onOpenDetail={(id) => setDetailCompId(id)}
+              onNavigate={handleNavigate}
+            />
+          </div>
         </div>
       )}
 
@@ -956,25 +968,34 @@ function OneStopInner() {
           headerAction={
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ThemeToggle variant="compact" />
-              <button
-                className="cc-header-notif-btn"
-                onClick={() => handleNavigate('requests')}
-                title="View requests and notifications"
-                aria-label="Notifications"
-              >
-                <BellIcon size={18} />
-                {pendingInboxCount > 0 && (
-                  <span className="cc-header-notif-badge">{pendingInboxCount}</span>
-                )}
-              </button>
+              <NotificationCenter
+                applications={applications}
+                competitions={competitions}
+                bookmarks={bookmarks}
+                posts={posts}
+                profile={profile}
+                onOpenWhatsApp={handleOpenWhatsApp}
+                onOpenDetail={(id) => setDetailCompId(id)}
+                onNavigate={handleNavigate}
+              />
             </div>
           }
         />
       ) : (
         <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
-          {/* Top-Right Theme Toggle Action */}
+          {/* Top-Right Theme Toggle & Notification Center */}
           <div className="onestop-top-actions">
             <ThemeToggle variant="compact" />
+            <NotificationCenter
+              applications={applications}
+              competitions={competitions}
+              bookmarks={bookmarks}
+              posts={posts}
+              profile={profile}
+              onOpenWhatsApp={handleOpenWhatsApp}
+              onOpenDetail={(id) => setDetailCompId(id)}
+              onNavigate={handleNavigate}
+            />
           </div>
           {screen === 'home' && (
             <HomeScreen

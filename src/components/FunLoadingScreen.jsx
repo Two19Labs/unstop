@@ -74,7 +74,7 @@ export const SARCASTIC_PUNS = GENERAL_PUNS;
 
 export default function FunLoadingScreen({
   isReady = true,
-  minDurationMs = 2500,
+  minDurationMs = 1800,
   onComplete,
   badge = "FETCHING COMPETITIONS",
   headline = "OneStop",

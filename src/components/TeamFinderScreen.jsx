@@ -568,7 +568,7 @@ export default function TeamFinderScreen({
             badge="SCOUTING SQUADS"
             headline="Team Finder"
             customPuns={SQUAD_PUNS}
-            minDurationMs={2500}
+            minDurationMs={1800}
             isReady={true}
             tickerItems={["Collegiate Network", "WhatsApp Handshake", "Zero Ghosting"]}
             onComplete={() => setShowSquadLoader(false)}

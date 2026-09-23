@@ -1423,7 +1423,7 @@ export default function CompetitionsPage({
             badge={bookmarkedOnly ? "SYNCING SAVED CHALLENGES" : "FETCHING LIVE LISTINGS"}
             headline={bookmarkedOnly ? "OneStop Saved" : "OneStop Browse"}
             customPuns={BROWSE_PUNS}
-            minDurationMs={2500}
+            minDurationMs={1800}
             isReady={!loading}
             onComplete={() => setShowFetchingScreen(false)}
             tickerItems={bookmarkedOnly
