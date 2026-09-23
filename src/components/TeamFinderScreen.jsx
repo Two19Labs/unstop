@@ -1,5 +1,5 @@
 // src/components/TeamFinderScreen.jsx
-// Complete SSCBS OS Team Finder Engine — Generalized for ALL Colleges & Universities
+// Complete SSCBS OS Team Finder Engine  -  Generalized for ALL Colleges & Universities
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SKILLS, DISCIPLINES, initialsOf, isMockPost } from '../data/initialData';
 import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';

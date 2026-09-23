@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- OneStop by Two19 Labs — Launch Day Database Migration
+-- OneStop by Two19 Labs  -  Launch Day Database Migration
 -- Run this in your Supabase SQL Editor (Dashboard > SQL Editor > New query)
 -- Idempotent & safe to run multiple times.
 -- ══════════════════════════════════════════════════════════════════

@@ -36,7 +36,7 @@ export default function DetailDrawer({
     { k: 'Host', v: item.host || item.orgName || 'Organizer' },
     { k: 'Circuit', v: item.circuit || 'Collegiate' },
     { k: 'Eligibility', v: eligibilityDisplay },
-    { k: 'Team size', v: item.team || (item.minTeam === item.maxTeam ? `${item.minTeam}` : `${item.minTeam}–${item.maxTeam}`) },
+    { k: 'Team size', v: item.team || (item.minTeam === item.maxTeam ? `${item.minTeam}` : `${item.minTeam}-${item.maxTeam}`) },
     { k: 'Format', v: item.mode || 'Online' },
     { k: 'Prize', v: item.prize || 'Recognition' },
     { k: 'Entry', v: item.fee || (item.isFree ? 'Free' : 'Paid') },
@@ -46,7 +46,7 @@ export default function DetailDrawer({
 
   const squadNote = squadsCount > 0
     ? `${squadsCount} ${squadsCount === 1 ? 'squad is' : 'squads are'} already looking for teammates on this.`
-    : 'No squads posted for this yet — post one and applicants come to you.';
+    : 'No squads posted for this yet  -  post one and applicants come to you.';
 
   return (
     <div

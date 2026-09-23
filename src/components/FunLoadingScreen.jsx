@@ -45,7 +45,7 @@ export const GENERAL_PUNS = [
 export const BROWSE_PUNS = [
   "Synchronizing with live Unstop servers across premier engineering & B-school campuses...",
   "Scouting national case competitions, hackathons, and corporate challenges...",
-  "Filtering out phantom links — delivering 100% verified campus competitions...",
+  "Filtering out phantom links  -  delivering 100% verified campus competitions...",
   "Aggressively indexing prize pools to fund the squad's caffeine addiction...",
   "Aligning competition deadlines with our broken collegiate sleep schedules...",
   "Extracting live criteria from DU, IIT Bombay, IIM Ahmedabad, XLRI, and BITS...",

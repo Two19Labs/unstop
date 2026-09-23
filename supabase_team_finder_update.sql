@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- OneStop by Two19 Labs — Complete Team Finder & Realtime Parity Migration
+-- OneStop by Two19 Labs  -  Complete Team Finder & Realtime Parity Migration
 -- ════════════════════════════════════════════════════════════════════════
 -- Run this in your Supabase SQL Editor (Dashboard > SQL Editor > New query)
 -- Idempotent & safe to run multiple times.

@@ -1,4 +1,4 @@
-/* Two19 Labs — OneStop Design System
+/* Two19 Labs  -  OneStop Design System
    Brand: Two19 Labs | Product: OneStop
    Reference: design_handoff_onestop/README.md & OneStop.dc.html
 */
@@ -58,7 +58,7 @@
 }
 
 [data-theme='dark'] {
-  /* Two19 Labs Product Design Tokens — Dark Mode */
+  /* Two19 Labs Product Design Tokens  -  Dark Mode */
   --canvas: #0F1013;
   --surface: #18191E;
   --surface-sunken: #121317;

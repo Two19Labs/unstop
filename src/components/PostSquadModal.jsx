@@ -367,7 +367,7 @@ export default function PostSquadModal({
               >
                 {filteredComps.map((c) => (
                   <option key={c.id} value={c.id} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>
-                    {c.title} — {c.host || c.orgName}
+                    {c.title}  -  {c.host || c.orgName}
                   </option>
                 ))}
               </select>

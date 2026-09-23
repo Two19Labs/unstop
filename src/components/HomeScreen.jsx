@@ -1,4 +1,4 @@
-// src/components/HomeScreen.jsx — OneStop Home Filter-Driven Rails
+// src/components/HomeScreen.jsx  -  OneStop Home Filter-Driven Rails
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { initialsOf, matchListing, formatDeadlineDateTime, formatDeadlineCountdown, getUrgencyLevel } from '../data/initialData';
 import InstitutionLogo from './InstitutionLogo';
@@ -682,7 +682,7 @@ export default function HomeScreen({
   const subline = showRailLoading
     ? 'Syncing live competitions from premier campuses…'
     : hasFilter
-    ? `${compTotal} competitions and ${squadTotal} squads match your Browse filter — ${filterChips.map(c => c.toLowerCase()).join(' · ')}.`
+    ? `${compTotal} competitions and ${squadTotal} squads match your Browse filter  -  ${filterChips.map(c => c.toLowerCase()).join(' · ')}.`
     : `${compTotal} competitions and ${squadTotal} squads open right now.`;
 
   return (
@@ -1976,7 +1976,7 @@ export default function HomeScreen({
                           cursor: 'default'
                         }}
                       >
-                        Requested — pending
+                        Requested  -  pending
                       </button>
                     ) : (
                       <button

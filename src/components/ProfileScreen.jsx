@@ -363,7 +363,7 @@ export default function ProfileScreen({
                 </div>
               ) : (
                 <span className="profile-preview-empty-skills">
-                  No skills selected yet — select skills on the left to stand out in squad searches.
+                  No skills selected yet  -  select skills on the left to stand out in squad searches.
                 </span>
               )}
             </div>

@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- OneStop by Two19 Labs — Supabase Database Schema
+-- OneStop by Two19 Labs  -  Supabase Database Schema
 -- Run this in your Supabase SQL Editor (Dashboard > SQL Editor)
 -- ══════════════════════════════════════════════════════════════════
 

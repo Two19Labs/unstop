@@ -472,7 +472,7 @@ function OneStopInner() {
               deadline: c.deadline,
               remainDaysText: c.remainDaysText,
               prize: c.prizes || 'Recognition',
-              team: c.teamSizeDisplay || `${c.minTeam || 1}–${c.maxTeam || 4}`,
+              team: c.teamSizeDisplay || `${c.minTeam || 1}-${c.maxTeam || 4}`,
               mode: c.mode || 'Online',
               fee: c.isFree ? 'Free' : (c.fee || 'Free'),
               desc: c.description || c.title,
@@ -795,7 +795,7 @@ function OneStopInner() {
       }));
     }
 
-    flash('Accepted — WhatsApp chat ready');
+    flash('Accepted  -  WhatsApp chat ready');
 
     if (user && authUpdateAppStatus) {
       try {
@@ -835,7 +835,7 @@ function OneStopInner() {
       }));
     }
 
-    flash('Member removed — spot re-opened');
+    flash('Member removed  -  spot re-opened');
     if (user && authUpdateAppStatus) {
       try {
         await authUpdateAppStatus(appId, 'removed');

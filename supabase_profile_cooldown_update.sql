@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- OneStop by Two19 Labs — 24-Hour Profile Change Cooldown Migration
+-- OneStop by Two19 Labs  -  24-Hour Profile Change Cooldown Migration
 -- ════════════════════════════════════════════════════════════════════════
 -- Run this in your Supabase SQL Editor (Dashboard > SQL Editor > New query)
 -- Idempotent & safe to run multiple times.

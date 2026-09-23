@@ -1097,7 +1097,7 @@ export default function CompetitionsPage({
             </div>
           </div>
 
-          {/* Unified Filter Card — All filters visible without scrolling */}
+          {/* Unified Filter Card  -  All filters visible without scrolling */}
           <div className="cc-filter-card cc-unified-filter-card">
             {/* Header: Title & Reset All */}
             <div className="cc-filter-card-header">

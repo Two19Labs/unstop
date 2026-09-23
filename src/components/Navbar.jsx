@@ -93,7 +93,7 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             }}
             role="button"
             tabIndex={0}
-            title="OneStop — Undergraduate Opportunities Hub"
+            title="OneStop  -  Undergraduate Opportunities Hub"
           >
             <OneStopLogo height={25} className="t19-navbar-logo" />
             <span className="t19-subdomain-pill">undergrad hub</span>

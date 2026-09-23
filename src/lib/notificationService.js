@@ -1,4 +1,4 @@
-// src/lib/notificationService.js — OneStop Dynamic Notification Radar Engine
+// src/lib/notificationService.js  -  OneStop Dynamic Notification Radar Engine
 import { formatDeadlineCountdown, getUrgencyLevel } from '../data/initialData';
 
 const READ_STORAGE_KEY = 'onestop_notifications_read';

@@ -23,7 +23,7 @@ This guide walks you through connecting **Supabase** for the backend database & 
 
 ---
 
-## 2. Brevo (Sendinblue) Setup — 300 Free Emails / Day
+## 2. Brevo (Sendinblue) Setup  -  300 Free Emails / Day
 
 Supabase's default email service has a strict rate limit of only 3 emails/hour. By connecting Brevo's free tier via Custom SMTP, you get **300 free emails every day** for signup confirmations and password resets.
 
@@ -57,7 +57,7 @@ Supabase's default email service has a strict rate limit of only 3 emails/hour. 
 
 ---
 
-## 3. Google Cloud Console — Sign In with Google
+## 3. Google Cloud Console  -  Sign In with Google
 
 To enable one-click "Continue with Google" authentication:
 
@@ -103,7 +103,7 @@ To enable one-click "Continue with Google" authentication:
    npm run dev
    ```
 2. Open `http://localhost:5173`.
-3. **Public Discovery Check**: Browse competitions, apply filters, search keywords — no sign-in required!
+3. **Public Discovery Check**: Browse competitions, apply filters, search keywords  -  no sign-in required!
 4. **Squad Finder Protection Check**:
    - Click **Squad Finder** in the top navigation or click **Find Teammates** on any competition card.
    - You will see the Teammate Access Gate and Sign-In Modal.
