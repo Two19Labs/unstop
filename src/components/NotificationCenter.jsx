@@ -32,6 +32,7 @@ export default function NotificationCenter({
   onOpenWhatsApp = () => {},
   onOpenDetail = () => {},
   onNavigate = () => {},
+  onToggleBookmark = () => {},
   className = ''
 }) {
   const auth = useAuth();
@@ -42,7 +43,7 @@ export default function NotificationCenter({
   const authDismiss = auth?.dismissNotification;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'squads' | 'deadlines' | 'updates'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'squads'
   const [localReadIds, setLocalReadIds] = useState(getReadNotificationIds);
   const [localDismissedIds, setLocalDismissedIds] = useState(getDismissedNotificationIds);
 
@@ -105,7 +106,7 @@ export default function NotificationCenter({
     return allNotifications.filter(n => checkIsUnread(n.id)).length;
   }, [allNotifications, checkIsUnread]);
 
-  // Filtered by active tab
+  // Filtered by active tab (All or Squads)
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'all') return allNotifications;
     return allNotifications.filter(n => n.category === activeTab);
@@ -116,8 +117,6 @@ export default function NotificationCenter({
     return {
       all: allNotifications.length,
       squads: allNotifications.filter(n => n.category === 'squads').length,
-      deadlines: allNotifications.filter(n => n.category === 'deadlines').length,
-      updates: allNotifications.filter(n => n.category === 'updates').length,
     };
   }, [allNotifications]);
 
@@ -131,14 +130,22 @@ export default function NotificationCenter({
     setLocalReadIds(getReadNotificationIds());
   }, [allNotifications, user, authMarkAllRead]);
 
-  const handleDismiss = useCallback((e, notifId) => {
+  const handleDismiss = useCallback((e, notifId, notif) => {
     e.stopPropagation();
     if (user && authDismiss) {
       authDismiss(notifId);
     }
     dismissNotification(notifId);
     setLocalDismissedIds(getDismissedNotificationIds());
-  }, [user, authDismiss]);
+
+    // If removing a bookmarked competition's alert with X, unbookmark it
+    if (notif?.type === 'deadline_alert' && notif?.data?.compId) {
+      const compIdStr = String(notif.data.compId);
+      if (bookmarks.some(b => String(b) === compIdStr) && onToggleBookmark) {
+        onToggleBookmark(notif.data.compId);
+      }
+    }
+  }, [user, authDismiss, bookmarks, onToggleBookmark]);
 
   const handleActionClick = useCallback((e, notif, action) => {
     e.stopPropagation();
@@ -260,26 +267,6 @@ export default function NotificationCenter({
               <span>Squads</span>
               {tabCounts.squads > 0 && <span className="onestop-notif-tab-badge">{tabCounts.squads}</span>}
             </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'deadlines'}
-              className={`onestop-notif-tab ${activeTab === 'deadlines' ? 'active' : ''}`}
-              onClick={() => setActiveTab('deadlines')}
-            >
-              <span>Deadlines</span>
-              {tabCounts.deadlines > 0 && <span className="onestop-notif-tab-badge">{tabCounts.deadlines}</span>}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'updates'}
-              className={`onestop-notif-tab ${activeTab === 'updates' ? 'active' : ''}`}
-              onClick={() => setActiveTab('updates')}
-            >
-              <span>Drops</span>
-              {tabCounts.updates > 0 && <span className="onestop-notif-tab-badge">{tabCounts.updates}</span>}
-            </button>
           </div>
 
           {/* Notification Items List */}
@@ -293,9 +280,7 @@ export default function NotificationCenter({
                 <p className="onestop-notif-empty-desc">
                   {activeTab === 'squads'
                     ? 'No pending squad applications or handshakes right now.'
-                    : activeTab === 'deadlines'
-                    ? 'No bookmarked opportunities closing in the next 72 hours.'
-                    : 'You are all caught up! New squad requests and urgent deadlines will land here.'}
+                    : 'You are all caught up! New squad requests and bookmarked competition deadlines will land here.'}
                 </p>
               </div>
             ) : (
@@ -327,9 +312,9 @@ export default function NotificationCenter({
                         <button
                           type="button"
                           className="onestop-notif-dismiss-btn"
-                          onClick={(e) => handleDismiss(e, notif.id)}
-                          title="Dismiss notification"
-                          aria-label="Dismiss"
+                          onClick={(e) => handleDismiss(e, notif.id, notif)}
+                          title={notif.type === 'deadline_alert' ? "Remove alert / unbookmark" : "Dismiss notification"}
+                          aria-label="Remove"
                         >
                           <CloseIcon size={14} />
                         </button>

@@ -929,6 +929,7 @@ function OneStopInner() {
               onOpenWhatsApp={handleOpenWhatsApp}
               onOpenDetail={(id) => setDetailCompId(id)}
               onNavigate={handleNavigate}
+              onToggleBookmark={handleToggleBookmark}
             />
           </div>
         </div>
@@ -977,6 +978,7 @@ function OneStopInner() {
                 onOpenWhatsApp={handleOpenWhatsApp}
                 onOpenDetail={(id) => setDetailCompId(id)}
                 onNavigate={handleNavigate}
+                onToggleBookmark={handleToggleBookmark}
               />
             </div>
           }
@@ -995,6 +997,7 @@ function OneStopInner() {
               onOpenWhatsApp={handleOpenWhatsApp}
               onOpenDetail={(id) => setDetailCompId(id)}
               onNavigate={handleNavigate}
+              onToggleBookmark={handleToggleBookmark}
             />
           </div>
           {screen === 'home' && (

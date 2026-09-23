@@ -197,105 +197,53 @@ export function generateNotifications({
     // If ended in the past, don't show active deadline alert
     if (diffMs <= 0) return;
 
-    const hoursLeft = diffMs / (1000 * 60 * 60);
+    // Stable ID per bookmarked competition so user can remove it with X button
+    const notifId = `deadline_${sId}`;
+    if (dismissedSet.has(notifId)) return;
 
-    // Urgent: Closing in less than 6 hours
+    const hoursLeft = diffMs / (1000 * 60 * 60);
+    const countdownStr = formatDeadlineCountdown(comp.deadline, comp.remain, comp.days);
+    const daysLeft = Math.ceil(hoursLeft / 24);
+
+    let urgency = 'info';
+    let title = `📌 Bookmarked: ${comp.title}`;
+    let subtitle = `Deadline: ${countdownStr} (${comp.host || comp.orgName || 'Host'}). Keep this on your radar.`;
+    let badgeText = `${daysLeft}d left`;
+
     if (hoursLeft <= 6) {
-      const notifId = `deadline_6h_${sId}`;
-      if (!dismissedSet.has(notifId)) {
-        const countdownStr = formatDeadlineCountdown(comp.deadline, comp.remain, comp.days);
-        notifs.push({
-          id: notifId,
-          type: 'deadline_imminent',
-          category: 'deadlines',
-          urgency: 'critical',
-          title: `🚨 Final Call: ${comp.title}`,
-          subtitle: `Only ${countdownStr} remaining before registration closes! Confirm your team submission.`,
-          timestamp: deadlineMs,
-          badgeText: countdownStr,
-          data: {
-            compId: comp.id,
-            competition: comp
-          },
-          actions: [
-            { label: 'View Opportunity', actionType: 'detail', isPrimary: true }
-          ]
-        });
-      }
+      urgency = 'critical';
+      title = `🚨 Final Call: ${comp.title}`;
+      subtitle = `Only ${countdownStr} remaining before registration closes! Confirm your team submission.`;
+      badgeText = countdownStr;
+    } else if (hoursLeft <= 24) {
+      urgency = 'warning';
+      title = `⏳ Closing Tomorrow: ${comp.title}`;
+      subtitle = `${countdownStr} left to register (${comp.host || comp.orgName || 'Host'}). Complete requirements today.`;
+      badgeText = countdownStr;
+    } else if (hoursLeft <= 72) {
+      urgency = 'info';
+      title = `📅 Closing in ${daysLeft} days: ${comp.title}`;
+      subtitle = `You saved this opportunity. Check if you need more teammates before the deadline.`;
+      badgeText = `${daysLeft} days left`;
     }
-    // Warning: Closing in less than 24 hours
-    else if (hoursLeft <= 24) {
-      const notifId = `deadline_24h_${sId}`;
-      if (!dismissedSet.has(notifId)) {
-        const countdownStr = formatDeadlineCountdown(comp.deadline, comp.remain, comp.days);
-        notifs.push({
-          id: notifId,
-          type: 'deadline_warning',
-          category: 'deadlines',
-          urgency: 'warning',
-          title: `⏳ Closing Tomorrow: ${comp.title}`,
-          subtitle: `${countdownStr} left to register (${comp.host || comp.orgName || 'Host'}). Complete requirements today.`,
-          timestamp: deadlineMs,
-          badgeText: countdownStr,
-          data: {
-            compId: comp.id,
-            competition: comp
-          },
-          actions: [
-            { label: 'View Opportunity', actionType: 'detail', isPrimary: true }
-          ]
-        });
-      }
-    }
-    // Notice: Closing in less than 72 hours
-    else if (hoursLeft <= 72) {
-      const notifId = `deadline_72h_${sId}`;
-      if (!dismissedSet.has(notifId)) {
-        const daysLeft = Math.ceil(hoursLeft / 24);
-        notifs.push({
-          id: notifId,
-          type: 'deadline_notice',
-          category: 'deadlines',
-          urgency: 'info',
-          title: `📅 Closing in ${daysLeft} days: ${comp.title}`,
-          subtitle: `You saved this opportunity. Check if you need more teammates before the deadline.`,
-          timestamp: deadlineMs,
-          badgeText: `${daysLeft} days left`,
-          data: {
-            compId: comp.id,
-            competition: comp
-          },
-          actions: [
-            { label: 'View Opportunity', actionType: 'detail', isPrimary: false }
-          ]
-        });
-      }
-    }
-    // Active bookmarked competition with upcoming deadline (> 72 hours)
-    else {
-      const notifId = `deadline_saved_${sId}`;
-      if (!dismissedSet.has(notifId)) {
-        const countdownStr = formatDeadlineCountdown(comp.deadline, comp.remain, comp.days);
-        const daysLeft = Math.ceil(hoursLeft / 24);
-        notifs.push({
-          id: notifId,
-          type: 'deadline_saved',
-          category: 'deadlines',
-          urgency: 'info',
-          title: `📌 Bookmarked: ${comp.title}`,
-          subtitle: `Deadline: ${countdownStr} (${comp.host || comp.orgName || 'Host'}). Keep this on your radar.`,
-          timestamp: deadlineMs,
-          badgeText: `${daysLeft}d left`,
-          data: {
-            compId: comp.id,
-            competition: comp
-          },
-          actions: [
-            { label: 'View Opportunity', actionType: 'detail', isPrimary: false }
-          ]
-        });
-      }
-    }
+
+    notifs.push({
+      id: notifId,
+      type: 'deadline_alert',
+      category: 'deadlines',
+      urgency,
+      title,
+      subtitle,
+      timestamp: deadlineMs,
+      badgeText,
+      data: {
+        compId: comp.id,
+        competition: comp
+      },
+      actions: [
+        { label: 'View Opportunity', actionType: 'detail', isPrimary: urgency === 'critical' || urgency === 'warning' }
+      ]
+    });
   });
 
   // ─────────────────────────────────────────────────────────────
