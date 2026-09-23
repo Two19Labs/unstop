@@ -12,7 +12,6 @@
   border-radius: 12px;
   box-sizing: border-box;
   transition: opacity 220ms ease, transform 220ms ease;
-  margin-bottom: 18px;
 }
 
 .section-loading-card.is-dismissing {
@@ -65,7 +64,7 @@
   .section-loading-ring { animation-duration: 2.4s; }
 }
 
-/* Keep: used by CompCardSkeleton and other components */
+/* Keep: used by CompCardSkeleton elsewhere */
 .skeleton-box {
   background: linear-gradient(90deg, #ECEBE6 25%, #F7F6F3 50%, #ECEBE6 75%);
   background-size: 200% 100%;

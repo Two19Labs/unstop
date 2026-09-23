@@ -1417,30 +1417,16 @@ export default function CompetitionsPage({
             </div>
           )}
 
-      {/* ── Competitions Section Loading: Little loading thing + Skeletons ── */}
+      {/* ── Competitions Section Loading: Redesigned minimalist loading card ── */}
       {(showFetchingScreen || loading) ? (
-        <div className="cc-section-loading-wrapper">
-          <SectionLoadingWidget
-            badge={bookmarkedOnly ? "SYNCING SAVED CHALLENGES" : "FETCHING LIVE LISTINGS"}
-            headline={bookmarkedOnly ? "OneStop Saved" : "OneStop Browse"}
-            customPuns={BROWSE_PUNS}
-            minDurationMs={1800}
-            isReady={!loading}
-            onComplete={() => setShowFetchingScreen(false)}
-            tickerItems={bookmarkedOnly
-              ? ["Direct Unstop Sync", "Countdown Verification", "Squad Matching"]
-              : ["Live Unstop Crawl", "Real-time Verification", "Zero Placeholders"]
-            }
-          />
-          <div className="cc-grid" aria-hidden="true">
-            <CompCardSkeleton />
-            <CompCardSkeleton />
-            <CompCardSkeleton />
-            <CompCardSkeleton />
-            <CompCardSkeleton />
-            <CompCardSkeleton />
-          </div>
-        </div>
+        <SectionLoadingWidget
+          headline={bookmarkedOnly ? 'Syncing your saved competitions...' : 'Fetching live competitions from Unstop...'}
+          subtitle={bookmarkedOnly ? 'Checking deadlines on everything you bookmarked' : 'Pulling direct listings across DU, IIMs, IITs & premier colleges'}
+          customPuns={BROWSE_PUNS}
+          minDurationMs={2000}
+          isReady={!loading}
+          onComplete={() => setShowFetchingScreen(false)}
+        />
       ) : fetchError ? (
         <div className="cc-empty-state error">
           <div className="cc-empty-icon">

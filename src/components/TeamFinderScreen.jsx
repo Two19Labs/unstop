@@ -563,31 +563,14 @@ export default function TeamFinderScreen({
 
       {/* Squad Cards Section */}
       {showSquadLoader ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <SectionLoadingWidget
-            badge="SCOUTING SQUADS"
-            headline="Team Finder"
-            customPuns={SQUAD_PUNS}
-            minDurationMs={1800}
-            isReady={true}
-            tickerItems={["Collegiate Network", "WhatsApp Handshake", "Zero Ghosting"]}
-            onComplete={() => setShowSquadLoader(false)}
-          />
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '14px'
-            }}
-          >
-            <SquadCardSkeleton />
-            <SquadCardSkeleton />
-            <SquadCardSkeleton />
-            <SquadCardSkeleton />
-            <SquadCardSkeleton />
-            <SquadCardSkeleton />
-          </div>
-        </div>
+        <SectionLoadingWidget
+          headline="Scouting collegiate squads across campuses..."
+          subtitle="Matching complementary skillsets and zero-ghosting teammates"
+          customPuns={SQUAD_PUNS}
+          minDurationMs={2000}
+          isReady={true}
+          onComplete={() => setShowSquadLoader(false)}
+        />
       ) : (
         <>
           <div

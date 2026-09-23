@@ -13,6 +13,7 @@ import {
   ExternalLinkIcon
 } from './icons';
 import './HomeScreen.css';
+import './SectionLoadingWidget.css';
 
 const CARDS_PER_RAIL = 3;
 
@@ -334,37 +335,37 @@ function RailSquadCardSkeleton() {
   );
 }
 
-function RailPunLoadingCard({
-  badge = "SYNCING DEADLINES",
-  category = "bookmarks",
-  customPuns = null,
-  minDurationMs = 1800
-}) {
-  const [progress, setProgress] = useState(15);
+// Module-level memory to prevent consecutive duplicate quotes on home rails
+let lastRailQuote = '';
 
-  // Pick exactly ONE quote for the entire duration of this loading card
+function RailPunLoadingCard({
+  category = "bookmarks",
+  headline,
+  customPuns = null
+}) {
+  // Exactly one quote per full loading card, shuffled at random
   const quote = useMemo(() => {
     let pool = GENERAL_PUNS;
     if (category === 'bookmarks' || category === 'comps') pool = BROWSE_PUNS;
     else if (category === 'squads') pool = SQUAD_PUNS;
     if (customPuns && customPuns.length > 0) pool = customPuns;
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    return pool[randomIndex] || pool[0];
+    if (!pool || pool.length === 0) return '';
+    let candidate = pool[Math.floor(Math.random() * pool.length)];
+    if (pool.length > 1 && candidate === lastRailQuote) {
+      const filtered = pool.filter(q => q !== lastRailQuote);
+      candidate = filtered[Math.floor(Math.random() * filtered.length)] || candidate;
+    }
+    lastRailQuote = candidate;
+    return candidate;
   }, [category, customPuns]);
 
-  const gradId = useMemo(() => `railCircleGrad-${category}-${Math.random().toString(36).slice(2, 9)}`, [category]);
+  const defaultHeadline = category === 'bookmarks'
+    ? 'Syncing saved competitions...'
+    : category === 'squads'
+    ? 'Scouting collegiate squads...'
+    : 'Fetching live competitions...';
 
-  useEffect(() => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(96, Math.floor((elapsed / minDurationMs) * 96));
-      setProgress(pct);
-    }, 35);
-    return () => clearInterval(interval);
-  }, [minDurationMs]);
-
-  const strokeOffset = Math.max(0, 88 - (progress / 100) * 88);
+  const cardTitle = headline || defaultHeadline;
 
   return (
     <div
@@ -372,96 +373,30 @@ function RailPunLoadingCard({
       style={{
         flex: '0 0 302px',
         width: '302px',
-        padding: '16px 17px 17px',
-        gap: '12px',
+        padding: '32px 20px',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
         background: 'var(--surface)',
-        border: '1px solid var(--line)',
+        border: '1px solid var(--border)',
         borderRadius: '12px'
       }}
+      role="status"
+      aria-live="polite"
     >
-      {/* Top Bar: Icon + Badge */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <OneStopLogo variant="icon" height={26} />
-          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>OneStop</span>
-        </div>
-        <span
-          style={{
-            background: 'rgba(15, 63, 254, 0.08)',
-            color: '#0F3FFE',
-            border: '1px solid rgba(15, 63, 254, 0.22)',
-            borderRadius: '20px',
-            padding: '2px 8px',
-            fontSize: '10px',
-            fontWeight: 700,
-            letterSpacing: '0.03em',
-            textTransform: 'uppercase'
-          }}
-        >
-          {badge}
-        </span>
+      <div className="section-loading-ring-wrap" style={{ width: '42px', height: '42px', marginBottom: '12px' }}>
+        <div className="section-loading-ring" aria-hidden="true" />
+        <OneStopLogo variant="icon" height={19} />
       </div>
-
-      {/* Middle: Circular Loader + Single Quote */}
-      <div style={{ margin: 'auto 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div className="rail-circular-loader" aria-label="Loading">
-          <svg className="rail-circular-svg" viewBox="0 0 36 36">
-            <defs>
-              <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#0F3FFE" />
-                <stop offset="100%" stopColor="#10B981" />
-              </linearGradient>
-            </defs>
-            <circle
-              className="rail-circular-track"
-              cx="18"
-              cy="18"
-              r="14"
-              fill="none"
-              strokeWidth="3.2"
-            />
-            <circle
-              className="rail-circular-head"
-              cx="18"
-              cy="18"
-              r="14"
-              fill="none"
-              stroke={`url(#${gradId})`}
-              strokeWidth="3.2"
-              strokeDasharray="88"
-              strokeDashoffset={strokeOffset}
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-        <p
-          className="home-rail-pun-text"
-          style={{
-            margin: 0,
-            fontSize: '12.5px',
-            fontStyle: 'italic',
-            fontWeight: 500,
-            color: 'var(--ink)',
-            lineHeight: 1.45,
-            flex: 1
-          }}
-        >
-          "{quote}"
-        </p>
-      </div>
-
-      {/* Bottom: Ticker & Status */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ink-muted)', paddingTop: '6px', borderTop: '1px solid var(--line)' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-          Live Ingestion
-        </span>
-        <span style={{ fontWeight: 600, color: 'var(--primary)' }}>Zero Mock Data</span>
-      </div>
+      <h3 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 800, color: 'var(--ink)' }}>
+        {cardTitle}
+      </h3>
+      <p style={{ margin: 0, fontSize: '12px', lineHeight: 1.45, color: 'var(--ink-dim)', maxWidth: '260px', textWrap: 'pretty' }}>
+        {quote}
+      </p>
     </div>
   );
 }
@@ -512,7 +447,7 @@ export default function HomeScreen({
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsHomeLoading(false);
-    }, 1800);
+    }, 2000);
     return () => clearTimeout(timer);
   }, []);
 

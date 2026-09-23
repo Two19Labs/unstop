@@ -2,109 +2,123 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import OneStopLogo from './OneStopLogo';
 import './FunLoadingScreen.css';
+import './SectionLoadingWidget.css';
 
 export const GENERAL_PUNS = [
-  "Aligning the BCG matrix with our broken sleep schedules...",
-  "Fixing the 1-pixel font margin error on slide 47 of the pitch deck...",
-  "Convincing the team that 'Market Research' isn't just scrolling Reddit at 3 AM...",
-  "Consultant voice activated: 'Let's take this offline and circle back by EOD'...",
-  "Aggressively googling TAM, SAM, and SOM 5 minutes before deadline...",
+  "Aligning the BCG matrix with our broken circadian rhythm...",
+  "Fixing the 1-pixel font margin error on slide 47 because aesthetics > unit economics...",
+  "Consultant mode activated: 'Let's take this offline and circle back by EOD'...",
+  "Consultant voice: 'Let's double-click on that' instead of admitting we have no clue...",
   "Formatting financial valuation models until Excel starts crying in #VALUE!...",
-  "Checking cumulative prize pools to see if we can finally afford iced americanos...",
+  "Aggressively googling 'TAM SAM SOM difference' in incognito 4 minutes before deadline...",
   "Rehearsing confident head nods for the Q&A round we didn't prepare for...",
-  "Praying the Unstop submission server doesn't crash at 11:58 PM...",
-  "Inserting buzzwords: 'Synergistic paradigm shift with high-conviction scalability'...",
-  "Debating whether a 2:00 AM WhatsApp brainstorm counts as team synergy...",
-  "Scouting premier DU, IIT & IIM opportunities with 0% mock data...",
+  "Praying the Unstop submission server doesn't 504 at 11:58:59 PM...",
+  "Inserting buzzwords: 'Synergistic paradigm shift with high-conviction hyper-scalability'...",
+  "Calling an unsourced bar chart 'Proprietary Primary Market Research'...",
   "Pretending we understood the judge's question about DCF sensitivity analysis...",
-  "Calling a basic Canva gradient 'Proprietary Visual Architecture'...",
+  "Calling a basic Canva gradient 'Proprietary Visual Design Architecture'...",
   "Re-reading the problem statement 10 minutes before submission because nobody read it...",
-  "Calculating how to turn 3 bullet points into a 20-slide executive summary...",
-  "Running a Monte Carlo simulation on whether our teammate will respond to WhatsApp...",
-  "Explaining our 'Go-To-Market' strategy: 'Virality on Instagram Reels and vibes'...",
-  "Checking if winning 3rd place covers the cost of midnight caffeine runs...",
-  "Synchronizing with live Unstop servers before the caffeine wears off...",
-  "Pasting Porter's Five Forces into a deck that definitely didn't ask for Porter's Five Forces...",
-  "Extracting high-stakes competitions from premier campuses across India...",
+  "Calculating how to stretch 3 bullet points into a 25-slide executive deck...",
+  "Our Go-To-Market strategy is 10% market penetration and 90% divine intervention...",
+  "Checking if winning 3rd place covers the cost of midnight caffeine runs and therapy...",
+  "Pasting Porter's Five Forces into a deck that is literally about selling chai...",
   "Convincing ourselves that our 4-member squad is 'lean, agile, and disruptive'...",
-  "Refactoring slide headers to start with action verbs so judges feel intimidated...",
-  "Negotiating equity split on a case competition idea that doesn't exist yet...",
+  "Refactoring slide headers to start with aggressive action verbs so judges feel intimidated...",
+  "Negotiating equity split on a case competition idea that currently exists only as a Google Doc title...",
   "Translating 'we have no idea' into 'preliminary exploratory heuristics'...",
-  "Filtering out phantom hackathons to deliver 100% genuine campus challenges...",
-  "Re-exporting pitch deck as PDF because PowerPoint font embedding failed again...",
+  "Exporting as 'Final_v7_ACTUAL_FINAL_SUBMIT_THIS_ONE_REAL.pdf'...",
   "Asking ChatGPT to 'make this sound like McKinsey wrote it during a panic attack'...",
-  "Double-checking team registration numbers so we don't end up solo by accident...",
-  "Practicing hand gestures in the mirror for the online presentation round...",
-  "Googling 'what is EBITDA' in an incognito tab while nodding thoughtfully...",
-  "Converting coffee directly into slide animations and financial projections...",
-  "Wrangling live competition APIs across North Campus, Powai, and Ahmedabad...",
-  "Reminding everyone that 'submission deadline is 11:59:59 PM, NOT 12:00:00 AM'...",
-  "Polishing executive summary until it shines brighter than our future careers..."
+  "Googling 'what is EBITDA' under the table while maintaining confident eye contact...",
+  "Converting cold coffee directly into slide transitions and imaginary revenue...",
+  "Reminding everyone that 11:59:59 PM is a hard deadline, not a gentle suggestion...",
+  "Polishing the executive summary until it shines brighter than our collegiate GPA...",
+  "Replacing all pie charts with donut charts because we're hungry and sophisticated...",
+  "Debating whether a 3:00 AM existential crisis counts as 'design thinking'...",
+  "Citing 'Internal Industry Estimates (2026)' for numbers we hallucinated in the shower...",
+  "Practicing hand gestures in the bathroom mirror so we look like a TED Talk keynote...",
+  "Replacing 'we sent a Google Form to our hostel wing' with 'Rigorous Empirical Field Study'...",
+  "Running a DCF model where revenue growth matches our adrenaline spike: 500% YoY...",
+  "Explaining our churn rate: 'Users aren't churning, they're just spiritually graduating'...",
+  "Putting McKinsey's 7S framework into a problem that just needed basic common sense...",
+  "Diagnosing our pitch deck: Symptoms include 40 bullet points and zero customer validation...",
+  "Claiming our product has 'viral network effects' because our moms promised to share the link...",
+  "Burning the midnight oil, the 3 AM candle, and whatever sanity was left in reserve...",
+  "Turning 'we winged the entire Q&A' into 'agile real-time executive adaptability'...",
+  "Double-checking if our valuation is in INR, USD, or pure delusions of grandeur...",
+  "Telling the judges our burn rate is fine while burning through Red Bulls at 4 AM..."
 ];
 
 export const BROWSE_PUNS = [
-  "Synchronizing with live Unstop servers across premier engineering & B-school campuses...",
-  "Scouting national case competitions, hackathons, and corporate challenges...",
-  "Filtering out phantom links  -  delivering 100% verified campus competitions...",
-  "Aggressively indexing prize pools to fund the squad's caffeine addiction...",
-  "Aligning competition deadlines with our broken collegiate sleep schedules...",
-  "Extracting live criteria from DU, IIT Bombay, IIM Ahmedabad, XLRI, and BITS...",
-  "Parsing competition decks before Unstop's submission counter ticks down...",
-  "Consultant voice activated: 'Benchmarking the highest-yield collegiate comps'...",
-  "Verifying that submission deadlines aren't actually 11:59 PM tonight...",
-  "Pasting Porter's Five Forces into memory caches while listings download...",
-  "Checking if top 3 cash awards justify staying up till 4:30 AM on a Tuesday...",
-  "Translating complex challenge rubrics into actionable student wins..."
+  "Hunting for hackathons with top prize pools and guaranteed midnight biryani...",
+  "Benchmarking competitions where the cash prize exceeds our semester tuition fees...",
+  "Filtering out competitions where round 1 is a 60-question aptitude test on Sunday morning...",
+  "Searching for competitions where 'Winner takes all' doesn't mean 'Winner loses all sleep'...",
+  "Cross-checking if the 2 Lakh prize pool is real cash or 199,000 platform discount coupons...",
+  "Indexing high-stakes challenges faster than a hosteller opens Swiggy at 1:30 AM...",
+  "Scouting corporate challenges so we can add 'National Finalist' to our LinkedIn headline...",
+  "Screening hackathons to ensure Red Bull sponsors are physically present on campus...",
+  "Calculating the ROI of spending 72 hours coding vs. sleeping like a responsible adult...",
+  "Verifying that 'Exciting Goodies & Swag' doesn't just mean a single sticker and a ballpoint pen...",
+  "Filtering out comps whose problem statement is 'Solve world peace with Web3 and AI'...",
+  "Sorting by highest prize money because our campus canteen debt is reaching sovereign levels...",
+  "Tracking registration deadlines before your procrastinating brain convinces you 'there's still time'...",
+  "Locating campus rounds so we can get free AC travel and an excuse to miss 8:30 AM attendance...",
+  "Scanning national challenges to see which Fortune 500 company wants free student consulting...",
+  "Aligning competition deadlines with our nocturnal collegiate circadian rhythm...",
+  "Parsing 40-page competition rulebooks to find out the submission limit is actually 3 slides...",
+  "Checking if top 3 cash awards justify submitting at 4:30 AM on a working Tuesday..."
 ];
 
 export const SQUAD_PUNS = [
-  "Scouting collegiate squads across DU, IITs, IIMs, and top universities...",
-  "Running Monte Carlo simulations on whether your prospective teammate replies to WhatsApp...",
-  "Debating whether a 2:00 AM brainstorm session qualifies as genuine team synergy...",
-  "Negotiating equity split on a 24-hour hackathon idea that doesn't exist yet...",
-  "Double-checking squad spots so nobody is accidentally left to solo a 5-round case...",
-  "Convincing the group that 4 generalists and 0 coders is a 'lean and agile' formation...",
-  "Rehearsing synchronized head nods for the squad's upcoming presentation round...",
-  "Verifying phone numbers for instant, zero-spam WhatsApp team handshakes...",
-  "Filtering out teammates who claim 'I specialize in ideation and vibes'...",
-  "Matching complementary skillsets: 1 financial modeler + 3 emotional support slides..."
+  "Running Monte Carlo simulations on whether your prospective teammate will reply or ghost on WhatsApp...",
+  "Matching dream teams: 1 person who works, 1 who talks, and 2 moral support passengers...",
+  "Filtering out teammates who write 'I specialize in ideation, high-level vision, and vibes'...",
+  "Building a hackathon squad: 1 full-stack developer, 3 people offering 'UI feedback' and snacks...",
+  "Convincing the group that 4 finance generalists and 0 coders is a 'lean and agile startup formation'...",
+  "Rehearsing the synchronized head nod so the judge thinks the entire team contributed equally...",
+  "Scouting a teammate whose laptop can run Docker without triggering the campus fire alarm...",
+  "Looking for someone who knows Excel formulas that don't immediately resolve to #REF!...",
+  "Finding a teammate who won't magically contract amnesia 2 hours before the 11:59 PM submission...",
+  "Dividing responsibilities: You do the 40-page financial model, I'll pick the presentation font...",
+  "Negotiating team roles: Who presents slide 1 vs. who hides off-camera during the Q&A cross-examination...",
+  "Searching for that mythical teammate who submits their deck slides 24 hours BEFORE the deadline...",
+  "Checking squad compatibility: Must be willing to survive on instant noodles, chai, and shared panic...",
+  "Pairing you with teammates who won't put Comic Sans or neon green text in an investment pitch...",
+  "Verifying phone numbers so we know exactly whose phone to ring 47 times at 11:45 PM...",
+  "Matching complementary skillsets: 1 financial modeler + 3 emotional support slides...",
+  "Filtering prospective teammates: Must possess a working webcam and basic human empathy...",
+  "Negotiating equity split on a 24-hour hackathon project that doesn't even compile yet..."
 ];
 
 export const SARCASTIC_PUNS = GENERAL_PUNS;
 
+// Module-level memory to prevent consecutive duplicate quotes
+let lastFullScreenQuote = '';
+
 export default function FunLoadingScreen({
   isReady = true,
-  minDurationMs = 1800,
+  minDurationMs = 2000,
   onComplete,
-  badge = "FETCHING COMPETITIONS",
   headline = "OneStop",
+  subtitle = null,
   customPuns = null,
-  tickerItems = ["Live Ingestion", "Adrenaline: 99%", "Zero Sandboxes"],
-  allowSkip = true
 }) {
-  const [progress, setProgress] = useState(12);
   const [isDismissing, setIsDismissing] = useState(false);
 
-  // Pick exactly ONE quote for the entire duration of this loading screen
+  // Exactly one quote per full loading screen, shuffled at random
   const quote = useMemo(() => {
     const pool = Array.isArray(customPuns) && customPuns.length > 0 ? customPuns : GENERAL_PUNS;
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    return pool[randomIndex] || pool[0];
+    if (!pool || pool.length === 0) return '';
+    let candidate = pool[Math.floor(Math.random() * pool.length)];
+    if (pool.length > 1 && candidate === lastFullScreenQuote) {
+      const filtered = pool.filter(q => q !== lastFullScreenQuote);
+      candidate = filtered[Math.floor(Math.random() * filtered.length)] || candidate;
+    }
+    lastFullScreenQuote = candidate;
+    return candidate;
   }, [customPuns]);
 
-  // Smooth circular progress animation
-  useEffect(() => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const pct = Math.min(96, Math.floor((elapsed / minDurationMs) * 96));
-      setProgress(pct);
-    }, 35);
-
-    return () => clearInterval(interval);
-  }, [minDurationMs]);
-
-  // Handle completion when both minDuration has elapsed AND isReady is true
+  // Handle completion when exactly minDurationMs has elapsed AND isReady is true
   useEffect(() => {
     let timer = null;
     const start = Date.now();
@@ -112,11 +126,10 @@ export default function FunLoadingScreen({
     const checkDone = () => {
       const elapsed = Date.now() - start;
       if (elapsed >= minDurationMs && isReady) {
-        setProgress(100);
         setIsDismissing(true);
-        setTimeout(() => {
+        timer = setTimeout(() => {
           if (onComplete) onComplete();
-        }, 360);
+        }, 220);
       } else {
         const remaining = Math.max(50, minDurationMs - elapsed);
         timer = setTimeout(checkDone, remaining);
@@ -129,99 +142,19 @@ export default function FunLoadingScreen({
     };
   }, [isReady, minDurationMs, onComplete]);
 
-  const handleSkip = () => {
-    setProgress(100);
-    setIsDismissing(true);
-    setTimeout(() => {
-      if (onComplete) onComplete();
-    }, 200);
-  };
-
-  const strokeOffset = Math.max(0, 113 - (progress / 100) * 113);
-
   return (
-    <div className={`fun-loading-overlay ${isDismissing ? 'fun-loading-dismiss' : ''}`}>
-      {/* Background ambient lighting */}
-      <div className="fun-loading-glow fun-loading-glow-1" />
-      <div className="fun-loading-glow fun-loading-glow-2" />
-
-      {/* Top right skip button */}
-      {allowSkip && (
-        <button
-          type="button"
-          className="fun-loading-skip-btn"
-          onClick={handleSkip}
-          title="Skip loading screen"
-        >
-          Skip ➔
-        </button>
-      )}
-
-      {/* Center Card */}
+    <div
+      className={`fun-loading-overlay ${isDismissing ? 'fun-loading-dismiss' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
       <div className="fun-loading-card">
-        {/* Animated Brand Emblem */}
-        <div className="fun-loading-logo-wrap">
-          <div className="fun-loading-logo-aura" />
-          <OneStopLogo variant="icon" height={52} />
+        <div className="section-loading-ring-wrap" style={{ width: '48px', height: '48px', marginBottom: '14px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="section-loading-ring" aria-hidden="true" />
+          <OneStopLogo variant="icon" height={22} />
         </div>
-
-        {/* Brand Title */}
-        <div className="fun-loading-header">
-          <span className="fun-loading-brand">{headline}</span>
-          <span className="fun-loading-badge">{badge}</span>
-        </div>
-
-        {/* Single Quote Text */}
-        <div className="fun-loading-pun-container">
-          <p className="fun-loading-pun">
-            "{quote}"
-          </p>
-        </div>
-
-        {/* Circular Progress Ring */}
-        <div className="fun-circular-loader" aria-label="Loading">
-          <svg className="fun-circular-svg" viewBox="0 0 44 44">
-            <defs>
-              <linearGradient id="funCircleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#0F3FFE" />
-                <stop offset="100%" stopColor="#10B981" />
-              </linearGradient>
-            </defs>
-            <circle
-              className="fun-circular-track"
-              cx="22"
-              cy="22"
-              r="18"
-              fill="none"
-              strokeWidth="3.6"
-            />
-            <circle
-              className="fun-circular-head"
-              cx="22"
-              cy="22"
-              r="18"
-              fill="none"
-              stroke="url(#funCircleGrad)"
-              strokeWidth="3.6"
-              strokeDasharray="113"
-              strokeDashoffset={strokeOffset}
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-
-        {/* Collegiate Micro-Ticker */}
-        <div className="fun-loading-ticker">
-          {tickerItems.map((item, idx) => (
-            <React.Fragment key={idx}>
-              {idx > 0 && <span className="ticker-sep">·</span>}
-              <span className="ticker-item">
-                {idx === 0 && <span className="ticker-dot green" />}
-                {item}
-              </span>
-            </React.Fragment>
-          ))}
-        </div>
+        <h3 className="section-loading-title">{headline}</h3>
+        <p className="section-loading-sub">{subtitle || quote}</p>
       </div>
     </div>
   );

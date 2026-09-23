@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+body { margin: 0; background: #F6F6F4; font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1A1A19; -webkit-font-smoothing: antialiased; }
+a { color: #0F3FFE; } a:hover { color: #0C33CC; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes punIn { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
+</style>
+</helmet>
+<div style="max-width: 1100px; margin: 0 auto; box-sizing: border-box; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+    <div style="position: relative; display: flex; align-items: center; flex: 1; max-width: 580px; min-width: 0;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 13px;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+      <div style="width: 100%; height: 38px; box-sizing: border-box; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 0 34px 0 38px; display: flex; align-items: center; font-size: 0.85rem; color: rgba(85,83,77,0.75); box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden; white-space: nowrap;">Search competitions, IIM, IIT, XLRI, ISB, prizes...</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 7px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 0 10px 0 12px; height: 38px; box-sizing: border-box; font-size: 0.8rem; color: #55534D; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.03); flex-shrink: 0;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"></path><path d="m7 9 5-5 5 5"></path></svg>
+      <span style="font-size: 0.78rem;">Sort:</span>
+      <span style="color: #1A1A19; padding-left: 4px; white-space: nowrap;">Closing Soonest</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px;">
+    <div style="position: relative; width: 48px; height: 48px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: absolute; inset: 0; box-sizing: border-box; border: 3px solid #E7E6E2; border-top-color: #0F3FFE; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      <img src="onestop-icon.png" alt="OneStop" style="height: 22px; width: auto; display: block;">
+    </div>
+    <h3 style="font-size: 1.05rem; font-weight: 800; color: #1A1A19; margin: 0 0 4px 0;">{{ cardTitle }}</h3>
+    <div style="font-size: 0.84rem; line-height: 1.45; color: #55534D; margin: 0; max-width: 440px; min-height: 2.9em; text-wrap: pretty;">{{ subEl }}</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showPuns&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;bookmarked&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const BROWSE_PUNS = [
+  "Synchronizing with live Unstop servers across premier engineering & B-school campuses...",
+  "Scouting national case competitions, hackathons, and corporate challenges...",
+  "Filtering out phantom links  -  delivering 100% verified campus competitions...",
+  "Aggressively indexing prize pools to fund the squad's caffeine addiction...",
+  "Aligning competition deadlines with our broken collegiate sleep schedules...",
+  "Extracting live criteria from DU, IIT Bombay, IIM Ahmedabad, XLRI, and BITS...",
+  "Parsing competition decks before Unstop's submission counter ticks down...",
+  "Consultant voice activated: 'Benchmarking the highest-yield collegiate comps'...",
+  "Verifying that submission deadlines aren't actually 11:59 PM tonight...",
+  "Pasting Porter's Five Forces into memory caches while listings download...",
+  "Checking if top 3 cash awards justify staying up till 4:30 AM on a Tuesday...",
+  "Translating complex challenge rubrics into actionable student wins..."
+];
+class Component extends DCLogic {
+  state = { i: Math.floor(Math.random() * BROWSE_PUNS.length) };
+  renderVals() {
+    const bookmarked = this.props.bookmarked ?? false;
+    const puns = this.props.showPuns ?? true;
+    const text = puns ? BROWSE_PUNS[this.state.i] : (bookmarked ? 'Checking deadlines on everything you bookmarked' : 'Pulling direct listings across DU, IIMs, IITs & premier colleges');
+    return {
+      cardTitle: bookmarked ? 'Syncing your saved competitions...' : 'Fetching live competitions from Unstop...',
+      subEl: React.createElement('p', { key: puns ? 'p' + this.state.i : 'plain', style: { margin: 0, animation: puns ? 'punIn 320ms ease-out' : 'none' } }, text)
+    };
+  }
+}
+</script>
+</body>
+</html>
