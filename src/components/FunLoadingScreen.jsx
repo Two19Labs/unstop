@@ -82,18 +82,17 @@ export default function FunLoadingScreen({
   tickerItems = ["Live Ingestion", "Adrenaline: 99%", "Zero Sandboxes"],
   allowSkip = true
 }) {
-  const [punIndex, setPunIndex] = useState(0);
-  const [fadeState, setFadeState] = useState('in'); // 'in' | 'out'
   const [progress, setProgress] = useState(12);
   const [isDismissing, setIsDismissing] = useState(false);
 
-  // Shuffle or randomize puns for uniqueness on each load
-  const punsList = useMemo(() => {
+  // Pick exactly ONE quote for the entire duration of this loading screen
+  const quote = useMemo(() => {
     const pool = Array.isArray(customPuns) && customPuns.length > 0 ? customPuns : GENERAL_PUNS;
-    return [...pool].sort(() => 0.5 - Math.random());
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex] || pool[0];
   }, [customPuns]);
 
-  // Smooth progress bar animation
+  // Smooth circular progress animation
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
@@ -104,19 +103,6 @@ export default function FunLoadingScreen({
 
     return () => clearInterval(interval);
   }, [minDurationMs]);
-
-  // Rotate puns every 820ms with a quick cross-fade for 2.5s screen
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFadeState('out');
-      setTimeout(() => {
-        setPunIndex((prev) => (prev + 1) % punsList.length);
-        setFadeState('in');
-      }, 140);
-    }, 820);
-
-    return () => clearInterval(interval);
-  }, [punsList.length]);
 
   // Handle completion when both minDuration has elapsed AND isReady is true
   useEffect(() => {
@@ -151,6 +137,8 @@ export default function FunLoadingScreen({
     }, 200);
   };
 
+  const strokeOffset = Math.max(0, 113 - (progress / 100) * 113);
+
   return (
     <div className={`fun-loading-overlay ${isDismissing ? 'fun-loading-dismiss' : ''}`}>
       {/* Background ambient lighting */}
@@ -183,19 +171,43 @@ export default function FunLoadingScreen({
           <span className="fun-loading-badge">{badge}</span>
         </div>
 
-        {/* Rotating Pun Text */}
+        {/* Single Quote Text */}
         <div className="fun-loading-pun-container">
-          <p className={`fun-loading-pun ${fadeState === 'out' ? 'pun-fade-out' : 'pun-fade-in'}`}>
-            "{punsList[punIndex]}"
+          <p className="fun-loading-pun">
+            "{quote}"
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <div className="fun-loading-progress-track">
-          <div
-            className="fun-loading-progress-bar"
-            style={{ width: `${progress}%` }}
-          />
+        {/* Circular Progress Ring */}
+        <div className="fun-circular-loader" aria-label="Loading">
+          <svg className="fun-circular-svg" viewBox="0 0 44 44">
+            <defs>
+              <linearGradient id="funCircleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0F3FFE" />
+                <stop offset="100%" stopColor="#10B981" />
+              </linearGradient>
+            </defs>
+            <circle
+              className="fun-circular-track"
+              cx="22"
+              cy="22"
+              r="18"
+              fill="none"
+              strokeWidth="3.6"
+            />
+            <circle
+              className="fun-circular-head"
+              cx="22"
+              cy="22"
+              r="18"
+              fill="none"
+              stroke="url(#funCircleGrad)"
+              strokeWidth="3.6"
+              strokeDasharray="113"
+              strokeDashoffset={strokeOffset}
+              strokeLinecap="round"
+            />
+          </svg>
         </div>
 
         {/* Collegiate Micro-Ticker */}

@@ -14,16 +14,19 @@ export default function SectionLoadingWidget({
   tickerItems = ["Live Unstop Crawl", "Real-time Verification", "Zero Placeholders"],
   allowSkip = true
 }) {
-  const [punIndex, setPunIndex] = useState(0);
-  const [fadeState, setFadeState] = useState('in');
   const [progress, setProgress] = useState(14);
   const [isDismissing, setIsDismissing] = useState(false);
 
-  const punsList = useMemo(() => {
+  // Pick exactly ONE quote for the entire duration of this loading screen
+  const quote = useMemo(() => {
     const pool = Array.isArray(customPuns) && customPuns.length > 0 ? customPuns : GENERAL_PUNS;
-    return [...pool].sort(() => 0.5 - Math.random());
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex] || pool[0];
   }, [customPuns]);
 
+  const gradId = useMemo(() => `secCircleGrad-${Math.random().toString(36).slice(2, 9)}`, []);
+
+  // Smooth circular progress animation
   useEffect(() => {
     const startTime = Date.now();
     const interval = setInterval(() => {
@@ -34,17 +37,7 @@ export default function SectionLoadingWidget({
     return () => clearInterval(interval);
   }, [minDurationMs]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFadeState('out');
-      setTimeout(() => {
-        setPunIndex((prev) => (prev + 1) % punsList.length);
-        setFadeState('in');
-      }, 140);
-    }, 820);
-    return () => clearInterval(interval);
-  }, [punsList.length]);
-
+  // Handle completion when both minDuration has elapsed AND isReady is true
   useEffect(() => {
     let timer = null;
     const start = Date.now();
@@ -76,6 +69,8 @@ export default function SectionLoadingWidget({
       if (onComplete) onComplete();
     }, 120);
   };
+
+  const strokeOffset = Math.max(0, 88 - (progress / 100) * 88);
 
   return (
     <div className={`section-loading-widget ${isDismissing ? 'widget-dismiss' : ''}`}>
@@ -112,17 +107,45 @@ export default function SectionLoadingWidget({
         </div>
       </div>
 
-      <div className="section-loading-pun-box">
-        <p className={`section-loading-pun ${fadeState === 'out' ? 'pun-fade-out' : 'pun-fade-in'}`}>
-          "{punsList[punIndex]}"
-        </p>
-      </div>
+      <div className="section-loading-main">
+        {/* Circular Loading Thing */}
+        <div className="section-circular-loader" aria-label="Loading">
+          <svg className="section-circular-svg" viewBox="0 0 36 36">
+            <defs>
+              <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0F3FFE" />
+                <stop offset="100%" stopColor="#10B981" />
+              </linearGradient>
+            </defs>
+            <circle
+              className="section-circular-track"
+              cx="18"
+              cy="18"
+              r="14"
+              fill="none"
+              strokeWidth="3.2"
+            />
+            <circle
+              className="section-circular-head"
+              cx="18"
+              cy="18"
+              r="14"
+              fill="none"
+              stroke={`url(#${gradId})`}
+              strokeWidth="3.2"
+              strokeDasharray="88"
+              strokeDashoffset={strokeOffset}
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
 
-      <div className="section-loading-progress-track">
-        <div
-          className="section-loading-progress-bar"
-          style={{ width: `${progress}%` }}
-        />
+        {/* Single Quote */}
+        <div className="section-loading-pun-box">
+          <p className="section-loading-pun">
+            "{quote}"
+          </p>
+        </div>
       </div>
     </div>
   );

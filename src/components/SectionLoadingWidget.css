@@ -104,7 +104,44 @@
   color: #1A1A19;
 }
 
+.section-loading-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 2px 0;
+}
+
+.section-circular-loader {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-circular-svg {
+  width: 32px;
+  height: 32px;
+  animation: sectionCircleSpin 1.6s linear infinite;
+  transform-origin: center;
+}
+
+.section-circular-track {
+  stroke: #ECEBE7;
+}
+
+.section-circular-head {
+  transition: stroke-dashoffset 80ms ease-out;
+}
+
+@keyframes sectionCircleSpin {
+  0% { transform: rotate(-90deg); }
+  100% { transform: rotate(270deg); }
+}
+
 .section-loading-pun-box {
+  flex: 1;
   min-height: 24px;
   display: flex;
   align-items: center;
@@ -113,35 +150,10 @@
 .section-loading-pun {
   margin: 0;
   font-size: 13.5px;
+  font-style: italic;
   color: #374151;
   font-weight: 500;
-  line-height: 1.4;
-  transition: opacity 140ms ease, transform 140ms ease;
-}
-
-.section-loading-pun.pun-fade-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.section-loading-pun.pun-fade-out {
-  opacity: 0;
-  transform: translateY(-2px);
-}
-
-.section-loading-progress-track {
-  width: 100%;
-  height: 4px;
-  background: #ECEBE7;
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.section-loading-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #0F3FFE 0%, #10B981 100%);
-  border-radius: 20px;
-  transition: width 40ms linear;
+  line-height: 1.45;
 }
 
 /* Skeleton Loading Box */

@@ -179,18 +179,29 @@
   box-shadow: 0 1px 4px rgba(26, 26, 25, 0.04);
 }
 
+.rail-circular-loader {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail-circular-svg {
+  width: 32px;
+  height: 32px;
+  animation: railCircleSpin 1.6s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes railCircleSpin {
+  0% { transform: rotate(-90deg); }
+  100% { transform: rotate(270deg); }
+}
+
 .home-rail-pun-text {
-  transition: opacity 140ms ease, transform 140ms ease;
-}
-
-.home-rail-pun-text.pun-fade-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.home-rail-pun-text.pun-fade-out {
-  opacity: 0;
-  transform: translateY(-2px);
+  transition: opacity 140ms ease;
 }
 
 @media (max-width: 768px) {

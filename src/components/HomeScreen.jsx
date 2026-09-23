@@ -235,17 +235,19 @@ function RailPunLoadingCard({
   customPuns = null,
   minDurationMs = 2500
 }) {
-  const [punIndex, setPunIndex] = useState(0);
-  const [fadeState, setFadeState] = useState('in');
   const [progress, setProgress] = useState(15);
 
-  const punsList = useMemo(() => {
+  // Pick exactly ONE quote for the entire duration of this loading card
+  const quote = useMemo(() => {
     let pool = GENERAL_PUNS;
     if (category === 'bookmarks' || category === 'comps') pool = BROWSE_PUNS;
     else if (category === 'squads') pool = SQUAD_PUNS;
-    if (customPuns) pool = customPuns;
-    return [...pool].sort(() => 0.5 - Math.random());
+    if (customPuns && customPuns.length > 0) pool = customPuns;
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex] || pool[0];
   }, [category, customPuns]);
+
+  const gradId = useMemo(() => `railCircleGrad-${category}-${Math.random().toString(36).slice(2, 9)}`, [category]);
 
   useEffect(() => {
     const startTime = Date.now();
@@ -257,16 +259,7 @@ function RailPunLoadingCard({
     return () => clearInterval(interval);
   }, [minDurationMs]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFadeState('out');
-      setTimeout(() => {
-        setPunIndex((prev) => (prev + 1) % punsList.length);
-        setFadeState('in');
-      }, 140);
-    }, 820);
-    return () => clearInterval(interval);
-  }, [punsList.length]);
+  const strokeOffset = Math.max(0, 88 - (progress / 100) * 88);
 
   return (
     <div
@@ -308,42 +301,61 @@ function RailPunLoadingCard({
         </span>
       </div>
 
-      {/* Middle: Rotating Pun */}
-      <div style={{ margin: 'auto 0', minHeight: '68px', display: 'flex', alignItems: 'center' }}>
+      {/* Middle: Circular Loader + Single Quote */}
+      <div style={{ margin: 'auto 0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="rail-circular-loader" aria-label="Loading">
+          <svg className="rail-circular-svg" viewBox="0 0 36 36">
+            <defs>
+              <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0F3FFE" />
+                <stop offset="100%" stopColor="#10B981" />
+              </linearGradient>
+            </defs>
+            <circle
+              className="rail-circular-track"
+              cx="18"
+              cy="18"
+              r="14"
+              fill="none"
+              strokeWidth="3.2"
+            />
+            <circle
+              className="rail-circular-head"
+              cx="18"
+              cy="18"
+              r="14"
+              fill="none"
+              stroke={`url(#${gradId})`}
+              strokeWidth="3.2"
+              strokeDasharray="88"
+              strokeDashoffset={strokeOffset}
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
         <p
-          className={`home-rail-pun-text ${fadeState === 'out' ? 'pun-fade-out' : 'pun-fade-in'}`}
+          className="home-rail-pun-text"
           style={{
             margin: 0,
             fontSize: '12.5px',
+            fontStyle: 'italic',
             fontWeight: 500,
             color: '#374151',
-            lineHeight: 1.45
+            lineHeight: 1.45,
+            flex: 1
           }}
         >
-          "{punsList[punIndex]}"
+          "{quote}"
         </p>
       </div>
 
-      {/* Bottom: Progress Bar & Ticker */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-        <div style={{ width: '100%', height: '4px', background: '#ECEBE7', borderRadius: '10px', overflow: 'hidden' }}>
-          <div
-            style={{
-              width: `${progress}%`,
-              height: '100%',
-              background: 'linear-gradient(90deg, #0F3FFE 0%, #10B981 100%)',
-              borderRadius: '10px',
-              transition: 'width 40ms linear'
-            }}
-          />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#75736C' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-            Live Ingestion
-          </span>
-          <span>Zero Sandboxes</span>
-        </div>
+      {/* Bottom: Ticker & Status */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '11px', color: '#75736C', paddingTop: '6px', borderTop: '1px solid #F0EFEB' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+          Live Ingestion
+        </span>
+        <span style={{ fontWeight: 600, color: '#0F3FFE' }}>Zero Mock Data</span>
       </div>
     </div>
   );
