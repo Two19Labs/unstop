@@ -605,16 +605,68 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  // Profile Update (Database & Auth Metadata with 24-Hour Cooldown)
+  const changePassword = async (newPassword) => {
+    if (!supabase || !user) {
+      throw new Error('You must be signed in to change your password.');
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters.');
+    }
+    trackEvent('auth_password_change_attempted');
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) {
+      trackEvent('auth_password_change_failed', { error: error.message });
+      throw error;
+    }
+    trackEvent('auth_password_change_success');
+    return data;
+  };
+
+  const deleteAccount = async () => {
+    if (!supabase || !user) {
+      throw new Error('You must be signed in to delete your account.');
+    }
+    trackEvent('auth_account_deletion_attempted');
+    const userId = user.id;
+
+    // 1. Try deleting via RPC if available
+    let rpcSuccess = false;
+    try {
+      const { error: rpcErr } = await supabase.rpc('delete_user_account');
+      if (!rpcErr) {
+        rpcSuccess = true;
+      }
+    } catch (e) {}
+
+    // 2. Cascade delete from user-owned public tables
+    if (!rpcSuccess) {
+      try {
+        await supabase.from('bookmarks').delete().eq('user_id', userId);
+      } catch (e) {}
+      try {
+        await supabase.from('squad_applications').delete().eq('applicant_id', userId);
+      } catch (e) {}
+      try {
+        await supabase.from('squad_posts').delete().eq('user_id', userId);
+      } catch (e) {}
+      try {
+        await supabase.from('user_notification_states').delete().eq('user_id', userId);
+      } catch (e) {}
+      try {
+        await supabase.from('profiles').delete().eq('id', userId);
+      } catch (e) {}
+    }
+
+    trackEvent('auth_account_deletion_success');
+    await signOut();
+  };
+
+  // Profile Update (Database & Auth Metadata)
   const updateProfile = async ({ fullName, college, course, year, phone, bio, education_level, skills }) => {
     if (!user || !supabase) {
       throw new Error('You must be signed in to update your profile.');
-    }
-
-    // 1. Enforce 24-Hour Cooldown
-    const cooldown = getProfileCooldown(profile, user);
-    if (cooldown.isLocked) {
-      throw new Error(`Profile details cannot be modified for 24 hours after an update. Cooldown remaining: ${cooldown.remainingFormatted}.`);
     }
 
     const cleanPhone = sanitizeIndianPhone(phone);
@@ -1279,6 +1331,8 @@ export function AuthProvider({ children }) {
         signUpWithPassword,
         signOut,
         resetPassword,
+        changePassword,
+        deleteAccount,
         theme,
         toggleTheme,
         bookmarks,

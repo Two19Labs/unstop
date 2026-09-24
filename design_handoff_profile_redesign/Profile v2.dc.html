@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#F6F6F4;color:#1A1A19;font-family:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:#0F3FFE;text-decoration:none}a:hover{color:#1A1A19}
+button{font-family:inherit;border:none;background:none;cursor:pointer}
+input,select{font-family:inherit;color:inherit}
+input:focus,select:focus{outline:none;border-color:#0F3FFE !important;box-shadow:0 0 0 3px rgba(15,63,254,0.10)}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.85)}}
+</style>
+</helmet>
+<div data-screen-label="Profile v2" style="min-height:100vh;background:#F6F6F4;color:#1A1A19;display:grid;grid-template-columns:236px minmax(0,1fr)">
+
+  <aside style="background:#FFFFFF;border-right:1px solid #E7E6E2;padding:20px 14px;display:flex;flex-direction:column;gap:20px;width:236px;position:sticky;top:0;height:100vh;z-index:46">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px">
+      <span style="display:inline-flex;align-items:center;height:26px;margin:2px 4px 0;cursor:pointer"><img src="assets/onestop-logo.png" alt="OneStop" style="display:block;height:100%;width:auto"></span>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:3px">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="5">
+        <button style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border-radius:9px;background:transparent;color:#55534D;padding:9px 12px;font-size:14px;font-weight:500" style-hover="background:#F2F1ED">
+          <span>{{ item.label }}</span>
+          <sc-if value="{{ item.badge }}" hint-placeholder-val="{{ false }}">
+            <span style="background:{{ item.badgeBg }};color:{{ item.badgeColor }};border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700;line-height:1.4">{{ item.badge }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+      <button style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:8px 12px;border:1px solid #E7E6E2;background:#F9F9F7;border-radius:9px;color:#55534D;font-size:13px;font-weight:500">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="display:flex;color:#1A1A19"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></span>
+          <span>Theme</span>
+        </div>
+        <span style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;padding:2px 7px;border-radius:6px;background:#FFFFFF;border:1px solid #E7E6E2;color:#1A1A19">Day</span>
+      </button>
+      <button style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid #E7E6E2;border-radius:9px;background:#F2F1ED;padding:9px 10px">
+        <span style="width:30px;height:30px;border-radius:50%;background:#FFFFFF;color:#55534D;display:flex;align-items:center;justify-content:center;flex:none;font-size:11px;font-weight:700">{{ sidebarInitials }}</span>
+        <span style="display:flex;flex-direction:column;line-height:1.3;min-width:0">
+          <span style="font-size:13px;font-weight:600;color:#1A1A19;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ savedName }}</span>
+          <span style="font-size:11px;color:#75736C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ savedMeta }}</span>
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <main style="min-width:0;padding:26px 30px 20px;position:relative;display:flex;flex-direction:column;min-height:100vh">
+    <div style="position:absolute;top:22px;right:30px;display:flex;align-items:center;gap:10px;z-index:30">
+      <button title="Switch to Night mode (Dark)" style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:#FFFFFF;border:1px solid #E7E6E2;color:#1A1A19;border-radius:9px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+      </button>
+      <button title="Notifications" style="position:relative;display:flex;align-items:center;justify-content:center;width:38px;height:38px;background:#FFFFFF;border:1px solid #E7E6E2;color:#1A1A19;border-radius:9px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+        <span style="position:absolute;top:-5px;right:-5px;background:#E11D48;color:#FFFFFF;font-size:10px;font-weight:700;height:18px;min-width:18px;padding:0 5px;border-radius:999px;display:flex;align-items:center;justify-content:center;line-height:1;border:2px solid #FFFFFF;box-shadow:0 1px 4px rgba(0,0,0,0.2)">3</span>
+      </button>
+    </div>
+
+    <div style="flex:1 0 auto;width:100%;max-width:1120px;display:flex;flex-direction:column;gap:22px">
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;padding-right:96px">
+        <div>
+          <h1 style="margin:0;font-size:26px;font-weight:700;letter-spacing:-0.02em;color:#1A1A19">Profile</h1>
+          <p style="margin:6px 0 0;font-size:14px;color:#75736C">Squad leads see this when you apply. Skills drive what gets recommended to you.</p>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:{{ gridCols }};gap:24px;align-items:start;width:100%">
+
+        <aside style="display:{{ railDisplay }};grid-template-columns:{{ railCols }};align-items:stretch;flex-direction:column;gap:14px;position:{{ railPos }};top:24px">
+          <div style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;box-shadow:0 2px 8px rgba(26,26,25,0.05);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 18px;border-bottom:1px solid #F0EFEB;background:#F9F9F7">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#75736C">Squad Lead View</span>
+              <span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#15803D">{{ liveDot }}Live Preview</span>
+            </div>
+            <div style="padding:22px 18px 18px;display:flex;flex-direction:column;gap:18px">
+              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:12px">
+                <div style="width:64px;height:64px;border-radius:50%;background:#0F3FFE;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;letter-spacing:-0.01em">{{ previewInitials }}</div>
+                <div style="display:flex;flex-direction:column;gap:4px;min-width:0;width:100%">
+                  <div style="font-size:19px;font-weight:700;color:#1A1A19;letter-spacing:-0.02em;line-height:1.2">{{ previewName }}</div>
+                  <div style="font-size:13px;color:#55534D;line-height:1.35">{{ previewCollege }}</div>
+                </div>
+                <span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:{{ standBg }};color:{{ standColor }};border:1px solid {{ standBorder }}">{{ standingText }}</span>
+              </div>
+
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:#75736C">Highlighted Skills ({{ skillCount }})</div>
+                <sc-if value="{{ hasSkills }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:6px">
+                    <sc-for list="{{ skills }}" as="sk" hint-placeholder-count="3">
+                      <span style="background:#F2F1ED;color:#1A1A19;border:1px solid #E7E6E2;border-radius:12px;padding:3px 9px;font-size:12px;font-weight:500">{{ sk }}</span>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ noSkills }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:12px;color:#9C9A94;font-style:italic">No skills selected yet</span>
+                </sc-if>
+              </div>
+
+              <sc-if value="{{ noPhone }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border-radius:9px;background:{{ contactBg }};border:1px solid {{ contactBorder }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366" style="flex:none;margin-top:1px"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg>
+                <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                  <div style="font-size:12px;font-weight:600;color:{{ contactColor }}">{{ contactStatus }}</div>
+                  <div style="font-size:11px;color:#75736C;line-height:1.35">{{ contactDesc }}</div>
+                </div>
+              </div></sc-if>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;overflow:hidden">
+            <div style="padding:14px 18px;border-bottom:1px solid #F0EFEB;display:flex;flex-direction:column;gap:3px">
+              <span style="font-size:13px;font-weight:700;color:#1A1A19">Account</span>
+              <span style="font-size:12px;color:#75736C;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Signed in as aarav.mehta@srcc.du.ac.in</span>
+            </div>
+            <div style="display:flex;flex-direction:column;padding:6px">
+              <button type="button" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:#1A1A19;text-align:left" style-hover="background:#F2F1ED">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Change password
+              </button>
+              <button type="button" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:#1A1A19;text-align:left" style-hover="background:#F2F1ED">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Sign out
+              </button>
+              <div style="height:1px;background:#F0EFEB;margin:6px 6px"></div>
+              <button type="button" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;font-size:13px;font-weight:500;color:#DC2626;text-align:left" style-hover="background:rgba(220,38,38,0.06)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Delete account
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <form onSubmit="{{ onSave }}" style="display:flex;flex-direction:column;gap:18px;width:100%;min-width:0">
+
+          <section style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 2px rgba(26,26,25,0.04)">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <h2 style="margin:0;font-size:15px;font-weight:700;color:#1A1A19;letter-spacing:-0.01em">Personal &amp; Campus Information</h2>
+              <p style="margin:0;font-size:13px;color:#75736C;line-height:1.45">Your collegiate identity displayed on squad applications and team invitations.</p>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:12px;font-weight:600;color:#55534D;letter-spacing:0.01em">Full Name</label>
+                <input ref="{{ nameRef }}" value="{{ name }}" onChange="{{ onName }}" placeholder="Your full name" style="border:1px solid #E7E6E2;border-radius:9px;background:#FFFFFF;padding:10px 13px;font-size:14px;color:#1A1A19;width:100%">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:12px;font-weight:600;color:#55534D;letter-spacing:0.01em">College / University</label>
+                <div style="position:relative;display:flex;align-items:center;width:100%">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:12px;pointer-events:none;z-index:1"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+                  <input ref="{{ collegeRef }}" value="{{ college }}" onChange="{{ onCollege }}" placeholder="Search college (e.g. SRCC, SSCBS, IIT)..." style="width:100%;padding:10px 36px;font-size:14px;color:#1A1A19;background:#FFFFFF;border:1px solid #E7E6E2;border-radius:9px">
+                  <sc-if value="{{ showClear }}" hint-placeholder-val="{{ true }}">
+                    <button type="button" onClick="{{ clearCollege }}" style="position:absolute;right:10px;display:flex;align-items:center;justify-content:center;color:#75736C;padding:4px;border-radius:4px" style-hover="color:#1A1A19;background:#F2F1ED">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label style="font-size:12px;font-weight:600;color:#55534D;letter-spacing:0.01em">WhatsApp Number</label>
+              <input ref="{{ phoneRef }}" value="{{ phone }}" onChange="{{ onPhone }}" placeholder="+91 98••• ••210" style="border:1px solid #E7E6E2;border-radius:9px;background:#FFFFFF;padding:10px 13px;font-size:14px;color:#1A1A19;width:100%;max-width:340px">
+              <span style="font-size:12px;color:#75736C;line-height:1.35">Shared only after a squad lead accepts your application for the instant 1-click WhatsApp squad handshake.</span>
+            </div>
+          </section>
+
+          <section style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 2px rgba(26,26,25,0.04)">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <h2 style="margin:0;font-size:15px;font-weight:700;color:#1A1A19;letter-spacing:-0.01em">Academic Standing</h2>
+              <p style="margin:0;font-size:13px;color:#75736C;line-height:1.45">Configures competition eligibility across all national case challenges, hackathons, and corporate summits.</p>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;max-width:520px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:12px;font-weight:600;color:#55534D;letter-spacing:0.01em">UG or PG</label>
+                <div style="position:relative;display:flex;align-items:center">
+                  <select value="{{ level }}" onChange="{{ onLevel }}" style="appearance:none;-webkit-appearance:none;width:100%;border:1px solid #E7E6E2;border-radius:9px;background:#FFFFFF;padding:10px 36px 10px 13px;font-size:14px;color:#1A1A19;cursor:pointer">
+                    <option value="UG">UG · Undergraduate</option>
+                    <option value="PG">PG · Postgraduate</option>
+                  </select>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:12px;pointer-events:none"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label style="font-size:12px;font-weight:600;color:#55534D;letter-spacing:0.01em">Year</label>
+                <div style="position:relative;display:flex;align-items:center">
+                  <select value="{{ yearNum }}" onChange="{{ onYear }}" style="appearance:none;-webkit-appearance:none;width:100%;border:1px solid #E7E6E2;border-radius:9px;background:#FFFFFF;padding:10px 36px 10px 13px;font-size:14px;color:#1A1A19;cursor:pointer">
+                    <sc-for list="{{ yearOpts }}" as="o" hint-placeholder-count="4">
+                      <option value="{{ o.value }}">{{ o.label }}</option>
+                    </sc-for>
+                  </select>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:12px;pointer-events:none"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;color:#55534D;line-height:1.45">
+              <sc-if value="{{ isPg }}" hint-placeholder-val="{{ false }}"><span>You'll see MBA &amp; PG challenges plus all open competitions.</span></sc-if>
+              <sc-if value="{{ isUg }}" hint-placeholder-val="{{ true }}"><span>You'll see undergrad-eligible competitions only. MBA/PG listings are hidden.</span></sc-if>
+            </div>
+          </section>
+
+          <section style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 1px 2px rgba(26,26,25,0.04)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <h2 style="margin:0;font-size:15px;font-weight:700;color:#1A1A19;letter-spacing:-0.01em">Skills &amp; Capabilities</h2>
+                <p style="margin:0;font-size:13px;color:#75736C;line-height:1.45">Choose skills that match your experience. Squad leads filter and recruit based on these tags.</p>
+              </div>
+              <span style="flex:none;font-size:12px;font-weight:600;color:#75736C;padding-top:2px">{{ skillCount }} selected</span>
+            </div>
+            <div ref="{{ skillsRef }}" style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ skillChips }}" as="s" hint-placeholder-count="10">
+                <button type="button" onClick="{{ s.onClick }}" style="display:inline-flex;align-items:center;gap:6px;border:1px solid {{ s.border }};border-radius:20px;background:{{ s.bg }};color:{{ s.color }};padding:7px 14px;white-space:nowrap;font-size:13px;font-weight:{{ s.weight }};transition:all 120ms ease">
+                  <sc-if value="{{ s.selected }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if>
+                  {{ s.label }}
+                </button>
+              </sc-for>
+            </div>
+          </section>
+
+          <sc-if value="{{ showBar }}" hint-placeholder-val="{{ false }}">
+            <div style="position:sticky;bottom:16px;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px 12px 20px;background:#1A1A19;border-radius:12px;box-shadow:0 8px 24px rgba(26,26,25,0.18)">
+              <span style="font-size:13px;font-weight:500;color:{{ barTextColor }};display:flex;align-items:center;gap:8px">
+                <sc-if value="{{ savedSuccess }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if>
+                {{ barText }}
+              </span>
+              <sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <button type="button" onClick="{{ onDiscard }}" style="border-radius:8px;color:#E7E6E2;padding:9px 14px;font-size:13px;font-weight:500" style-hover="background:rgba(255,255,255,0.08)">Discard</button>
+                  <button type="submit" style="border-radius:8px;background:#0F3FFE;color:#FFFFFF;padding:9px 18px;font-size:13px;font-weight:600" style-hover="background:#0C33CC">Save changes</button>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </form>
+      </div>
+    </div>
+
+    <footer style="margin-top:auto;padding:40px 20px 24px;width:100%;display:flex;align-items:center;justify-content:center">
+      <p style="margin:0;font-size:13.5px;line-height:1.6;color:#55534D;text-align:center;letter-spacing:-0.01em">
+        <span>Made with </span><span style="color:#DC2626;margin:0 1px">♥</span><span> by </span><a href="https://www.linkedin.com/in/aditya-singhani-69294a27a/" target="_blank" style="color:#0F3FFE;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;font-weight:500">Aditya Singhani</a><span> &amp; </span><a href="https://www.linkedin.com/in/manthan-kabra/" target="_blank" style="color:#0F3FFE;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;font-weight:500">Manthan Kabra</a><span style="color:#75736C;padding:0 3px"> · </span><span>From the House of </span><a href="https://two19labs.in" target="_blank" style="color:#0F3FFE;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;font-weight:500">Two19 Labs</a>
+      </p>
+    </footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SKILLS = ["Finance modelling","Deck design","Market research","Frontend","Backend","ML / Data","Copywriting","Public speaking","Valuation","Design"];
+const YEARS = { UG: ['1st', '2nd', '3rd', '4th'], PG: ['1st', '2nd'] };
+function initialsOf(host = "") {
+  const skip = { "&":1,"and":1,"company":1,"college":1,"of":1,"institute":1,"university":1 };
+  const w = host.split(/[\s.]+/).filter(x => x && !skip[x.toLowerCase()]);
+  if (!w.length) return "··";
+  if (w.length === 1) return w[0].slice(0, 2).toUpperCase();
+  return w.slice(0, 2).map(x => x.charAt(0)).join("").toUpperCase();
+}
+const INITIAL = { name: 'Aarav Mehta', college: 'Shri Ram College of Commerce', level: 'UG', yearNum: '2nd', phone: '', skills: ['Finance modelling', 'Deck design', 'Market research'] };
+class Component extends DCLogic {
+  state = { ...INITIAL, saved: { ...INITIAL }, savedSuccess: false, signedIn: true };
+  nameRef = React.createRef(); collegeRef = React.createRef(); phoneRef = React.createRef(); skillsRef = React.createRef();
+  componentDidMount() {
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onResize);
+    this._onResize();
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._onResize); clearTimeout(this._t); }
+  focus(ref) {
+    const el = ref.current; if (!el) return;
+    if (el.focus && el.tagName === 'INPUT') el.focus();
+    else if (el.animate) el.animate([{ outline: '2px solid rgba(15,63,254,0.35)', outlineOffset: '6px', borderRadius: '8px' }, { outline: '2px solid transparent', outlineOffset: '6px' }], { duration: 1200 });
+  }
+  renderVals() {
+    const s = this.state;
+    const vw = s.vw ?? 1440;
+    const signedIn = s.signedIn;
+    const isPg = s.level === 'PG';
+    const year = `${s.level} ${s.yearNum} Year`;
+    const email = 'aarav.mehta@srcc.du.ac.in';
+    const keys = ['name', 'college', 'level', 'yearNum', 'phone'];
+    const dirty = keys.some(k => s[k] !== s.saved[k]) || s.skills.join('|') !== s.saved.skills.join('|');
+    const checks = [
+      ['Add your full name', !!s.name.trim(), this.nameRef], ['Add your college', !!s.college.trim(), this.collegeRef],
+      ['Pick at least 1 skill', s.skills.length > 0, this.skillsRef], ['Add WhatsApp number', !!s.phone.trim(), this.phoneRef]
+    ];
+    const done = checks.filter(c => c[1]).length + 1;
+    const pct = Math.round(done / (checks.length + 1) * 100);
+    const missing = checks.filter(c => !c[1]).map(([label, , ref]) => ({ label, onClick: () => this.focus(ref) }));
+    const phone = s.phone.trim();
+    const sv = s.saved;
+    return {
+      ...s, isPg, isUg: !isPg, dirty,
+      gridCols: vw <= 1180 ? 'minmax(0,1fr)' : vw <= 1320 ? '300px minmax(0,1fr)' : '340px minmax(0,1fr)',
+      railPos: vw <= 1180 ? 'static' : 'sticky',
+      railDisplay: vw <= 1180 ? 'grid' : 'flex',
+      railCols: vw <= 1180 ? 'repeat(auto-fit,minmax(260px,1fr))' : 'none',
+      navItems: [
+        { label: 'Home' }, { label: 'Browse' },
+        { label: 'Bookmarked', badge: '4', badgeBg: '#F2F1ED', badgeColor: '#55534D' },
+        { label: 'Team finder' },
+        { label: 'Requests', badge: '2', badgeBg: '#0F3FFE', badgeColor: '#FFFFFF' }
+      ],
+      sidebarInitials: sv.name.trim() ? sv.name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'UG',
+      savedName: sv.name || 'Your Profile',
+      savedMeta: sv.college ? `${sv.college} · ${sv.level} ${sv.yearNum} Year` : 'Click to edit details',
+      showClear: !!s.college,
+      onName: e => this.setState({ name: e.target.value }),
+      onCollege: e => this.setState({ college: e.target.value }),
+      clearCollege: () => this.setState({ college: '' }),
+      onPhone: e => this.setState({ phone: e.target.value }),
+      onLevel: e => { const lv = e.target.value; this.setState(p => ({ level: lv, yearNum: YEARS[lv].includes(p.yearNum) ? p.yearNum : '1st' })); },
+      onYear: e => this.setState({ yearNum: e.target.value }),
+      yearOpts: YEARS[s.level].map(y => ({ value: y, label: `${y} Year` })),
+      levelTag: isPg ? 'MBA/PG' : 'UG',
+      badgeBg: isPg ? '#EEF2FF' : '#F2F1ED', badgeColor: isPg ? '#0F3FFE' : '#55534D',
+      skillCount: s.skills.length, hasSkills: s.skills.length > 0, noSkills: s.skills.length === 0,
+      skillChips: SKILLS.map(k => {
+        const sel = s.skills.includes(k);
+        return { label: k, selected: sel, onClick: () => this.setState(p => ({ skills: p.skills.includes(k) ? p.skills.filter(x => x !== k) : [...p.skills, k] })),
+          border: sel ? '#0F3FFE' : '#E7E6E2', bg: sel ? 'rgba(15,63,254,0.07)' : '#FFFFFF', color: sel ? '#0F3FFE' : '#1A1A19', weight: sel ? 600 : 500 };
+      }),
+      showBar: dirty || s.savedSuccess,
+      barText: dirty ? 'You have unsaved changes' : 'Profile saved successfully',
+      barTextColor: dirty ? '#E7E6E2' : '#4ADE80',
+      onDiscard: () => this.setState(p => ({ ...p.saved, skills: [...p.saved.skills] })),
+      onSave: e => {
+        e.preventDefault();
+        this.setState(p => ({ savedSuccess: true, saved: { name: p.name.trim() || 'Student', college: p.college.trim() || 'College', level: p.level, yearNum: p.yearNum, phone: p.phone.trim(), skills: [...p.skills] } }));
+        clearTimeout(this._t); this._t = setTimeout(() => this.setState({ savedSuccess: false }), 2400);
+      },
+      liveDot: React.createElement('span', { style: { width: 6, height: 6, borderRadius: '50%', background: '#16A34A', animation: 'pulse-dot 2s infinite ease-in-out' } }),
+      previewInitials: initialsOf(s.name || (signedIn ? email.split('@')[0] : 'Student')),
+      previewName: s.name.trim() || 'Your Name', previewCollege: s.college.trim() || 'Select your college',
+      standingText: `${year} ${isPg ? '· MBA / PG' : '· Undergraduate'}`,
+      standBg: isPg ? '#EEF2FF' : '#F2F1ED', standColor: isPg ? '#0F3FFE' : '#1A1A19', standBorder: isPg ? 'rgba(15,63,254,0.25)' : '#E7E6E2',
+      noPhone: !phone,
+      contactColor: phone ? '#15803D' : '#B45309', contactBg: phone ? 'rgba(23,163,74,0.08)' : '#F9F9F7', contactBorder: phone ? 'rgba(23,163,74,0.25)' : '#EFEEEA',
+      contactStatus: phone ? 'WhatsApp Handshake Ready' : 'WhatsApp number missing',
+      contactDesc: phone ? '1-click squad chat unlocked upon acceptance' : 'Add your WhatsApp number so squad leads can immediately message you.',
+      pct, pctWidth: pct + '%', pctColor: pct === 100 ? '#15803D' : '#0F3FFE', barColor: pct === 100 ? '#17A34A' : '#0F3FFE',
+      missing, hasMissing: missing.length > 0, complete: missing.length === 0,
+      syncDot: signedIn ? '#17A34A' : '#CFCDC7',
+      syncLine: signedIn ? `Cloud Synced · ${email}` : 'Guest Mode · saved on this device',
+      syncBtn: signedIn ? 'Sign out' : 'Sign in to Cloud Sync', syncBtnColor: signedIn ? '#55534D' : '#0F3FFE',
+      toggleSign: () => this.setState(p => ({ signedIn: !p.signedIn }))
+    };
+  }
+}
+</script>
+</body>
+</html>

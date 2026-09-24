@@ -134,7 +134,9 @@ function OneStopInner() {
     updateProfile: authUpdateProfile,
     refreshSquadData,
     openAuthModal,
-    signOut
+    signOut,
+    changePassword,
+    deleteAccount
   } = useAuth();
 
   // Screen State: 'home' | 'browse' | 'saved' | 'teams' | 'requests' | 'profile'
@@ -1139,6 +1141,9 @@ function OneStopInner() {
                 user={user}
                 onOpenAuthModal={() => openAuthModal && openAuthModal()}
                 onSignOut={signOut}
+                onChangePassword={changePassword}
+                onDeleteAccount={deleteAccount}
+                flashToast={flash}
               />
             )}
           </div>

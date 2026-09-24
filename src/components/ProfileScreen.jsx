@@ -1,447 +1,749 @@
 // src/components/ProfileScreen.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SKILLS, initialsOf } from '../data/initialData';
-import { YEAR_OPTIONS } from '../data/colleges';
-import { useAuth } from '../context/AuthContext';
 import SearchableCollegeSelect from './SearchableCollegeSelect';
-import { WhatsAppIcon, SparklesIcon, CheckIcon } from './icons';
+import {
+  WhatsAppIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  LockIcon,
+  LogOutIcon,
+  AlertCircleIcon,
+  CloseIcon
+} from './icons';
 import './ProfileScreen.css';
+
+const YEARS = {
+  UG: ['1st', '2nd', '3rd', '4th'],
+  PG: ['1st', '2nd']
+};
+
+function parseAcademicStanding(profile) {
+  const candidate = (profile?.year || profile?.batch || '').trim();
+  const match = candidate.match(/^(UG|PG)\s+(\d+(?:st|nd|rd|th))\s+Year$/i);
+  if (match) {
+    const lvl = match[1].toUpperCase();
+    const yr = match[2];
+    if (YEARS[lvl]?.includes(yr)) {
+      return { level: lvl, yearNum: yr };
+    }
+  }
+
+  const isPost = (profile?.education_level || '').toLowerCase().includes('post') || candidate.startsWith('PG');
+  if (isPost) {
+    return { level: 'PG', yearNum: '1st' };
+  }
+  return { level: 'UG', yearNum: '2nd' };
+}
 
 export default function ProfileScreen({
   profile,
   onSaveProfile,
   user,
   onOpenAuthModal,
-  onSignOut
+  onSignOut,
+  onChangePassword,
+  onDeleteAccount,
+  flashToast
 }) {
-  const { getProfileCooldown } = useAuth();
+  // 1. Initial snapshot resolution
+  const initialAcademic = useMemo(() => parseAcademicStanding(profile), [profile]);
+
   const [name, setName] = useState(profile?.name || '');
   const [college, setCollege] = useState(profile?.college || '');
-  const [year, setYear] = useState(() => {
-    if (profile?.year && YEAR_OPTIONS.includes(profile.year)) return profile.year;
-    if (profile?.batch && YEAR_OPTIONS.includes(profile.batch)) return profile.batch;
-    if ((profile?.education_level || '').toLowerCase().includes('post')) return 'PG 1st Year';
-    return 'UG 2nd Year';
-  });
+  const [level, setLevel] = useState(initialAcademic.level);
+  const [yearNum, setYearNum] = useState(initialAcademic.yearNum);
   const [phone, setPhone] = useState(profile?.phone || '');
   const [skills, setSkills] = useState(profile?.skills || []);
+
+  // Snapshot of last saved values to determine dirty state and allow Discard
+  const [savedSnapshot, setSavedSnapshot] = useState({
+    name: profile?.name || '',
+    college: profile?.college || '',
+    level: initialAcademic.level,
+    yearNum: initialAcademic.yearNum,
+    phone: profile?.phone || '',
+    skills: profile?.skills || []
+  });
+
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const successTimerRef = useRef(null);
 
-  // Live 24-Hour Cooldown
-  const [cooldown, setCooldown] = useState(() => (getProfileCooldown ? getProfileCooldown(profile, user) : { isLocked: false }));
+  // Modals for Account features
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
 
-  useEffect(() => {
-    if (!getProfileCooldown) return;
-    setCooldown(getProfileCooldown(profile, user));
-    const interval = setInterval(() => {
-      setCooldown(getProfileCooldown(profile, user));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [profile, user, getProfileCooldown]);
-
+  // Sync state if profile prop changes externally (e.g. initial cloud sync load)
   useEffect(() => {
     if (profile) {
-      setName(profile.name || '');
-      setCollege(profile.college || '');
-      setPhone(profile.phone || '');
-      setSkills(profile.skills || []);
-      if (profile.year && YEAR_OPTIONS.includes(profile.year)) {
-        setYear(profile.year);
-      } else if (profile.batch && YEAR_OPTIONS.includes(profile.batch)) {
-        setYear(profile.batch);
-      } else if ((profile.education_level || '').toLowerCase().includes('post')) {
-        setYear('PG 1st Year');
-      } else {
-        setYear('UG 2nd Year');
-      }
+      const parsed = parseAcademicStanding(profile);
+      const nextSaved = {
+        name: profile.name || '',
+        college: profile.college || '',
+        level: parsed.level,
+        yearNum: parsed.yearNum,
+        phone: profile.phone || '',
+        skills: Array.isArray(profile.skills) ? profile.skills : []
+      };
+      setName(nextSaved.name);
+      setCollege(nextSaved.college);
+      setLevel(nextSaved.level);
+      setYearNum(nextSaved.yearNum);
+      setPhone(nextSaved.phone);
+      setSkills(nextSaved.skills);
+      setSavedSnapshot(nextSaved);
     }
   }, [profile]);
 
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
+
+  // 2. Computed Dirty State
+  const isDirty = useMemo(() => {
+    if (name !== savedSnapshot.name) return true;
+    if (college !== savedSnapshot.college) return true;
+    if (level !== savedSnapshot.level) return true;
+    if (yearNum !== savedSnapshot.yearNum) return true;
+    if (phone !== savedSnapshot.phone) return true;
+    const currentSkillsStr = [...skills].sort().join('|');
+    const savedSkillsStr = [...savedSnapshot.skills].sort().join('|');
+    return currentSkillsStr !== savedSkillsStr;
+  }, [name, college, level, yearNum, phone, skills, savedSnapshot]);
+
+  // Level switch: validate yearNum against valid options for new level
+  const handleLevelChange = (e) => {
+    const newLevel = e.target.value;
+    setLevel(newLevel);
+    if (!YEARS[newLevel].includes(yearNum)) {
+      setYearNum('1st');
+    }
+  };
+
   const toggleSkill = (skill) => {
-    if (cooldown.isLocked) return;
-    setSkills(prev =>
-      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
+    setSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
     );
   };
 
-  const isPostgraduate = year.startsWith('PG');
-
-  const handleSave = (e) => {
-    e.preventDefault();
-    if (cooldown.isLocked) return;
-    onSaveProfile({
-      name: name.trim() || 'Student',
-      college: college.trim() || 'College',
-      course: '', // removed per user request
-      year: year,
-      batch: year,
-      education_level: isPostgraduate ? 'postgraduate' : 'undergraduate',
-      phone: phone.trim(),
-      skills
-    });
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2400);
+  const handleDiscard = () => {
+    setName(savedSnapshot.name);
+    setCollege(savedSnapshot.college);
+    setLevel(savedSnapshot.level);
+    setYearNum(savedSnapshot.yearNum);
+    setPhone(savedSnapshot.phone);
+    setSkills(savedSnapshot.skills);
   };
 
-  // Profile readiness checklist calculations
-  const readiness = useMemo(() => {
-    const checks = [
-      { id: 'name', label: 'Full name', done: Boolean(name.trim()) },
-      { id: 'college', label: 'College / University', done: Boolean(college.trim()) },
-      { id: 'year', label: 'Academic standing', done: Boolean(year) },
-      { id: 'skills', label: 'At least 1 skill', done: skills.length > 0 },
-      { id: 'phone', label: 'WhatsApp contact', done: Boolean(phone.trim()) }
-    ];
-    const completedCount = checks.filter(c => c.done).length;
-    const percentage = Math.round((completedCount / checks.length) * 100);
-    return { checks, percentage };
-  }, [name, college, year, skills, phone]);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const isPost = level === 'PG';
+    const computedYear = `${level} ${yearNum} Year`;
 
-  const previewInitials = initialsOf(name || (user?.email ? user.email.split('@')[0] : 'Student'));
+    const updatedData = {
+      name: name.trim() || 'Student',
+      college: college.trim() || 'College',
+      course: '',
+      year: computedYear,
+      batch: computedYear,
+      education_level: isPost ? 'postgraduate' : 'undergraduate',
+      phone: phone.trim(),
+      skills
+    };
+
+    onSaveProfile(updatedData);
+
+    setSavedSnapshot({
+      name: updatedData.name,
+      college: updatedData.college,
+      level,
+      yearNum,
+      phone: updatedData.phone,
+      skills: [...skills]
+    });
+
+    setSavedSuccess(true);
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
+    }
+    successTimerRef.current = setTimeout(() => {
+      setSavedSuccess(false);
+    }, 2400);
+  };
+
+  // Preview derivations
+  const previewInitials = initialsOf(name.trim() || (user?.email ? user.email.split('@')[0] : 'Student'));
+  const isPostgraduate = level === 'PG';
+  const computedYear = `${level} ${yearNum} Year`;
+  const standingText = `${computedYear} ${isPostgraduate ? '· MBA / PG' : '· Undergraduate'}`;
+  const isPhoneMissing = !phone.trim();
 
   return (
     <div className="profile-screen-container">
-      {/* Header */}
-      <div className="profile-header">
+      {/* 1. Header */}
+      <header className="profile-header">
         <div className="profile-header-titles">
           <h1>Profile</h1>
           <p>Squad leads see this when you apply. Skills drive what gets recommended to you.</p>
         </div>
+      </header>
 
-        <div className="profile-header-badges">
-          {user ? (
-            <span className="profile-status-pill synced">
-              <span className="profile-status-dot" />
-              Cloud Synced · {user.email ? user.email.split('@')[0] : 'User'}
-            </span>
-          ) : (
-            <span className="profile-status-pill guest">
-              <span className="profile-status-dot" />
-              Guest Mode
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* 24-Hour Cooldown Notice */}
-      {cooldown.isLocked && (
-        <div className="profile-cooldown-banner">
-          <span style={{ fontSize: '18px' }} role="img" aria-label="Locked">🔒</span>
-          <div>
-            <strong>Profile edit locked:</strong> Details can only be updated once every 24 hours. Cooldown remaining:{' '}
-            <span className="profile-cooldown-timer">{cooldown.remainingFormatted}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Responsive 2-Column Grid (Uses full width of page) */}
-      <div className="profile-screen-grid">
-        {/* Left Column: Interactive Form */}
-        <form onSubmit={handleSave} className="profile-form-column">
-          {/* 1. Academic Standing Card */}
-          <div className="profile-card">
-            <div className="profile-card-header">
-              <h2 className="profile-card-title">
-                Academic Standing
-              </h2>
-              <span className={`profile-card-badge ${isPostgraduate ? 'mba' : 'ug'}`}>
-                {isPostgraduate ? '✨ MBA & PG challenges unlocked' : '🛡️ Undergraduate competitions only'}
+      {/* 2. Main Grid: Left sticky rail + Right form */}
+      <div className="profile-main-grid">
+        {/* Left Rail (<aside>) */}
+        <aside className="profile-left-rail">
+          {/* Card A: Squad Lead Live Preview Card */}
+          <div className="profile-preview-card">
+            <div className="profile-preview-strip">
+              <span className="profile-preview-strip-label">Squad Lead View</span>
+              <span className="profile-preview-live-badge">
+                <span className="profile-pulse-dot" />
+                Live Preview
               </span>
             </div>
 
-            <p className="profile-card-subtitle">
-              Configures competition eligibility across all national case challenges, hackathons, and corporate summits.
-            </p>
+            <div className="profile-preview-body">
+              {/* Identity block */}
+              <div className="profile-preview-identity">
+                <div className="profile-preview-avatar">
+                  {previewInitials}
+                </div>
+                <div className="profile-preview-names">
+                  <div className="profile-preview-fullname">
+                    {name.trim() || 'Your Name'}
+                  </div>
+                  <div className="profile-preview-college-line">
+                    {college.trim() || 'Select your college'}
+                  </div>
+                </div>
+                <span className={`profile-preview-standing-pill ${isPostgraduate ? 'pg' : 'ug'}`}>
+                  {standingText}
+                </span>
+              </div>
 
-            <div className="profile-year-grid">
-              {YEAR_OPTIONS.map((y) => {
-                const isSelected = year === y;
-                const isPgOption = y.startsWith('PG');
-                return (
-                  <button
-                    key={y}
-                    type="button"
-                    disabled={cooldown.isLocked}
-                    onClick={() => setYear(y)}
-                    className={`profile-year-btn ${isSelected ? 'selected' : ''}`}
-                  >
-                    <div className="profile-year-btn-left">
-                      <div className="profile-year-radio">
-                        {isSelected && <div className="profile-year-radio-dot" />}
-                      </div>
-                      <span className="profile-year-label">{y}</span>
-                    </div>
-                    {isPgOption && (
-                      <span className={`profile-year-tag ${isSelected ? 'selected' : 'unselected'}`}>
-                        MBA/PG
+              {/* Highlighted Skills block */}
+              <div className="profile-preview-skills-block">
+                <div className="profile-preview-skills-heading">
+                  Highlighted Skills ({skills.length})
+                </div>
+                {skills.length > 0 ? (
+                  <div className="profile-preview-skills-list">
+                    {skills.map((s) => (
+                      <span key={s} className="profile-preview-skill-tag">
+                        {s}
                       </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="profile-preview-no-skills">
+                    No skills selected yet
+                  </span>
+                )}
+              </div>
 
-            <div className="profile-eligibility-callout">
-              {isPostgraduate ? (
-                <span>
-                  ✨ <strong>Postgraduate active:</strong> Showing MBA & postgraduate flagship challenges (IIMs, corporate summits) <em>as well as</em> all open collegiate competitions.
-                </span>
-              ) : (
-                <span>
-                  🛡️ <strong>Undergraduate active:</strong> Showing curated undergraduate-eligible competitions. MBA-only and PG-exclusive listings are strictly hidden.
-                </span>
+              {/* WhatsApp missing notice: ONLY shown when phone is empty */}
+              {isPhoneMissing && (
+                <div className="profile-preview-whatsapp-alert">
+                  <WhatsAppIcon size={16} className="profile-preview-whatsapp-icon" />
+                  <div className="profile-preview-whatsapp-content">
+                    <span className="profile-preview-whatsapp-title">
+                      WhatsApp number missing
+                    </span>
+                    <span className="profile-preview-whatsapp-desc">
+                      Add your WhatsApp number so squad leads can immediately message you.
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
 
-          {/* 2. Personal & Campus Information Card */}
-          <div className="profile-card">
-            <div className="profile-card-header">
-              <h2 className="profile-card-title">
-                Personal & Campus Information
-              </h2>
-            </div>
-            <p className="profile-card-subtitle">
-              Your collegiate identity displayed on squad applications and team invitations.
-            </p>
+          {/* Card B: Account Card */}
+          <div className="profile-account-card">
+            {user ? (
+              <>
+                <div className="profile-account-header">
+                  <span className="profile-account-title">Account</span>
+                  <span className="profile-account-email" title={user.email}>
+                    Signed in as {user.email}
+                  </span>
+                </div>
+                <div className="profile-account-actions">
+                  <button
+                    type="button"
+                    className="profile-account-action-btn"
+                    onClick={() => setIsChangePasswordOpen(true)}
+                  >
+                    <LockIcon size={15} color="var(--ink-muted)" />
+                    <span>Change password</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="profile-account-action-btn"
+                    onClick={onSignOut}
+                  >
+                    <LogOutIcon size={15} color="var(--ink-muted)" />
+                    <span>Sign out</span>
+                  </button>
+                  <div className="profile-account-divider" />
+                  <button
+                    type="button"
+                    className="profile-account-action-btn danger"
+                    onClick={() => setIsDeleteAccountOpen(true)}
+                  >
+                    <AlertCircleIcon size={15} color="currentColor" />
+                    <span>Delete account</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="profile-account-header">
+                  <span className="profile-account-title">Account</span>
+                  <span className="profile-account-subtitle">
+                    Sign in to sync your bookmarks, squad applications, and collegiate profile across all devices.
+                  </span>
+                </div>
+                <div className="profile-account-guest-body">
+                  <button
+                    type="button"
+                    className="profile-account-signin-btn"
+                    onClick={onOpenAuthModal}
+                  >
+                    Sign in to Cloud Sync
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </aside>
 
-            <div className="profile-fields-grid">
-              <div className="profile-input-group">
-                <label className="profile-label" htmlFor="profile-name-input">Full Name</label>
+        {/* Right Column (<form>) */}
+        <form onSubmit={handleSubmit} className="profile-form-column">
+          {/* Section 1: Personal & Campus Information */}
+          <section className="profile-section-card">
+            <div className="profile-section-header">
+              <h2 className="profile-section-title">Personal &amp; Campus Information</h2>
+              <p className="profile-section-subtitle">
+                Your collegiate identity displayed on squad applications and team invitations.
+              </p>
+            </div>
+
+            <div className="profile-fields-row">
+              <div className="profile-field-group">
+                <label className="profile-field-label" htmlFor="profile-full-name">Full Name</label>
                 <input
-                  id="profile-name-input"
+                  id="profile-full-name"
+                  type="text"
+                  className="profile-input"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your full name"
-                  disabled={cooldown.isLocked}
-                  className="profile-input"
                 />
               </div>
 
-              <div className="profile-input-group">
-                <label className="profile-label">College / University</label>
+              <div className="profile-field-group">
+                <label className="profile-field-label">College / University</label>
                 <SearchableCollegeSelect
                   value={college}
                   onChange={(val) => setCollege(val)}
                   placeholder="Search college (e.g. SRCC, SSCBS, IIT)..."
-                  disabled={cooldown.isLocked}
                 />
               </div>
             </div>
 
-            <div className="profile-input-group" style={{ marginTop: '2px' }}>
-              <label className="profile-label" htmlFor="profile-phone-input" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <WhatsAppIcon size={15} /> WhatsApp Number
-              </label>
+            <div className="profile-field-group profile-phone-group">
+              <label className="profile-field-label" htmlFor="profile-phone-input">WhatsApp Number</label>
               <input
                 id="profile-phone-input"
+                type="tel"
+                className="profile-input profile-phone-input"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 98••• ••210"
-                disabled={cooldown.isLocked}
-                className="profile-input"
               />
-              <span className="profile-input-help">
+              <span className="profile-field-help">
                 Shared only after a squad lead accepts your application for the instant 1-click WhatsApp squad handshake.
               </span>
             </div>
-          </div>
+          </section>
 
-          {/* 3. Skills & Capabilities Card */}
-          <div className="profile-card">
-            <div className="profile-card-header">
-              <h2 className="profile-card-title">
-                Skills & Capabilities
-              </h2>
-              <span className="profile-card-badge ug">
+          {/* Section 2: Academic Standing */}
+          <section className="profile-section-card">
+            <div className="profile-section-header">
+              <h2 className="profile-section-title">Academic Standing</h2>
+              <p className="profile-section-subtitle">
+                Configures competition eligibility across all national case challenges, hackathons, and corporate summits.
+              </p>
+            </div>
+
+            <div className="profile-academic-selects-grid">
+              <div className="profile-field-group">
+                <label className="profile-field-label" htmlFor="profile-level-select">UG or PG</label>
+                <div className="profile-select-wrapper">
+                  <select
+                    id="profile-level-select"
+                    className="profile-select"
+                    value={level}
+                    onChange={handleLevelChange}
+                  >
+                    <option value="UG">UG · Undergraduate</option>
+                    <option value="PG">PG · Postgraduate</option>
+                  </select>
+                  <ChevronDownIcon size={16} className="profile-select-icon" color="var(--ink-muted)" />
+                </div>
+              </div>
+
+              <div className="profile-field-group">
+                <label className="profile-field-label" htmlFor="profile-year-select">Year</label>
+                <div className="profile-select-wrapper">
+                  <select
+                    id="profile-year-select"
+                    className="profile-select"
+                    value={yearNum}
+                    onChange={(e) => setYearNum(e.target.value)}
+                  >
+                    {YEARS[level].map((y) => (
+                      <option key={y} value={y}>
+                        {y} Year
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon size={16} className="profile-select-icon" color="var(--ink-muted)" />
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-eligibility-note">
+              {isPostgraduate ? (
+                <span>You'll see MBA &amp; PG challenges plus all open competitions.</span>
+              ) : (
+                <span>You'll see undergrad-eligible competitions only. MBA/PG listings are hidden.</span>
+              )}
+            </div>
+          </section>
+
+          {/* Section 3: Skills & Capabilities */}
+          <section className="profile-section-card">
+            <div className="profile-skills-header-row">
+              <div className="profile-section-header">
+                <h2 className="profile-section-title">Skills &amp; Capabilities</h2>
+                <p className="profile-section-subtitle">
+                  Choose skills that match your experience. Squad leads filter and recruit based on these tags.
+                </p>
+              </div>
+              <span className="profile-skills-count-badge">
                 {skills.length} selected
               </span>
             </div>
-            <p className="profile-card-subtitle">
-              Choose skills that match your experience. Squad leads filter and recruit based on these tags.
-            </p>
 
-            <div className="profile-skills-wrap">
+            <div className="profile-skills-chips-wrapper">
               {SKILLS.map((skill) => {
                 const isSelected = skills.includes(skill);
                 return (
                   <button
                     key={skill}
                     type="button"
-                    disabled={cooldown.isLocked}
                     onClick={() => toggleSkill(skill)}
                     className={`profile-skill-chip ${isSelected ? 'selected' : ''}`}
+                    aria-pressed={isSelected}
                   >
-                    {isSelected && <span style={{ marginRight: '4px' }}>✓</span>}
-                    {skill}
+                    {isSelected && (
+                      <CheckIcon size={13} className="profile-skill-check" color="var(--primary)" />
+                    )}
+                    <span>{skill}</span>
                   </button>
                 );
               })}
             </div>
-          </div>
+          </section>
 
-          {/* 4. Action Bar */}
-          <div className="profile-action-bar">
-            <button
-              type="submit"
-              disabled={cooldown.isLocked}
-              className="profile-save-btn"
-            >
-              {cooldown.isLocked ? 'Edit Locked (24h Cooldown)' : 'Save changes'}
-            </button>
-
-            {savedSuccess && (
-              <span className="profile-save-feedback">
-                <CheckIcon size={16} color="#15803D" /> Profile saved successfully
-              </span>
-            )}
-          </div>
-        </form>
-
-        {/* Right Column: Live Squad Preview, Cloud Sync & Readiness Rail */}
-        <aside className="profile-rail-column">
-          {/* Live Squad Card Preview */}
-          <div className="profile-preview-card">
-            <div className="profile-preview-top-badge">
-              <span className="profile-preview-lead-tag">
-                Squad Lead View
-              </span>
-              <span className="profile-preview-live-indicator">
-                <span className="profile-preview-live-dot" />
-                Live Preview
-              </span>
-            </div>
-
-            <div className="profile-preview-user-row">
-              <div className="profile-preview-avatar">
-                {previewInitials}
-              </div>
-              <div className="profile-preview-user-info">
-                <div className="profile-preview-name" title={name || 'Student'}>
-                  {name.trim() || 'Your Name'}
-                </div>
-                <div className="profile-preview-college" title={college || 'College'}>
-                  🏛️ {college.trim() || 'Select your college'}
-                </div>
-              </div>
-            </div>
-
-            <div className={`profile-preview-standing-badge ${isPostgraduate ? 'pg' : ''}`}>
-              🎓 {year} {isPostgraduate ? '· MBA / PG' : '· Undergraduate'}
-            </div>
-
-            <div className="profile-preview-contact-box">
-              <div className={`profile-preview-contact-status ${phone.trim() ? 'ready' : 'missing'}`}>
-                {phone.trim() ? (
-                  <>
-                    <span>🟢</span> WhatsApp Handshake Ready
-                  </>
+          {/* Sticky Bottom Save / Unsaved Changes Bar */}
+          {(isDirty || savedSuccess) && (
+            <div className="profile-sticky-save-bar">
+              <div className="profile-sticky-bar-left">
+                {savedSuccess ? (
+                  <span className="profile-sticky-bar-saved">
+                    <CheckIcon size={16} color="#4ADE80" />
+                    <span>Profile saved successfully</span>
+                  </span>
                 ) : (
-                  <>
-                    <span>⚠️</span> WhatsApp number missing
-                  </>
+                  <span className="profile-sticky-bar-dirty-text">
+                    You have unsaved changes
+                  </span>
                 )}
               </div>
-              <div className="profile-preview-contact-desc">
-                {phone.trim()
-                  ? `${phone.trim()} · 1-click squad chat unlocked upon acceptance`
-                  : 'Add your WhatsApp number so squad leads can immediately message you.'}
-              </div>
-            </div>
 
-            <div className="profile-preview-skills-section">
-              <div className="profile-preview-skills-label">
-                Highlighted Skills ({skills.length})
-              </div>
-              {skills.length > 0 ? (
-                <div className="profile-preview-skills-tags">
-                  {skills.map((s) => (
-                    <span key={s} className="profile-preview-skill-tag">
-                      {s}
-                    </span>
-                  ))}
+              {isDirty && (
+                <div className="profile-sticky-bar-actions">
+                  <button
+                    type="button"
+                    className="profile-sticky-discard-btn"
+                    onClick={handleDiscard}
+                  >
+                    Discard
+                  </button>
+                  <button
+                    type="submit"
+                    className="profile-sticky-save-btn"
+                  >
+                    Save changes
+                  </button>
                 </div>
-              ) : (
-                <span className="profile-preview-empty-skills">
-                  No skills selected yet  -  select skills on the left to stand out in squad searches.
-                </span>
               )}
             </div>
+          )}
+        </form>
+      </div>
 
-            <div className="profile-preview-footer-note">
-              💡 Squad leads in Team Finder and Requests review this exact card when deciding whether to accept you into their squad.
+      {/* Change Password Modal */}
+      {isChangePasswordOpen && (
+        <ChangePasswordModal
+          onClose={() => setIsChangePasswordOpen(false)}
+          onChangePassword={onChangePassword}
+          flashToast={flashToast}
+        />
+      )}
+
+      {/* Delete Account Modal */}
+      {isDeleteAccountOpen && (
+        <DeleteAccountModal
+          user={user}
+          onClose={() => setIsDeleteAccountOpen(false)}
+          onDeleteAccount={onDeleteAccount}
+          flashToast={flashToast}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Interactive Modals
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ChangePasswordModal({ onClose, onChangePassword, flashToast }) {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (newPassword.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMsg('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (onChangePassword) {
+        await onChangePassword(newPassword);
+      }
+      if (flashToast) {
+        flashToast('Password updated successfully');
+      }
+      onClose();
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to update password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="profile-modal-overlay" onClick={onClose}>
+      <div
+        className="profile-modal-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="change-pwd-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="profile-modal-header">
+          <div>
+            <h3 id="change-pwd-title" className="profile-modal-title">Change Password</h3>
+            <p className="profile-modal-subtitle">Update your password to keep your OneStop account secure.</p>
+          </div>
+          <button
+            type="button"
+            className="profile-modal-close-btn"
+            onClick={onClose}
+            aria-label="Close dialog"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="profile-modal-form">
+          {errorMsg && (
+            <div className="profile-modal-error-box">
+              <AlertCircleIcon size={15} color="var(--urgency-red)" />
+              <span>{errorMsg}</span>
             </div>
+          )}
+
+          <div className="profile-field-group">
+            <label className="profile-field-label" htmlFor="new-password">New Password</label>
+            <input
+              id="new-password"
+              type="password"
+              required
+              minLength={6}
+              autoFocus
+              className="profile-input"
+              placeholder="Minimum 6 characters"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
           </div>
 
-          {/* Account & Cloud Sync Card */}
-          <div className="profile-sync-card">
-            <div className="profile-sync-header">
-              <div className="profile-sync-title">
-                <span>☁️</span> Cloud Sync & Account
-              </div>
-              {user && (
-                <span style={{ fontSize: '11px', color: '#15803D', fontWeight: 600 }}>
-                  Active
-                </span>
-              )}
-            </div>
+          <div className="profile-field-group">
+            <label className="profile-field-label" htmlFor="confirm-password">Confirm New Password</label>
+            <input
+              id="confirm-password"
+              type="password"
+              required
+              minLength={6}
+              className="profile-input"
+              placeholder="Re-enter new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
 
-            <p className="profile-sync-desc">
-              {user
-                ? `Signed in as ${user.email} · Bookmarks, squad posts, and applications are synced to Supabase cloud.`
-                : 'Sign in to sync your bookmarks, squad applications, and collegiate profile across all devices.'}
+          <div className="profile-modal-actions">
+            <button
+              type="button"
+              className="profile-modal-ghost-btn"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="profile-modal-primary-btn"
+              disabled={loading}
+            >
+              {loading ? 'Updating...' : 'Update password'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
+  const [typedEmail, setTypedEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const targetEmail = user?.email || '';
+  const isMatch = typedEmail.trim().toLowerCase() === targetEmail.toLowerCase();
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    if (!isMatch) return;
+
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      if (onDeleteAccount) {
+        await onDeleteAccount();
+      }
+      if (flashToast) {
+        flashToast('Your account has been deleted');
+      }
+      onClose();
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to delete account. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="profile-modal-overlay" onClick={onClose}>
+      <div
+        className="profile-modal-dialog danger"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-acc-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="profile-modal-header">
+          <div>
+            <h3 id="delete-acc-title" className="profile-modal-title danger">Delete Account</h3>
+            <p className="profile-modal-subtitle">This action is permanent and cannot be undone.</p>
+          </div>
+          <button
+            type="button"
+            className="profile-modal-close-btn"
+            onClick={onClose}
+            aria-label="Close dialog"
+          >
+            <CloseIcon size={16} />
+          </button>
+        </div>
+
+        <form onSubmit={handleDelete} className="profile-modal-form">
+          {errorMsg && (
+            <div className="profile-modal-error-box">
+              <AlertCircleIcon size={15} color="var(--urgency-red)" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <div className="profile-modal-danger-callout">
+            <p>
+              Deleting your account will permanently remove your profile, created squad posts, applications, and saved bookmarks from OneStop across all devices.
             </p>
-
-            <div>
-              {user ? (
-                <button
-                  type="button"
-                  onClick={onSignOut}
-                  className="profile-sync-btn-outline"
-                >
-                  Sign out
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onOpenAuthModal}
-                  className="profile-sync-btn-primary"
-                >
-                  Sign in to Cloud Sync
-                </button>
-              )}
-            </div>
           </div>
 
-          {/* Collegiate Profile Readiness Checklist */}
-          <div className="profile-readiness-card">
-            <div className="profile-readiness-header">
-              <span className="profile-readiness-title">Profile Readiness</span>
-              <span className="profile-readiness-score">{readiness.percentage}%</span>
-            </div>
-
-            <div className="profile-readiness-bar-track">
-              <div
-                className="profile-readiness-bar-fill"
-                style={{ width: `${readiness.percentage}%` }}
-              />
-            </div>
-
-            <div className="profile-readiness-checklist">
-              {readiness.checks.map((check) => (
-                <div
-                  key={check.id}
-                  className={`profile-readiness-item ${check.done ? 'done' : ''}`}
-                >
-                  <span className={`profile-readiness-check ${check.done ? 'done' : 'missing'}`}>
-                    {check.done ? '✓' : '○'}
-                  </span>
-                  <span>{check.label}</span>
-                </div>
-              ))}
-            </div>
+          <div className="profile-field-group">
+            <label className="profile-field-label" htmlFor="delete-confirm-email">
+              To confirm, type your email <strong>{targetEmail}</strong>:
+            </label>
+            <input
+              id="delete-confirm-email"
+              type="email"
+              autoFocus
+              className="profile-input"
+              placeholder={targetEmail}
+              value={typedEmail}
+              onChange={(e) => setTypedEmail(e.target.value)}
+            />
           </div>
-        </aside>
+
+          <div className="profile-modal-actions">
+            <button
+              type="button"
+              className="profile-modal-ghost-btn"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="profile-modal-danger-btn"
+              disabled={!isMatch || loading}
+            >
+              {loading ? 'Deleting...' : 'Permanently Delete Account'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
