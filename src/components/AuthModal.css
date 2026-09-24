@@ -390,6 +390,9 @@
 }
 
 @media (max-width: 480px) {
+  .arena-auth-backdrop {
+    padding-bottom: max(0.75rem, var(--sab, 0px));
+  }
   .arena-auth-card {
     padding: 1rem 1rem 0.85rem;
     max-width: 100%;
@@ -398,3 +401,4 @@
     grid-template-columns: 1fr;
   }
 }
+

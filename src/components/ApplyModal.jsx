@@ -76,9 +76,10 @@ export default function ApplyModal({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '16px 16px calc(16px + var(--sab, 0px))',
         zIndex: 60
       }}
+
     >
       <div
         onClick={(e) => e.stopPropagation()}

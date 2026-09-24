@@ -77,7 +77,7 @@ export default function Sidebar({
         style={{
           background: 'var(--surface)',
           borderRight: '1px solid var(--line)',
-          padding: '20px 14px',
+          padding: 'max(20px, var(--sat, 20px)) 14px max(20px, var(--sab, 20px))',
           display: 'flex',
           flexDirection: 'column',
           gap: '20px',
@@ -96,7 +96,31 @@ export default function Sidebar({
             style={{ cursor: 'pointer', margin: '2px 4px 0' }}
             onClick={() => handleNav('home')}
           />
+          {mobileOpen && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              style={{
+                background: 'var(--surface-sunken)',
+                border: '1px solid var(--line)',
+                borderRadius: '8px',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--ink-secondary)',
+                cursor: 'pointer',
+                fontSize: '14px',
+                flexShrink: 0
+              }}
+              aria-label="Close sidebar"
+            >
+              ✕
+            </button>
+          )}
         </div>
+
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
           {navItems.map((item) => {
