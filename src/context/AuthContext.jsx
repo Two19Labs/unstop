@@ -289,7 +289,9 @@ export function AuthProvider({ children }) {
                 pitch: a.pitch_note,
                 pitch_note: a.pitch_note,
                 phone: a.applicant_phone,
-                applicant_phone: a.applicant_phone
+                applicant_phone: a.applicant_phone,
+                leadPhone: a.lead_phone || '',
+                lead_phone: a.lead_phone || ''
               };
             });
           setSquadApps(cleanApps);
@@ -968,38 +970,29 @@ export function AuthProvider({ children }) {
 
     if (supabase && user) {
       try {
-        const { error: appErr } = await supabase
-          .from('squad_applications')
-          .update({ status: newStatus })
-          .eq('id', appId);
+        const { data: updatedApp, error: rpcErr } = await supabase.rpc('respond_to_application', {
+          p_app_id: appId,
+          p_status: newStatus,
+        });
 
-        if (appErr) throw appErr;
+        if (rpcErr) throw rpcErr;
 
-        if (newStatus === 'accepted' && targetPost && applicantEmail) {
-          const currentAccepted = Array.isArray(targetPost.accepted_emails) ? targetPost.accepted_emails : [];
-          const nextAccepted = currentAccepted.includes(applicantEmail) ? currentAccepted : [...currentAccepted, applicantEmail];
-          const nextSpots = Math.max(0, (targetPost.spots_left || 1) - 1);
-          await supabase
-            .from('squad_posts')
-            .update({
-              spots_left: nextSpots,
-              is_open: nextSpots > 0,
-              accepted_emails: nextAccepted,
-            })
-            .eq('id', targetPostId);
-        } else if (newStatus === 'removed' && targetPost && applicantEmail) {
-          const currentAccepted = Array.isArray(targetPost.accepted_emails) ? targetPost.accepted_emails : [];
-          const nextAccepted = currentAccepted.filter(e => e !== applicantEmail);
-          const nextSpots = Math.min(targetPost.total_members || 4, (targetPost.spots_left || 0) + 1);
-          await supabase
-            .from('squad_posts')
-            .update({
-              spots_left: nextSpots,
-              is_open: true,
-              accepted_emails: nextAccepted,
-            })
-            .eq('id', targetPostId);
+        if (updatedApp) {
+          setSquadApps(prev =>
+            prev.map(app =>
+              app.id === appId
+                ? {
+                    ...app,
+                    status: updatedApp.status,
+                    lead_phone: updatedApp.lead_phone || '',
+                    leadPhone: updatedApp.lead_phone || '',
+                    updated_at: updatedApp.updated_at
+                  }
+                : app
+            )
+          );
         }
+        await refreshSquadData();
       } catch (err) {
         console.error('Could not update status in Supabase, rolling back optimistic state:', err.message);
         setSquadApps(prevApps);

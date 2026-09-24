@@ -804,6 +804,8 @@ function OneStopInner() {
         if (refreshSquadData) refreshSquadData();
       } catch (err) {
         console.warn('Supabase accept error:', err.message);
+        flash(err.message || 'Could not accept application');
+        if (refreshSquadData) refreshSquadData();
       }
     }
   };
@@ -836,7 +838,7 @@ function OneStopInner() {
       }));
     }
 
-    flash('Member removed  -  spot re-opened');
+    flash('Member removed - spot re-opened');
     if (user && authUpdateAppStatus) {
       try {
         await authUpdateAppStatus(appId, 'removed');
@@ -862,7 +864,15 @@ function OneStopInner() {
 
   // WhatsApp Handshake Launcher (strictly real phone numbers with prefilled message)
   const handleOpenWhatsApp = (appOrPost) => {
-    const rawPhone = appOrPost?.phone || appOrPost?.phone_number || appOrPost?.leadPhone || appOrPost?.applicant_phone || '';
+    const rawPhone =
+      appOrPost?.lead_phone ||
+      appOrPost?.leadPhone ||
+      appOrPost?.myApp?.lead_phone ||
+      appOrPost?.myApp?.leadPhone ||
+      appOrPost?.phone ||
+      appOrPost?.phone_number ||
+      appOrPost?.applicant_phone ||
+      '';
     const name = appOrPost?.created_by_name || appOrPost?.lead || appOrPost?.applicant_name || appOrPost?.who || '';
     const comp = appOrPost?.competition_name || appOrPost?.displayTitle || appOrPost?.title || 'Competition';
     const message = `Hey ${name ? name.split(' ')[0] : ''}! Connecting regarding our squad for "${comp}".`;
