@@ -20,8 +20,6 @@ const CAT_COLORS = {
   'Debates': '#17A34A'
 };
 
-const BROWSE_FILTER_KEY = 'onestop_user_filter_prefs';
-
 function formatDue(daysOrDeadline) {
   let h = 24;
   if (typeof daysOrDeadline === 'string' && daysOrDeadline.includes('-')) {
@@ -153,40 +151,6 @@ export default function TeamFinderScreen({
   const userName = profile?.name || 'Aarav Mehta';
   const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
 
-  // Load Saved Browse filter
-  const savedBrowseFilter = useMemo(() => {
-    try {
-      const userKey = user?.email ? `${BROWSE_FILTER_KEY}_${user.email.toLowerCase()}` : null;
-      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem(BROWSE_FILTER_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        const circuitMap = { du: 'DU Circuit', 'iim-iit-premier': 'IIMs, IITs & Premier', 'corporate-global': 'Corporate & Global', others: 'Others' };
-        const trackMap = { case: 'Case Comps', hackathon: 'Hackathons', writing: 'Writing & Research', quiz: 'Quizzes', simulation: 'Simulations', debate: 'Debates' };
-        const cats = Array.isArray(parsed.selectedTracks) && parsed.selectedTracks.length > 0
-          ? parsed.selectedTracks.map(t => trackMap[t] || t).filter(Boolean)
-          : ['Case Comps'];
-        const circuits = Array.isArray(parsed.selectedCircuits) && parsed.selectedCircuits.length > 0
-          ? parsed.selectedCircuits.map(c => circuitMap[c] || c).filter(Boolean)
-          : ['DU Circuit'];
-        return { cats, circuits };
-      }
-    } catch (e) {}
-    return { cats: ['Case Comps'], circuits: ['DU Circuit'] };
-  }, [user?.email]);
-
-  const isBrowseApplied = useMemo(() => {
-    return (
-      fCats.length === savedBrowseFilter.cats.length &&
-      fCats.every(c => savedBrowseFilter.cats.includes(c)) &&
-      fCircuits.length === savedBrowseFilter.circuits.length &&
-      fCircuits.every(c => savedBrowseFilter.circuits.includes(c))
-    );
-  }, [fCats, fCircuits, savedBrowseFilter]);
-
-  const handleApplyBrowseFilter = () => {
-    setFCats([...savedBrowseFilter.cats]);
-    setFCircuits([...savedBrowseFilter.circuits]);
-  };
 
   // Helper to find competition metadata
   const getCompMeta = (compId, fallbackTitle, fallbackHost) => {
@@ -659,24 +623,6 @@ export default function TeamFinderScreen({
               <button type="button" onClick={handleClearAll} className="tf-clear-all-btn">
                 Clear all
               </button>
-            </div>
-
-            {/* Row 2: Your Browse filter callout */}
-            <div className="tf-browse-callout">
-              <div className="tf-browse-callout-header">
-                <span className="tf-browse-callout-title">Your Browse filter</span>
-                <button
-                  type="button"
-                  onClick={handleApplyBrowseFilter}
-                  className="tf-browse-callout-apply"
-                  style={{ color: isBrowseApplied ? 'var(--ink-muted, #75736C)' : 'var(--primary, #0F3FFE)' }}
-                >
-                  {isBrowseApplied ? 'Applied' : 'Apply'}
-                </button>
-              </div>
-              <span className="tf-browse-callout-desc">
-                {savedBrowseFilter.cats.join(', ')} · {savedBrowseFilter.circuits.join(', ')}. Apply it to see squads for the competitions you're already tracking.
-              </span>
             </div>
 
             {/* Row 3: Quick Checkboxes */}

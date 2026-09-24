@@ -181,50 +181,6 @@
   color: var(--primary, #0F3FFE);
 }
 
-/* Browse Filter Callout */
-.tf-browse-callout {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: var(--surface-sunken, #F9F9F7);
-  border: 1px solid var(--line-lighter, #EFEEEA);
-  border-radius: 9px;
-  padding: 10px 11px;
-}
-
-.tf-browse-callout-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.tf-browse-callout-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-secondary, #55534D);
-}
-
-.tf-browse-callout-apply {
-  font-size: 12px;
-  font-weight: 600;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
-}
-
-.tf-browse-callout-apply:hover {
-  color: var(--ink, #1A1A19);
-}
-
-.tf-browse-callout-desc {
-  font-size: 12px;
-  color: var(--ink-muted, #75736C);
-  line-height: 1.4;
-}
-
 /* Filter Blocks */
 .tf-filter-block {
   display: flex;
