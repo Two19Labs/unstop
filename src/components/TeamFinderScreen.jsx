@@ -426,8 +426,7 @@ export default function TeamFinderScreen({
 
   // Faceted count calculation helper
   const countIn = (pred, skip) => {
-    const c = activePool.filter(p => passFilter(p, skip) && pred(p)).length;
-    return c > 0 ? c : '';
+    return activePool.filter(p => passFilter(p, skip) && pred(p)).length;
   };
 
   // Sort function
@@ -453,7 +452,7 @@ export default function TeamFinderScreen({
   const activeChips = useMemo(() => {
     const chips = [];
     if (fMatch) chips.push({ label: 'Matches my skills', remove: () => setFMatch(false) });
-    if (fMyCollege) chips.push({ label: `From ${userCollege.split(' ')[0]}`, remove: () => setFMyCollege(false) });
+    if (fMyCollege) chips.push({ label: 'Teams From My College', remove: () => setFMyCollege(false) });
     fCats.forEach(c => chips.push({ label: c, remove: () => setFCats(fCats.filter(x => x !== c)) }));
     fCircuits.forEach(c => chips.push({ label: c, remove: () => setFCircuits(fCircuits.filter(x => x !== c)) }));
     fSkills.forEach(s => chips.push({ label: s, remove: () => setFSkills(fSkills.filter(x => x !== s)) }));
@@ -709,7 +708,7 @@ export default function TeamFinderScreen({
                     <span className="cc-custom-checkbox">
                       {fMyCollege && <CheckIcon size={10} />}
                     </span>
-                    <span className="cc-checkbox-label-text">Lead from my college ({userCollege.split(' ')[0]})</span>
+                    <span className="cc-checkbox-label-text">Teams From My College</span>
                     <span className="cc-filter-num">({countIn(p => p.college.toLowerCase() === userCollege.toLowerCase(), 'myCollege')})</span>
                   </label>
                 </div>
