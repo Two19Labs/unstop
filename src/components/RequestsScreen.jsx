@@ -1,6 +1,7 @@
 // src/components/RequestsScreen.jsx
 import React, { useState } from 'react';
 import { isMockApp, isMockPost } from '../data/initialData';
+import './RequestsScreen.css';
 
 export default function RequestsScreen({
   applications = [],
@@ -57,19 +58,19 @@ export default function RequestsScreen({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '17px' }}>
+    <div className="requests-screen-container">
       {/* Header */}
       <div>
-        <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
+        <h1 className="requests-header-title">
           Requests
         </h1>
-        <p style={{ margin: '7px 0 0', fontSize: '14px', color: 'var(--ink-muted)' }}>
+        <p className="requests-header-sub">
           Applications to your squads, and the ones you have sent out.
         </p>
       </div>
 
       {/* Pill Tabs */}
-      <div style={{ display: 'flex', gap: '7px' }}>
+      <div className="requests-pill-tabs">
         {[
           { id: 'in', label: `To my squads (${inCount})` },
           { id: 'out', label: `Sent by me (${outCount})` }
@@ -79,18 +80,7 @@ export default function RequestsScreen({
             <button
               key={t.id}
               onClick={() => setReqTab(t.id)}
-              style={{
-                border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
-                borderRadius: '20px',
-                background: on ? 'var(--primary)' : 'var(--surface)',
-                color: on ? '#FFFFFF' : 'var(--ink)',
-                padding: '8px 15px',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                fontSize: '13px',
-                fontWeight: 500,
-                transition: 'all 120ms ease'
-              }}
+              className={`requests-tab-btn ${on ? 'active' : ''}`}
             >
               {t.label}
             </button>
@@ -98,8 +88,8 @@ export default function RequestsScreen({
         })}
       </div>
 
-      {/* Requests Card */}
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '12px', overflow: 'hidden' }}>
+      {/* Requests Card Container */}
+      <div className="requests-card-container">
         {currentRows.map((app) => {
           const post = postMap.get(app.postId || app.post_id);
           const comp = post ? (competitions.find(c => String(c.id) === String(post.compId) || (post.competition_name && c.title === post.competition_name)) || null) : null;
@@ -119,68 +109,34 @@ export default function RequestsScreen({
           const skills = app.highlighted_skills || app.skills || [];
 
           return (
-            <div
-              key={app.id}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1fr) auto',
-                alignItems: 'start',
-                gap: '16px',
-                padding: '15px 18px',
-                borderBottom: '1px solid var(--line)'
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>{whoTitle}</span>
+            <div key={app.id} className="requests-row">
+              <div className="requests-row-left">
+                <div className="requests-row-title-row">
+                  <span className="requests-row-who">{whoTitle}</span>
                   <span
+                    className="requests-status-badge"
                     style={{
                       background: look.bg,
                       color: look.color,
                       border: `1px solid ${look.border}`,
-                      borderRadius: '20px',
-                      padding: '2px 9px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap'
                     }}
                   >
                     {look.label}
                   </span>
                 </div>
 
-                <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--ink-muted)' }}>{subline}</p>
+                <p className="requests-row-subline">{subline}</p>
 
                 {pitch && (
-                  <p
-                    style={{
-                      margin: '9px 0 0',
-                      fontSize: '13px',
-                      color: 'var(--ink)',
-                      lineHeight: 1.5,
-                      borderLeft: '2px solid var(--line)',
-                      paddingLeft: '11px'
-                    }}
-                  >
+                  <p className="requests-row-pitch">
                     {pitch}
                   </p>
                 )}
 
                 {skills.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '9px' }}>
+                  <div className="requests-skills-list">
                     {skills.map((s, idx) => (
-                      <span
-                        key={idx}
-                        style={{
-                          background: 'var(--surface-muted)',
-                          borderRadius: '6px',
-                          padding: '3px 8px',
-                          fontSize: '11px',
-                          fontWeight: 500,
-                          color: 'var(--ink-secondary)',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
+                      <span key={idx} className="requests-skill-chip">
                         {s}
                       </span>
                     ))}
@@ -189,40 +145,18 @@ export default function RequestsScreen({
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '8px', paddingTop: '2px' }}>
+              <div className="requests-row-actions">
                 {app.dir === 'in' && app.status === 'pending' && (
                   <>
                     <button
                       onClick={() => onAccept(app.id)}
-                      style={{
-                        border: '1px solid var(--primary)',
-                        borderRadius: '8px',
-                        background: 'var(--primary)',
-                        color: '#FFFFFF',
-                        padding: '8px 13px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        fontSize: '13px',
-                        fontWeight: 600
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
+                      className="requests-btn-primary"
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => onDecline(app.id)}
-                      style={{
-                        border: '1px solid var(--line)',
-                        borderRadius: '8px',
-                        background: 'var(--surface)',
-                        color: 'var(--ink-secondary)',
-                        padding: '8px 13px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        fontSize: '13px',
-                        fontWeight: 500
-                      }}
+                      className="requests-btn-secondary"
                     >
                       Decline
                     </button>
@@ -230,7 +164,7 @@ export default function RequestsScreen({
                 )}
 
                 {app.status === 'accepted' && (
-                  <div style={{ display: 'flex', gap: '6px' }}>
+                  <>
                     <button
                       onClick={() => {
                         if (app.dir === 'out') {
@@ -242,17 +176,7 @@ export default function RequestsScreen({
                           onOpenWhatsApp(app);
                         }
                       }}
-                      style={{
-                        border: '1px solid #16A34A',
-                        borderRadius: '8px',
-                        background: '#16A34A',
-                        color: '#FFFFFF',
-                        padding: '8px 13px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        fontSize: '13px',
-                        fontWeight: 600
-                      }}
+                      className="requests-btn-whatsapp"
                     >
                       Open WhatsApp
                     </button>
@@ -263,38 +187,18 @@ export default function RequestsScreen({
                             onRemove(app.id);
                           }
                         }}
-                        style={{
-                          border: '1px solid rgba(239, 68, 68, 0.4)',
-                          borderRadius: '8px',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          color: '#F87171',
-                          padding: '8px 12px',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap',
-                          fontSize: '13px',
-                          fontWeight: 500
-                        }}
+                        className="requests-btn-remove"
                       >
                         Remove
                       </button>
                     )}
-                  </div>
+                  </>
                 )}
 
                 {app.dir === 'out' && app.status === 'pending' && (
                   <button
                     onClick={() => onWithdraw(app.id)}
-                    style={{
-                      border: '1px solid var(--line)',
-                      borderRadius: '8px',
-                      background: 'var(--surface)',
-                      color: 'var(--ink-secondary)',
-                      padding: '8px 13px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      fontSize: '13px',
-                      fontWeight: 500
-                    }}
+                    className="requests-btn-secondary"
                   >
                     Withdraw
                   </button>
@@ -306,9 +210,9 @@ export default function RequestsScreen({
 
         {/* Empty State */}
         {currentRows.length === 0 && (
-          <div style={{ padding: '38px 18px', textAlign: 'center' }}>
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>Nothing here</p>
-            <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--ink-muted)' }}>
+          <div className="requests-empty-state">
+            <p className="requests-empty-title">Nothing here</p>
+            <p className="requests-empty-desc">
               {reqTab === 'in'
                 ? 'No one has applied to your squads yet.'
                 : 'You have not requested to join any squad yet.'}

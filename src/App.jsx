@@ -16,6 +16,8 @@ import AuthModal from './components/AuthModal';
 import ThemeToggle from './components/ThemeToggle';
 import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
+import MobileBottomNav from './components/MobileBottomNav';
+import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
 
 import {
   describeFilter,
@@ -223,6 +225,9 @@ function OneStopInner() {
     const cached = getCachedCompetitions();
     return !(Array.isArray(cached) && cached.length > 0);
   });
+
+  // Boot loading screen: displays for exactly 1.5s on initial boot so users trust live data is real
+  const [showBootScreen, setShowBootScreen] = useState(true);
 
   // Bookmarks State (String-normalized, zero mock IDs)
   const [localBookmarks, setLocalBookmarks] = useState(() => {
@@ -1193,11 +1198,33 @@ function OneStopInner() {
         onSubmitApply={handleSubmitApply}
       />
 
+      {/* Universal Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        screen={screen}
+        onNavigate={handleNavigate}
+        pendingInboxCount={pendingInboxCount}
+        bookmarksCount={bookmarks.length}
+        profile={profile}
+      />
+
       {/* Global Toast */}
+
       <Toast message={toastMessage} />
 
       {/* Supabase Auth Modal */}
       <AuthModal />
+
+      {/* Fun Collegiate Boot Screen with Circular Ring Animation & Quotes */}
+      {showBootScreen && (
+        <FunLoadingScreen
+          isReady={!competitionsLoading}
+          minDurationMs={1500}
+          maxDurationMs={3000}
+          headline="Fetching live opportunities from Unstop..."
+          customPuns={GENERAL_PUNS}
+          onComplete={() => setShowBootScreen(false)}
+        />
+      )}
     </div>
   );
 }

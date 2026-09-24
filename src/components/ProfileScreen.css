@@ -28,6 +28,13 @@
   }
 }
 
+@media (max-width: 768px) {
+  .profile-screen-container {
+    padding-bottom: calc(var(--mobile-bottom-nav-height, 60px) + 24px) !important;
+  }
+}
+
+
 .profile-header-titles h1 {
   margin: 0;
   font-size: 26px;
@@ -783,6 +790,30 @@
 .profile-sticky-save-btn:hover {
   background: var(--primary-hover);
 }
+
+@media (max-width: 768px) {
+  .profile-sticky-save-bar {
+    bottom: calc(var(--mobile-bottom-nav-height, 60px) + 12px) !important;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .profile-sticky-bar-actions {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .profile-sticky-discard-btn,
+  .profile-sticky-save-btn {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
 
 /* ══════════════════════════════════════════════════════════════════════════
    Account Management Modals (Change Password & Delete Account)

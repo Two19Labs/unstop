@@ -60,7 +60,7 @@
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: max(12px, var(--sat)) 16px 12px;
   background-color: var(--surface);
   border-bottom: 1px solid var(--line);
   position: sticky;
@@ -73,13 +73,14 @@
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-  width: 32px;
-  height: 32px;
-  padding: 6px;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
   border: 1px solid var(--line);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--surface);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .mobile-hamburger-btn span {
@@ -134,12 +135,24 @@
   }
 }
 
-@media (max-width: 480px) {
+/* Mobile Bottom Nav clearance and touch optimizations */
+@media (max-width: 768px) {
   .onestop-main {
-    padding: 14px 12px 28px;
+    padding-bottom: calc(var(--mobile-bottom-nav-height, 60px) + 24px) !important;
   }
 
   .onestop-main.onestop-main-home {
-    padding: 14px 0 28px;
+    padding-bottom: calc(var(--mobile-bottom-nav-height, 60px) + 24px) !important;
   }
 }
+
+@media (max-width: 480px) {
+  .onestop-main {
+    padding: 14px 12px calc(var(--mobile-bottom-nav-height, 60px) + 20px) !important;
+  }
+
+  .onestop-main.onestop-main-home {
+    padding: 14px 0 calc(var(--mobile-bottom-nav-height, 60px) + 20px) !important;
+  }
+}
+

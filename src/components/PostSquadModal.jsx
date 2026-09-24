@@ -846,11 +846,12 @@ export default function PostSquadModal({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '14px 20px',
+            padding: '14px 20px calc(14px + var(--sab, 0px))',
             borderTop: '1px solid var(--line, #E7E6E2)',
             background: 'var(--surface, #FFFFFF)',
             flexShrink: 0
           }}
+
         >
           <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
             {open} open of {total}

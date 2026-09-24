@@ -12,8 +12,8 @@ export default function SectionLoadingWidget({
   subtitle = 'Pulling direct listings across DU, IIMs, IITs & premier colleges',
   customPuns = null,
   showPuns = true,
-  minDurationMs = 800,
-  maxDurationMs = 1450,
+  minDurationMs = 1500,
+  maxDurationMs = 3000,
   isReady = true,
   onComplete,
 }) {
@@ -33,7 +33,7 @@ export default function SectionLoadingWidget({
     return candidate;
   }, [customPuns]);
 
-  // Dismiss once minDurationMs has elapsed AND data is ready, or enforce maxDurationMs cap (<= 1.5s max)
+  // Stays visible for exactly 1.5s (minDurationMs) when ready, capped at maxDurationMs
   useEffect(() => {
     let timer = null;
     let completed = false;
@@ -48,13 +48,12 @@ export default function SectionLoadingWidget({
 
     const checkDone = () => {
       const elapsed = Date.now() - start;
-      if (elapsed >= maxDurationMs || (elapsed >= minDurationMs && isReady)) {
+      if (elapsed >= minDurationMs && isReady) {
+        finish();
+      } else if (elapsed >= maxDurationMs) {
         finish();
       } else {
-        const remaining = Math.min(
-          Math.max(40, minDurationMs - elapsed),
-          Math.max(40, maxDurationMs - elapsed)
-        );
+        const remaining = Math.max(30, minDurationMs - elapsed);
         timer = setTimeout(checkDone, remaining);
       }
     };

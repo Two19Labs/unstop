@@ -79,7 +79,7 @@ export default function DetailDrawer({
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: '12px',
-            padding: '15px 20px',
+            padding: 'max(15px, var(--sat, 15px)) 20px 15px',
             borderBottom: '1px solid var(--line)'
           }}
         >
@@ -167,8 +167,9 @@ export default function DetailDrawer({
         </div>
 
         {/* Footer Actions */}
-        <div style={{ padding: '20px', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '9px' }}>
+        <div style={{ padding: '20px 20px calc(20px + var(--sab, 0px))', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '9px' }}>
           <button
+
             onClick={() => onOpenPostSquad(item)}
             style={{
               border: '1px solid var(--primary)',

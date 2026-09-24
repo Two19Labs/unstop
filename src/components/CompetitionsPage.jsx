@@ -521,7 +521,7 @@ export default function CompetitionsPage({
 
   const [competitions, setCompetitions] = useState(() => (Array.isArray(initialCompetitions) && initialCompetitions.length > 0 ? initialCompetitions : []));
   const [loading, setLoading] = useState(() => !(Array.isArray(initialCompetitions) && initialCompetitions.length > 0));
-  const [showFetchingScreen, setShowFetchingScreen] = useState(() => !(Array.isArray(initialCompetitions) && initialCompetitions.length > 0));
+  const [showFetchingScreen, setShowFetchingScreen] = useState(true);
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
@@ -710,7 +710,6 @@ export default function CompetitionsPage({
     if (Array.isArray(initialCompetitions) && initialCompetitions.length > 0) {
       setCompetitions(initialCompetitions);
       setLoading(false);
-      setShowFetchingScreen(false);
       if (onCountUpdate) onCountUpdate(initialCompetitions.length);
     } else {
       // Only fetch if parent did not provide competitions
@@ -1393,8 +1392,8 @@ export default function CompetitionsPage({
           headline={bookmarkedOnly ? 'Syncing your saved competitions...' : 'Fetching live competitions from Unstop...'}
           subtitle={bookmarkedOnly ? 'Checking deadlines on everything you bookmarked' : 'Pulling direct listings across DU, IIMs, IITs & premier colleges'}
           customPuns={BROWSE_PUNS}
-          minDurationMs={800}
-          maxDurationMs={1400}
+          minDurationMs={1500}
+          maxDurationMs={3000}
           isReady={!loading}
           onComplete={() => setShowFetchingScreen(false)}
         />

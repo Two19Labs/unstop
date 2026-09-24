@@ -245,7 +245,11 @@
   scroll-snap-align: start;
   transition: border-color 150ms ease, box-shadow 150ms ease;
   box-sizing: border-box;
+  flex: 0 0 clamp(260px, 80vw, 302px) !important;
+  width: clamp(260px, 80vw, 302px) !important;
+  max-width: calc(100vw - 32px);
 }
+
 
 .home-rail-card:hover {
   border-color: var(--card-hover-border);
@@ -396,14 +400,32 @@
     padding-right: 16px;
   }
   .home-campus-name {
-    max-width: 220px;
+    max-width: 180px;
   }
   .home-greeting-title {
-    font-size: 23px;
+    font-size: clamp(20px, 5.5vw, 24px);
+  }
+  .home-pulse-container {
+    gap: 10px;
   }
   .rail {
     padding-left: 16px;
     padding-right: 16px;
     scroll-padding: 0 16px;
+    gap: 12px;
   }
 }
+
+@media (max-width: 480px) {
+  .home-greeting-block,
+  .home-section-header {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .rail {
+    padding-left: 14px;
+    padding-right: 14px;
+    scroll-padding: 0 14px;
+  }
+}
+

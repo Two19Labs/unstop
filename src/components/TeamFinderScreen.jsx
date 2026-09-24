@@ -6,6 +6,8 @@ import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
 import PostSquadModal from './PostSquadModal';
 import ApplyModal from './ApplyModal';
+import SectionLoadingWidget from './SectionLoadingWidget';
+import { SQUAD_PUNS } from './FunLoadingScreen';
 import './TeamFinderScreen.css';
 
 const CATS = ['Case Comps', 'Hackathons', 'Writing & Research', 'Quizzes', 'Simulations', 'Debates'];
@@ -133,9 +135,11 @@ export default function TeamFinderScreen({
   onSubmitPost
 }) {
   const [tab, setTab] = useState('other'); // 'other' | 'mine'
+  const [showSquadLoader, setShowSquadLoader] = useState(true);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('newest'); // 'newest' | 'closing' | 'spots'
   const [skillsOpen, setSkillsOpen] = useState(false);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   // Filters State
   const [fMatch, setFMatch] = useState(false);
@@ -684,8 +688,34 @@ export default function TeamFinderScreen({
         <div className="tf-body-grid">
 
           {/* ── Filter Sidebar (Left) ── */}
-          <aside className="tf-sidebar cc-filter-sidebar">
+          <aside className={`tf-sidebar cc-filter-sidebar ${isMobileFiltersOpen ? 'mobile-open' : ''}`}>
+            {/* Mobile Drawer Header */}
+            <div className="cc-mobile-filter-header">
+              <div className="cc-mobile-filter-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>Filters {filterCount > 0 && `(${filterCount})`}</span>
+              </div>
+              <div className="cc-mobile-filter-actions">
+                {filterCount > 0 && (
+                  <button type="button" className="cc-filter-reset-link" onClick={handleClearAll}>
+                    Reset All
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="cc-mobile-filter-close"
+                  onClick={() => setIsMobileFiltersOpen(false)}
+                  aria-label="Close filters"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
             <div className="cc-filter-card cc-unified-filter-card">
+
 
               {/* Header: Title & Reset All */}
               <div className="cc-filter-card-header">
@@ -953,7 +983,27 @@ export default function TeamFinderScreen({
               </div>
 
             </div>
+
+            {/* Mobile Drawer Bottom Apply CTA */}
+            <div className="tf-mobile-filter-footer">
+              <button
+                type="button"
+                className="tf-mobile-filter-apply-btn"
+                onClick={() => setIsMobileFiltersOpen(false)}
+              >
+                Show {totalCardsShown} Squad{totalCardsShown === 1 ? '' : 's'}
+              </button>
+            </div>
           </aside>
+
+          {/* Backdrop for mobile drawer */}
+          {isMobileFiltersOpen && (
+            <div
+              className="cc-filter-backdrop"
+              onClick={() => setIsMobileFiltersOpen(false)}
+              aria-hidden="true"
+            />
+          )}
 
           {/* ── Results Column (Right) ── */}
           <main className="tf-results-col">
@@ -994,6 +1044,21 @@ export default function TeamFinderScreen({
                 />
               </label>
 
+              {/* Mobile Filter Trigger Button */}
+              <button
+                type="button"
+                className={`tf-mobile-filter-trigger ${filterCount > 0 ? 'active' : ''}`}
+                onClick={() => setIsMobileFiltersOpen(true)}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>Filters</span>
+                {filterCount > 0 && (
+                  <span className="tf-filter-badge-count">{filterCount}</span>
+                )}
+              </button>
+
               {/* Sort Selector */}
               <div className="tf-sort-box">
                 <ArrowUpDownIcon size={13} className="tf-sort-icon" />
@@ -1018,6 +1083,7 @@ export default function TeamFinderScreen({
               </div>
             </div>
 
+
             {/* Status Row + Removable Active Chips */}
             <div className="tf-status-row">
               <span className="tf-status-dot"></span>
@@ -1037,9 +1103,22 @@ export default function TeamFinderScreen({
               ))}
             </div>
 
-            {/* Empty State */}
-            {displayedSections.length === 0 && (
-              <div className="tf-empty-state">
+            {/* Squads Loading Screen */}
+            {showSquadLoader ? (
+              <SectionLoadingWidget
+                headline="Scouting collegiate squads across campuses..."
+                subtitle="Matching complementary skillsets and zero-ghosting teammates"
+                customPuns={SQUAD_PUNS}
+                minDurationMs={1500}
+                maxDurationMs={1500}
+                isReady={true}
+                onComplete={() => setShowSquadLoader(false)}
+              />
+            ) : (
+              <>
+                {/* Empty State */}
+                {displayedSections.length === 0 && (
+                  <div className="tf-empty-state">
                 <h3 className="tf-empty-title">
                   {tab === 'mine' && filterCount === 0 ? 'Nothing here yet' : 'No squads match these filters'}
                 </h3>
@@ -1322,6 +1401,8 @@ export default function TeamFinderScreen({
                 </div>
               </section>
             ))}
+              </>
+            )}
 
           </main>
         </div>
