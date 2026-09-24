@@ -90,10 +90,11 @@ export default function TeamFinderScreen({
   onDeleteSquadPost,
   onAcceptApp,
   onDeclineApp,
-  onRemoveApp
+  onRemoveApp,
+  headerAction = null
 }) {
   const [tq, setTq] = useState('');
-  const [showSquadLoader, setShowSquadLoader] = useState(true);
+  const [showSquadLoader, setShowSquadLoader] = useState(() => !(Array.isArray(posts) && posts.length > 0));
   const [tScope, setTScope] = useState(() => {
     try {
       return localStorage.getItem('onestop_squad_scope') || 'all';
@@ -269,8 +270,8 @@ export default function TeamFinderScreen({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 300px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
               Team finder
@@ -295,26 +296,43 @@ export default function TeamFinderScreen({
           </p>
         </div>
 
-        <button
-          onClick={() => onOpenPostSquad(null)}
-          style={{
-            border: '1px solid #0F3FFE',
-            borderRadius: '9px',
-            background: '#0F3FFE',
-            color: '#FFFFFF',
-            padding: '11px 18px',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            fontSize: '14px',
-            fontWeight: 600,
-            transition: 'background 120ms ease',
-            boxShadow: '0 2px 4px rgba(15,63,254,0.18)'
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
-        >
-          + Post a squad
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          <button
+            onClick={() => onOpenPostSquad(null)}
+            style={{
+              border: '1px solid #0F3FFE',
+              borderRadius: '9px',
+              background: '#0F3FFE',
+              color: '#FFFFFF',
+              padding: '0 18px',
+              height: '38px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              fontSize: '14px',
+              fontWeight: 600,
+              transition: 'background 120ms ease, transform 120ms ease',
+              boxShadow: '0 2px 4px rgba(15,63,254,0.18)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#0C33CC';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#0F3FFE';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            + Post a squad
+          </button>
+          {headerAction && (
+            <div className="team-finder-header-action-cluster">
+              {headerAction}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Filter Suite */}
@@ -567,7 +585,8 @@ export default function TeamFinderScreen({
           headline="Scouting collegiate squads across campuses..."
           subtitle="Matching complementary skillsets and zero-ghosting teammates"
           customPuns={SQUAD_PUNS}
-          minDurationMs={2000}
+          minDurationMs={800}
+          maxDurationMs={1400}
           isReady={true}
           onComplete={() => setShowSquadLoader(false)}
         />

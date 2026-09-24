@@ -15,6 +15,13 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 14px;
+  padding-right: 96px;
+}
+
+@media (max-width: 860px) {
+  .profile-header {
+    padding-right: 0;
+  }
 }
 
 .profile-header-titles h1 {

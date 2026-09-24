@@ -442,14 +442,18 @@ export default function HomeScreen({
   const collegeName = profile?.college?.trim() || 'Shaheed Sukhdev College of Business Studies';
   const batchStatus = profile?.batch?.trim() || profile?.year?.trim() || (isPostgraduate ? 'Postgraduate Track' : 'UG 2nd Year');
 
-  const [isHomeLoading, setIsHomeLoading] = useState(true);
+  const [isHomeLoading, setIsHomeLoading] = useState(() => Boolean(competitionsLoading || !competitions || competitions.length === 0));
 
   useEffect(() => {
+    if (!competitionsLoading && competitions && competitions.length > 0) {
+      setIsHomeLoading(false);
+      return;
+    }
     const timer = setTimeout(() => {
       setIsHomeLoading(false);
-    }, 2000);
+    }, 1200);
     return () => clearTimeout(timer);
-  }, []);
+  }, [competitionsLoading, competitions?.length]);
 
   const showRailLoading = isHomeLoading || competitionsLoading;
 

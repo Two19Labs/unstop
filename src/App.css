@@ -49,6 +49,12 @@
   z-index: 30;
 }
 
+.team-finder-header-action-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Mobile Header bar (hidden on desktop) */
 .mobile-topbar {
   display: none;
@@ -86,6 +92,11 @@
 
 /* Responsive adjustments */
 @media (max-width: 860px) {
+  .onestop-top-actions,
+  .team-finder-header-action-cluster {
+    display: none !important;
+  }
+
   .onestop-app {
     display: flex;
     flex-direction: column;

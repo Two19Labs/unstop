@@ -97,7 +97,8 @@ let lastFullScreenQuote = '';
 
 export default function FunLoadingScreen({
   isReady = true,
-  minDurationMs = 2000,
+  minDurationMs = 800,
+  maxDurationMs = 1450,
   onComplete,
   headline = "OneStop",
   subtitle = null,
@@ -118,20 +119,30 @@ export default function FunLoadingScreen({
     return candidate;
   }, [customPuns]);
 
-  // Handle completion when exactly minDurationMs has elapsed AND isReady is true
+  // Handle completion: dismiss promptly when minDurationMs has elapsed & isReady, or enforce maxDurationMs cap (<= 1.5s max)
   useEffect(() => {
     let timer = null;
+    let completed = false;
     const start = Date.now();
+
+    const finish = () => {
+      if (completed) return;
+      completed = true;
+      setIsDismissing(true);
+      timer = setTimeout(() => {
+        if (onComplete) onComplete();
+      }, 180);
+    };
 
     const checkDone = () => {
       const elapsed = Date.now() - start;
-      if (elapsed >= minDurationMs && isReady) {
-        setIsDismissing(true);
-        timer = setTimeout(() => {
-          if (onComplete) onComplete();
-        }, 220);
+      if (elapsed >= maxDurationMs || (elapsed >= minDurationMs && isReady)) {
+        finish();
       } else {
-        const remaining = Math.max(50, minDurationMs - elapsed);
+        const remaining = Math.min(
+          Math.max(40, minDurationMs - elapsed),
+          Math.max(40, maxDurationMs - elapsed)
+        );
         timer = setTimeout(checkDone, remaining);
       }
     };
@@ -140,7 +151,7 @@ export default function FunLoadingScreen({
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isReady, minDurationMs, onComplete]);
+  }, [isReady, minDurationMs, maxDurationMs, onComplete]);
 
   return (
     <div

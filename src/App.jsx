@@ -87,6 +87,35 @@ function getInitialScreen() {
   return 'home';
 }
 
+const COMPETITIONS_CACHE_KEY = 'onestop_cached_competitions_v1';
+const COMPETITIONS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes client cache
+
+function getCachedCompetitions() {
+  try {
+    if (typeof window === 'undefined') return null;
+    const raw = sessionStorage.getItem(COMPETITIONS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.data) && parsed.data.length > 0) {
+      if (Date.now() - (parsed.timestamp || 0) < COMPETITIONS_CACHE_TTL_MS) {
+        return parsed.data;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function setCachedCompetitions(data) {
+  try {
+    if (typeof window !== 'undefined' && Array.isArray(data) && data.length > 0) {
+      sessionStorage.setItem(COMPETITIONS_CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        data
+      }));
+    }
+  } catch (e) {}
+}
+
 function OneStopInner() {
   const {
     user,
@@ -183,9 +212,15 @@ function OneStopInner() {
     };
   }, []);
 
-  // Competitions State (100% real data fetched from Unstop crawler)
-  const [competitions, setCompetitions] = useState([]);
-  const [competitionsLoading, setCompetitionsLoading] = useState(true);
+  // Competitions State (Instant Session Cache with background revalidation)
+  const [competitions, setCompetitions] = useState(() => {
+    const cached = getCachedCompetitions();
+    return Array.isArray(cached) && cached.length > 0 ? cached : [];
+  });
+  const [competitionsLoading, setCompetitionsLoading] = useState(() => {
+    const cached = getCachedCompetitions();
+    return !(Array.isArray(cached) && cached.length > 0);
+  });
 
   // Bookmarks State (String-normalized, zero mock IDs)
   const [localBookmarks, setLocalBookmarks] = useState(() => {
@@ -299,6 +334,7 @@ function OneStopInner() {
           course: '',
           year: yr,
           phone: updatedData.phone,
+          skills: updatedData.skills || [],
           education_level: isPg ? 'postgraduate' : 'undergraduate',
         });
         flash('Profile updated');
@@ -441,9 +477,12 @@ function OneStopInner() {
   useEffect(() => {
     let isMounted = true;
     async function loadCompetitions() {
-      setCompetitionsLoading(true);
+      const cached = getCachedCompetitions();
+      if (!cached || cached.length === 0) {
+        setCompetitionsLoading(true);
+      }
       try {
-        const res = await fetch(`/api/competitions?t=${Date.now()}`);
+        const res = await fetch('/api/competitions');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         if (isMounted && json.success && Array.isArray(json.data)) {
@@ -491,6 +530,7 @@ function OneStopInner() {
           });
 
           setCompetitions(mapped);
+          setCachedCompetitions(mapped);
         }
       } catch (e) {
         console.warn('Could not fetch real-time Unstop competitions:', e.message);
@@ -996,21 +1036,23 @@ function OneStopInner() {
         />
       ) : (
         <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
-          {/* Top-Right Theme Toggle & Notification Center */}
-          <div className="onestop-top-actions">
-            <ThemeToggle variant="compact" />
-            <NotificationCenter
-              applications={applications}
-              competitions={competitions}
-              bookmarks={bookmarks}
-              posts={posts}
-              profile={profile}
-              onOpenWhatsApp={handleOpenWhatsApp}
-              onOpenDetail={(id) => setDetailCompId(id)}
-              onNavigate={handleNavigate}
-              onToggleBookmark={handleToggleBookmark}
-            />
-          </div>
+          {/* Top-Right Theme Toggle & Notification Center (for screens that don't embed it in their header) */}
+          {screen !== 'teams' && (
+            <div className="onestop-top-actions">
+              <ThemeToggle variant="compact" />
+              <NotificationCenter
+                applications={applications}
+                competitions={competitions}
+                bookmarks={bookmarks}
+                posts={posts}
+                profile={profile}
+                onOpenWhatsApp={handleOpenWhatsApp}
+                onOpenDetail={(id) => setDetailCompId(id)}
+                onNavigate={handleNavigate}
+                onToggleBookmark={handleToggleBookmark}
+              />
+            </div>
+          )}
           <div className="onestop-screen-content">
             {screen === 'home' && (
               <HomeScreen
@@ -1054,6 +1096,22 @@ function OneStopInner() {
                 onAcceptApp={handleAcceptApp}
                 onDeclineApp={handleDeclineApp}
                 onRemoveApp={handleRemoveApp}
+                headerAction={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <ThemeToggle variant="compact" />
+                    <NotificationCenter
+                      applications={applications}
+                      competitions={competitions}
+                      bookmarks={bookmarks}
+                      posts={posts}
+                      profile={profile}
+                      onOpenWhatsApp={handleOpenWhatsApp}
+                      onOpenDetail={(id) => setDetailCompId(id)}
+                      onNavigate={handleNavigate}
+                      onToggleBookmark={handleToggleBookmark}
+                    />
+                  </div>
+                }
               />
             )}
 

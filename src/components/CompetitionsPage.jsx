@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import InstitutionLogo from './InstitutionLogo';
 import SectionLoadingWidget from './SectionLoadingWidget';
 import { BROWSE_PUNS } from './FunLoadingScreen';
@@ -522,7 +521,7 @@ export default function CompetitionsPage({
 
   const [competitions, setCompetitions] = useState(() => (Array.isArray(initialCompetitions) && initialCompetitions.length > 0 ? initialCompetitions : []));
   const [loading, setLoading] = useState(() => !(Array.isArray(initialCompetitions) && initialCompetitions.length > 0));
-  const [showFetchingScreen, setShowFetchingScreen] = useState(true);
+  const [showFetchingScreen, setShowFetchingScreen] = useState(() => !(Array.isArray(initialCompetitions) && initialCompetitions.length > 0));
   const [fetchError, setFetchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
@@ -623,42 +622,6 @@ export default function CompetitionsPage({
     return internalBookmarkedIds;
   }, [propBookmarks, internalBookmarkedIds]);
 
-  // Sync bookmarks to cloud across devices
-  const syncProgressToCloud = useCallback(async (newBookmarks) => {
-    if (!user || !hasValidCredentials) return;
-    try {
-      // 1. Update Supabase auth user metadata
-      const { data, error } = await supabase.auth.updateUser({
-        data: {
-          case_comp_bookmarks: newBookmarks,
-        },
-      });
-
-      // 2. Update user_progress settings table for backup
-      if (!error && data?.user?.id) {
-        const { data: progressData } = await supabase
-          .from('user_progress')
-          .select('settings')
-          .eq('user_id', data.user.id)
-          .maybeSingle();
-
-        const existingSettings = progressData?.settings || {};
-        const newSettings = {
-          ...existingSettings,
-          case_comp_bookmarks: newBookmarks,
-          email: data.user.email,
-        };
-
-        await supabase
-          .from('user_progress')
-          .update({ settings: newSettings })
-          .eq('user_id', data.user.id);
-      }
-    } catch (err) {
-      console.warn('Error syncing case comp bookmarks to cloud:', err);
-    }
-  }, [user]);
-
   // Sync bookmarks to localStorage whenever they change (if using internal state)
   useEffect(() => {
     if (propBookmarks !== undefined) return;
@@ -698,11 +661,9 @@ export default function CompetitionsPage({
     setInternalBookmarkedIds((prev) => {
       const willAdd = !prev.includes(sId);
       trackCaseCompsEvent(willAdd ? 'bookmark_added' : 'bookmark_removed', { comp_id: sId });
-      const next = willAdd ? [...prev, sId] : prev.filter((item) => item !== sId);
-      syncProgressToCloud(next);
-      return next;
+      return willAdd ? [...prev, sId] : prev.filter((item) => item !== sId);
     });
-  }, [propToggleBookmark, syncProgressToCloud]);
+  }, [propToggleBookmark]);
 
   useEffect(() => {
     // Tick every 30 seconds for live countdown accuracy
@@ -720,7 +681,7 @@ export default function CompetitionsPage({
     setFetchError(null);
 
     try {
-      const res = await fetch(`/api/competitions?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch('/api/competitions');
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to reach Unstop`);
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
@@ -744,9 +705,18 @@ export default function CompetitionsPage({
     }
   }, [onCountUpdate]);
 
+  // Sync initialCompetitions from parent if updated
   useEffect(() => {
-    fetchOpportunities();
-  }, [fetchOpportunities]);
+    if (Array.isArray(initialCompetitions) && initialCompetitions.length > 0) {
+      setCompetitions(initialCompetitions);
+      setLoading(false);
+      setShowFetchingScreen(false);
+      if (onCountUpdate) onCountUpdate(initialCompetitions.length);
+    } else {
+      // Only fetch if parent did not provide competitions
+      fetchOpportunities();
+    }
+  }, [initialCompetitions, fetchOpportunities, onCountUpdate]);
 
   const handleShare = (comp, e) => {
     e.stopPropagation();
@@ -1423,7 +1393,8 @@ export default function CompetitionsPage({
           headline={bookmarkedOnly ? 'Syncing your saved competitions...' : 'Fetching live competitions from Unstop...'}
           subtitle={bookmarkedOnly ? 'Checking deadlines on everything you bookmarked' : 'Pulling direct listings across DU, IIMs, IITs & premier colleges'}
           customPuns={BROWSE_PUNS}
-          minDurationMs={2000}
+          minDurationMs={800}
+          maxDurationMs={1400}
           isReady={!loading}
           onComplete={() => setShowFetchingScreen(false)}
         />

@@ -12,7 +12,8 @@ export default function SectionLoadingWidget({
   subtitle = 'Pulling direct listings across DU, IIMs, IITs & premier colleges',
   customPuns = null,
   showPuns = true,
-  minDurationMs = 2000,
+  minDurationMs = 800,
+  maxDurationMs = 1450,
   isReady = true,
   onComplete,
 }) {
@@ -32,22 +33,35 @@ export default function SectionLoadingWidget({
     return candidate;
   }, [customPuns]);
 
-  // Dismiss once exactly minDurationMs has elapsed AND data is ready
+  // Dismiss once minDurationMs has elapsed AND data is ready, or enforce maxDurationMs cap (<= 1.5s max)
   useEffect(() => {
     let timer = null;
+    let completed = false;
     const start = Date.now();
+
+    const finish = () => {
+      if (completed) return;
+      completed = true;
+      setIsDismissing(true);
+      timer = setTimeout(() => onComplete && onComplete(), 160);
+    };
+
     const checkDone = () => {
       const elapsed = Date.now() - start;
-      if (elapsed >= minDurationMs && isReady) {
-        setIsDismissing(true);
-        timer = setTimeout(() => onComplete && onComplete(), 220);
+      if (elapsed >= maxDurationMs || (elapsed >= minDurationMs && isReady)) {
+        finish();
       } else {
-        timer = setTimeout(checkDone, Math.max(50, minDurationMs - elapsed));
+        const remaining = Math.min(
+          Math.max(40, minDurationMs - elapsed),
+          Math.max(40, maxDurationMs - elapsed)
+        );
+        timer = setTimeout(checkDone, remaining);
       }
     };
+
     checkDone();
     return () => timer && clearTimeout(timer);
-  }, [isReady, minDurationMs, onComplete]);
+  }, [isReady, minDurationMs, maxDurationMs, onComplete]);
 
   return (
     <div

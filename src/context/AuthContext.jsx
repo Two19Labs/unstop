@@ -146,18 +146,27 @@ export function AuthProvider({ children }) {
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  // 2. Fetch Profile and Bookmarks from Supabase
-  const fetchUserProfile = useCallback(async (userId) => {
+  // Column projections to minimize Supabase egress
+  const SQUAD_POSTS_SELECT = 'id, user_id, created_by_name, created_by_email, competition_name, organizer, competition_link, phone_number, title, description, skills_have, skills_looking_for, total_members, spots_left, initial_open_spots, is_open, college, course, year, accepted_emails, created_at, updated_at';
+  const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_course, applicant_year, pitch_note, highlighted_skills, status, lead_phone, created_at, updated_at';
+  const PROFILE_SELECT = 'id, email, full_name, college, course, year, phone, bio, education_level, profile_last_updated_at';
+
+  // In-flight request caching & deduplication to eliminate duplicate parallel calls
+  const squadDataInFlightRef = useRef(null);
+  const lastSquadDataFetchRef = useRef(0);
+
+  // 2. Fetch Profile and Bookmarks from Supabase (Strict column selection & zero extra roundtrips)
+  const fetchUserProfile = useCallback(async (userId, passedUser = null) => {
     if (!supabase || !userId) return;
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(PROFILE_SELECT)
         .eq('id', userId)
         .maybeSingle();
 
-      const { data: authData } = await supabase.auth.getUser();
-      const meta = authData?.user?.user_metadata || {};
+      const activeUser = passedUser || userRef.current;
+      const meta = activeUser?.user_metadata || {};
       const localLastUpdated = localStorage.getItem(`onestop_profile_last_updated_${userId}`);
       const lastUpdatedAt = data?.profile_last_updated_at || meta?.profile_last_updated_at || localLastUpdated || null;
       const educationLevel = data?.education_level || meta?.education_level || 'undergraduate';
@@ -170,7 +179,7 @@ export function AuthProvider({ children }) {
         profile_last_updated_at: lastUpdatedAt,
       } : (meta.full_name ? {
         id: userId,
-        email: authData?.user?.email,
+        email: activeUser?.email,
         full_name: meta.full_name,
         education_level: educationLevel,
         college: meta.college || '',
@@ -185,7 +194,7 @@ export function AuthProvider({ children }) {
         setProfile(resolvedProfile);
         setPersonProperties({
           name: resolvedProfile.full_name,
-          email: resolvedProfile.email || authData?.user?.email,
+          email: resolvedProfile.email || activeUser?.email,
           college: resolvedProfile.college,
           year: resolvedProfile.year,
           course: resolvedProfile.course,
@@ -208,7 +217,9 @@ export function AuthProvider({ children }) {
       if (!error && Array.isArray(data)) {
         const ids = data.map(b => String(b.comp_id)).filter(id => !isMockBookmark(id));
         setBookmarks(ids);
-        localStorage.setItem('onestop_bookmarks', JSON.stringify(ids));
+        try {
+          localStorage.setItem('onestop_bookmarks', JSON.stringify(ids));
+        } catch (e) {}
       }
     } catch (err) {
       console.warn('Bookmarks fetch warning:', err.message);
@@ -232,77 +243,98 @@ export function AuthProvider({ children }) {
           };
         });
         setNotificationStates(map);
-        localStorage.setItem(`onestop_user_notification_states_${userId}`, JSON.stringify(map));
-        localStorage.setItem('onestop_user_notification_states', JSON.stringify(map));
+        try {
+          localStorage.setItem(`onestop_user_notification_states_${userId}`, JSON.stringify(map));
+          localStorage.setItem('onestop_user_notification_states', JSON.stringify(map));
+        } catch (e) {}
       }
     } catch (err) {
       console.warn('Notification states fetch error:', err.message);
     }
   }, []);
 
-  // 3. Sync Squad Data from Supabase with Normalized Application Fields
-  const refreshSquadData = useCallback(async (targetUser = null) => {
+  // 3. Sync Squad Data from Supabase with Lean Field Projections & Request Deduplication
+  const refreshSquadData = useCallback(async (targetUser = null, force = false) => {
     if (!supabase) return;
 
-    // Fetch squad posts
-    try {
-      const { data: posts, error: postErr } = await supabase
-        .from('squad_posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!postErr && Array.isArray(posts)) {
-        const cleanPosts = posts.filter(p => !isMockPost(p));
-        setSquadPosts(cleanPosts);
-        localStorage.setItem('onestop_posts', JSON.stringify(cleanPosts));
-      }
-    } catch (e) {
-      console.warn('Could not sync squad posts from Supabase:', e.message);
+    const now = Date.now();
+    if (!force && squadDataInFlightRef.current) {
+      return squadDataInFlightRef.current;
+    }
+    if (!force && (now - lastSquadDataFetchRef.current < 4000)) {
+      return;
     }
 
-    // Fetch applications if user is signed in
-    const activeUser = targetUser || userRef.current;
-    if (activeUser) {
+    const fetchPromise = (async () => {
       try {
-        const { data: apps, error: appErr } = await supabase
-          .from('squad_applications')
-          .select('*')
-          .order('created_at', { ascending: false });
+        lastSquadDataFetchRef.current = Date.now();
 
-        if (!appErr && Array.isArray(apps)) {
-          const cleanApps = apps
-            .filter(a => !isMockApp(a))
-            .map(a => {
-              const isApplicant = a.applicant_id === activeUser.id;
-              return {
-                ...a,
-                dir: isApplicant ? 'out' : 'in',
-                postId: a.post_id,
-                who: a.applicant_name,
-                meta: a.applicant_college,
-                applicant_name: a.applicant_name,
-                applicant_college: a.applicant_college,
-                applicant_year: a.applicant_year || 'UG 2nd Year',
-                applicant_course: a.applicant_course || '',
-                skills: a.highlighted_skills || [],
-                highlighted_skills: a.highlighted_skills || [],
-                pitch: a.pitch_note,
-                pitch_note: a.pitch_note,
-                phone: a.applicant_phone,
-                applicant_phone: a.applicant_phone,
-                leadPhone: a.lead_phone || '',
-                lead_phone: a.lead_phone || ''
-              };
-            });
-          setSquadApps(cleanApps);
-          localStorage.setItem('onestop_applications', JSON.stringify(cleanApps));
+        // Fetch squad posts with column projection and row limit
+        const { data: posts, error: postErr } = await supabase
+          .from('squad_posts')
+          .select(SQUAD_POSTS_SELECT)
+          .order('created_at', { ascending: false })
+          .limit(60);
+
+        if (!postErr && Array.isArray(posts)) {
+          const cleanPosts = posts.filter(p => !isMockPost(p));
+          setSquadPosts(cleanPosts);
+          try {
+            localStorage.setItem('onestop_posts', JSON.stringify(cleanPosts));
+          } catch (e) {}
+        }
+
+        // Fetch applications if user is signed in
+        const activeUser = targetUser || userRef.current;
+        if (activeUser?.id) {
+          const { data: apps, error: appErr } = await supabase
+            .from('squad_applications')
+            .select(SQUAD_APPS_SELECT)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (!appErr && Array.isArray(apps)) {
+            const cleanApps = apps
+              .filter(a => !isMockApp(a))
+              .map(a => {
+                const isApplicant = a.applicant_id === activeUser.id;
+                return {
+                  ...a,
+                  dir: isApplicant ? 'out' : 'in',
+                  postId: a.post_id,
+                  who: a.applicant_name,
+                  meta: a.applicant_college,
+                  applicant_name: a.applicant_name,
+                  applicant_college: a.applicant_college,
+                  applicant_year: a.applicant_year || 'UG 2nd Year',
+                  applicant_course: a.applicant_course || '',
+                  skills: a.highlighted_skills || [],
+                  highlighted_skills: a.highlighted_skills || [],
+                  pitch: a.pitch_note,
+                  pitch_note: a.pitch_note,
+                  phone: a.applicant_phone,
+                  applicant_phone: a.applicant_phone,
+                  leadPhone: a.lead_phone || '',
+                  lead_phone: a.lead_phone || ''
+                };
+              });
+            setSquadApps(cleanApps);
+            try {
+              localStorage.setItem('onestop_applications', JSON.stringify(cleanApps));
+            } catch (e) {}
+          }
+        } else {
+          setSquadApps([]);
         }
       } catch (e) {
-        console.warn('Could not sync squad apps from Supabase:', e.message);
+        console.warn('Could not sync squad data from Supabase:', e.message);
+      } finally {
+        squadDataInFlightRef.current = null;
       }
-    } else {
-      setSquadApps([]);
-    }
+    })();
+
+    squadDataInFlightRef.current = fetchPromise;
+    return fetchPromise;
   }, []);
 
   // 4. Initialize Supabase Auth Listener
@@ -323,7 +355,7 @@ export function AuthProvider({ children }) {
       userRef.current = currentUser;
       if (currentUser) {
         identifyUser(currentUser.id, { email: currentUser.email });
-        fetchUserProfile(currentUser.id);
+        fetchUserProfile(currentUser.id, currentUser);
         fetchUserBookmarks(currentUser.id);
         fetchNotificationStates(currentUser.id);
         refreshSquadData(currentUser);
@@ -345,10 +377,10 @@ export function AuthProvider({ children }) {
 
         if (currentUser) {
           identifyUser(currentUser.id, { email: currentUser.email });
-          await fetchUserProfile(currentUser.id);
+          await fetchUserProfile(currentUser.id, currentUser);
           await fetchUserBookmarks(currentUser.id);
           await fetchNotificationStates(currentUser.id);
-          refreshSquadData(currentUser);
+          refreshSquadData(currentUser, true);
         } else {
           resetUser();
           setProfile(null);
@@ -366,20 +398,28 @@ export function AuthProvider({ children }) {
     };
   }, [fetchUserProfile, fetchUserBookmarks, fetchNotificationStates, refreshSquadData]);
 
-  // 5. Initial Squad Data Fetch + Realtime Subscription & Polling Fallback Across Devices
+  // 5. Initial Squad Data Fetch + Realtime Subscription & Background Sync Across Devices
   useEffect(() => {
     refreshSquadData();
 
     if (!supabase) return;
 
+    let debounceTimer = null;
+    const scheduleDebouncedSync = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        refreshSquadData(null, true);
+      }, 350);
+    };
+
     // Realtime Postgres changes subscription across devices
     const channel = supabase
       .channel('public:app_realtime_sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, () => {
-        refreshSquadData();
+        scheduleDebouncedSync();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, () => {
-        refreshSquadData();
+        scheduleDebouncedSync();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookmarks' }, () => {
         if (userRef.current?.id) fetchUserBookmarks(userRef.current.id);
@@ -392,17 +432,48 @@ export function AuthProvider({ children }) {
       })
       .subscribe();
 
-    // 30-second interval polling fallback
+    // Visibility-gated polling fallback: 3-minute interval (180,000ms), paused when document is hidden
     const pollInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       refreshSquadData();
       if (userRef.current?.id) {
         fetchUserBookmarks(userRef.current.id);
         fetchNotificationStates(userRef.current.id);
       }
-    }, 30000);
+    }, 180000);
+
+    // Tab focus / visibility revalidation: only refresh when returning after > 60s
+    let lastVisibilitySync = Date.now();
+    const handleVisibilityOrFocus = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        const now = Date.now();
+        if (now - lastVisibilitySync > 60000) {
+          lastVisibilitySync = now;
+          refreshSquadData();
+          if (userRef.current?.id) {
+            fetchUserBookmarks(userRef.current.id);
+            fetchNotificationStates(userRef.current.id);
+          }
+        }
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleVisibilityOrFocus);
+    }
 
     return () => {
       clearInterval(pollInterval);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleVisibilityOrFocus);
+      }
       supabase.removeChannel(channel);
     };
   }, [refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchUserProfile]);
@@ -535,7 +606,7 @@ export function AuthProvider({ children }) {
   };
 
   // Profile Update (Database & Auth Metadata with 24-Hour Cooldown)
-  const updateProfile = async ({ fullName, college, course, year, phone, bio, education_level }) => {
+  const updateProfile = async ({ fullName, college, course, year, phone, bio, education_level, skills }) => {
     if (!user || !supabase) {
       throw new Error('You must be signed in to update your profile.');
     }
@@ -555,6 +626,7 @@ export function AuthProvider({ children }) {
     const selectedEducationLevel = selectedYear.startsWith('PG') || (education_level || profile?.education_level || user?.user_metadata?.education_level || 'undergraduate').toLowerCase().includes('post')
       ? 'postgraduate'
       : 'undergraduate';
+    const cleanSkills = Array.isArray(skills) ? skills : (profile?.skills || []);
 
     // Check if any field has actually changed
     const prevName = (profile?.full_name || user?.user_metadata?.full_name || '').trim();
@@ -566,6 +638,8 @@ export function AuthProvider({ children }) {
     const prevEducationLevel = prevYear.startsWith('PG') || (profile?.education_level || user?.user_metadata?.education_level || 'undergraduate').toLowerCase().includes('post')
       ? 'postgraduate'
       : 'undergraduate';
+    const prevSkills = Array.isArray(profile?.skills) ? profile.skills : (Array.isArray(user?.user_metadata?.skills) ? user.user_metadata.skills : []);
+    const skillsChanged = JSON.stringify(prevSkills.slice().sort()) !== JSON.stringify(cleanSkills.slice().sort());
 
     const hasChanged =
       trimmedName !== prevName ||
@@ -574,7 +648,8 @@ export function AuthProvider({ children }) {
       selectedYear !== prevYear ||
       cleanPhone !== prevPhone ||
       trimmedBio !== prevBio ||
-      selectedEducationLevel !== prevEducationLevel;
+      selectedEducationLevel !== prevEducationLevel ||
+      skillsChanged;
 
     // If nothing has changed, do not start/reset cooldown
     if (!hasChanged && (profile?.profile_last_updated_at || user?.user_metadata?.profile_last_updated_at)) {
@@ -593,6 +668,7 @@ export function AuthProvider({ children }) {
         education_level: selectedEducationLevel,
         phone: cleanPhone,
         bio: trimmedBio,
+        skills: cleanSkills,
         profile_last_updated_at: nowIso,
       },
     });
@@ -615,6 +691,7 @@ export function AuthProvider({ children }) {
       education_level: selectedEducationLevel,
       phone: cleanPhone,
       bio: trimmedBio,
+      skills: cleanSkills,
       profile_last_updated_at: nowIso,
       updated_at: nowIso,
     };
@@ -638,6 +715,7 @@ export function AuthProvider({ children }) {
             year: selectedYear,
             phone: cleanPhone,
             bio: trimmedBio,
+            skills: cleanSkills,
             profile_last_updated_at: nowIso,
             updated_at: nowIso,
           }, { onConflict: 'id' });
