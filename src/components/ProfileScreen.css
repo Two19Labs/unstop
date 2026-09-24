@@ -401,6 +401,81 @@
   min-width: 0;
 }
 
+/* 24-Hour Cooldown Banner (Only displayed when user attempts to update within 24 hours) */
+.profile-cooldown-banner {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: #92400E;
+  box-shadow: 0 1px 3px rgba(180, 83, 9, 0.08);
+  animation: profile-cooldown-appear 180ms ease;
+}
+
+@keyframes profile-cooldown-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-cooldown-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.profile-cooldown-icon {
+  flex-shrink: 0;
+}
+
+.profile-cooldown-content {
+  line-height: 1.4;
+}
+
+.profile-cooldown-content strong {
+  color: #78350F;
+}
+
+.profile-cooldown-timer {
+  font-family: monospace;
+  font-weight: 700;
+  background: rgba(180, 83, 9, 0.12);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  margin-left: 2px;
+}
+
+.profile-cooldown-close-btn {
+  background: transparent;
+  border: none;
+  color: #B45309;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms ease;
+  flex-shrink: 0;
+}
+
+.profile-cooldown-close-btn:hover {
+  background: rgba(180, 83, 9, 0.12);
+  color: #78350F;
+}
+
 .profile-section-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -658,6 +733,14 @@
   align-items: center;
   gap: 8px;
   color: #4ADE80;
+  font-weight: 600;
+}
+
+.profile-sticky-bar-locked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #FBBF24;
   font-weight: 600;
 }
 
@@ -973,3 +1056,29 @@
   border-color: rgba(248, 113, 113, 0.25);
   color: var(--ink-secondary);
 }
+
+[data-theme='dark'] .profile-cooldown-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #FCD34D;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme='dark'] .profile-cooldown-content strong {
+  color: #FBBF24;
+}
+
+[data-theme='dark'] .profile-cooldown-timer {
+  background: rgba(245, 158, 11, 0.25);
+  color: #FDE68A;
+}
+
+[data-theme='dark'] .profile-cooldown-close-btn {
+  color: #FCD34D;
+}
+
+[data-theme='dark'] .profile-cooldown-close-btn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FFFFFF;
+}
+

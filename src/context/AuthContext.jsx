@@ -669,6 +669,12 @@ export function AuthProvider({ children }) {
       throw new Error('You must be signed in to update your profile.');
     }
 
+    // 1. Enforce 24-Hour Cooldown
+    const cooldown = getProfileCooldown(profile, user);
+    if (cooldown.isLocked) {
+      throw new Error(`Profile details can only be updated once every 24 hours. Cooldown remaining: ${cooldown.remainingFormatted}.`);
+    }
+
     const cleanPhone = sanitizeIndianPhone(phone);
     const trimmedName = (fullName || '').trim();
     const trimmedCollege = (college || '').trim();

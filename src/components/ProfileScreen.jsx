@@ -11,6 +11,7 @@ import {
   AlertCircleIcon,
   CloseIcon
 } from './icons';
+import { getProfileCooldown } from '../context/AuthContext';
 import './ProfileScreen.css';
 
 const YEARS = {
@@ -69,6 +70,11 @@ export default function ProfileScreen({
   const [savedSuccess, setSavedSuccess] = useState(false);
   const successTimerRef = useRef(null);
 
+  // 24-Hour Cooldown State: Only displayed when the user attempts to save changes within 24 hours
+  const [cooldown, setCooldown] = useState(null);
+  const [showCooldownNotice, setShowCooldownNotice] = useState(false);
+  const cooldownIntervalRef = useRef(null);
+
   // Modals for Account features
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
@@ -95,10 +101,35 @@ export default function ProfileScreen({
     }
   }, [profile]);
 
+  // Live timer interval: ticks every second only while cooldown notice is displayed
+  useEffect(() => {
+    if (showCooldownNotice) {
+      const updateTimer = () => {
+        const cd = getProfileCooldown(profile, user);
+        if (!cd.isLocked) {
+          setShowCooldownNotice(false);
+          setCooldown(null);
+        } else {
+          setCooldown(cd);
+        }
+      };
+      updateTimer();
+      cooldownIntervalRef.current = setInterval(updateTimer, 1000);
+      return () => {
+        if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
+      };
+    } else {
+      if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
+    }
+  }, [showCooldownNotice, profile, user]);
+
   useEffect(() => {
     return () => {
       if (successTimerRef.current) {
         clearTimeout(successTimerRef.current);
+      }
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
       }
     };
   }, []);
@@ -137,10 +168,23 @@ export default function ProfileScreen({
     setYearNum(savedSnapshot.yearNum);
     setPhone(savedSnapshot.phone);
     setSkills(savedSnapshot.skills);
+    setShowCooldownNotice(false);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // 24-hour edit cooldown check: only displayed when someone attempts to update within 24 hours
+    const currentCooldown = getProfileCooldown(profile, user);
+    if (currentCooldown.isLocked) {
+      setCooldown(currentCooldown);
+      setShowCooldownNotice(true);
+      if (flashToast) {
+        flashToast(`Profile edit locked (${currentCooldown.remainingFormatted} remaining)`);
+      }
+      return;
+    }
+
     const isPost = level === 'PG';
     const computedYear = `${level} ${yearNum} Year`;
 
@@ -167,6 +211,7 @@ export default function ProfileScreen({
     });
 
     setSavedSuccess(true);
+    setShowCooldownNotice(false);
     if (successTimerRef.current) {
       clearTimeout(successTimerRef.current);
     }
@@ -324,6 +369,28 @@ export default function ProfileScreen({
 
         {/* Right Column (<form>) */}
         <form onSubmit={handleSubmit} className="profile-form-column">
+          {/* 24-Hour Cooldown Banner: only displayed when user attempts to update within 24 hours */}
+          {showCooldownNotice && cooldown?.isLocked && (
+            <div className="profile-cooldown-banner" role="alert">
+              <div className="profile-cooldown-banner-left">
+                <LockIcon size={18} className="profile-cooldown-icon" color="var(--urgency-yellow)" />
+                <div className="profile-cooldown-content">
+                  <strong>Profile edit locked:</strong> Details can only be updated once every 24 hours. Cooldown remaining:{' '}
+                  <span className="profile-cooldown-timer">{cooldown.remainingFormatted}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="profile-cooldown-close-btn"
+                onClick={() => setShowCooldownNotice(false)}
+                title="Dismiss notice"
+                aria-label="Dismiss notice"
+              >
+                <CloseIcon size={15} />
+              </button>
+            </div>
+          )}
+
           {/* Section 1: Personal & Campus Information */}
           <section className="profile-section-card">
             <div className="profile-section-header">
@@ -463,13 +530,18 @@ export default function ProfileScreen({
           </section>
 
           {/* Sticky Bottom Save / Unsaved Changes Bar */}
-          {(isDirty || savedSuccess) && (
-            <div className="profile-sticky-save-bar">
+          {(isDirty || savedSuccess || (showCooldownNotice && cooldown?.isLocked)) && (
+            <div className={`profile-sticky-save-bar ${showCooldownNotice && cooldown?.isLocked ? 'locked' : ''}`}>
               <div className="profile-sticky-bar-left">
                 {savedSuccess ? (
                   <span className="profile-sticky-bar-saved">
                     <CheckIcon size={16} color="#4ADE80" />
                     <span>Profile saved successfully</span>
+                  </span>
+                ) : showCooldownNotice && cooldown?.isLocked ? (
+                  <span className="profile-sticky-bar-locked">
+                    <LockIcon size={15} color="#FBBF24" />
+                    <span>Profile edit locked ({cooldown.remainingFormatted} remaining)</span>
                   </span>
                 ) : (
                   <span className="profile-sticky-bar-dirty-text">
@@ -483,15 +555,19 @@ export default function ProfileScreen({
                   <button
                     type="button"
                     className="profile-sticky-discard-btn"
-                    onClick={handleDiscard}
+                    onClick={() => {
+                      handleDiscard();
+                      setShowCooldownNotice(false);
+                    }}
                   >
                     Discard
                   </button>
                   <button
                     type="submit"
                     className="profile-sticky-save-btn"
+                    disabled={showCooldownNotice && cooldown?.isLocked}
                   >
-                    Save changes
+                    {showCooldownNotice && cooldown?.isLocked ? 'Edit Locked' : 'Save changes'}
                   </button>
                 </div>
               )}
