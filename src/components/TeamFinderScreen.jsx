@@ -33,6 +33,18 @@ function formatDue(daysOrDeadline) {
   return { text, color, hours: h, days: h / 24 };
 }
 
+const ChevronDownIcon = ({ size = 12, className = '' }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+const CheckIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
 // Sample fallback squad data from design handoff to ensure full fidelity when database has no posts yet
 const SAMPLE_COMPS = [
   { id: 'c1', title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', days: 5 / 24, team: '2–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
@@ -124,6 +136,43 @@ export default function TeamFinderScreen({
   const [fSkills, setFSkills] = useState([]);
   const [fSpots, setFSpots] = useState('any'); // 'any' | '1' | '2'
   const [fCloses, setFCloses] = useState('any'); // 'any' | 'week' | 'month'
+
+  const [openSections, setOpenSections] = useState({
+    categories: true,
+    circuits: true,
+    skills: false,
+  });
+
+  const toggleSection = (sectionKey) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey],
+    }));
+  };
+
+  const handleToggleAllCats = () => {
+    if (fCats.length > 0) {
+      setFCats([]);
+    } else {
+      setFCats([...CATS]);
+    }
+  };
+
+  const handleToggleAllCircuits = () => {
+    if (fCircuits.length > 0) {
+      setFCircuits([]);
+    } else {
+      setFCircuits([...CIRCUITS]);
+    }
+  };
+
+  const handleToggleAllSkills = () => {
+    if (fSkills.length > 0) {
+      setFSkills([]);
+    } else {
+      setFSkills([...SKILLS]);
+    }
+  };
 
   // Modals & Sheets State
   const [detailPostId, setDetailPostId] = useState(null);
@@ -610,221 +659,275 @@ export default function TeamFinderScreen({
         <div className="tf-body-grid">
 
           {/* ── Filter Sidebar (Left) ── */}
-          <aside className="tf-sidebar">
+          <aside className="tf-sidebar cc-filter-sidebar">
+            <div className="cc-filter-card cc-unified-filter-card">
 
-            {/* Row 1: Header */}
-            <div className="tf-sidebar-header">
-              <div className="tf-sidebar-title-wrap">
-                <span className="tf-sidebar-title">Filters</span>
+              {/* Header: Title & Reset All */}
+              <div className="cc-filter-card-header">
+                <div className="cc-card-heading-group">
+                  <span className="cc-card-heading">Filters</span>
+                  {filterCount > 0 && (
+                    <span className="cc-active-count-badge">{filterCount}</span>
+                  )}
+                </div>
                 {filterCount > 0 && (
-                  <span className="tf-filter-count-badge">{filterCount}</span>
+                  <button
+                    type="button"
+                    className="cc-filter-reset-link"
+                    onClick={handleClearAll}
+                    title="Reset all filters"
+                  >
+                    Reset All
+                  </button>
                 )}
               </div>
-              <button type="button" onClick={handleClearAll} className="tf-clear-all-btn">
-                Clear all
-              </button>
-            </div>
 
-            {/* Row 3: Quick Checkboxes */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <button
-                type="button"
-                onClick={() => setFMatch(!fMatch)}
-                className="tf-checkbox-row"
-                style={{ fontWeight: fMatch ? 600 : 500 }}
-              >
-                <span className={`tf-checkbox-box ${fMatch ? 'checked' : ''}`}>
-                  {fMatch && (
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  )}
-                </span>
-                <span className="tf-checkbox-label">Matches my skills</span>
-                <span className="tf-checkbox-count">{countIn(p => p.match > 0, 'match')}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFMyCollege(!fMyCollege)}
-                className="tf-checkbox-row"
-                style={{ fontWeight: fMyCollege ? 600 : 500 }}
-              >
-                <span className={`tf-checkbox-box ${fMyCollege ? 'checked' : ''}`}>
-                  {fMyCollege && (
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  )}
-                </span>
-                <span className="tf-checkbox-label">Lead from my college ({userCollege.split(' ')[0]})</span>
-                <span className="tf-checkbox-count">{countIn(p => p.college.toLowerCase() === userCollege.toLowerCase(), 'myCollege')}</span>
-              </button>
-            </div>
-
-            {/* Row 4: Categories */}
-            <div className="tf-filter-block">
-              <div className="tf-filter-block-header">
-                <span className="tf-filter-block-label">Categories</span>
-                <button
-                  type="button"
-                  onClick={() => setFCats([])}
-                  className="tf-filter-all-link"
-                  style={{ color: fCats.length > 0 ? 'var(--primary, #0F3FFE)' : 'var(--ink-muted, #75736C)' }}
-                >
-                  All
-                </button>
-              </div>
-              {CATS.map((c) => {
-                const checked = fCats.includes(c);
-                const count = countIn(p => p.comp.cat === c, 'cats');
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setFCats(checked ? fCats.filter(x => x !== c) : [...fCats, c])}
-                    className="tf-checkbox-row"
-                    style={{ fontWeight: checked ? 600 : 500 }}
-                  >
-                    <span className={`tf-checkbox-box ${checked ? 'checked' : ''}`}>
-                      {checked && (
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      )}
+              {/* Subgroup 1: Quick Preferences (Matches skills, College lead) */}
+              <div className="cc-filter-subgroup" style={{ borderTop: 'none', paddingTop: 2 }}>
+                <div className="cc-checkbox-list">
+                  <label className="cc-filter-checkbox-row">
+                    <input
+                      type="checkbox"
+                      className="cc-filter-checkbox-input"
+                      checked={fMatch}
+                      onChange={() => setFMatch(!fMatch)}
+                    />
+                    <span className="cc-custom-checkbox">
+                      {fMatch && <CheckIcon size={10} />}
                     </span>
-                    <span className="tf-checkbox-label">{c}</span>
-                    <span className="tf-checkbox-count">{count}</span>
-                  </button>
-                );
-              })}
-            </div>
+                    <span className="cc-checkbox-label-text">Matches my skills</span>
+                    <span className="cc-filter-num">({countIn(p => p.match > 0, 'match')})</span>
+                  </label>
 
-            {/* Row 5: Circuits */}
-            <div className="tf-filter-block">
-              <div className="tf-filter-block-header">
-                <span className="tf-filter-block-label">Circuits</span>
-                <button
-                  type="button"
-                  onClick={() => setFCircuits([])}
-                  className="tf-filter-all-link"
-                  style={{ color: fCircuits.length > 0 ? 'var(--primary, #0F3FFE)' : 'var(--ink-muted, #75736C)' }}
-                >
-                  All
-                </button>
-              </div>
-              {CIRCUITS.map((circ) => {
-                const checked = fCircuits.includes(circ);
-                const count = countIn(p => p.comp.circuit === circ, 'circuits');
-                return (
-                  <button
-                    key={circ}
-                    type="button"
-                    onClick={() => setFCircuits(checked ? fCircuits.filter(x => x !== circ) : [...fCircuits, circ])}
-                    className="tf-checkbox-row"
-                    style={{ fontWeight: checked ? 600 : 500 }}
-                  >
-                    <span className={`tf-checkbox-box ${checked ? 'checked' : ''}`}>
-                      {checked && (
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      )}
+                  <label className="cc-filter-checkbox-row">
+                    <input
+                      type="checkbox"
+                      className="cc-filter-checkbox-input"
+                      checked={fMyCollege}
+                      onChange={() => setFMyCollege(!fMyCollege)}
+                    />
+                    <span className="cc-custom-checkbox">
+                      {fMyCollege && <CheckIcon size={10} />}
                     </span>
-                    <span className="tf-checkbox-label">{circ}</span>
-                    <span className="tf-checkbox-count">{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Row 6: Skills Needed */}
-            <div className="tf-filter-block">
-              <div className="tf-filter-block-header">
-                <span className="tf-filter-block-label">Skills needed</span>
-                <button
-                  type="button"
-                  onClick={() => setFSkills([])}
-                  className="tf-filter-all-link"
-                  style={{ color: fSkills.length > 0 ? 'var(--primary, #0F3FFE)' : 'var(--ink-muted, #75736C)' }}
-                >
-                  All
-                </button>
+                    <span className="cc-checkbox-label-text">Lead from my college ({userCollege.split(' ')[0]})</span>
+                    <span className="cc-filter-num">({countIn(p => p.college.toLowerCase() === userCollege.toLowerCase(), 'myCollege')})</span>
+                  </label>
+                </div>
               </div>
-              {(skillsOpen ? SKILLS : SKILLS.slice(0, 5)).map((sk) => {
-                const checked = fSkills.includes(sk);
-                const count = countIn(p => p.want.includes(sk), 'skills');
-                return (
-                  <button
-                    key={sk}
-                    type="button"
-                    onClick={() => setFSkills(checked ? fSkills.filter(x => x !== sk) : [...fSkills, sk])}
-                    className="tf-checkbox-row"
-                    style={{ fontWeight: checked ? 600 : 500 }}
-                  >
-                    <span className={`tf-checkbox-box ${checked ? 'checked' : ''}`}>
-                      {checked && (
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      )}
-                    </span>
-                    <span className="tf-checkbox-label">{sk}</span>
-                    <span className="tf-checkbox-count">{count}</span>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => setSkillsOpen(!skillsOpen)}
-                className="tf-expand-link"
-              >
-                {skillsOpen ? 'Show fewer' : `Show all ${SKILLS.length}`}
-              </button>
-            </div>
 
-            {/* Row 7: Open spots segmented control */}
-            <div className="tf-filter-block">
-              <span className="tf-segment-label">Open spots</span>
-              <div className="tf-segment-track">
-                {[
-                  ['any', 'Any'],
-                  ['1', '1 left'],
-                  ['2', '2+']
-                ].map(([val, label]) => (
+              {/* Subgroup 2: Categories */}
+              <div className="cc-filter-subgroup">
+                <div className="cc-subgroup-header-row">
                   <button
-                    key={val}
                     type="button"
-                    onClick={() => setFSpots(val)}
-                    className={`tf-segment-btn ${fSpots === val ? 'active' : ''}`}
+                    className={`cc-accordion-header ${openSections.categories ? 'open' : ''}`}
+                    onClick={() => toggleSection('categories')}
+                    aria-expanded={openSections.categories}
                   >
-                    {label}
+                    <div className="cc-accordion-header-left">
+                      <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+                      <span className="cc-accordion-title">Categories</span>
+                    </div>
+                    {fCats.length > 0 && (
+                      <span className="cc-active-count-badge">{fCats.length}</span>
+                    )}
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    className="cc-mini-select-all"
+                    onClick={handleToggleAllCats}
+                    title={fCats.length > 0 ? "Clear categories" : "Select all categories"}
+                  >
+                    {fCats.length > 0 ? "Clear" : "All"}
+                  </button>
+                </div>
+
+                {openSections.categories && (
+                  <div className="cc-accordion-content">
+                    <div className="cc-checkbox-list">
+                      {CATS.map((c) => {
+                        const isChecked = fCats.includes(c);
+                        const count = countIn(p => p.comp.cat === c, 'cats');
+                        return (
+                          <label key={c} className="cc-filter-checkbox-row">
+                            <input
+                              type="checkbox"
+                              className="cc-filter-checkbox-input"
+                              checked={isChecked}
+                              onChange={() => setFCats(isChecked ? fCats.filter(x => x !== c) : [...fCats, c])}
+                            />
+                            <span className="cc-custom-checkbox">
+                              {isChecked && <CheckIcon size={10} />}
+                            </span>
+                            <span className="cc-checkbox-label-text">{c}</span>
+                            <span className="cc-filter-num">({count})</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
 
-            {/* Row 8: Competition closes segmented control */}
-            <div className="tf-filter-block">
-              <span className="tf-segment-label">Competition closes</span>
-              <div className="tf-segment-track">
-                {[
-                  ['any', 'Any'],
-                  ['week', 'This week'],
-                  ['month', 'This month']
-                ].map(([val, label]) => (
+              {/* Subgroup 3: Circuits */}
+              <div className="cc-filter-subgroup">
+                <div className="cc-subgroup-header-row">
                   <button
-                    key={val}
                     type="button"
-                    onClick={() => setFCloses(val)}
-                    className={`tf-segment-btn ${fCloses === val ? 'active' : ''}`}
+                    className={`cc-accordion-header ${openSections.circuits ? 'open' : ''}`}
+                    onClick={() => toggleSection('circuits')}
+                    aria-expanded={openSections.circuits}
                   >
-                    {label}
+                    <div className="cc-accordion-header-left">
+                      <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+                      <span className="cc-accordion-title">Circuits</span>
+                    </div>
+                    {fCircuits.length > 0 && (
+                      <span className="cc-active-count-badge">{fCircuits.length}</span>
+                    )}
                   </button>
-                ))}
-              </div>
-            </div>
+                  <button
+                    type="button"
+                    className="cc-mini-select-all"
+                    onClick={handleToggleAllCircuits}
+                    title={fCircuits.length > 0 ? "Clear circuits" : "Select all circuits"}
+                  >
+                    {fCircuits.length > 0 ? "Clear" : "All"}
+                  </button>
+                </div>
 
+                {openSections.circuits && (
+                  <div className="cc-accordion-content">
+                    <div className="cc-checkbox-list">
+                      {CIRCUITS.map((circ) => {
+                        const isChecked = fCircuits.includes(circ);
+                        const count = countIn(p => p.comp.circuit === circ, 'circuits');
+                        return (
+                          <label key={circ} className="cc-filter-checkbox-row">
+                            <input
+                              type="checkbox"
+                              className="cc-filter-checkbox-input"
+                              checked={isChecked}
+                              onChange={() => setFCircuits(isChecked ? fCircuits.filter(x => x !== circ) : [...fCircuits, circ])}
+                            />
+                            <span className="cc-custom-checkbox">
+                              {isChecked && <CheckIcon size={10} />}
+                            </span>
+                            <span className="cc-checkbox-label-text">{circ}</span>
+                            <span className="cc-filter-num">({count})</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Subgroup 4: Skills Needed */}
+              <div className="cc-filter-subgroup">
+                <div className="cc-subgroup-header-row">
+                  <button
+                    type="button"
+                    className={`cc-accordion-header ${openSections.skills ? 'open' : ''}`}
+                    onClick={() => toggleSection('skills')}
+                    aria-expanded={openSections.skills}
+                  >
+                    <div className="cc-accordion-header-left">
+                      <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+                      <span className="cc-accordion-title">Skills needed</span>
+                    </div>
+                    {fSkills.length > 0 && (
+                      <span className="cc-active-count-badge">{fSkills.length}</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="cc-mini-select-all"
+                    onClick={handleToggleAllSkills}
+                    title={fSkills.length > 0 ? "Clear skills" : "Select all skills"}
+                  >
+                    {fSkills.length > 0 ? "Clear" : "All"}
+                  </button>
+                </div>
+
+                {openSections.skills && (
+                  <div className="cc-accordion-content">
+                    <div className="cc-checkbox-list">
+                      {(skillsOpen ? SKILLS : SKILLS.slice(0, 5)).map((sk) => {
+                        const isChecked = fSkills.includes(sk);
+                        const count = countIn(p => p.want.includes(sk), 'skills');
+                        return (
+                          <label key={sk} className="cc-filter-checkbox-row">
+                            <input
+                              type="checkbox"
+                              className="cc-filter-checkbox-input"
+                              checked={isChecked}
+                              onChange={() => setFSkills(isChecked ? fSkills.filter(x => x !== sk) : [...fSkills, sk])}
+                            />
+                            <span className="cc-custom-checkbox">
+                              {isChecked && <CheckIcon size={10} />}
+                            </span>
+                            <span className="cc-checkbox-label-text">{sk}</span>
+                            <span className="cc-filter-num">({count})</span>
+                          </label>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => setSkillsOpen(!skillsOpen)}
+                        className="cc-mini-select-all"
+                        style={{ alignSelf: 'flex-start', marginTop: 2, padding: '2px 4px', fontSize: '0.72rem', color: 'var(--primary, #0F3FFE)' }}
+                      >
+                        {skillsOpen ? 'Show fewer' : `+ Show ${SKILLS.length - 5} more`}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Subgroup 5: Open spots */}
+              <div className="cc-filter-subgroup cc-segmented-subgroup">
+                <span className="cc-subgroup-label">Open Spots</span>
+                <div className="cc-segmented-bar">
+                  {[
+                    ['any', 'Any'],
+                    ['1', '1 left'],
+                    ['2', '2+']
+                  ].map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`cc-seg-btn ${fSpots === val ? 'active' : ''}`}
+                      onClick={() => setFSpots(val)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subgroup 6: Competition Closes */}
+              <div className="cc-filter-subgroup cc-segmented-subgroup">
+                <span className="cc-subgroup-label">Competition Closes</span>
+                <div className="cc-segmented-bar">
+                  {[
+                    ['any', 'Any'],
+                    ['week', 'This week'],
+                    ['month', 'This month']
+                  ].map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`cc-seg-btn ${fCloses === val ? 'active' : ''}`}
+                      onClick={() => setFCloses(val)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
           </aside>
 
           {/* ── Results Column (Right) ── */}
