@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #F6F6F4; color: #1A1A19; font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #0F3FFE; text-decoration: none; }
+a:hover { color: #1A1A19; }
+button, input, textarea { font-family: inherit; color: inherit; }
+button { border: none; background: none; cursor: pointer; }
+input:focus, textarea:focus { outline: none; border-color: #0F3FFE !important; }
+::placeholder { color: #75736C; }
+@keyframes tfpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</helmet>
+<div data-screen-label="Team finder" style="min-height: 100vh; background: #F6F6F4; padding: 24px clamp(16px, 3vw, 32px) 32px;">
+  <div style="max-width: 1480px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px;">
+
+    <header style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 1px solid #E7E6E2;">
+      <div style="display: flex; align-items: flex-start; gap: 12px; min-width: 0;">
+        <button aria-label="Go back" style="width: 36px; height: 36px; flex: none; margin-top: 2px; border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #1A1A19; display: flex; align-items: center; justify-content: center;" style-hover="border-color: #1A1A19;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <div style="min-width: 0;">
+          <h1 style="font-size: 25px; font-weight: 700; letter-spacing: -0.02em;">Team finder</h1>
+          <p style="margin-top: 5px; font-size: 14px; color: #75736C; line-height: 1.45; text-wrap: pretty;">Find a squad for any competition, or post your own. Message the lead on WhatsApp before or after you request.</p>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button onClick="{{ openPost }}" style="display: flex; align-items: center; gap: 7px; height: 38px; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 0 15px; white-space: nowrap; font-size: 14px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Post a squad
+        </button>
+        <button title="Switch to Night mode (Dark)" style="width: 38px; height: 38px; border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; display: flex; align-items: center; justify-content: center;" style-hover="background: #F2F1ED; border-color: #D6D4CE;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+        </button>
+        <button title="Notifications" style="position: relative; width: 38px; height: 38px; border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #1A1A19; display: flex; align-items: center; justify-content: center;" style-hover="border-color: #1A1A19;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+          <span style="position: absolute; top: -5px; right: -5px; background: #E11D48; color: #FFFFFF; font-size: 10px; font-weight: 700; height: 17px; min-width: 17px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF;">3</span>
+        </button>
+      </div>
+    </header>
+
+    <div style="display: grid; grid-template-columns: minmax(216px, 256px) minmax(0, 1fr); gap: 18px; align-items: start;">
+
+      <aside style="position: sticky; top: 16px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 16px; max-height: calc(100vh - 32px); overflow-y: auto;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 7px;">
+            <span style="font-size: 15px; font-weight: 600;">Filters</span>
+            <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}"><span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 0 7px; font-size: 11px; font-weight: 700; line-height: 1.5;">{{ filterCount }}</span></sc-if>
+          </div>
+          <button onClick="{{ clearAll }}" style="font-size: 13px; font-weight: 500; color: #75736C; white-space: nowrap;" style-hover="color: #0F3FFE;">Clear all</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; background: #F9F9F7; border: 1px solid #EFEEEA; border-radius: 9px; padding: 10px 11px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="font-size: 12px; font-weight: 600; color: #55534D;">Your Browse filter</span>
+            <button onClick="{{ applyBrowse }}" style="font-size: 12px; font-weight: 600; color: {{ browseBtnColor }};" style-hover="color: #1A1A19;">{{ browseBtnLabel }}</button>
+          </div>
+          <span style="font-size: 12px; color: #75736C; line-height: 1.4;">{{ browseDesc }}</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <sc-for list="{{ quick }}" as="o" hint-placeholder-count="2">
+            <button onClick="{{ o.toggle }}" style="display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 5px 0; font-size: 13px; font-weight: {{ o.fw }}; color: #1A1A19;">
+              <span style="width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid {{ o.boxBd }}; background: {{ o.boxBg }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none;"><sc-if value="{{ o.on }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if></span>
+              <span style="flex: 1; min-width: 0;">{{ o.label }}</span>
+              <span style="font-size: 12px; color: #75736C;">{{ o.n }}</span>
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 15px; border-top: 1px solid #F0EFEB;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 13px; font-weight: 600;">{{ g.label }}</span>
+              <button onClick="{{ g.clear }}" style="font-size: 12px; font-weight: 600; color: {{ g.allColor }};" style-hover="color: #0F3FFE;">All</button>
+            </div>
+            <sc-for list="{{ g.options }}" as="o" hint-placeholder-count="4">
+              <button onClick="{{ o.toggle }}" style="display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 5px 0; font-size: 13px; font-weight: {{ o.fw }}; color: #1A1A19;">
+                <span style="width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid {{ o.boxBd }}; background: {{ o.boxBg }}; color: #FFFFFF; display: flex; align-items: center; justify-content: center; flex: none;"><sc-if value="{{ o.on }}" hint-placeholder-val="{{ false }}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if></span>
+                <span style="flex: 1; min-width: 0;">{{ o.label }}</span>
+                <span style="font-size: 12px; color: #75736C;">{{ o.n }}</span>
+              </button>
+            </sc-for>
+            <sc-if value="{{ g.canExpand }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ g.expand }}" style="align-self: flex-start; margin-top: 2px; font-size: 12px; font-weight: 600; color: #0F3FFE;" style-hover="color: #1A1A19;">{{ g.expandLabel }}</button>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <sc-for list="{{ segs }}" as="sg" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 15px; border-top: 1px solid #F0EFEB;">
+            <span style="font-size: 12px; font-weight: 600; color: #75736C;">{{ sg.label }}</span>
+            <div style="display: flex; gap: 3px; padding: 3px; background: #F6F6F4; border: 1px solid #EFEEEA; border-radius: 8px;">
+              <sc-for list="{{ sg.options }}" as="o" hint-placeholder-count="3">
+                <button onClick="{{ o.select }}" style="flex: 1; border-radius: 6px; padding: 5px 4px; font-size: 12px; font-weight: {{ o.fw }}; color: {{ o.fg }}; background: {{ o.bg }}; box-shadow: {{ o.sh }}; white-space: nowrap;">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </aside>
+
+      <main style="min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 3px; padding: 3px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px;">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+              <button onClick="{{ t.select }}" style="display: flex; align-items: center; gap: 7px; padding: 0 12px; border-radius: 7px; background: {{ t.bg }}; color: {{ t.fg }}; font-size: 13px; font-weight: {{ t.fw }}; white-space: nowrap;" style-hover="color: #1A1A19;">
+                {{ t.label }}<span style="background: {{ t.pillBg }}; color: {{ t.pillFg }}; border-radius: 20px; padding: 0 7px; font-size: 11px; font-weight: 700; line-height: 1.6;">{{ t.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <label style="flex: 1 1 240px; min-width: 210px; display: flex; align-items: center; gap: 9px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 0 12px; color: #75736C;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <input value="{{ q }}" onChange="{{ onQ }}" placeholder="Search competitions, leads, colleges or skills" style="flex: 1; min-width: 0; border: 0; background: transparent; font-size: 14px; color: #1A1A19;" />
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 0 10px 0 12px; font-size: 13px; font-weight: 600; color: #55534D;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path></svg>Sort:
+            <select value="{{ sort }}" onChange="{{ onSort }}" style="border: 0; background: transparent; font-family: inherit; font-size: 13px; font-weight: 600; color: #1A1A19; cursor: pointer; outline: none;">
+              <option value="newest">Newest</option>
+              <option value="closing">Closing soonest</option>
+              <option value="spots">Most spots open</option>
+            </select>
+          </label>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 26px;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #17A34A; flex: none;"></span>
+          <span style="flex: none; font-size: 13px; color: #55534D; white-space: nowrap;">{{ statusText }}</span>
+          <sc-for list="{{ activeChips }}" as="c" hint-placeholder-count="0">
+            <button onClick="{{ c.remove }}" style="display: flex; align-items: center; gap: 5px; background: rgba(15,63,254,0.07); color: #0F3FFE; border: 1px solid rgba(15,63,254,0.20); border-radius: 20px; padding: 3px 8px 3px 10px; font-size: 12px; font-weight: 600;" style-hover="border-color: rgba(15,63,254,0.35);">{{ c.label }}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px;" aria-hidden="true">
+            <sc-for list="{{ skeletons }}" as="k" hint-placeholder-count="6">
+              <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 17px 17px; display: flex; flex-direction: column; gap: 12px; animation: tfpulse 1.4s ease-in-out infinite;">
+                <div style="display: flex; justify-content: space-between;"><div style="height: 10px; width: 110px; border-radius: 4px; background: #F2F1ED;"></div><div style="height: 10px; width: 60px; border-radius: 4px; background: #F2F1ED;"></div></div>
+                <div style="display: flex; flex-direction: column; gap: 7px;"><div style="height: 16px; width: 90%; border-radius: 4px; background: #F2F1ED;"></div><div style="height: 16px; width: 55%; border-radius: 4px; background: #F2F1ED;"></div></div>
+                <div style="height: 11px; width: 70%; border-radius: 4px; background: #F2F1ED;"></div>
+                <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 11px; width: 100%; border-radius: 4px; background: #F2F1ED;"></div><div style="height: 11px; width: 80%; border-radius: 4px; background: #F2F1ED;"></div></div>
+                <div style="display: flex; gap: 6px;"><div style="height: 24px; width: 96px; border-radius: 6px; background: #F2F1ED;"></div><div style="height: 24px; width: 80px; border-radius: 6px; background: #F2F1ED;"></div></div>
+                <div style="display: flex; gap: 10px; align-items: center; padding-top: 12px; border-top: 1px solid #F0EFEB;"><div style="width: 32px; height: 32px; border-radius: 50%; background: #F2F1ED;"></div><div style="height: 12px; width: 140px; border-radius: 4px; background: #F2F1ED;"></div></div>
+                <div style="display: flex; gap: 8px;"><div style="height: 38px; width: 110px; border-radius: 9px; background: #F2F1ED;"></div><div style="height: 38px; flex: 1; border-radius: 9px; background: #F2F1ED;"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; border: 1px dashed #D6D4CE; border-radius: 12px; padding: 44px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;">
+            <h3 style="font-size: 16px; font-weight: 700;">{{ emptyTitle }}</h3>
+            <p style="font-size: 13px; color: #75736C; max-width: 420px; line-height: 1.5; text-wrap: pretty;">{{ emptyText }}</p>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ clearAll }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 9px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #F2F1ED;">Clear filters</button>
+              </sc-if>
+              <button onClick="{{ openPost }}" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 9px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #0C33CC;">Post a squad</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="1">
+          <section style="display: flex; flex-direction: column; gap: 12px;">
+            <sc-if value="{{ sec.hasTitle }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; align-items: center; gap: 9px; margin-top: 4px;">
+                <h2 style="font-size: 15px; font-weight: 700; letter-spacing: -0.01em;">{{ sec.title }}</h2>
+                <span style="background: #E7E6E2; color: #55534D; border-radius: 20px; padding: 1px 8px; font-size: 11px; font-weight: 700;">{{ sec.count }}</span>
+              </div>
+            </sc-if>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 14px;">
+              <sc-for list="{{ sec.cards }}" as="p" hint-placeholder-count="6">
+                <article onClick="{{ p.open }}" style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 17px 17px; display: flex; flex-direction: column; gap: 12px; cursor: pointer;" style-hover="border-color: #D6D4CE;">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden;">
+                      <span style="flex: none; display: flex; align-items: center; gap: 5px; background: #F2F1ED; color: #1A1A19; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 600; white-space: nowrap;"><span style="width: 6px; height: 6px; border-radius: 2px; background: {{ p.catDot }};"></span>{{ p.cat }}</span>
+                      <span style="min-width: 0; border: 1px solid #E7E6E2; color: #55534D; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.circuit }}</span>
+                    </div>
+                    <span style="flex: none; display: flex; align-items: center; gap: 5px; color: {{ p.dueFg }}; font-size: 12px; font-weight: {{ p.dueWeight }}; white-space: nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>{{ p.dueText }}</span>
+                  </div>
+
+                  <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <h3 style="font-size: 16px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; color: #1A1A19; text-wrap: pretty;">{{ p.comp }}</h3>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                      <span style="min-width: 0; font-size: 12px; color: #55534D; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.host }}</span>
+                      <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" onClick="{{ stop }}" style="flex: none; display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;">View competition<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" x2="21" y1="14" y2="3"></line></svg></a>
+                    </div>
+                  </div>
+
+                  <p style="font-size: 13px; line-height: 1.5; color: #55534D; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ p.note }}</p>
+
+                  <div style="display: flex; flex-direction: column; gap: 7px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                      <div style="display: flex; align-items: center; gap: 7px;">
+                        <div style="display: flex; align-items: center; gap: 3px;">
+                          <sc-for list="{{ p.dots }}" as="dt" hint-placeholder-count="4"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{ dt.bg }}; border: {{ dt.bd }}; box-sizing: border-box;"></span></sc-for>
+                        </div>
+                        <span style="font-size: 12px; font-weight: 700; color: {{ p.spotsColor }};">{{ p.spotsText }}</span>
+                      </div>
+                      <sc-if value="{{ p.showFit }}" hint-placeholder-val="{{ false }}">
+                        <span style="display: flex; align-items: center; gap: 4px; flex: none; white-space: nowrap; font-size: 11px; font-weight: 600; color: #15803D;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>{{ p.fitText }}</span>
+                      </sc-if>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                      <sc-for list="{{ p.chips }}" as="c" hint-placeholder-count="2">
+                        <span style="background: {{ c.bg }}; color: {{ c.fg }}; border: 1px solid {{ c.bd }}; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 500; white-space: nowrap;">{{ c.label }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+
+                  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding-top: 12px; border-top: 1px solid #F0EFEB;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <span style="width: 32px; height: 32px; border-radius: 50%; background: {{ p.avBg }}; color: {{ p.avFg }}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex: none;">{{ p.leadInitial }}</span>
+                      <div style="min-width: 0; flex: 1; line-height: 1.3;">
+                        <div style="font-size: 13px; font-weight: 600; color: #1A1A19; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.lead }}</div>
+                        <div style="font-size: 12px; color: #75736C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.leadMeta }}</div>
+                      </div>
+                      <sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ false }}">
+                        <span style="flex: none; border: 1px solid {{ p.badgeBd }}; background: {{ p.badgeBg }}; color: {{ p.badgeFg }}; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; white-space: nowrap;">{{ p.badge }}</span>
+                      </sc-if>
+                      <sc-if value="{{ p.noBadge }}" hint-placeholder-val="{{ true }}">
+                        <span style="flex: none; font-size: 12px; color: #75736C; white-space: nowrap;">{{ p.posted }}</span>
+                      </sc-if>
+                    </div>
+
+                    <sc-if value="{{ p.isOwn }}" hint-placeholder-val="{{ false }}">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <button onClick="{{ p.review }}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid {{ p.revBd }}; border-radius: 9px; background: {{ p.revBg }}; color: {{ p.revFg }}; padding: 9px 12px; font-size: 13px; font-weight: 600; white-space: nowrap;" style-hover="border-color: #0C33CC;">{{ p.reviewLabel }}</button>
+                        <button onClick="{{ p.edit }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 9px 13px; font-size: 13px; font-weight: 600;" style-hover="background: #F2F1ED;">Edit</button>
+                        <button onClick="{{ p.toggleClosed }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #55534D; padding: 9px 13px; font-size: 13px; font-weight: 600; white-space: nowrap;" style-hover="background: #F2F1ED;">{{ p.closeLabel }}</button>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ p.notOwn }}" hint-placeholder-val="{{ true }}">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <sc-if value="{{ p.showWaSecondary }}" hint-placeholder-val="{{ true }}">
+                          <button onClick="{{ p.whatsapp }}" style="display: flex; align-items: center; gap: 6px; border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 9px 12px; font-size: 13px; font-weight: 600; white-space: nowrap;" style-hover="background: #F2F1ED; border-color: #D6D4CE;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg>WhatsApp
+                          </button>
+                        </sc-if>
+                        <sc-if value="{{ p.isOpen }}" hint-placeholder-val="{{ true }}">
+                          <button onClick="{{ p.request }}" style="flex: 1; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 9px 12px; font-size: 13px; font-weight: 600; white-space: nowrap;" style-hover="background: #0C33CC; border-color: #0C33CC;">Request to join</button>
+                        </sc-if>
+                        <sc-if value="{{ p.isRequested }}" hint-placeholder-val="{{ false }}">
+                          <button onClick="{{ p.withdraw }}" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #E7E6E2; border-radius: 9px; background: #F9F9F7; color: #55534D; padding: 9px 12px; font-size: 13px; font-weight: 600; white-space: nowrap;" style-hover="color: #DC2626;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Requested · Withdraw</button>
+                        </sc-if>
+                        <sc-if value="{{ p.isAccepted }}" hint-placeholder-val="{{ false }}">
+                          <button onClick="{{ p.whatsapp }}" style="flex: 1; border: 1px solid #17A34A; border-radius: 9px; background: #17A34A; color: #FFFFFF; padding: 9px 12px; font-size: 13px; font-weight: 600; white-space: nowrap;" style-hover="background: #15803D; border-color: #15803D;">Message {{ p.leadFirst }} on WhatsApp</button>
+                        </sc-if>
+                        <sc-if value="{{ p.isFull }}" hint-placeholder-val="{{ false }}">
+                          <span style="flex: 1; text-align: center; border-radius: 9px; background: #F2F1ED; color: #75736C; padding: 10px 12px; font-size: 13px; font-weight: 600;">Squad full</span>
+                        </sc-if>
+                      </div>
+                    </sc-if>
+                  </div>
+                </article>
+              </sc-for>
+            </div>
+          </section>
+        </sc-for>
+      </main>
+    </div>
+  </div>
+</div>
+
+<sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Squad detail" style="position: fixed; inset: 0; z-index: 50; display: flex; justify-content: flex-end;">
+    <div onClick="{{ closeDetail }}" style="position: absolute; inset: 0; background: rgba(26,26,25,0.35);"></div>
+    <div style="position: relative; width: min(480px, 100%); height: 100vh; background: #FFFFFF; border-left: 1px solid #E7E6E2; display: flex; flex-direction: column;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #E7E6E2;">
+        <span style="font-size: 12px; font-weight: 600; color: #75736C;">Squad · posted {{ d.posted }}</span>
+        <button onClick="{{ closeDetail }}" style="width: 32px; height: 32px; border: 1px solid #E7E6E2; border-radius: 8px; background: #F9F9F7; color: #55534D; display: flex; align-items: center; justify-content: center;" style-hover="background: #F2F1ED;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: start;">
+            <span style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid #EFEEEA; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;">{{ d.hostInitials }}</span>
+            <div style="min-width: 0;">
+              <h2 style="font-size: 19px; font-weight: 700; line-height: 1.3; letter-spacing: -0.015em; text-wrap: pretty;">{{ d.comp }}</h2>
+              <div style="margin-top: 3px; font-size: 13px; color: #55534D;">{{ d.host }}</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 12px; color: #55534D;">
+            <span>{{ d.cat }}</span><span style="color: #C9C7C1;">·</span><span>Teams of {{ d.total }}</span><span style="color: #C9C7C1;">·</span><span style="font-weight: {{ d.dueWeight }}; color: {{ d.dueColor }};">{{ d.dueText }}</span>
+            <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" style="margin-left: auto; display: flex; align-items: center; gap: 4px; font-weight: 600;">View on Unstop<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" x2="21" y1="14" y2="3"></line></svg></a>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; font-weight: 600; color: #75736C; text-transform: uppercase; letter-spacing: 0.03em;">From the lead</span>
+          <p style="font-size: 14px; line-height: 1.55; color: #1A1A19; text-wrap: pretty;">{{ d.desc }}</p>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 11px; font-weight: 600; color: #75736C; text-transform: uppercase; letter-spacing: 0.03em;">Team</span>
+            <span style="font-size: 12px; font-weight: 600; color: #1A1A19;">{{ d.rosterText }}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; border: 1px solid #E7E6E2; border-radius: 12px; overflow: hidden;">
+            <sc-for list="{{ d.roster }}" as="r" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 11px; padding: 10px 13px; border-top: {{ r.divider }}; background: {{ r.rowBg }};">
+                <span style="width: 32px; height: 32px; border-radius: 50%; background: {{ r.bg }}; color: {{ r.fg }}; border: {{ r.bd }}; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex: none;">{{ r.initial }}</span>
+                <div style="min-width: 0; flex: 1; line-height: 1.3;">
+                  <div style="font-size: 13px; font-weight: 600; color: {{ r.nameColor }};">{{ r.name }}</div>
+                  <div style="font-size: 12px; color: #75736C;">{{ r.meta }}</div>
+                </div>
+                <sc-if value="{{ r.isLead }}" hint-placeholder-val="{{ false }}"><span style="background: #F2F1ED; color: #55534D; border-radius: 6px; padding: 2px 7px; font-size: 11px; font-weight: 600;">Lead</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 11px; font-weight: 600; color: #75736C; text-transform: uppercase; letter-spacing: 0.03em;">Looking for</span>
+            <sc-if value="{{ d.showFit }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 600; color: #15803D;">{{ d.fitText }}</span></sc-if>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <sc-for list="{{ d.chips }}" as="c" hint-placeholder-count="2">
+              <span style="background: {{ c.bg }}; color: {{ c.fg }}; border: 1px solid {{ c.bd }}; border-radius: 6px; padding: 4px 9px; font-size: 12px; font-weight: 500;">{{ c.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 11px; font-weight: 600; color: #75736C; text-transform: uppercase; letter-spacing: 0.03em;">{{ d.leadFirst }} brings</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            <sc-for list="{{ d.have }}" as="h" hint-placeholder-count="2">
+              <span style="background: #FFFFFF; color: #55534D; border: 1px solid #E7E6E2; border-radius: 6px; padding: 4px 9px; font-size: 12px; font-weight: 500;">{{ h }}</span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 14px 20px 18px; border-top: 1px solid #E7E6E2; display: flex; flex-direction: column; gap: 8px;">
+        <sc-if value="{{ d.isOpen }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ d.request }}" style="width: 100%; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 11px 14px; font-size: 14px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC;">Request to join</button>
+          <span style="font-size: 12px; color: #75736C; text-align: center;">{{ d.leadFirst }} sees your profile and a short note. Your number is shared only if you're accepted.</span>
+        </sc-if>
+        <sc-if value="{{ d.isRequested }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #F9F9F7; border: 1px solid #E7E6E2; border-radius: 9px; padding: 10px 12px;">
+            <span style="display: flex; align-items: center; gap: 7px; font-size: 13px; color: #55534D;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Request sent. Waiting on {{ d.leadFirst }}.</span>
+            <button onClick="{{ d.withdraw }}" style="color: #75736C; font-size: 13px; font-weight: 500; white-space: nowrap;" style-hover="color: #DC2626;">Withdraw</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ d.isAccepted }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ d.whatsapp }}" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid #17A34A; border-radius: 9px; background: #17A34A; color: #FFFFFF; padding: 11px 14px; font-size: 14px; font-weight: 600;" style-hover="background: #15803D; border-color: #15803D;">Message {{ d.leadFirst }} on WhatsApp</button>
+          <span style="font-size: 12px; color: #75736C; text-align: center;">You're on the team. The rest of the squad can see your number.</span>
+        </sc-if>
+        <sc-if value="{{ d.isFull }}" hint-placeholder-val="{{ false }}">
+          <div style="background: #F2F1ED; border-radius: 9px; padding: 11px 14px; text-align: center; font-size: 13px; font-weight: 500; color: #55534D;">This squad is full. Look for another team or post your own.</div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ hasReview }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Review requests" style="position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div onClick="{{ closeReview }}" style="position: absolute; inset: 0; background: rgba(26,26,25,0.35);"></div>
+    <div style="position: relative; width: min(580px, 100%); max-height: 90vh; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+      <div style="padding: 18px 20px 0; display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+          <div style="min-width: 0;">
+            <h2 style="font-size: 17px; font-weight: 700; letter-spacing: -0.01em;">{{ r.comp }}</h2>
+            <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+              <div style="display: flex; align-items: center;">
+                <sc-for list="{{ r.slots }}" as="sl" hint-placeholder-count="4">
+                  <span style="width: 22px; height: 22px; border-radius: 50%; margin-left: {{ sl.ml }}; background: {{ sl.bg }}; color: {{ sl.fg }}; border: {{ sl.bd }}; box-shadow: 0 0 0 2px #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex: none;">{{ sl.initial }}</span>
+                </sc-for>
+              </div>
+              <span style="font-size: 12px; color: #55534D;">{{ r.rosterText }}</span>
+            </div>
+          </div>
+          <button onClick="{{ closeReview }}" style="width: 32px; height: 32px; flex: none; border: 1px solid #E7E6E2; border-radius: 8px; background: #F9F9F7; color: #55534D; display: flex; align-items: center; justify-content: center;" style-hover="background: #F2F1ED;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+        <div style="display: flex; gap: 2px; border-bottom: 1px solid #E7E6E2;">
+          <sc-for list="{{ r.tabs }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.select }}" style="display: flex; align-items: center; gap: 6px; padding: 8px 12px 10px; margin-bottom: -1px; border-bottom: 2px solid {{ t.line }}; color: {{ t.fg }}; font-size: 13px; font-weight: {{ t.fw }};">{{ t.label }}<span style="font-size: 12px; font-weight: 600; color: #75736C;">{{ t.count }}</span></button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex: 1; overflow-y: auto; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 12px;">
+        <sc-if value="{{ r.none }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 32px 16px; text-align: center; display: flex; flex-direction: column; gap: 4px;">
+            <h4 style="font-size: 14px; font-weight: 600;">{{ r.emptyTitle }}</h4>
+            <p style="font-size: 13px; color: #75736C;">{{ r.emptyText }}</p>
+          </div>
+        </sc-if>
+        <sc-for list="{{ r.apps }}" as="a" hint-placeholder-count="2">
+          <div style="border: 1px solid #E7E6E2; border-radius: 12px; padding: 14px 15px; display: flex; flex-direction: column; gap: 11px;">
+            <div style="display: flex; align-items: center; gap: 11px;">
+              <span style="width: 36px; height: 36px; border-radius: 50%; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex: none;">{{ a.initials }}</span>
+              <div style="min-width: 0; flex: 1; line-height: 1.3;">
+                <div style="font-size: 14px; font-weight: 700;">{{ a.name }}</div>
+                <div style="font-size: 12px; color: #75736C;">{{ a.meta }}</div>
+              </div>
+              <sc-if value="{{ a.showFit }}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; font-weight: 600; color: #15803D; white-space: nowrap;">{{ a.fitText }}</span></sc-if>
+            </div>
+            <p style="font-size: 13px; line-height: 1.5; color: #1A1A19; background: #F9F9F7; border: 1px solid #EFEEEA; border-radius: 9px; padding: 9px 11px; text-wrap: pretty;">{{ a.pitch }}</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+              <sc-for list="{{ a.chips }}" as="c" hint-placeholder-count="2">
+                <span style="background: {{ c.bg }}; color: {{ c.fg }}; border: 1px solid {{ c.bd }}; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 500;">{{ c.label }}</span>
+              </sc-for>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <sc-if value="{{ a.isPending }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ a.accept }}" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 8px 16px; font-size: 13px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC;">Accept</button>
+                <button onClick="{{ a.decline }}" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 8px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #F2F1ED;">Decline</button>
+              </sc-if>
+              <sc-if value="{{ a.isAccepted }}" hint-placeholder-val="{{ false }}">
+                <button style="display: flex; align-items: center; gap: 6px; border: 1px solid rgba(23,163,74,0.30); border-radius: 9px; background: rgba(23,163,74,0.08); color: #15803D; padding: 7px 12px; font-size: 13px; font-weight: 600;" style-hover="border-color: #17A34A;"><svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg>WhatsApp</button>
+                <button onClick="{{ a.remove }}" style="margin-left: auto; color: #75736C; font-size: 13px; font-weight: 500;" style-hover="color: #DC2626;">Remove from squad</button>
+              </sc-if>
+              <sc-if value="{{ a.isDeclined }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ a.undo }}" style="color: #75736C; font-size: 13px; font-weight: 500;" style-hover="color: #0F3FFE;">Move back to pending</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ postOpen }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Post a squad" style="position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div onClick="{{ closePost }}" style="position: absolute; inset: 0; background: rgba(26,26,25,0.35);"></div>
+    <div style="position: relative; width: min(560px, 100%); max-height: 92vh; display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 16px; border-bottom: 1px solid #E7E6E2;">
+        <div>
+          <h2 style="font-size: 17px; font-weight: 700; letter-spacing: -0.01em;">{{ pf.heading }}</h2>
+          <p style="margin-top: 3px; font-size: 13px; color: #75736C;">People apply with a short note. You pick who joins.</p>
+        </div>
+        <button onClick="{{ closePost }}" style="width: 32px; height: 32px; flex: none; border: 1px solid #E7E6E2; border-radius: 8px; background: #F9F9F7; color: #55534D; display: flex; align-items: center; justify-content: center;" style-hover="background: #F2F1ED;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 22px;">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <span style="font-size: 13px; font-weight: 600;">Competition</span>
+            <button onClick="{{ pf.toggleCustom }}" style="font-size: 12px; font-weight: 600; color: #0F3FFE;" style-hover="color: #1A1A19;">{{ pf.customToggleLabel }}</button>
+          </div>
+          <sc-if value="{{ pf.isUnstop }}" hint-placeholder-val="{{ true }}">
+            <label style="display: flex; align-items: center; gap: 9px; border: 1px solid #E7E6E2; border-radius: 9px; padding: 0 12px; color: #75736C;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+              <input value="{{ pf.compQ }}" onChange="{{ pf.onCompQ }}" placeholder="Search competitions on Unstop" style="flex: 1; min-width: 0; border: 0; background: transparent; padding: 10px 0; font-size: 14px; color: #1A1A19;" />
+            </label>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <sc-for list="{{ pf.comps }}" as="c" hint-placeholder-count="3">
+                <button onClick="{{ c.select }}" style="display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; border: 1px solid {{ c.bd }}; background: {{ c.bg }}; border-radius: 10px; padding: 9px 11px;" style-hover="border-color: #D6D4CE;">
+                  <span style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid #EFEEEA; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700;">{{ c.initials }}</span>
+                  <span style="min-width: 0; line-height: 1.3;"><span style="display: block; font-size: 13px; font-weight: 600; color: #1A1A19; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ c.title }}</span><span style="display: block; font-size: 12px; color: #75736C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ c.host }} · {{ c.team }}</span></span>
+                  <span style="font-size: 12px; color: #75736C; white-space: nowrap;">{{ c.dueText }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ pf.isCustom }}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <input placeholder="Competition name" style="border: 1px solid #E7E6E2; border-radius: 9px; padding: 10px 12px; font-size: 14px;" />
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <input placeholder="Organiser" style="min-width: 0; border: 1px solid #E7E6E2; border-radius: 9px; padding: 10px 12px; font-size: 14px;" />
+                <input placeholder="Link (optional)" style="min-width: 0; border: 1px solid #E7E6E2; border-radius: 9px; padding: 10px 12px; font-size: 14px;" />
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <sc-for list="{{ pf.steppers }}" as="s" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-size: 13px; font-weight: 600;">{{ s.label }}</span>
+              <div style="display: flex; align-items: center; justify-content: space-between; border: 1px solid #E7E6E2; border-radius: 9px; padding: 4px;">
+                <button onClick="{{ s.dec }}" style="width: 34px; height: 34px; border-radius: 7px; background: #F2F1ED; color: #1A1A19; font-size: 17px; font-weight: 500;" style-hover="background: #E7E6E2;">−</button>
+                <span style="font-size: 15px; font-weight: 700;">{{ s.value }}</span>
+                <button onClick="{{ s.inc }}" style="width: 34px; height: 34px; border-radius: 7px; background: #F2F1ED; color: #1A1A19; font-size: 17px; font-weight: 500;" style-hover="background: #E7E6E2;">+</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-for list="{{ pf.skillGroups }}" as="g" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 13px; font-weight: 600;">{{ g.label }}</span><span style="font-size: 12px; color: #75736C;">{{ g.hint }}</span></div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+              <sc-for list="{{ g.chips }}" as="c" hint-placeholder-count="10">
+                <button onClick="{{ c.toggle }}" style="border: 1px solid {{ c.bd }}; border-radius: 20px; background: {{ c.bg }}; color: {{ c.fg }}; padding: 5px 12px; font-size: 12px; font-weight: 500;">{{ c.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;"><span style="font-size: 13px; font-weight: 600;">Note to applicants</span><span style="font-size: 12px; color: #75736C;">Optional</span></div>
+          <textarea rows="3" placeholder="What you're aiming for, how you'll work, when you meet." style="border: 1px solid #E7E6E2; border-radius: 9px; padding: 10px 12px; font-size: 14px; line-height: 1.5; resize: vertical;"></textarea>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 13px; font-weight: 600;">WhatsApp number</span>
+          <div style="display: flex; align-items: center; border: 1px solid #E7E6E2; border-radius: 9px; overflow: hidden;">
+            <span style="padding: 10px 12px; background: #F9F9F7; border-right: 1px solid #E7E6E2; font-size: 14px; color: #55534D;">+91</span>
+            <input value="98110 42278" placeholder="10-digit number" style="flex: 1; min-width: 0; border: 0; padding: 10px 12px; font-size: 14px;" />
+          </div>
+          <span style="font-size: 12px; color: #75736C;">Only shared with people you accept.</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; background: #F9F9F7; border: 1px solid #EFEEEA; border-radius: 9px; padding: 9px 11px;">
+          <span style="width: 28px; height: 28px; border-radius: 50%; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex: none;">AM</span>
+          <span style="flex: 1; font-size: 12px; color: #55534D;">Posting as <strong style="color: #1A1A19;">Aarav Mehta</strong> · SRCC · UG 2nd Year</span>
+          <button style="font-size: 12px; font-weight: 600; color: #0F3FFE;" style-hover="color: #1A1A19;">Edit</button>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; padding: 14px 20px; border-top: 1px solid #E7E6E2;">
+        <span style="font-size: 12px; color: #75736C;">{{ pf.summary }}</span>
+        <button onClick="{{ closePost }}" style="margin-left: auto; border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; padding: 9px 14px; font-size: 13px; font-weight: 600;" style-hover="background: #F2F1ED;">Cancel</button>
+        <button onClick="{{ pf.submit }}" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; padding: 9px 16px; font-size: 13px; font-weight: 600;" style-hover="background: #0C33CC; border-color: #0C33CC;">{{ pf.submitLabel }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;previewState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;live&quot;,&quot;loading&quot;,&quot;empty&quot;],&quot;default&quot;:&quot;live&quot;,&quot;tsType&quot;:&quot;'live'|'loading'|'empty'&quot;,&quot;section&quot;:&quot;States&quot;},&quot;fitSignal&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Cards&quot;},&quot;showYourSquads&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Cards&quot;}}">
+const ME = { name: 'Aarav Mehta', college: 'SRCC', year: 'UG 2nd Year', skills: ['Market research', 'Deck design', 'Copywriting'] };
+const SKILLS = ['Finance modelling', 'Deck design', 'Market research', 'Frontend', 'Backend', 'ML / Data', 'Copywriting', 'Public speaking', 'Valuation', 'Design'];
+const CATS = ['Case Comps', 'Hackathons', 'Writing & Research', 'Quizzes', 'Simulations', 'Debates'];
+const CIRCUITS = ['DU Circuit', 'IIMs, IITs & Premier', 'Corporate & Global', 'Others'];
+const BROWSE = { cats: ['Case Comps'], circuits: ['DU Circuit'] };
+const COMPS = [
+  { id: 'c1', title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', days: 5 / 24, team: '2–4 members', cat: 'Case Comps', circuit: 'DU Circuit' },
+  { id: 'c2', title: 'Prayaas Case Challenge', host: 'Shri Ram College of Commerce', days: 20 / 24, team: '3–4 members', cat: 'Case Comps', circuit: 'DU Circuit' },
+  { id: 'c3', title: "L'Oréal Brandstorm 2026", host: "L'Oréal", days: 11, team: '3 members', cat: 'Case Comps', circuit: 'Corporate & Global' },
+  { id: 'c4', title: 'Smart India Hackathon — Campus Round', host: 'Ministry of Education', days: 23, team: '6 members', cat: 'Hackathons', circuit: 'Others' },
+  { id: 'c5', title: 'Tata Crucible Campus Quiz', host: 'Tata Group', days: 4, team: '2 members', cat: 'Quizzes', circuit: 'Corporate & Global' },
+  { id: 'c6', title: 'Bain Business Bowl', host: 'Bain & Company', days: 17, team: '3–4 members', cat: 'Case Comps', circuit: 'Corporate & Global' },
+  { id: 'c7', title: 'Wall Street Simulation League', host: 'IIT Delhi', days: 8, team: '2–3 members', cat: 'Simulations', circuit: 'IIMs, IITs & Premier' },
+  { id: 'c8', title: 'Consult-a-thon', host: 'Kirori Mal College', days: 15, team: '3–4 members', cat: 'Case Comps', circuit: 'DU Circuit' },
+  { id: 'c9', title: 'Revive the Failed — Business Case Competition', host: 'Lady Shri Ram College for Women', days: 6, team: '2–3 members', cat: 'Case Comps', circuit: 'DU Circuit' }
+];
+const cmp = id => COMPS.find(c => c.id === id);
+const POSTS = [
+  { id: 'p1', compId: 'c1', lead: 'Ananya Rao', college: 'Lady Shri Ram College', year: '3rd year', posted: '4h ago', total: 4, members: [{ name: 'Riya Kapoor', college: 'LSR', year: '3rd year' }], state: 'open', want: ['Market research', 'Deck design'], have: ['Finance modelling', 'Public speaking'], desc: 'We made the semis last year and want to go further. Looking for one person who can dig up market data fast and one who can make a deck look sharp. We meet on Meet most evenings after 8.' },
+  { id: 'p8', compId: 'c9', lead: 'Riddhi Sharma', college: 'Lady Shri Ram College', year: 'BMS, 1st year', posted: '6h ago', total: 3, members: [], state: 'open', want: [], have: ['Market research'], desc: 'First case comp for me. All skills and backgrounds welcome, just be ready to put in a few evenings.' },
+  { id: 'p2', compId: 'c3', lead: 'Kabir Sethi', college: 'SRCC', year: '2nd year', posted: '9h ago', total: 3, members: [], state: 'requested', want: ['Copywriting', 'Design'], have: ['Market research'], desc: 'Brandstorm Round 1 closes soon. I have the idea, need a writer and a designer to make it land.' },
+  { id: 'p3', compId: 'c4', lead: 'Nikhil Arora', college: 'SSCBS', year: '2nd year', posted: 'Yesterday', total: 6, members: [{ name: 'Aarav Mehta', college: 'SRCC', year: '2nd year' }, { name: 'Tanvi Shah', college: 'DTU', year: '3rd year' }, { name: 'Ishaan Verma', college: 'DTU', year: '2nd year' }], state: 'accepted', want: ['Backend', 'ML / Data'], have: ['Frontend', 'Design'], desc: 'Building a grievance-routing tool. Frontend and design sorted, need backend and someone who knows basic ML.' },
+  { id: 'p4', compId: 'c5', lead: 'Meher Gill', college: 'Hindu College', year: '1st year', posted: '2 days ago', total: 2, members: [{ name: 'Arjun Nair', college: 'Hindu College', year: '1st year' }], state: 'full', want: ['Public speaking'], have: ['Copywriting'], desc: 'Quiz pair. Full for now.' },
+  { id: 'p5', compId: 'c6', lead: 'Devansh Iyer', college: 'Hansraj College', year: '2nd year', posted: '2 days ago', total: 4, members: [], state: 'open', want: ['Finance modelling', 'Valuation', 'Public speaking'], have: ['Market research'], desc: 'First Bain Bowl for all of us. Serious about prep: two mock cases a week before the deadline.' },
+  { id: 'p6', compId: 'c7', lead: 'Sara Thomas', college: 'IIT Delhi', year: '3rd year', posted: '3 days ago', total: 3, members: [{ name: 'Kunal Jain', college: 'IIT Delhi', year: '3rd year' }], state: 'open', want: ['Finance modelling', 'ML / Data'], have: ['Valuation'], desc: 'Trading sim with a quant bent. Comfort with Excel or Python matters more than finance theory.' },
+  { id: 'p7', compId: 'c1', lead: 'Rohan Das', college: 'SRCC', year: '2nd year', posted: '4 days ago', total: 3, members: [], state: 'open', want: ['Deck design', 'Copywriting'], have: ['Finance modelling'], desc: 'Second SRCC team for Kurukshetra. Need a storyteller and a slide person.' }
+];
+const OWN = [
+  { id: 'o1', compId: 'c2', posted: '2 days ago', total: 4, closed: false, want: ['Finance modelling', 'Valuation'], have: ['Deck design', 'Public speaking'], desc: 'Two-person SRCC team so far. Need someone who can own the financials and one more analyst.',
+    apps: [
+      { id: 'a1', name: 'Priya Menon', college: 'SSCBS', year: '2nd year', status: 'pending', skills: ['Finance modelling', 'Valuation', 'Market research'], pitch: 'Built three LBO models for my finance society this year. Happy to own the numbers end to end.' },
+      { id: 'a2', name: 'Aditya Rao', college: 'Hansraj College', year: '3rd year', status: 'pending', skills: ['Public speaking', 'Market research'], pitch: 'Finalist at two case comps last semester. Strong on the pitch, can help with research.' },
+      { id: 'a3', name: 'Neha Bansal', college: 'SRCC', year: '2nd year', status: 'accepted', skills: ['Valuation', 'Deck design'], pitch: 'Classmate from B.Com (H). I can do valuation and help with slides.' }
+    ] },
+  { id: 'o2', compId: 'c8', posted: '5 days ago', total: 3, closed: false, want: ['Market research'], have: ['Deck design'], desc: 'Looking for a researcher who enjoys digging into industry reports.', apps: [] }
+];
+const OPEN_SLOT = { initial: '', bg: '#FFFFFF', fg: '#75736C', bd: '1.5px dashed #CFCDC7', title: 'Open spot' };
+function initialsOf(h = '') { const w = h.split(/[\s.,]+/).filter(x => x && !/^(of|the|and|&|college|university|company|for)$/i.test(x)); return w.length === 1 ? w[0].slice(0, 2).toUpperCase() : w.slice(0, 2).map(x => x[0]).join('').toUpperCase(); }
+const ini = n => n.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+const due = d => { const h = Math.round(d * 24); const c = h < 6 ? '#DC2626' : h < 24 ? '#B45309' : '#15803D';
+  return { dueText: h + 'h left to register', dueColor: c, dueWeight: 600, dueBd: c, dueBg: '#FFFFFF', dueFg: c }; };
+function slotsFor(leadName, members, total) {
+  const s = [{ initial: leadName[0], bg: '#0F3FFE', fg: '#FFFFFF', bd: '0', title: leadName + ' (lead)' }]
+    .concat(members.map(m => ({ initial: ini(m.name), bg: m.name === ME.name ? '#17A34A' : '#E7E6E2', fg: m.name === ME.name ? '#FFFFFF' : '#55534D', bd: '0', title: m.name })));
+  while (s.length < total) s.push({ ...OPEN_SLOT });
+  return s.map((x, i) => ({ ...x, ml: i === 0 ? '0' : '-5px' }));
+}
+function chipsFor(list, fit) {
+  if (!list.length) return [{ label: 'All skills welcome', bg: '#FFFFFF', fg: '#55534D', bd: '#E7E6E2' }];
+  return list.map(label => ({ label, bg: 'rgba(15,63,254,0.07)', fg: '#0F3FFE', bd: 'rgba(15,63,254,0.20)' }));
+}
+const dotsFor = (filled, total) => Array.from({ length: total }, (_, i) => i < filled ? { bg: '#0F3FFE', bd: '0' } : { bg: '#FFFFFF', bd: '1.5px solid #CFCDC7' });
+const EMPTY_F = { match: false, myCollege: false, cats: [], circuits: [], skills: [], spots: 'any', closes: 'any' };
+
+class Component extends DCLogic {
+  state = { posts: POSTS.map(p => ({ ...p })), own: OWN.map(o => ({ ...o, apps: o.apps.map(a => ({ ...a })) })), tab: 'other', q: '', sort: 'newest', f: { ...EMPTY_F }, skillsOpen: false, detailId: null, reviewId: null, reviewTab: 'pending', postOpen: false, editId: null, form: null };
+
+  setPost(id, patch) { this.setState(s => ({ posts: s.posts.map(p => p.id === id ? { ...p, ...patch } : p) })); }
+  setApp(oid, aid, status) { this.setState(s => ({ own: s.own.map(o => o.id !== oid ? o : { ...o, apps: o.apps.map(a => a.id === aid ? { ...a, status } : a) }) })); }
+  setF(patch) { this.setState(s => ({ f: { ...s.f, ...patch } })); }
+  newForm(o) { return o ? { custom: false, compQ: '', compId: o.compId, total: o.total, open: o.total - 1 - o.apps.filter(a => a.status === 'accepted').length, want: [...o.want], have: [...o.have] } : { custom: false, compQ: '', compId: 'c2', total: 4, open: 2, want: [], have: [] }; }
+  setForm(patch) { this.setState(s => ({ form: { ...s.form, ...patch } })); }
+
+  renderVals() {
+    const S = this.state, F = S.f, fit = this.props.fitSignal ?? true, preview = this.props.previewState ?? 'live';
+    const stop = e => e.stopPropagation();
+
+    const others = S.posts.map((p, i) => { const c = cmp(p.compId); const filled = 1 + p.members.length; return { ...p, c, idx: i, filled, openN: p.total - filled, match: p.want.filter(w => ME.skills.includes(w)).length, own: false }; });
+    const mine = S.own.map((o, i) => { const c = cmp(o.compId); const acc = o.apps.filter(a => a.status === 'accepted'); const filled = 1 + acc.length;
+      return { ...o, c, idx: -100 + i, filled, openN: o.total - filled, acc, pend: o.apps.filter(a => a.status === 'pending').length, lead: ME.name, college: ME.college, year: ME.year, want: o.want, match: 0, own: true, state: o.closed ? 'closed' : 'own' }; });
+
+    const pass = (p, skip) => {
+      if (skip !== 'match' && F.match && !(p.match > 0)) return false;
+      if (skip !== 'myCollege' && F.myCollege && p.college !== ME.college) return false;
+      if (skip !== 'cats' && F.cats.length && !F.cats.includes(p.c.cat)) return false;
+      if (skip !== 'circuits' && F.circuits.length && !F.circuits.includes(p.c.circuit)) return false;
+      if (skip !== 'skills' && F.skills.length && !p.want.some(w => F.skills.includes(w))) return false;
+      if (F.spots === '1' && p.openN !== 1) return false;
+      if (F.spots === '2' && p.openN < 2) return false;
+      if (F.closes === 'week' && p.c.days > 7) return false;
+      if (F.closes === 'month' && p.c.days > 30) return false;
+      if (S.q.trim() && !`${p.c.title} ${p.c.host} ${p.lead} ${p.college} ${p.want.join(' ')}`.toLowerCase().includes(S.q.trim().toLowerCase())) return false;
+      return true;
+    };
+    const otherPool = others.filter(p => p.state === 'open' || p.state === 'full');
+    const appliedPool = others.filter(p => p.state === 'requested' || p.state === 'accepted');
+    const pool = S.tab === 'other' ? otherPool : mine.concat(appliedPool);
+    const countIn = (pred, skip) => pool.filter(p => pass(p, skip) && pred(p)).length || '';
+
+    const cb = (on) => ({ on, fw: on ? 600 : 500, boxBd: on ? '#0F3FFE' : '#CFCDC7', boxBg: on ? '#0F3FFE' : '#FFFFFF' });
+    const quick = [
+      { label: 'Matches my skills', ...cb(F.match), n: countIn(p => p.match > 0, 'match'), toggle: () => this.setF({ match: !F.match }) },
+      { label: `Lead from my college (${ME.college})`, ...cb(F.myCollege), n: countIn(p => p.college === ME.college, 'myCollege'), toggle: () => this.setF({ myCollege: !F.myCollege }) }
+    ];
+    const listGroup = (key, label, all, get, limit) => {
+      const expanded = key === 'skills' && S.skillsOpen;
+      const shown = limit && !expanded ? all.slice(0, limit) : all;
+      return { label, allColor: F[key].length ? '#0F3FFE' : '#75736C', clear: () => this.setF({ [key]: [] }),
+        canExpand: !!limit, expandLabel: expanded ? 'Show fewer' : `Show all ${all.length}`, expand: () => this.setState({ skillsOpen: !S.skillsOpen }),
+        options: shown.map(v => { const on = F[key].includes(v); return { label: v, ...cb(on), n: countIn(p => get(p, v), key), toggle: () => this.setF({ [key]: on ? F[key].filter(x => x !== v) : [...F[key], v] }) }; }) };
+    };
+    const groups = [
+      listGroup('cats', 'Categories', CATS, (p, v) => p.c.cat === v),
+      listGroup('circuits', 'Circuits', CIRCUITS, (p, v) => p.c.circuit === v),
+      listGroup('skills', 'Skills needed', SKILLS, (p, v) => p.want.includes(v), 5)
+    ];
+    const seg = (key, label, opts) => ({ label, options: opts.map(([v, l]) => { const on = F[key] === v;
+      return { label: l, fw: on ? 600 : 500, fg: on ? '#1A1A19' : '#55534D', bg: on ? '#FFFFFF' : 'transparent', sh: on ? '0 1px 2px rgba(0,0,0,0.08)' : 'none', select: () => this.setF({ [key]: v }) }; }) });
+    const segs = [seg('spots', 'Open spots', [['any', 'Any'], ['1', '1 left'], ['2', '2+']]), seg('closes', 'Competition closes', [['any', 'Any'], ['week', 'This week'], ['month', 'This month']])];
+
+    const browseOn = F.cats.join() === BROWSE.cats.join() && F.circuits.join() === BROWSE.circuits.join();
+    const activeChips = [];
+    if (F.match) activeChips.push({ label: 'Matches my skills', remove: () => this.setF({ match: false }) });
+    if (F.myCollege) activeChips.push({ label: 'From ' + ME.college, remove: () => this.setF({ myCollege: false }) });
+    ['cats', 'circuits', 'skills'].forEach(k => F[k].forEach(v => activeChips.push({ label: v, remove: () => this.setF({ [k]: F[k].filter(x => x !== v) }) })));
+    if (F.spots !== 'any') activeChips.push({ label: F.spots === '1' ? '1 spot left' : '2+ spots', remove: () => this.setF({ spots: 'any' }) });
+    if (F.closes !== 'any') activeChips.push({ label: F.closes === 'week' ? 'Closes this week' : 'Closes this month', remove: () => this.setF({ closes: 'any' }) });
+    const filterCount = activeChips.length;
+    const clearAll = () => this.setState({ f: { ...EMPTY_F }, q: '' });
+
+    const sorter = (a, b) => S.sort === 'closing' ? a.c.days - b.c.days : S.sort === 'spots' ? b.openN - a.openN : a.idx - b.idx;
+    const toCard = p => {
+      const isOwn = p.own; const st = p.state;
+      const badge = { requested: ['Requested', '#E7E6E2', '#F9F9F7', '#55534D'], accepted: ["You're in", 'rgba(23,163,74,0.30)', 'rgba(23,163,74,0.08)', '#15803D'], full: ['Full', '#E7E6E2', '#F2F1ED', '#75736C'], closed: ['Closed', '#E7E6E2', '#F2F1ED', '#75736C'] }[st]
+        || (isOwn && p.pend ? [p.pend + ' new', '#0F3FFE', '#0F3FFE', '#FFFFFF'] : null);
+      return {
+        cat: p.c.cat, circuit: p.c.circuit, catDot: { 'Case Comps': '#0F3FFE', 'Hackathons': '#7C3AED', 'Writing & Research': '#D97706', 'Quizzes': '#DB2777', 'Simulations': '#0891B2', 'Debates': '#17A34A' }[p.c.cat] || '#75736C', ...due(p.c.days), comp: p.c.title, host: p.c.host, note: p.desc,
+        dots: dotsFor(p.filled, p.total), spotsText: p.openN > 0 ? `${p.openN} of ${p.total} open` : `${p.total} of ${p.total} filled`, spotsColor: p.openN > 0 ? '#1A1A19' : '#75736C',
+        chips: chipsFor(p.want, fit), showFit: fit && !isOwn && p.match > 0, fitText: p.match === p.want.length ? 'You fit' : `${p.match} of ${p.want.length} match you`,
+        lead: isOwn ? 'You' : p.lead, leadFirst: p.lead.split(' ')[0], leadInitial: isOwn ? 'A' : p.lead[0], avBg: isOwn ? '#F2F1ED' : '#0F3FFE', avFg: isOwn ? '#55534D' : '#FFFFFF',
+        leadMeta: `${p.college} · ${p.year}`, posted: p.posted,
+        hasBadge: !!badge, noBadge: !badge, badge: badge && badge[0], badgeBd: badge && badge[1], badgeBg: badge && badge[2], badgeFg: badge && badge[3],
+        isOwn, notOwn: !isOwn, isOpen: st === 'open', isRequested: st === 'requested', isAccepted: st === 'accepted', isFull: st === 'full',
+        showWaSecondary: st === 'open' || st === 'requested',
+        reviewLabel: p.pend ? `Review ${p.pend} request${p.pend > 1 ? 's' : ''}` : 'Manage team',
+        revBd: p.pend ? '#0F3FFE' : '#E7E6E2', revBg: p.pend ? '#0F3FFE' : '#FFFFFF', revFg: p.pend ? '#FFFFFF' : '#1A1A19',
+        closeLabel: p.closed ? 'Reopen' : 'Close',
+        open: () => isOwn ? this.setState({ reviewId: p.id, reviewTab: p.pend ? 'pending' : 'accepted' }) : this.setState({ detailId: p.id }),
+        request: e => { e.stopPropagation(); this.setPost(p.id, { state: 'requested' }); },
+        withdraw: e => { e.stopPropagation(); this.setPost(p.id, { state: 'open' }); },
+        whatsapp: e => { e.stopPropagation(); },
+        review: e => { e.stopPropagation(); this.setState({ reviewId: p.id, reviewTab: p.pend ? 'pending' : 'accepted' }); },
+        edit: e => { e.stopPropagation(); const o = S.own.find(x => x.id === p.id); this.setState({ postOpen: true, editId: p.id, form: this.newForm(o) }); },
+        toggleClosed: e => { e.stopPropagation(); this.setState(s => ({ own: s.own.map(x => x.id === p.id ? { ...x, closed: !x.closed } : x) })); }
+      };
+    };
+
+    let sections;
+    if (S.tab === 'other') {
+      const list = otherPool.filter(p => pass(p)).sort(sorter);
+      sections = list.length ? [{ hasTitle: false, cards: list.map(toCard) }] : [];
+    } else {
+      const lead = mine.filter(p => pass(p)).sort(sorter), applied = appliedPool.filter(p => pass(p)).sort(sorter);
+      sections = [['Posted by you', lead], ['Squads you applied to', applied]].filter(x => x[1].length).map(([title, l]) => ({ hasTitle: true, title, count: l.length, cards: l.map(toCard) }));
+    }
+    const shownCount = sections.reduce((n, s) => n + s.cards.length, 0);
+    if (preview === 'empty') sections = [];
+    const isLoading = preview === 'loading';
+    const isEmpty = !isLoading && sections.length === 0;
+
+    const tabs = [['mine', 'My listings', mine.length + appliedPool.length], ['other', 'Other listings', otherPool.length]].map(([id, label, count]) => { const on = S.tab === id;
+      return { label, count, bg: on ? '#F2F1ED' : 'transparent', fg: on ? '#1A1A19' : '#55534D', fw: on ? 600 : 500, pillBg: on ? '#0F3FFE' : '#E7E6E2', pillFg: on ? '#FFFFFF' : '#55534D', select: () => this.setState({ tab: id }) }; });
+
+    let d = {};
+    const dp = others.find(p => p.id === S.detailId);
+    if (dp) {
+      const roster = [{ name: dp.lead, meta: `${dp.college} · ${dp.year}`, initial: dp.lead[0], bg: '#0F3FFE', fg: '#FFFFFF', bd: '0', isLead: true }]
+        .concat(dp.members.map(m => ({ name: m.name === ME.name ? 'You' : m.name, meta: `${m.college} · ${m.year}`, initial: ini(m.name), bg: m.name === ME.name ? '#17A34A' : '#E7E6E2', fg: m.name === ME.name ? '#FFFFFF' : '#55534D', bd: '0' })));
+      while (roster.length < dp.total) roster.push({ name: 'Open spot', meta: 'Could be you', initial: '', bg: '#FFFFFF', fg: '#75736C', bd: '1.5px dashed #CFCDC7', nameColor: '#75736C', rowBg: '#F9F9F7' });
+      d = { comp: dp.c.title, host: dp.c.host, hostInitials: initialsOf(dp.c.host), cat: dp.c.cat, total: dp.total, ...due(dp.c.days), posted: dp.posted, desc: dp.desc,
+        rosterText: dp.openN > 0 ? `${dp.openN} of ${dp.total} open` : 'Full',
+        roster: roster.map((r, i) => ({ isLead: false, nameColor: '#1A1A19', rowBg: '#FFFFFF', ...r, divider: i ? '1px solid #F0EFEB' : '0' })),
+        chips: chipsFor(dp.want, fit), showFit: fit && dp.match > 0, fitText: dp.match === dp.want.length ? 'You have all of these' : `You have ${dp.match} of ${dp.want.length}`,
+        have: dp.have, leadFirst: dp.lead.split(' ')[0],
+        isOpen: dp.state === 'open', isRequested: dp.state === 'requested', isAccepted: dp.state === 'accepted', isFull: dp.state === 'full',
+        request: () => this.setPost(dp.id, { state: 'requested' }), withdraw: () => this.setPost(dp.id, { state: 'open' }), whatsapp: () => {} };
+    }
+
+    let r = {};
+    const ro = S.own.find(o => o.id === S.reviewId);
+    if (ro) {
+      const acc = ro.apps.filter(a => a.status === 'accepted'); const openN = ro.total - 1 - acc.length;
+      const rtabs = [['pending', 'Pending'], ['accepted', 'Accepted'], ['declined', 'Declined']].map(([id, label]) => { const on = S.reviewTab === id;
+        return { label, count: ro.apps.filter(a => a.status === id).length, line: on ? '#0F3FFE' : 'transparent', fg: on ? '#1A1A19' : '#55534D', fw: on ? 600 : 500, select: () => this.setState({ reviewTab: id }) }; });
+      const apps = ro.apps.filter(a => a.status === S.reviewTab).map(a => { const m = a.skills.filter(s => ro.want.includes(s)).length;
+        return { name: a.name, initials: ini(a.name), meta: `${a.college} · ${a.year}`, pitch: a.pitch,
+          chips: a.skills.map(label => { const hit = fit && ro.want.includes(label); return { label, bg: hit ? 'rgba(23,163,74,0.08)' : '#F2F1ED', fg: hit ? '#15803D' : '#55534D', bd: hit ? 'rgba(23,163,74,0.30)' : '#F2F1ED' }; }),
+          showFit: fit && m > 0, fitText: `Has ${m} of ${ro.want.length} you need`,
+          isPending: a.status === 'pending', isAccepted: a.status === 'accepted', isDeclined: a.status === 'declined',
+          accept: () => this.setApp(ro.id, a.id, 'accepted'), decline: () => this.setApp(ro.id, a.id, 'declined'), remove: () => this.setApp(ro.id, a.id, 'pending'), undo: () => this.setApp(ro.id, a.id, 'pending') }; });
+      const empty = { pending: ['No pending requests', 'New requests show up here.'], accepted: ['Nobody accepted yet', 'Accept a request to add them to the team.'], declined: ['Nothing declined', 'Requests you decline stay here in case you change your mind.'] }[S.reviewTab];
+      r = { comp: cmp(ro.compId).title, slots: slotsFor('A', acc, ro.total), rosterText: `${openN} of ${ro.total} spots open`, tabs: rtabs, apps, none: apps.length === 0, emptyTitle: empty[0], emptyText: empty[1] };
+    }
+
+    let pf = {};
+    if (S.postOpen && S.form) {
+      const FM = S.form; const q = FM.compQ.trim().toLowerCase();
+      const list = COMPS.filter(c => !q || (c.title + ' ' + c.host).toLowerCase().includes(q)).slice(0, 4);
+      const stepper = (label, key, min, max) => ({ label, value: FM[key],
+        dec: () => { const v = Math.max(min, FM[key] - 1); this.setForm(key === 'total' ? { total: v, open: Math.min(FM.open, v - 1) } : { [key]: v }); },
+        inc: () => this.setForm({ [key]: Math.min(max, FM[key] + 1) }) });
+      const grp = (label, hint, key) => ({ label, hint, chips: SKILLS.map(sk => { const on = FM[key].includes(sk);
+        return { label: sk, bd: on ? '#0F3FFE' : '#E7E6E2', bg: on ? '#0F3FFE' : '#FFFFFF', fg: on ? '#FFFFFF' : '#1A1A19', toggle: () => this.setForm({ [key]: on ? FM[key].filter(x => x !== sk) : [...FM[key], sk] }) }; }) });
+      pf = { heading: S.editId ? 'Edit squad' : 'Post a squad', submitLabel: S.editId ? 'Save changes' : 'Post squad',
+        isUnstop: !FM.custom, isCustom: FM.custom, customToggleLabel: FM.custom ? 'Pick from Unstop' : 'Not on Unstop?',
+        toggleCustom: () => this.setForm({ custom: !FM.custom }), compQ: FM.compQ, onCompQ: e => this.setForm({ compQ: e.target.value }),
+        comps: list.map(c => { const on = FM.compId === c.id; return { title: c.title, host: c.host, team: c.team, initials: initialsOf(c.host), dueText: due(c.days).dueText, bd: on ? '#0F3FFE' : '#E7E6E2', bg: on ? 'rgba(15,63,254,0.07)' : '#FFFFFF', select: () => this.setForm({ compId: c.id }) }; }),
+        steppers: [stepper('Team size', 'total', 2, 6), stepper('Open spots', 'open', 1, FM.total - 1)],
+        skillGroups: [grp('Looking for', 'Pick up to 3', 'want'), grp('You bring', 'Helps people decide', 'have')],
+        summary: `${Math.min(FM.open, FM.total - 1)} open of ${FM.total}`,
+        submit: () => {
+          if (S.editId) this.setState(s => ({ own: s.own.map(o => o.id === S.editId ? { ...o, compId: FM.compId, total: FM.total, want: FM.want, have: FM.have } : o), postOpen: false }));
+          else this.setState(s => ({ own: [{ id: 'o' + Date.now(), compId: FM.compId, posted: 'just now', total: FM.total, closed: false, want: FM.want, have: FM.have, desc: 'New squad. Say hi on WhatsApp if you have questions.', apps: [] }, ...s.own], postOpen: false, tab: 'mine' }));
+        } };
+    }
+
+    return {
+      stop, q: S.q, onQ: e => this.setState({ q: e.target.value }), sort: S.sort, onSort: e => this.setState({ sort: e.target.value }),
+      tabs, quick, groups, segs, activeChips, filterCount, hasFilters: filterCount > 0, clearAll,
+      browseDesc: `${BROWSE.cats.join(', ')} · ${BROWSE.circuits.join(', ')}. Apply it to see squads for the competitions you're already tracking.`,
+      browseBtnLabel: browseOn ? 'Applied' : 'Apply', browseBtnColor: browseOn ? '#75736C' : '#0F3FFE',
+      applyBrowse: () => this.setF({ cats: [...BROWSE.cats], circuits: [...BROWSE.circuits] }),
+      statusText: S.tab === 'other' ? `Showing ${shownCount} squad${shownCount === 1 ? '' : 's'} looking for teammates` : `${shownCount} listing${shownCount === 1 ? '' : 's'} you lead or applied to`,
+      isLoading, isEmpty, skeletons: [1, 2, 3, 4, 5, 6], sections: isLoading ? [] : sections,
+      emptyTitle: S.tab === 'mine' && !filterCount ? 'Nothing here yet' : 'No squads match these filters',
+      emptyText: S.tab === 'mine' && !filterCount ? 'Squads you post, and squads you request to join, show up here.' : 'Clear a filter, or post your own squad and let applicants come to you.',
+      hasDetail: !!dp, d, closeDetail: () => this.setState({ detailId: null }),
+      hasReview: !!ro, r, closeReview: () => this.setState({ reviewId: null }),
+      postOpen: S.postOpen && !!S.form, pf, openPost: () => this.setState({ postOpen: true, editId: null, form: this.newForm(null) }), closePost: () => this.setState({ postOpen: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

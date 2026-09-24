@@ -1,78 +1,93 @@
 // src/components/TeamFinderScreen.jsx
-// Complete SSCBS OS Team Finder Engine  -  Generalized for ALL Colleges & Universities
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { SKILLS, DISCIPLINES, initialsOf, isMockPost } from '../data/initialData';
+// OneStop Team Finder Standalone Page - Full High-Fidelity Implementation
+import React, { useState, useEffect, useMemo } from 'react';
+import { SKILLS, initialsOf, isMockPost } from '../data/initialData';
 import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
-import InstitutionLogo from './InstitutionLogo';
-import SectionLoadingWidget from './SectionLoadingWidget';
-import { SQUAD_PUNS } from './FunLoadingScreen';
+import PostSquadModal from './PostSquadModal';
+import ApplyModal from './ApplyModal';
+import './TeamFinderScreen.css';
 
-function SquadCardSkeleton() {
-  return (
-    <div
-      style={{
-        background: 'var(--surface)',
-        border: '1px solid var(--line)',
-        borderRadius: '13px',
-        padding: '17px 19px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        position: 'relative'
-      }}
-      aria-hidden="true"
-    >
-      {/* Row 1: Spots Left Badge + Time Placeholder */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-        <div className="skeleton-box" style={{ height: '20px', width: '85px', borderRadius: '20px' }} />
-        <div className="skeleton-box" style={{ height: '12px', width: '45px', borderRadius: '4px' }} />
-      </div>
+const CATS = ['Case Comps', 'Hackathons', 'Writing & Research', 'Quizzes', 'Simulations', 'Debates'];
+const CIRCUITS = ['DU Circuit', 'IIMs, IITs & Premier', 'Corporate & Global', 'Others'];
 
-      {/* Row 2: Host Logo & Competition Title */}
-      <div style={{ display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr)', alignItems: 'center', gap: '10px' }}>
-        <div className="skeleton-box" style={{ width: '40px', height: '40px', borderRadius: '8px' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <div className="skeleton-box" style={{ height: '15px', width: '90%', borderRadius: '4px' }} />
-          <div className="skeleton-box" style={{ height: '11px', width: '55%', borderRadius: '4px' }} />
-        </div>
-      </div>
+const CAT_COLORS = {
+  'Case Comps': '#0F3FFE',
+  'Hackathons': '#7C3AED',
+  'Writing & Research': '#D97706',
+  'Quizzes': '#DB2777',
+  'Simulations': '#0891B2',
+  'Debates': '#17A34A'
+};
 
-      {/* Row 3: Creator / Lead info */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div className="skeleton-box" style={{ width: '24px', height: '24px', borderRadius: '50%' }} />
-        <div className="skeleton-box" style={{ height: '12px', width: '130px', borderRadius: '4px' }} />
-      </div>
+const BROWSE_FILTER_KEY = 'onestop_user_filter_prefs';
 
-      {/* Row 4: Skills Chips */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        <div className="skeleton-box" style={{ height: '22px', width: '70px', borderRadius: '20px' }} />
-        <div className="skeleton-box" style={{ height: '22px', width: '85px', borderRadius: '20px' }} />
-        <div className="skeleton-box" style={{ height: '22px', width: '60px', borderRadius: '20px' }} />
-      </div>
-
-      {/* Row 5: Action Buttons */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '6px' }}>
-        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
-        <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
-      </div>
-    </div>
-  );
+function formatDue(daysOrDeadline) {
+  let h = 24;
+  if (typeof daysOrDeadline === 'string' && daysOrDeadline.includes('-')) {
+    const diff = new Date(daysOrDeadline).getTime() - Date.now();
+    if (!isNaN(diff)) h = Math.max(1, Math.round(diff / 3600000));
+  } else if (daysOrDeadline !== undefined && daysOrDeadline !== null) {
+    h = Math.max(1, Math.round(Number(daysOrDeadline) * 24));
+  }
+  const color = h < 6 ? '#DC2626' : h < 24 ? '#B45309' : '#15803D';
+  const text = h < 72 ? `${h}h left to register` : `${Math.round(h / 24)}d left to register`;
+  return { text, color, hours: h, days: h / 24 };
 }
 
-const POPULAR_COLLEGE_FILTERS = [
-  'SSCBS',
-  'SRCC',
-  'IIT Delhi',
-  'BITS Pilani',
-  'IIM',
-  'DTU',
-  'Hindu College',
-  'St. Stephen’s',
-  'LSR',
-  'Hansraj',
-  'Christ University',
-  'NMIMS'
+// Sample fallback squad data from design handoff to ensure full fidelity when database has no posts yet
+const SAMPLE_COMPS = [
+  { id: 'c1', title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', days: 5 / 24, team: '2–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
+  { id: 'c2', title: 'Prayaas Case Challenge', host: 'Shri Ram College of Commerce', days: 20 / 24, team: '3–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
+  { id: 'c3', title: "L'Oréal Brandstorm 2026", host: "L'Oréal", days: 11, team: '3 members', cat: 'Case Comps', circuit: 'Corporate & Global', url: 'https://unstop.com' },
+  { id: 'c4', title: 'Smart India Hackathon — Campus Round', host: 'Ministry of Education', days: 23, team: '6 members', cat: 'Hackathons', circuit: 'Others', url: 'https://unstop.com' },
+  { id: 'c5', title: 'Tata Crucible Campus Quiz', host: 'Tata Group', days: 4, team: '2 members', cat: 'Quizzes', circuit: 'Corporate & Global', url: 'https://unstop.com' },
+  { id: 'c6', title: 'Bain Business Bowl', host: 'Bain & Company', days: 17, team: '3–4 members', cat: 'Case Comps', circuit: 'Corporate & Global', url: 'https://unstop.com' },
+  { id: 'c7', title: 'Wall Street Simulation League', host: 'IIT Delhi', days: 8, team: '2–3 members', cat: 'Simulations', circuit: 'IIMs, IITs & Premier', url: 'https://unstop.com' },
+  { id: 'c8', title: 'Consult-a-thon', host: 'Kirori Mal College', days: 15, team: '3–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
+  { id: 'c9', title: 'Revive the Failed — Business Case Competition', host: 'Lady Shri Ram College for Women', days: 6, team: '2–3 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' }
+];
+
+const SAMPLE_POSTS = [
+  { id: 'demo_p1', compId: 'c1', lead: 'Ananya Rao', college: 'Lady Shri Ram College', year: '3rd year', posted: '4h ago', total: 4, members: [{ name: 'Riya Kapoor', college: 'LSR', year: '3rd year' }], state: 'open', want: ['Market research', 'Deck design'], have: ['Finance modelling', 'Public speaking'], desc: 'We made the semis last year and want to go further. Looking for one person who can dig up market data fast and one who can make a deck look sharp. We meet on Meet most evenings after 8.', phone: '9811042278' },
+  { id: 'demo_p8', compId: 'c9', lead: 'Riddhi Sharma', college: 'Lady Shri Ram College', year: 'BMS, 1st year', posted: '6h ago', total: 3, members: [], state: 'open', want: [], have: ['Market research'], desc: 'First case comp for me. All skills and backgrounds welcome, just be ready to put in a few evenings.', phone: '9811042278' },
+  { id: 'demo_p2', compId: 'c3', lead: 'Kabir Sethi', college: 'SRCC', year: '2nd year', posted: '9h ago', total: 3, members: [], state: 'requested', want: ['Copywriting', 'Design'], have: ['Market research'], desc: 'Brandstorm Round 1 closes soon. I have the idea, need a writer and a designer to make it land.', phone: '9811042278' },
+  { id: 'demo_p3', compId: 'c4', lead: 'Nikhil Arora', college: 'SSCBS', year: '2nd year', posted: 'Yesterday', total: 6, members: [{ name: 'Aarav Mehta', college: 'SRCC', year: '2nd year' }, { name: 'Tanvi Shah', college: 'DTU', year: '3rd year' }, { name: 'Ishaan Verma', college: 'DTU', year: '2nd year' }], state: 'accepted', want: ['Backend', 'ML / Data'], have: ['Frontend', 'Design'], desc: 'Building a grievance-routing tool. Frontend and design sorted, need backend and someone who knows basic ML.', phone: '9811042278' },
+  { id: 'demo_p4', compId: 'c5', lead: 'Meher Gill', college: 'Hindu College', year: '1st year', posted: '2 days ago', total: 2, members: [{ name: 'Arjun Nair', college: 'Hindu College', year: '1st year' }], state: 'full', want: ['Public speaking'], have: ['Copywriting'], desc: 'Quiz pair. Full for now.', phone: '9811042278' },
+  { id: 'demo_p5', compId: 'c6', lead: 'Devansh Iyer', college: 'Hansraj College', year: '2nd year', posted: '2 days ago', total: 4, members: [], state: 'open', want: ['Finance modelling', 'Valuation', 'Public speaking'], have: ['Market research'], desc: 'First Bain Bowl for all of us. Serious about prep: two mock cases a week before the deadline.', phone: '9811042278' },
+  { id: 'demo_p6', compId: 'c7', lead: 'Sara Thomas', college: 'IIT Delhi', year: '3rd year', posted: '3 days ago', total: 3, members: [{ name: 'Kunal Jain', college: 'IIT Delhi', year: '3rd year' }], state: 'open', want: ['Finance modelling', 'ML / Data'], have: ['Valuation'], desc: 'Trading sim with a quant bent. Comfort with Excel or Python matters more than finance theory.', phone: '9811042278' },
+  { id: 'demo_p7', compId: 'c1', lead: 'Rohan Das', college: 'SRCC', year: '2nd year', posted: '4 days ago', total: 3, members: [], state: 'open', want: ['Deck design', 'Copywriting'], have: ['Finance modelling'], desc: 'Second SRCC team for Kurukshetra. Need a storyteller and a slide person.', phone: '9811042278' }
+];
+
+const SAMPLE_OWN = [
+  {
+    id: 'demo_o1',
+    compId: 'c2',
+    posted: '2 days ago',
+    total: 4,
+    closed: false,
+    want: ['Finance modelling', 'Valuation'],
+    have: ['Deck design', 'Public speaking'],
+    desc: 'Two-person SRCC team so far. Need someone who can own the financials and one more analyst.',
+    phone: '9811042278',
+    apps: [
+      { id: 'demo_a1', name: 'Priya Menon', college: 'SSCBS', year: '2nd year', status: 'pending', skills: ['Finance modelling', 'Valuation', 'Market research'], pitch: 'Built three LBO models for my finance society this year. Happy to own the numbers end to end.', phone: '9876543210' },
+      { id: 'demo_a2', name: 'Aditya Rao', college: 'Hansraj College', year: '3rd year', status: 'pending', skills: ['Public speaking', 'Market research'], pitch: 'Finalist at two case comps last semester. Strong on the pitch, can help with research.', phone: '9876543211' },
+      { id: 'demo_a3', name: 'Neha Bansal', college: 'SRCC', year: '2nd year', status: 'accepted', skills: ['Valuation', 'Deck design'], pitch: 'Classmate from B.Com (H). I can do valuation and help with slides.', phone: '9876543212' }
+    ]
+  },
+  {
+    id: 'demo_o2',
+    compId: 'c8',
+    posted: '5 days ago',
+    total: 3,
+    closed: false,
+    want: ['Market research'],
+    have: ['Deck design'],
+    desc: 'Looking for a researcher who enjoys digging into industry reports.',
+    phone: '9811042278',
+    apps: []
+  }
 ];
 
 export default function TeamFinderScreen({
@@ -91,1375 +106,1678 @@ export default function TeamFinderScreen({
   onAcceptApp,
   onDeclineApp,
   onRemoveApp,
-  headerAction = null
+  onWithdrawApp,
+  onBack,
+  onNavigate,
+  showToast,
+  headerAction,
+  onSubmitPost
 }) {
-  const [tq, setTq] = useState('');
-  const [showSquadLoader, setShowSquadLoader] = useState(() => !(Array.isArray(posts) && posts.length > 0));
-  const [tScope, setTScope] = useState(() => {
-    try {
-      return localStorage.getItem('onestop_squad_scope') || 'all';
-    } catch {
-      return 'all';
-    }
+  const [tab, setTab] = useState('other'); // 'other' | 'mine'
+  const [q, setQ] = useState('');
+  const [sort, setSort] = useState('newest'); // 'newest' | 'closing' | 'spots'
+  const [skillsOpen, setSkillsOpen] = useState(false);
+
+  // Filters State
+  const [fMatch, setFMatch] = useState(false);
+  const [fMyCollege, setFMyCollege] = useState(false);
+  const [fCats, setFCats] = useState([]);
+  const [fCircuits, setFCircuits] = useState([]);
+  const [fSkills, setFSkills] = useState([]);
+  const [fSpots, setFSpots] = useState('any'); // 'any' | '1' | '2'
+  const [fCloses, setFCloses] = useState('any'); // 'any' | 'week' | 'month'
+
+  // Modals & Sheets State
+  const [detailPostId, setDetailPostId] = useState(null);
+  const [reviewPostId, setReviewPostId] = useState(null);
+  const [reviewTab, setReviewTab] = useState('pending'); // 'pending' | 'accepted' | 'declined'
+
+  // Post / Edit Squad Modal State
+  const [postModalOpen, setPostModalOpen] = useState(false);
+  const [editingPostData, setEditingPostData] = useState(null);
+
+  // Apply Modal State
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [applyTargetPost, setApplyTargetPost] = useState(null);
+
+  // Local state mutations for demo / live reactivity
+  const [localPostsState, setLocalPostsState] = useState(() => {
+    return SAMPLE_POSTS.map(p => ({ ...p }));
+  });
+  const [localOwnState, setLocalOwnState] = useState(() => {
+    return SAMPLE_OWN.map(o => ({ ...o, apps: o.apps.map(a => ({ ...a })) }));
   });
 
-  useEffect(() => {
+  const profileSkills = useMemo(() => profile?.skills || ['Market research', 'Deck design', 'Copywriting'], [profile]);
+  const userCollege = (profile?.college || user?.user_metadata?.college || 'SRCC').trim();
+  const userName = profile?.name || 'Aarav Mehta';
+  const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
+
+  // Load Saved Browse filter
+  const savedBrowseFilter = useMemo(() => {
     try {
-      localStorage.setItem('onestop_squad_scope', tScope);
-    } catch {}
-  }, [tScope]);
+      const userKey = user?.email ? `${BROWSE_FILTER_KEY}_${user.email.toLowerCase()}` : null;
+      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem(BROWSE_FILTER_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const circuitMap = { du: 'DU Circuit', 'iim-iit-premier': 'IIMs, IITs & Premier', 'corporate-global': 'Corporate & Global', others: 'Others' };
+        const trackMap = { case: 'Case Comps', hackathon: 'Hackathons', writing: 'Writing & Research', quiz: 'Quizzes', simulation: 'Simulations', debate: 'Debates' };
+        const cats = Array.isArray(parsed.selectedTracks) && parsed.selectedTracks.length > 0
+          ? parsed.selectedTracks.map(t => trackMap[t] || t).filter(Boolean)
+          : ['Case Comps'];
+        const circuits = Array.isArray(parsed.selectedCircuits) && parsed.selectedCircuits.length > 0
+          ? parsed.selectedCircuits.map(c => circuitMap[c] || c).filter(Boolean)
+          : ['DU Circuit'];
+        return { cats, circuits };
+      }
+    } catch (e) {}
+    return { cats: ['Case Comps'], circuits: ['DU Circuit'] };
+  }, [user?.email]);
 
-  const [tSkills, setTSkills] = useState([]);
-  const [tDisc, setTDisc] = useState([]);
-  const [selectedCollege, setSelectedCollege] = useState('all'); // 'all' | 'my' | specific name
+  const isBrowseApplied = useMemo(() => {
+    return (
+      fCats.length === savedBrowseFilter.cats.length &&
+      fCats.every(c => savedBrowseFilter.cats.includes(c)) &&
+      fCircuits.length === savedBrowseFilter.circuits.length &&
+      fCircuits.every(c => savedBrowseFilter.circuits.includes(c))
+    );
+  }, [fCats, fCircuits, savedBrowseFilter]);
 
-  // Active review modal & admin dropdown
-  const [reviewModalPostId, setReviewModalPostId] = useState(null);
-  const [activeMenuPostId, setActiveMenuPostId] = useState(null);
-  const [deleteConfirmPostId, setDeleteConfirmPostId] = useState(null);
+  const handleApplyBrowseFilter = () => {
+    setFCats([...savedBrowseFilter.cats]);
+    setFCircuits([...savedBrowseFilter.circuits]);
+  };
 
-  // Close menus on outside click
-  useEffect(() => {
-    const handleOutsideClick = () => setActiveMenuPostId(null);
-    window.addEventListener('click', handleOutsideClick);
-    return () => window.removeEventListener('click', handleOutsideClick);
-  }, []);
+  // Helper to find competition metadata
+  const getCompMeta = (compId, fallbackTitle, fallbackHost) => {
+    const live = competitions.find(c => String(c.id) === String(compId) || (c.title && c.title.toLowerCase() === (fallbackTitle || '').toLowerCase()));
+    if (live) {
+      let cat = 'Case Comps';
+      const catKey = (live.category || live.discipline || '').toLowerCase();
+      if (catKey.includes('hack') || catKey.includes('code')) cat = 'Hackathons';
+      else if (catKey.includes('writ') || catKey.includes('research')) cat = 'Writing & Research';
+      else if (catKey.includes('quiz')) cat = 'Quizzes';
+      else if (catKey.includes('simul')) cat = 'Simulations';
+      else if (catKey.includes('debat')) cat = 'Debates';
 
-  const profileSkills = profile?.skills || [];
-  const userCollege = (profile?.college || user?.user_metadata?.college || '').trim();
+      let circ = 'Others';
+      if (live.isDU || /sscbs|srcc|hindu|hansraj|lsr|kmc|ramjas|du/i.test(live.host || '')) circ = 'DU Circuit';
+      else if (live.isPremier || live.isIIMorIIT || /iim|iit|bits|fms|xlri/i.test(live.host || '')) circ = 'IIMs, IITs & Premier';
+      else if (live.isCorporate || /bain|l'oreal|mckinsey|tata|google/i.test(live.host || '')) circ = 'Corporate & Global';
 
-  // Normalize squad posts
-  const cleanPosts = posts.filter(p => !isMockPost(p));
+      const dueInfo = formatDue(live.deadline || live.days || 10);
+      return {
+        id: live.id,
+        title: live.title,
+        host: live.host || live.orgName || 'Organizer',
+        cat,
+        circuit: circ,
+        url: live.unstopUrl || 'https://unstop.com',
+        dueText: dueInfo.text,
+        dueColor: dueInfo.color,
+        days: dueInfo.days
+      };
+    }
 
-  const normalizedPosts = useMemo(() => {
-    return cleanPosts.map((p) => {
-      const comp = competitions.find(
-        c => String(c.id) === String(p.compId) ||
-        (p.competition_name && c.title && c.title.toLowerCase() === p.competition_name.toLowerCase())
-      ) || null;
+    const sample = SAMPLE_COMPS.find(c => c.id === compId);
+    if (sample) {
+      const dueInfo = formatDue(sample.days);
+      return { ...sample, dueText: dueInfo.text, dueColor: dueInfo.color, days: dueInfo.days };
+    }
 
-      const title = p.competition_name || comp?.title || p.title || 'Competition';
-      const host = p.organizer || comp?.host || comp?.orgName || 'Host Institution';
-      const logo = comp?.logo || comp?.orgLogo || null;
-      const desc = p.description || p.desc || '';
-      const want = Array.isArray(p.skills_looking_for) ? p.skills_looking_for : (Array.isArray(p.want) ? p.want : []);
-      const have = Array.isArray(p.skills_have) ? p.skills_have : [];
+    const dueInfo = formatDue(7);
+    return {
+      id: compId || 'custom',
+      title: fallbackTitle || 'Collegiate Challenge',
+      host: fallbackHost || 'University Host',
+      cat: 'Case Comps',
+      circuit: 'DU Circuit',
+      url: 'https://unstop.com',
+      dueText: dueInfo.text,
+      dueColor: dueInfo.color,
+      days: 7
+    };
+  };
 
-      const acceptedList = Array.isArray(p.accepted_emails) ? p.accepted_emails : [];
-      const spotsLeft = p.spots_left !== undefined ? Number(p.spots_left) : Math.max(0, (p.total_members || p.size || 4) - 1);
-      const totalMembers = Number(p.total_members || p.size || (spotsLeft + 1));
-      const filledCount = Math.max(1, totalMembers - spotsLeft);
+  // Build unified normalized posts
+  const realCleanPosts = useMemo(() => (Array.isArray(posts) ? posts.filter(p => !isMockPost(p)) : []), [posts]);
 
-      const lead = p.created_by_name || p.lead || 'Student Lead';
-      const postCollege = (p.college || '').trim();
-      const postYear = normalizeYear(p.year);
-
+  const allPosts = useMemo(() => {
+    // If realCleanPosts exist, map real posts
+    const mappedReal = realCleanPosts.map((p, i) => {
+      const comp = getCompMeta(p.compId, p.competition_name || p.title, p.organizer || p.host);
       const isMine = Boolean(
         p.mine ||
         (user && p.user_id && p.user_id === user.id) ||
         (user && p.created_by_email && p.created_by_email.toLowerCase() === (user.email || '').toLowerCase()) ||
-        (profile?.name && lead.toLowerCase() === profile.name.toLowerCase())
+        (userName && (p.created_by_name || p.lead || '').toLowerCase() === userName.toLowerCase())
       );
 
-      const discipline = comp?.discipline || 'Case';
-      const isOpen = p.is_open !== false && spotsLeft > 0;
+      const want = Array.isArray(p.skills_looking_for) ? p.skills_looking_for : (Array.isArray(p.want) ? p.want : []);
+      const have = Array.isArray(p.skills_have) ? p.skills_have : (Array.isArray(p.have) ? p.have : []);
+      const total = Number(p.total_members || p.size || 4);
 
-      // Applications linked to this post
+      // Connected applications
       const postApps = applications.filter(a => String(a.postId || a.post_id) === String(p.id));
-      const pendingAppsCount = postApps.filter(a => a.status === 'pending').length;
+      const acceptedApps = postApps.filter(a => a.status === 'accepted');
+      const pendingApps = postApps.filter(a => a.status === 'pending');
+      const declinedApps = postApps.filter(a => a.status === 'declined' || a.status === 'rejected');
 
-      // Current user's application
+      const filled = 1 + acceptedApps.length;
+      const openN = Math.max(0, total - filled);
+
       const myApp = applications.find(a =>
         String(a.postId || a.post_id) === String(p.id) &&
         (a.dir === 'out' || (user && a.applicant_id === user.id) || (user && a.applicant_email === user.email))
       );
 
-      let postState = 'open';
+      let state = 'open';
       if (isMine) {
-        postState = 'own';
+        state = p.is_open === false ? 'closed' : 'own';
       } else if (myApp) {
-        postState = myApp.status === 'accepted' ? 'accepted' : (myApp.status === 'declined' || myApp.status === 'rejected' ? 'declined' : 'requested');
-      } else if (!isOpen || spotsLeft <= 0) {
-        postState = 'full';
+        state = myApp.status === 'accepted' ? 'accepted' : (myApp.status === 'rejected' || myApp.status === 'declined' ? 'open' : 'requested');
+      } else if (openN <= 0 || p.is_open === false) {
+        state = 'full';
       }
+
+      const match = want.filter(w => profileSkills.includes(w)).length;
 
       return {
-        ...p,
-        displayTitle: title,
-        displayHost: host,
-        displayLogo: logo,
-        displayDesc: desc,
-        displaySkills: want,
-        displaySkillsHave: have,
-        displaySpotsLeft: spotsLeft,
-        displayTotalMembers: totalMembers,
-        displayFilledCount: filledCount,
-        displayLead: lead,
-        displayCollege: postCollege,
-        displayYear: postYear,
-        isMine,
-        isOpen,
-        state: postState,
-        discipline,
-        rawComp: comp,
-        postApps,
-        pendingAppsCount,
-        myApp
+        id: p.id,
+        rawPost: p,
+        comp,
+        lead: isMine ? 'You' : (p.created_by_name || p.lead || 'Student Lead'),
+        college: p.college || userCollege,
+        year: p.year || '2nd year',
+        posted: p.posted || 'recently',
+        total,
+        filled,
+        openN,
+        want,
+        have,
+        desc: p.description || p.desc || '',
+        phone: p.phone_number || p.phone || p.leadPhone || '',
+        state,
+        isOwn: isMine,
+        apps: postApps.map(a => ({
+          id: a.id,
+          name: a.applicant_name || a.who || 'Applicant',
+          college: a.applicant_college || a.meta || 'Collegiate',
+          year: a.applicant_year || 'UG',
+          status: a.status || 'pending',
+          skills: a.highlighted_skills || a.skills || [],
+          pitch: a.pitch_note || a.pitch || '',
+          phone: a.applicant_phone || a.phone || ''
+        })),
+        members: acceptedApps.map(a => ({
+          name: a.applicant_name || a.who || 'Member',
+          college: a.applicant_college || 'Collegiate',
+          year: a.applicant_year || 'UG'
+        })),
+        match,
+        idx: i
       };
     });
-  }, [cleanPosts, competitions, applications, user, profile]);
 
-  // Filtering
-  const visiblePosts = useMemo(() => {
-    return normalizedPosts.filter((p) => {
-      // Scope filter
-      if (tScope === 'mine' && !p.isMine) return false;
-      if (tScope === 'open' && (p.isMine || !p.isOpen || p.displaySpotsLeft <= 0)) return false;
-      if (tScope === 'match' && !p.displaySkills.some(w => profileSkills.includes(w))) return false;
+    if (mappedReal.length > 0) {
+      return mappedReal;
+    }
 
-      // College filter
-      if (selectedCollege === 'my') {
-        if (!userCollege || !p.displayCollege.toLowerCase().includes(userCollege.toLowerCase())) return false;
-      } else if (selectedCollege !== 'all') {
-        const target = selectedCollege.toLowerCase();
-        const postCol = p.displayCollege.toLowerCase();
-        if (!postCol.includes(target)) return false;
-      }
-
-      // Skills & Discipline
-      if (tSkills.length > 0 && !p.displaySkills.some(w => tSkills.includes(w))) return false;
-      if (tDisc.length > 0 && !tDisc.includes(p.discipline)) return false;
-
-      // Free text search
-      if (tq.trim()) {
-        const hay = `${p.displayTitle} ${p.displayHost} ${p.displayLead} ${p.displayCollege} ${p.displaySkills.join(' ')} ${p.displayDesc}`.toLowerCase();
-        if (!hay.includes(tq.trim().toLowerCase())) return false;
-      }
-
-      return true;
+    // Otherwise use design demo state
+    const others = localPostsState.map((p, i) => {
+      const comp = getCompMeta(p.compId);
+      const filled = 1 + (p.members?.length || 0);
+      const openN = Math.max(0, p.total - filled);
+      const match = p.want.filter(w => profileSkills.includes(w)).length;
+      return {
+        id: p.id,
+        comp,
+        lead: p.lead,
+        college: p.college,
+        year: p.year,
+        posted: p.posted,
+        total: p.total,
+        filled,
+        openN,
+        want: p.want,
+        have: p.have,
+        desc: p.desc,
+        phone: p.phone,
+        state: p.state,
+        isOwn: false,
+        apps: [],
+        members: p.members || [],
+        match,
+        idx: i
+      };
     });
-  }, [normalizedPosts, tScope, selectedCollege, userCollege, tSkills, tDisc, tq, profileSkills]);
 
-  const toggleSkill = (skill) => {
-    setTSkills(prev => prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]);
+    const mine = localOwnState.map((o, i) => {
+      const comp = getCompMeta(o.compId);
+      const acc = o.apps.filter(a => a.status === 'accepted');
+      const filled = 1 + acc.length;
+      const openN = Math.max(0, o.total - filled);
+      return {
+        id: o.id,
+        comp,
+        lead: 'You',
+        college: userCollege,
+        year: userYear,
+        posted: o.posted,
+        total: o.total,
+        filled,
+        openN,
+        want: o.want,
+        have: o.have,
+        desc: o.desc,
+        phone: o.phone,
+        state: o.closed ? 'closed' : 'own',
+        isOwn: true,
+        apps: o.apps,
+        members: acc.map(a => ({ name: a.name, college: a.college, year: a.year })),
+        match: 0,
+        closed: o.closed,
+        idx: -100 + i
+      };
+    });
+
+    return [...others, ...mine];
+  }, [realCleanPosts, competitions, applications, user, userName, userCollege, userYear, profileSkills, localPostsState, localOwnState]);
+
+  // Pools
+  const otherPool = useMemo(() => allPosts.filter(p => !p.isOwn && (p.state === 'open' || p.state === 'full')), [allPosts]);
+  const appliedPool = useMemo(() => allPosts.filter(p => !p.isOwn && (p.state === 'requested' || p.state === 'accepted')), [allPosts]);
+  const ownPool = useMemo(() => allPosts.filter(p => p.isOwn), [allPosts]);
+  const myTotalPool = useMemo(() => [...ownPool, ...appliedPool], [ownPool, appliedPool]);
+
+  const activePool = tab === 'other' ? otherPool : myTotalPool;
+
+  // Filter testing predicate
+  const passFilter = (p, skip = null) => {
+    if (skip !== 'match' && fMatch && p.match === 0) return false;
+    if (skip !== 'myCollege' && fMyCollege && p.college.toLowerCase() !== userCollege.toLowerCase()) return false;
+    if (skip !== 'cats' && fCats.length > 0 && !fCats.includes(p.comp.cat)) return false;
+    if (skip !== 'circuits' && fCircuits.length > 0 && !fCircuits.includes(p.comp.circuit)) return false;
+    if (skip !== 'skills' && fSkills.length > 0 && !p.want.some(w => fSkills.includes(w))) return false;
+    if (fSpots === '1' && p.openN !== 1) return false;
+    if (fSpots === '2' && p.openN < 2) return false;
+    if (fCloses === 'week' && p.comp.days > 7) return false;
+    if (fCloses === 'month' && p.comp.days > 30) return false;
+
+    if (q.trim()) {
+      const hay = `${p.comp.title} ${p.comp.host} ${p.lead} ${p.college} ${p.want.join(' ')}`.toLowerCase();
+      if (!hay.includes(q.trim().toLowerCase())) return false;
+    }
+    return true;
   };
 
-  const toggleDisc = (disc) => {
-    setTDisc(prev => prev.includes(disc) ? prev.filter(d => d !== disc) : [...prev, disc]);
+  // Faceted count calculation helper
+  const countIn = (pred, skip) => {
+    const c = activePool.filter(p => passFilter(p, skip) && pred(p)).length;
+    return c > 0 ? c : '';
   };
 
-  const handleReset = () => {
-    setTq('');
-    setTScope('all');
-    setSelectedCollege('all');
-    setTSkills([]);
-    setTDisc([]);
+  // Sort function
+  const sortComparator = (a, b) => {
+    if (sort === 'closing') return a.comp.days - b.comp.days;
+    if (sort === 'spots') return b.openN - a.openN;
+    return a.idx - b.idx;
   };
 
-  // Active review target post
-  const reviewTargetPost = normalizedPosts.find(p => p.id === reviewModalPostId) || null;
+  // Clear all filters
+  const handleClearAll = () => {
+    setFMatch(false);
+    setFMyCollege(false);
+    setFCats([]);
+    setFCircuits([]);
+    setFSkills([]);
+    setFSpots('any');
+    setFCloses('any');
+    setQ('');
+  };
 
-  const countAll = normalizedPosts.length;
-  const countOpen = normalizedPosts.filter(p => !p.isMine && p.isOpen && p.displaySpotsLeft > 0).length;
-  const countMine = normalizedPosts.filter(p => p.isMine).length;
-  const countMatch = normalizedPosts.filter(p => p.displaySkills.some(w => profileSkills.includes(w))).length;
+  // Active filter chips
+  const activeChips = useMemo(() => {
+    const chips = [];
+    if (fMatch) chips.push({ label: 'Matches my skills', remove: () => setFMatch(false) });
+    if (fMyCollege) chips.push({ label: `From ${userCollege.split(' ')[0]}`, remove: () => setFMyCollege(false) });
+    fCats.forEach(c => chips.push({ label: c, remove: () => setFCats(fCats.filter(x => x !== c)) }));
+    fCircuits.forEach(c => chips.push({ label: c, remove: () => setFCircuits(fCircuits.filter(x => x !== c)) }));
+    fSkills.forEach(s => chips.push({ label: s, remove: () => setFSkills(fSkills.filter(x => x !== s)) }));
+    if (fSpots !== 'any') chips.push({ label: fSpots === '1' ? '1 spot left' : '2+ spots', remove: () => setFSpots('any') });
+    if (fCloses !== 'any') chips.push({ label: fCloses === 'week' ? 'Closes this week' : 'Closes this month', remove: () => setFCloses('any') });
+    return chips;
+  }, [fMatch, fMyCollege, userCollege, fCats, fCircuits, fSkills, fSpots, fCloses]);
 
-  const activeSkills = SKILLS.filter(k => normalizedPosts.some(p => p.displaySkills.includes(k)));
-  const activeDisciplines = DISCIPLINES.filter(d => normalizedPosts.some(p => p.discipline === d));
+  const filterCount = activeChips.length;
+
+  // Filtered & Sorted Listings
+  const displayedSections = useMemo(() => {
+    if (tab === 'other') {
+      const list = otherPool.filter(p => passFilter(p)).sort(sortComparator);
+      return list.length ? [{ hasTitle: false, cards: list }] : [];
+    } else {
+      const leadList = ownPool.filter(p => passFilter(p)).sort(sortComparator);
+      const appliedList = appliedPool.filter(p => passFilter(p)).sort(sortComparator);
+      const secs = [];
+      if (leadList.length > 0) secs.push({ hasTitle: true, title: 'Posted by you', count: leadList.length, cards: leadList });
+      if (appliedList.length > 0) secs.push({ hasTitle: true, title: 'Squads you applied to', count: appliedList.length, cards: appliedList });
+      return secs;
+    }
+  }, [tab, otherPool, ownPool, appliedPool, fMatch, fMyCollege, fCats, fCircuits, fSkills, fSpots, fCloses, q, sort]);
+
+  const totalCardsShown = displayedSections.reduce((acc, s) => acc + s.cards.length, 0);
+
+  // Card interaction handlers
+  const handleOpenWhatsAppPost = (e, post) => {
+    e.stopPropagation();
+    if (onOpenWhatsApp) {
+      onOpenWhatsApp(post.rawPost || post);
+    } else {
+      const phone = post.phone || '9811042278';
+      const leadName = post.lead.split(' ')[0];
+      const msg = `Hey ${leadName}! Reaching out regarding your squad for "${post.comp.title}". Wanted to connect!`;
+      const url = formatWhatsAppUrl(phone, msg);
+      if (url && url !== '#') window.open(url, '_blank', 'noopener,noreferrer');
+      else alert('No WhatsApp number provided.');
+    }
+  };
+
+  const handleRequestJoin = (e, post) => {
+    e.stopPropagation();
+    if (onOpenApply) {
+      onOpenApply(post.rawPost || post);
+    } else {
+      // Local optimistic update
+      setLocalPostsState(prev => prev.map(p => p.id === post.id ? { ...p, state: 'requested' } : p));
+      if (showToast) showToast(`Request sent to ${post.lead.split(' ')[0]}`);
+    }
+  };
+
+  const handleWithdraw = (e, post) => {
+    e.stopPropagation();
+    if (onWithdrawApp && post.rawPost) {
+      const myApp = applications.find(a => String(a.postId || a.post_id) === String(post.id));
+      if (myApp) onWithdrawApp(myApp.id);
+    } else {
+      setLocalPostsState(prev => prev.map(p => p.id === post.id ? { ...p, state: 'open' } : p));
+      if (showToast) showToast('Request withdrawn');
+    }
+  };
+
+  const handleToggleClosed = (e, post) => {
+    e.stopPropagation();
+    if (onTogglePostOpen) {
+      onTogglePostOpen(post.id, post.state !== 'closed');
+    } else {
+      setLocalOwnState(prev => prev.map(o => o.id === post.id ? { ...o, closed: !o.closed } : o));
+    }
+  };
+
+  const handleOpenEdit = (e, post) => {
+    e.stopPropagation();
+    if (onOpenEditSquad) {
+      onOpenEditSquad(post.rawPost || post);
+    } else {
+      setEditingPostData(post);
+      setPostModalOpen(true);
+    }
+  };
+
+  // Review modal target
+  const reviewTarget = useMemo(() => {
+    if (!reviewPostId) return null;
+    return allPosts.find(p => p.id === reviewPostId) || null;
+  }, [reviewPostId, allPosts]);
+
+  // Detail sheet target
+  const detailTarget = useMemo(() => {
+    if (!detailPostId) return null;
+    return allPosts.find(p => p.id === detailPostId) || null;
+  }, [detailPostId, allPosts]);
+
+  // Review actions
+  const handleAcceptApplicant = (appId) => {
+    if (onAcceptApp) {
+      onAcceptApp(appId);
+    } else {
+      setLocalOwnState(prev => prev.map(o => {
+        if (o.id !== reviewPostId) return o;
+        return {
+          ...o,
+          apps: o.apps.map(a => a.id === appId ? { ...a, status: 'accepted' } : a)
+        };
+      }));
+    }
+  };
+
+  const handleDeclineApplicant = (appId) => {
+    if (onDeclineApp) {
+      onDeclineApp(appId);
+    } else {
+      setLocalOwnState(prev => prev.map(o => {
+        if (o.id !== reviewPostId) return o;
+        return {
+          ...o,
+          apps: o.apps.map(a => a.id === appId ? { ...a, status: 'declined' } : a)
+        };
+      }));
+    }
+  };
+
+  const handleRemoveApplicant = (appId) => {
+    if (onRemoveApp) {
+      onRemoveApp(appId);
+    } else {
+      setLocalOwnState(prev => prev.map(o => {
+        if (o.id !== reviewPostId) return o;
+        return {
+          ...o,
+          apps: o.apps.map(a => a.id === appId ? { ...a, status: 'pending' } : a)
+        };
+      }));
+    }
+  };
+
+  const handleUndoDecline = (appId) => {
+    setLocalOwnState(prev => prev.map(o => {
+      if (o.id !== reviewPostId) return o;
+      return {
+        ...o,
+        apps: o.apps.map(a => a.id === appId ? { ...a, status: 'pending' } : a)
+      };
+    }));
+  };
+
+  const handlePostSuccess = () => {
+    setTab('mine');
+    if (showToast) showToast('Squad posted! Switched to My listings.');
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-      {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 300px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h1 style={{ margin: 0, fontSize: '25px', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
-              Team finder
-            </h1>
-            <span
-              style={{
-                background: 'rgba(59, 107, 255, 0.1)',
-                color: 'var(--primary)',
-                border: '1px solid rgba(59, 107, 255, 0.3)',
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.03em'
-              }}
-            >
-              ALL COLLEGES & UNIVERSITIES
-            </span>
-          </div>
-          <p style={{ margin: '7px 0 0', fontSize: '14px', color: 'var(--ink-muted)' }}>
-            SSCBS OS Architecture · Recruit teammates for any competition or apply to open squads. Instant WhatsApp handshake upon acceptance.
-          </p>
-        </div>
+    <div className="tf-page">
+      <div className="tf-container">
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <button
-            onClick={() => onOpenPostSquad(null)}
-            style={{
-              border: '1px solid #0F3FFE',
-              borderRadius: '9px',
-              background: '#0F3FFE',
-              color: '#FFFFFF',
-              padding: '0 18px',
-              height: '38px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              fontSize: '14px',
-              fontWeight: 600,
-              transition: 'background 120ms ease, transform 120ms ease',
-              boxShadow: '0 2px 4px rgba(15,63,254,0.18)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#0C33CC';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#0F3FFE';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            + Post a squad
-          </button>
-          {headerAction && (
-            <div className="team-finder-header-action-cluster">
-              {headerAction}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main Filter Suite */}
-      <div
-        style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--line)',
-          borderRadius: '14px',
-          padding: '16px 18px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px'
-        }}
-      >
-        {/* Search & Scope Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <input
-            value={tq}
-            onChange={(e) => setTq(e.target.value)}
-            placeholder="Search by competition name, college, skill, or lead..."
-            style={{
-              flex: 1,
-              minWidth: '220px',
-              border: '1px solid var(--line)',
-              borderRadius: '9px',
-              background: 'var(--surface-sunken)',
-              padding: '10px 14px',
-              fontSize: '14px',
-              color: 'var(--ink)'
-            }}
-          />
-
-          <div
-            style={{
-              display: 'flex',
-              background: 'var(--surface-sunken)',
-              border: '1px solid var(--line)',
-              borderRadius: '9px',
-              padding: '3px',
-              gap: '3px',
-              overflowX: 'auto'
-            }}
-          >
-            {[
-              { id: 'all', label: 'All squads', count: countAll },
-              { id: 'open', label: 'Open spots', count: countOpen },
-              { id: 'match', label: 'Matching my skills', count: countMatch },
-              { id: 'mine', label: 'My posts', count: countMine }
-            ].map((t) => {
-              const on = tScope === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTScope(t.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '7px',
-                    border: 0,
-                    borderRadius: '7px',
-                    background: on ? 'var(--surface)' : 'transparent',
-                    color: on ? 'var(--ink)' : 'var(--ink-secondary)',
-                    padding: '8px 13px',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    fontSize: '13px',
-                    fontWeight: on ? 600 : 500,
-                    boxShadow: on ? '0 1px 2px rgba(0,0,0,0.15)' : 'none'
-                  }}
-                >
-                  <span>{t.label}</span>
-                  <span
-                    style={{
-                      background: on ? 'var(--primary)' : 'var(--surface-muted)',
-                      color: on ? '#FFFFFF' : 'var(--ink-secondary)',
-                      borderRadius: '20px',
-                      padding: '1px 7px',
-                      fontSize: '11px',
-                      fontWeight: 700
-                    }}
-                  >
-                    {t.count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* College Filter Rail (Built for ALL Colleges) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '7px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-              Filter by College / University
-            </span>
-            {userCollege && (
-              <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>
-                Your campus: <strong>{userCollege}</strong>
-              </span>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        {/* ── Top Header ── */}
+        <header className="tf-header">
+          <div className="tf-header-left">
             <button
-              onClick={() => setSelectedCollege('all')}
-              style={{
-                border: `1px solid ${selectedCollege === 'all' ? 'var(--primary)' : 'var(--line)'}`,
-                borderRadius: '20px',
-                background: selectedCollege === 'all' ? 'var(--primary)' : 'var(--surface)',
-                color: selectedCollege === 'all' ? '#FFFFFF' : 'var(--ink)',
-                padding: '5px 12px',
-                cursor: 'pointer',
-                fontSize: '12px',
-                fontWeight: 500
-              }}
+              type="button"
+              onClick={onBack || (() => window.history.back())}
+              aria-label="Go back"
+              className="tf-back-btn"
             >
-              All Colleges
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
             </button>
-
-            {userCollege && (
-              <button
-                onClick={() => setSelectedCollege('my')}
-                style={{
-                  border: `1px solid ${selectedCollege === 'my' ? 'var(--primary)' : 'rgba(59, 107, 255, 0.3)'}`,
-                  borderRadius: '20px',
-                  background: selectedCollege === 'my' ? 'var(--primary)' : 'rgba(59, 107, 255, 0.1)',
-                  color: selectedCollege === 'my' ? '#FFFFFF' : 'var(--primary)',
-                  padding: '5px 12px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: 600
-                }}
-              >
-                🏫 My College ({userCollege.split(' ')[0]})
-              </button>
-            )}
-
-            {POPULAR_COLLEGE_FILTERS.map((col) => {
-              const on = selectedCollege.toLowerCase() === col.toLowerCase();
-              return (
-                <button
-                  key={col}
-                  onClick={() => setSelectedCollege(on ? 'all' : col)}
-                  style={{
-                    border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
-                    borderRadius: '20px',
-                    background: on ? 'var(--primary)' : 'var(--surface)',
-                    color: on ? '#FFFFFF' : 'var(--ink)',
-                    padding: '5px 12px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 500
-                  }}
-                >
-                  {col}
-                </button>
-              );
-            })}
+            <div className="tf-title-block">
+              <h1 className="tf-title">Team finder</h1>
+              <p className="tf-subtitle">
+                Find a squad for any competition, or post your own. Message the lead on WhatsApp before or after you request.
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Skills Needed Chips */}
-        {activeSkills.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-              Skill needed
-            </span>
-            {activeSkills.map((skill) => {
-              const on = tSkills.includes(skill);
-              return (
-                <button
-                  key={skill}
-                  onClick={() => toggleSkill(skill)}
-                  style={{
-                    border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
-                    borderRadius: '20px',
-                    background: on ? 'var(--primary)' : 'var(--surface)',
-                    color: on ? '#FFFFFF' : 'var(--ink)',
-                    padding: '4px 11px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 500,
-                    transition: 'all 120ms ease'
-                  }}
-                >
-                  {skill}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Categories / Disciplines */}
-        {activeDisciplines.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-              Category
-            </span>
-            {activeDisciplines.map((d) => {
-              const on = tDisc.includes(d);
-              return (
-                <button
-                  key={d}
-                  onClick={() => toggleDisc(d)}
-                  style={{
-                    border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
-                    borderRadius: '20px',
-                    background: on ? 'var(--primary)' : 'var(--surface)',
-                    color: on ? '#FFFFFF' : 'var(--ink)',
-                    padding: '4px 11px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 500
-                  }}
-                >
-                  {d}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Reset Row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--line)' }}>
-          <span style={{ fontSize: '13px', color: 'var(--ink-secondary)' }}>
-            Showing <strong>{visiblePosts.length}</strong> {visiblePosts.length === 1 ? 'squad' : 'squads'}
-          </span>
-          <button
-            onClick={handleReset}
-            style={{
-              border: 0,
-              background: 'none',
-              color: 'var(--ink-muted)',
-              padding: 0,
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: 500
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--primary)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--ink-muted)')}
-          >
-            Clear all filters
-          </button>
-        </div>
-      </div>
-
-      {/* Squad Cards Section */}
-      {showSquadLoader ? (
-        <SectionLoadingWidget
-          headline="Scouting collegiate squads across campuses..."
-          subtitle="Matching complementary skillsets and zero-ghosting teammates"
-          customPuns={SQUAD_PUNS}
-          minDurationMs={800}
-          maxDurationMs={1400}
-          isReady={true}
-          onComplete={() => setShowSquadLoader(false)}
-        />
-      ) : (
-        <>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '14px'
-            }}
-          >
-        {visiblePosts.map((post) => {
-          const left = post.displaySpotsLeft;
-          const isFull = !post.isOpen || left <= 0;
-          const spotsText = isFull ? 'Full · Closed' : `${left} ${left === 1 ? 'spot left' : 'spots left'}`;
-          const isUrgent = !isFull && left <= 1;
-          const initials = initialsOf(post.displayHost || 'Host');
-
-          return (
-            <div
-              key={post.id}
-              style={{
-                background: 'var(--surface)',
-                border: post.isMine ? '1px solid var(--primary)' : '1px solid var(--line)',
-                borderRadius: '13px',
-                padding: '17px 19px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                position: 'relative',
-                boxShadow: post.isMine ? '0 2px 8px rgba(15,63,254,0.12)' : '0 1px 3px rgba(0,0,0,0.05)'
+          <div className="tf-header-right">
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenPostSquad) onOpenPostSquad(null);
+                else {
+                  setEditingPostData(null);
+                  setPostModalOpen(true);
+                }
               }}
+              className="tf-post-btn"
             >
-              {/* Row 1: Spots Left Badge + Admin 3-Dots Menu */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                <span
-                  style={{
-                    background: isFull ? 'var(--surface-muted)' : (isUrgent ? 'rgba(239, 68, 68, 0.12)' : 'rgba(15,63,254,0.08)'),
-                    color: isFull ? 'var(--ink-muted)' : (isUrgent ? '#F87171' : 'var(--primary)'),
-                    border: `1px solid ${isFull ? 'var(--line)' : (isUrgent ? 'rgba(239, 68, 68, 0.35)' : 'rgba(15,63,254,0.25)')}`,
-                    borderRadius: '20px',
-                    padding: '2px 9px',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                    whiteSpace: 'nowrap'
-                  }}
-                >
-                  {spotsText}
-                </span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14"></path>
+                <path d="M12 5v14"></path>
+              </svg>
+              Post a squad
+            </button>
+            {headerAction}
+          </div>
+        </header>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {post.isMine && (
-                    <span
-                      style={{
-                        background: 'var(--primary)',
-                        color: '#FFFFFF',
-                        borderRadius: '4px',
-                        padding: '2px 6px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        letterSpacing: '0.04em'
-                      }}
-                    >
-                      HOST
-                    </span>
-                  )}
+        {/* ── Two-Column Main Layout ── */}
+        <div className="tf-body-grid">
 
-                  {/* 3-Dots Menu for Host */}
-                  {post.isMine && (
-                    <div style={{ position: 'relative' }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id);
-                        }}
-                        style={{
-                          border: '1px solid var(--line)',
-                          borderRadius: '6px',
-                          background: 'var(--surface)',
-                          color: 'var(--ink-secondary)',
-                          width: '28px',
-                          height: '28px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '14px',
-                          lineHeight: 1
-                        }}
-                        title="Squad options"
-                      >
-                        ⋮
-                      </button>
+          {/* ── Filter Sidebar (Left) ── */}
+          <aside className="tf-sidebar">
 
-                      {activeMenuPostId === post.id && (
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          style={{
-                            position: 'absolute',
-                            right: 0,
-                            top: '32px',
-                            background: 'var(--surface)',
-                            border: '1px solid var(--line)',
-                            borderRadius: '9px',
-                            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
-                            zIndex: 20,
-                            minWidth: '160px',
-                            overflow: 'hidden'
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveMenuPostId(null);
-                              onOpenEditSquad(post);
-                            }}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '9px 13px',
-                              border: 0,
-                              background: 'transparent',
-                              color: 'var(--ink)',
-                              fontSize: '13px',
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                              borderBottom: '1px solid var(--line)'
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            ✏️ Edit listing
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveMenuPostId(null);
-                              onTogglePostOpen(post.id, post.is_open !== false);
-                            }}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '9px 13px',
-                              border: 0,
-                              background: 'transparent',
-                              color: 'var(--ink)',
-                              fontSize: '13px',
-                              fontWeight: 500,
-                              cursor: 'pointer',
-                              borderBottom: '1px solid var(--line)'
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            {post.is_open !== false ? '🔒 Close listing' : '🔓 Re-open listing'}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveMenuPostId(null);
-                              setDeleteConfirmPostId(post.id);
-                            }}
-                            style={{
-                              width: '100%',
-                              textAlign: 'left',
-                              padding: '9px 13px',
-                              border: 0,
-                              background: 'transparent',
-                              color: '#EF4444',
-                              fontSize: '13px',
-                              fontWeight: 500,
-                              cursor: 'pointer'
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            🗑️ Delete squad
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Row 2: Host Lockup (SSCBS OS Standard) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '50%',
-                    background: 'var(--primary)',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    flex: 'none'
-                  }}
-                >
-                  {(post.displayLead || 'C').charAt(0).toUpperCase()}
-                </div>
-
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>
-                      {post.displayLead}
-                    </span>
-                    <span
-                      style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        background: '#16A34A',
-                        display: 'inline-block'
-                      }}
-                      title="Verified student lead"
-                    />
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '1px' }}>
-                    <strong>{post.displayCollege || 'Collegiate'}</strong> · {post.displayYear || 'UG 2nd Year'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 3: Competition & Organizer */}
-              <div style={{ borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)', textTransform: 'uppercase' }}>
-                  Competing in:
-                </span>
-                <h3
-                  style={{
-                    margin: '3px 0 0',
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    color: 'var(--ink)',
-                    lineHeight: 1.35
-                  }}
-                >
-                  {post.displayTitle}
-                </h3>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                    <InstitutionLogo
-                      logo={post.displayLogo}
-                      name={post.displayHost}
-                      size={20}
-                      borderRadius={5}
-                      fontSize={9}
-                    />
-                    <span style={{ fontSize: '12px', color: 'var(--ink-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {post.displayHost}
-                    </span>
-                  </div>
-                  {post.competition_link && (
-                    <a
-                      href={post.competition_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontSize: '11px', color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, flexShrink: 0 }}
-                    >
-                      View link ↗
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              {/* Description */}
-              {post.displayDesc && (
-                <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
-                  {post.displayDesc}
-                </p>
-              )}
-
-              {/* Skills Looking For */}
-              {post.displaySkills && post.displaySkills.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-muted)' }}>
-                    Teammates needed with:
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
-                    {post.displaySkills.map((s, idx) => (
-                      <span
-                        key={idx}
-                        style={{
-                          background: 'rgba(15,63,254,0.08)',
-                          color: 'var(--primary)',
-                          borderRadius: '6px',
-                          padding: '3px 8px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Skills Host Brings */}
-              {post.displaySkillsHave && post.displaySkillsHave.length > 0 && (
-                <div>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: '#10B981' }}>
-                    Host brings:
-                  </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '4px' }}>
-                    {post.displaySkillsHave.map((s, idx) => (
-                      <span
-                        key={idx}
-                        style={{
-                          background: 'rgba(16, 185, 129, 0.1)',
-                          color: '#10B981',
-                          borderRadius: '6px',
-                          padding: '2px 7px',
-                          fontSize: '11px',
-                          fontWeight: 500,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {s}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions Footer */}
-              <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
-                {post.isMine ? (
-                  <button
-                    type="button"
-                    onClick={() => setReviewModalPostId(post.id)}
-                    style={{
-                      width: '100%',
-                      border: '1px solid var(--primary)',
-                      borderRadius: '8px',
-                      background: post.pendingAppsCount > 0 ? 'var(--primary)' : 'rgba(59, 107, 255, 0.1)',
-                      color: post.pendingAppsCount > 0 ? '#FFFFFF' : 'var(--primary)',
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <span>👥 Review Applicants</span>
-                    {post.pendingAppsCount > 0 && (
-                      <span
-                        style={{
-                          background: '#FFFFFF',
-                          color: 'var(--primary)',
-                          borderRadius: '12px',
-                          padding: '1px 7px',
-                          fontSize: '11px',
-                          fontWeight: 800
-                        }}
-                      >
-                        {post.pendingAppsCount} pending
-                      </span>
-                    )}
-                  </button>
-                ) : post.state === 'accepted' ? (
-                  <button
-                    type="button"
-                    onClick={() => onOpenWhatsApp(post)}
-                    style={{
-                      width: '100%',
-                      border: '1px solid #16A34A',
-                      borderRadius: '8px',
-                      background: '#16A34A',
-                      color: '#FFFFFF',
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <span>💬 Open WhatsApp Chat</span>
-                  </button>
-                ) : post.state === 'requested' ? (
-                  <button
-                    type="button"
-                    disabled
-                    style={{
-                      width: '100%',
-                      border: '1px solid var(--line)',
-                      borderRadius: '8px',
-                      background: 'var(--surface-muted)',
-                      color: 'var(--ink-muted)',
-                      padding: '10px 14px',
-                      cursor: 'default',
-                      fontSize: '13px',
-                      fontWeight: 600
-                    }}
-                  >
-                    ⏳ Request Pending Lead Review
-                  </button>
-                ) : isFull ? (
-                  <button
-                    type="button"
-                    disabled
-                    style={{
-                      width: '100%',
-                      border: '1px solid var(--line)',
-                      borderRadius: '8px',
-                      background: 'var(--surface-muted)',
-                      color: 'var(--ink-muted)',
-                      padding: '10px 14px',
-                      cursor: 'not-allowed',
-                      fontSize: '13px',
-                      fontWeight: 600
-                    }}
-                  >
-                    Squad Full
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => onOpenApply(post)}
-                    style={{
-                      width: '100%',
-                      border: '1px solid #0F3FFE',
-                      borderRadius: '8px',
-                      background: '#0F3FFE',
-                      color: '#FFFFFF',
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      transition: 'background 120ms ease'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
-                  >
-                    Request to Join Squad
-                  </button>
+            {/* Row 1: Header */}
+            <div className="tf-sidebar-header">
+              <div className="tf-sidebar-title-wrap">
+                <span className="tf-sidebar-title">Filters</span>
+                {filterCount > 0 && (
+                  <span className="tf-filter-count-badge">{filterCount}</span>
                 )}
               </div>
+              <button type="button" onClick={handleClearAll} className="tf-clear-all-btn">
+                Clear all
+              </button>
             </div>
-          );
-        })}
+
+            {/* Row 2: Your Browse filter callout */}
+            <div className="tf-browse-callout">
+              <div className="tf-browse-callout-header">
+                <span className="tf-browse-callout-title">Your Browse filter</span>
+                <button
+                  type="button"
+                  onClick={handleApplyBrowseFilter}
+                  className="tf-browse-callout-apply"
+                  style={{ color: isBrowseApplied ? 'var(--ink-muted, #75736C)' : 'var(--primary, #0F3FFE)' }}
+                >
+                  {isBrowseApplied ? 'Applied' : 'Apply'}
+                </button>
+              </div>
+              <span className="tf-browse-callout-desc">
+                {savedBrowseFilter.cats.join(', ')} · {savedBrowseFilter.circuits.join(', ')}. Apply it to see squads for the competitions you're already tracking.
+              </span>
+            </div>
+
+            {/* Row 3: Quick Checkboxes */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <button
+                type="button"
+                onClick={() => setFMatch(!fMatch)}
+                className="tf-checkbox-row"
+                style={{ fontWeight: fMatch ? 600 : 500 }}
+              >
+                <span className={`tf-checkbox-box ${fMatch ? 'checked' : ''}`}>
+                  {fMatch && (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  )}
+                </span>
+                <span className="tf-checkbox-label">Matches my skills</span>
+                <span className="tf-checkbox-count">{countIn(p => p.match > 0, 'match')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setFMyCollege(!fMyCollege)}
+                className="tf-checkbox-row"
+                style={{ fontWeight: fMyCollege ? 600 : 500 }}
+              >
+                <span className={`tf-checkbox-box ${fMyCollege ? 'checked' : ''}`}>
+                  {fMyCollege && (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  )}
+                </span>
+                <span className="tf-checkbox-label">Lead from my college ({userCollege.split(' ')[0]})</span>
+                <span className="tf-checkbox-count">{countIn(p => p.college.toLowerCase() === userCollege.toLowerCase(), 'myCollege')}</span>
+              </button>
+            </div>
+
+            {/* Row 4: Categories */}
+            <div className="tf-filter-block">
+              <div className="tf-filter-block-header">
+                <span className="tf-filter-block-label">Categories</span>
+                <button
+                  type="button"
+                  onClick={() => setFCats([])}
+                  className="tf-filter-all-link"
+                  style={{ color: fCats.length > 0 ? 'var(--primary, #0F3FFE)' : 'var(--ink-muted, #75736C)' }}
+                >
+                  All
+                </button>
+              </div>
+              {CATS.map((c) => {
+                const checked = fCats.includes(c);
+                const count = countIn(p => p.comp.cat === c, 'cats');
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFCats(checked ? fCats.filter(x => x !== c) : [...fCats, c])}
+                    className="tf-checkbox-row"
+                    style={{ fontWeight: checked ? 600 : 500 }}
+                  >
+                    <span className={`tf-checkbox-box ${checked ? 'checked' : ''}`}>
+                      {checked && (
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </span>
+                    <span className="tf-checkbox-label">{c}</span>
+                    <span className="tf-checkbox-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Row 5: Circuits */}
+            <div className="tf-filter-block">
+              <div className="tf-filter-block-header">
+                <span className="tf-filter-block-label">Circuits</span>
+                <button
+                  type="button"
+                  onClick={() => setFCircuits([])}
+                  className="tf-filter-all-link"
+                  style={{ color: fCircuits.length > 0 ? 'var(--primary, #0F3FFE)' : 'var(--ink-muted, #75736C)' }}
+                >
+                  All
+                </button>
+              </div>
+              {CIRCUITS.map((circ) => {
+                const checked = fCircuits.includes(circ);
+                const count = countIn(p => p.comp.circuit === circ, 'circuits');
+                return (
+                  <button
+                    key={circ}
+                    type="button"
+                    onClick={() => setFCircuits(checked ? fCircuits.filter(x => x !== circ) : [...fCircuits, circ])}
+                    className="tf-checkbox-row"
+                    style={{ fontWeight: checked ? 600 : 500 }}
+                  >
+                    <span className={`tf-checkbox-box ${checked ? 'checked' : ''}`}>
+                      {checked && (
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </span>
+                    <span className="tf-checkbox-label">{circ}</span>
+                    <span className="tf-checkbox-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Row 6: Skills Needed */}
+            <div className="tf-filter-block">
+              <div className="tf-filter-block-header">
+                <span className="tf-filter-block-label">Skills needed</span>
+                <button
+                  type="button"
+                  onClick={() => setFSkills([])}
+                  className="tf-filter-all-link"
+                  style={{ color: fSkills.length > 0 ? 'var(--primary, #0F3FFE)' : 'var(--ink-muted, #75736C)' }}
+                >
+                  All
+                </button>
+              </div>
+              {(skillsOpen ? SKILLS : SKILLS.slice(0, 5)).map((sk) => {
+                const checked = fSkills.includes(sk);
+                const count = countIn(p => p.want.includes(sk), 'skills');
+                return (
+                  <button
+                    key={sk}
+                    type="button"
+                    onClick={() => setFSkills(checked ? fSkills.filter(x => x !== sk) : [...fSkills, sk])}
+                    className="tf-checkbox-row"
+                    style={{ fontWeight: checked ? 600 : 500 }}
+                  >
+                    <span className={`tf-checkbox-box ${checked ? 'checked' : ''}`}>
+                      {checked && (
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      )}
+                    </span>
+                    <span className="tf-checkbox-label">{sk}</span>
+                    <span className="tf-checkbox-count">{count}</span>
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => setSkillsOpen(!skillsOpen)}
+                className="tf-expand-link"
+              >
+                {skillsOpen ? 'Show fewer' : `Show all ${SKILLS.length}`}
+              </button>
+            </div>
+
+            {/* Row 7: Open spots segmented control */}
+            <div className="tf-filter-block">
+              <span className="tf-segment-label">Open spots</span>
+              <div className="tf-segment-track">
+                {[
+                  ['any', 'Any'],
+                  ['1', '1 left'],
+                  ['2', '2+']
+                ].map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFSpots(val)}
+                    className={`tf-segment-btn ${fSpots === val ? 'active' : ''}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 8: Competition closes segmented control */}
+            <div className="tf-filter-block">
+              <span className="tf-segment-label">Competition closes</span>
+              <div className="tf-segment-track">
+                {[
+                  ['any', 'Any'],
+                  ['week', 'This week'],
+                  ['month', 'This month']
+                ].map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFCloses(val)}
+                    className={`tf-segment-btn ${fCloses === val ? 'active' : ''}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+          </aside>
+
+          {/* ── Results Column (Right) ── */}
+          <main className="tf-results-col">
+
+            {/* Toolbar */}
+            <div className="tf-toolbar">
+              {/* Segmented Tabs */}
+              <div className="tf-tabs-segmented">
+                <button
+                  type="button"
+                  onClick={() => setTab('mine')}
+                  className={`tf-tab-btn ${tab === 'mine' ? 'active' : ''}`}
+                >
+                  My listings
+                  <span className="tf-tab-pill">{myTotalPool.length}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('other')}
+                  className={`tf-tab-btn ${tab === 'other' ? 'active' : ''}`}
+                >
+                  Other listings
+                  <span className="tf-tab-pill">{otherPool.length}</span>
+                </button>
+              </div>
+
+              {/* Search Bar */}
+              <label className="tf-search-wrapper">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.3-4.3"></path>
+                </svg>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search competitions, leads, colleges or skills"
+                  className="tf-search-input"
+                />
+              </label>
+
+              {/* Sort Dropdown */}
+              <label className="tf-sort-wrapper">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m21 16-4 4-4-4"></path>
+                  <path d="M17 20V4"></path>
+                  <path d="m3 8 4-4 4 4"></path>
+                  <path d="M7 4v16"></path>
+                </svg>
+                Sort:
+                <select value={sort} onChange={(e) => setSort(e.target.value)} className="tf-sort-select">
+                  <option value="newest">Newest</option>
+                  <option value="closing">Closing soonest</option>
+                  <option value="spots">Most spots open</option>
+                </select>
+              </label>
+            </div>
+
+            {/* Status Row + Removable Active Chips */}
+            <div className="tf-status-row">
+              <span className="tf-status-dot"></span>
+              <span className="tf-status-text">
+                {tab === 'other'
+                  ? `Showing ${totalCardsShown} squad${totalCardsShown === 1 ? '' : 's'} looking for teammates`
+                  : `${totalCardsShown} listing${totalCardsShown === 1 ? '' : 's'} you lead or applied to`}
+              </span>
+              {activeChips.map((c, idx) => (
+                <button key={idx} type="button" onClick={c.remove} className="tf-filter-chip">
+                  <span>{c.label}</span>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {displayedSections.length === 0 && (
+              <div className="tf-empty-state">
+                <h3 className="tf-empty-title">
+                  {tab === 'mine' && filterCount === 0 ? 'Nothing here yet' : 'No squads match these filters'}
+                </h3>
+                <p className="tf-empty-text">
+                  {tab === 'mine' && filterCount === 0
+                    ? 'Squads you post, and squads you request to join, show up here.'
+                    : 'Clear a filter, or post your own squad and let applicants come to you.'}
+                </p>
+                <div className="tf-empty-actions">
+                  {filterCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearAll}
+                      className="tf-btn-secondary"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenPostSquad) onOpenPostSquad(null);
+                      else {
+                        setEditingPostData(null);
+                        setPostModalOpen(true);
+                      }
+                    }}
+                    className="tf-post-btn"
+                  >
+                    Post a squad
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Squads Grid by Sections */}
+            {displayedSections.map((sec, secIdx) => (
+              <section key={secIdx} className="tf-section">
+                {sec.hasTitle && (
+                  <div className="tf-section-header">
+                    <h2 className="tf-section-title">{sec.title}</h2>
+                    <span className="tf-section-count-pill">{sec.count}</span>
+                  </div>
+                )}
+
+                <div className="tf-grid">
+                  {sec.cards.map((post) => {
+                    const isOwn = post.isOwn;
+                    const catColor = CAT_COLORS[post.comp.cat] || '#75736C';
+                    const hasFit = !isOwn && post.match > 0;
+                    const fitLabel = post.match === post.want.length ? 'You fit' : `${post.match} of ${post.want.length} match you`;
+                    const pendingAppsCount = post.apps.filter(a => a.status === 'pending').length;
+
+                    return (
+                      <article
+                        key={post.id}
+                        onClick={() => {
+                          if (isOwn) {
+                            setReviewPostId(post.id);
+                            setReviewTab(pendingAppsCount > 0 ? 'pending' : 'accepted');
+                          } else {
+                            setDetailPostId(post.id);
+                          }
+                        }}
+                        className="tf-card"
+                      >
+                        {/* 1. Meta Row */}
+                        <div className="tf-card-meta-row">
+                          <div className="tf-card-tags-left">
+                            <span className="tf-cat-tag">
+                              <span className="tf-cat-square" style={{ background: catColor }}></span>
+                              {post.comp.cat}
+                            </span>
+                            <span className="tf-circuit-tag">{post.comp.circuit}</span>
+                          </div>
+
+                          <span className="tf-deadline-badge" style={{ color: post.comp.dueColor }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            {post.comp.dueText}
+                          </span>
+                        </div>
+
+                        {/* 2. Title & Host */}
+                        <div className="tf-card-title-block">
+                          <h3 className="tf-card-title">{post.comp.title}</h3>
+                          <div className="tf-card-host-row">
+                            <span className="tf-card-host-name">{post.comp.host}</span>
+                            <a
+                              href={post.comp.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="tf-card-view-link"
+                            >
+                              View competition
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="10" y1="14" x2="21" y2="3"></line>
+                              </svg>
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* 3. Lead's Note */}
+                        {post.desc && (
+                          <p className="tf-card-note">{post.desc}</p>
+                        )}
+
+                        {/* 4. Spots & Skills */}
+                        <div className="tf-card-spots-skills">
+                          <div className="tf-card-spots-row">
+                            <div className="tf-card-spots-indicator">
+                              <div className="tf-dots-cluster">
+                                {Array.from({ length: post.total }, (_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`tf-dot ${i < post.filled ? 'filled' : 'hollow'}`}
+                                  />
+                                ))}
+                              </div>
+                              <span
+                                className="tf-spots-text"
+                                style={{ color: post.openN > 0 ? 'var(--ink, #1A1A19)' : 'var(--ink-muted, #75736C)' }}
+                              >
+                                {post.openN > 0 ? `${post.openN} of ${post.total} open` : `${post.total} of ${post.total} filled`}
+                              </span>
+                            </div>
+
+                            {hasFit && (
+                              <span className="tf-fit-hint">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                {fitLabel}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="tf-skills-wrap">
+                            {post.want.length > 0 ? (
+                              post.want.map((w, idx) => (
+                                <span key={idx} className="tf-skill-pill-needed">
+                                  {w}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="tf-skill-pill-welcome">
+                                All skills welcome
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 5. Footer */}
+                        <div className="tf-card-footer">
+                          {/* Lead row */}
+                          <div className="tf-lead-info-row">
+                            <span className={`tf-lead-avatar ${isOwn ? 'own' : 'other'}`}>
+                              {isOwn ? 'You' : initialsOf(post.lead)}
+                            </span>
+                            <div className="tf-lead-details">
+                              <div className="tf-lead-name">{isOwn ? 'You' : post.lead}</div>
+                              <div className="tf-lead-meta">{post.college} · {post.year}</div>
+                            </div>
+
+                            {/* Badge or Posted Time */}
+                            {post.state === 'requested' ? (
+                              <span className="tf-badge tf-badge-requested">Requested</span>
+                            ) : post.state === 'accepted' ? (
+                              <span className="tf-badge tf-badge-accepted">You're in</span>
+                            ) : post.state === 'full' ? (
+                              <span className="tf-badge tf-badge-full">Full</span>
+                            ) : post.state === 'closed' ? (
+                              <span className="tf-badge tf-badge-closed">Closed</span>
+                            ) : isOwn && pendingAppsCount > 0 ? (
+                              <span className="tf-badge tf-badge-pending-count">{pendingAppsCount} new</span>
+                            ) : (
+                              <span className="tf-posted-time">{post.posted}</span>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          {isOwn ? (
+                            <div className="tf-actions-row">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReviewPostId(post.id);
+                                  setReviewTab(pendingAppsCount > 0 ? 'pending' : 'accepted');
+                                }}
+                                className="tf-review-btn"
+                                style={{
+                                  border: pendingAppsCount > 0 ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
+                                  background: pendingAppsCount > 0 ? 'var(--primary, #0F3FFE)' : 'var(--surface, #FFFFFF)',
+                                  color: pendingAppsCount > 0 ? '#FFFFFF' : 'var(--ink, #1A1A19)'
+                                }}
+                              >
+                                {pendingAppsCount > 0 ? `Review ${pendingAppsCount} request${pendingAppsCount > 1 ? 's' : ''}` : 'Manage team'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleOpenEdit(e, post)}
+                                className="tf-btn-secondary"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleToggleClosed(e, post)}
+                                className="tf-btn-secondary"
+                                style={{ color: 'var(--ink-secondary, #55534D)' }}
+                              >
+                                {post.state === 'closed' || post.closed ? 'Reopen' : 'Close'}
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="tf-actions-row">
+                              {(post.state === 'open' || post.state === 'requested') && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleOpenWhatsAppPost(e, post)}
+                                  className="tf-wa-btn"
+                                >
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366">
+                                    <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path>
+                                    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path>
+                                  </svg>
+                                  WhatsApp
+                                </button>
+                              )}
+
+                              {post.state === 'open' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleRequestJoin(e, post)}
+                                  className="tf-join-btn"
+                                >
+                                  Request to join
+                                </button>
+                              )}
+
+                              {post.state === 'requested' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleWithdraw(e, post)}
+                                  className="tf-withdraw-btn"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                                  Requested · Withdraw
+                                </button>
+                              )}
+
+                              {post.state === 'accepted' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleOpenWhatsAppPost(e, post)}
+                                  className="tf-wa-accepted-btn"
+                                >
+                                  Message {post.lead.split(' ')[0]} on WhatsApp
+                                </button>
+                              )}
+
+                              {post.state === 'full' && (
+                                <span className="tf-full-block">Squad full</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+
+          </main>
+        </div>
+
       </div>
 
-      {/* Empty State */}
-      {visiblePosts.length === 0 && (
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--line)',
-            borderRadius: '14px',
-            padding: '48px 24px',
-            textAlign: 'center'
-          }}
-        >
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔎</div>
-          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--ink)' }}>
-            No squads match your filters
-          </h3>
-          <p style={{ margin: '6px auto 0', fontSize: '14px', color: 'var(--ink-muted)', maxWidth: '420px' }}>
-            {tScope === 'mine'
-              ? 'You have not posted any squad recruitment listings yet. Post one to build a winning team!'
-              : 'Try clearing your college or skill filters, or post a squad for this competition yourself.'}
-          </p>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '16px' }}>
-            <button
-              onClick={handleReset}
-              style={{
-                border: '1px solid var(--line)',
-                borderRadius: '8px',
-                background: 'var(--surface)',
-                color: 'var(--ink)',
-                padding: '9px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              Clear filters
-            </button>
-            <button
-              onClick={() => onOpenPostSquad(null)}
-              style={{
-                border: '1px solid #0F3FFE',
-                borderRadius: '8px',
-                background: '#0F3FFE',
-                color: '#FFFFFF',
-                padding: '9px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              + Post a squad
-            </button>
+      {/* ── Slide-Over Squad Detail Sheet (Right Side) ── */}
+      {detailTarget && (
+        <div className="tf-detail-sheet-wrap">
+          <div className="tf-backdrop" onClick={() => setDetailPostId(null)} />
+          <div className="tf-detail-sheet">
+            <div className="tf-sheet-header">
+              <span className="tf-sheet-posted">Squad · posted {detailTarget.posted}</span>
+              <button
+                type="button"
+                onClick={() => setDetailPostId(null)}
+                aria-label="Close"
+                className="tf-sheet-close-btn"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            <div className="tf-sheet-body">
+              {/* Competition header */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '44px minmax(0, 1fr)', gap: '12px', alignItems: 'start' }}>
+                  <span className="tf-host-initials-tile">
+                    {initialsOf(detailTarget.comp.host)}
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <h2 style={{ margin: 0, fontSize: '19px', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.015em', textWrap: 'pretty', color: 'var(--ink, #1A1A19)' }}>
+                      {detailTarget.comp.title}
+                    </h2>
+                    <div style={{ marginTop: '3px', fontSize: '13px', color: 'var(--ink-secondary, #55534D)' }}>
+                      {detailTarget.comp.host}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '9px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--ink-secondary, #55534D)' }}>
+                  <span>{detailTarget.comp.cat}</span>
+                  <span style={{ color: 'var(--divider-dot, #C9C7C1)' }}>·</span>
+                  <span>Teams of {detailTarget.total}</span>
+                  <span style={{ color: 'var(--divider-dot, #C9C7C1)' }}>·</span>
+                  <span style={{ fontWeight: 600, color: detailTarget.comp.dueColor }}>{detailTarget.comp.dueText}</span>
+                  <a
+                    href={detailTarget.comp.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: 'var(--primary, #0F3FFE)', textDecoration: 'none' }}
+                  >
+                    View on Unstop
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              {/* From the lead */}
+              {detailTarget.desc && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span className="tf-section-label-caps">From the lead</span>
+                  <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.55, color: 'var(--ink, #1A1A19)', textWrap: 'pretty' }}>
+                    {detailTarget.desc}
+                  </p>
+                </div>
+              )}
+
+              {/* Team roster */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span className="tf-section-label-caps">Team</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                    {detailTarget.openN > 0 ? `${detailTarget.openN} of ${detailTarget.total} open` : 'Full'}
+                  </span>
+                </div>
+
+                <div className="tf-roster-list">
+                  {/* Lead Row */}
+                  <div className="tf-roster-row" style={{ background: 'var(--surface, #FFFFFF)' }}>
+                    <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary, #0F3FFE)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flex: 'none' }}>
+                      {initialsOf(detailTarget.lead)}
+                    </span>
+                    <div style={{ minWidth: 0, flex: 1, lineHeight: 1.3 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                        {detailTarget.lead}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+                        {detailTarget.college} · {detailTarget.year}
+                      </div>
+                    </div>
+                    <span style={{ background: 'var(--surface-muted, #F2F1ED)', color: 'var(--ink-secondary, #55534D)', borderRadius: '6px', padding: '2px 7px', fontSize: '11px', fontWeight: 600 }}>
+                      Lead
+                    </span>
+                  </div>
+
+                  {/* Accepted Members */}
+                  {detailTarget.members.map((m, idx) => (
+                    <div key={idx} className="tf-roster-row" style={{ borderTop: '1px solid var(--line-light, #F0EFEB)', background: 'var(--surface, #FFFFFF)' }}>
+                      <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: m.name === userName ? 'var(--success, #17A34A)' : 'var(--line, #E7E6E2)', color: m.name === userName ? '#FFFFFF' : 'var(--ink-secondary, #55534D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flex: 'none' }}>
+                        {initialsOf(m.name)}
+                      </span>
+                      <div style={{ minWidth: 0, flex: 1, lineHeight: 1.3 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                          {m.name === userName ? 'You' : m.name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+                          {m.college} · {m.year}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Open Slots */}
+                  {Array.from({ length: detailTarget.openN }).map((_, idx) => (
+                    <div key={idx} className="tf-roster-row" style={{ borderTop: '1px solid var(--line-light, #F0EFEB)', background: 'var(--surface-sunken, #F9F9F7)' }}>
+                      <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--surface, #FFFFFF)', color: 'var(--ink-muted, #75736C)', border: '1.5px dashed var(--checkbox-border, #CFCDC7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, flex: 'none' }} />
+                      <div style={{ minWidth: 0, flex: 1, lineHeight: 1.3 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink-muted, #75736C)' }}>
+                          Open spot
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+                          Could be you
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Looking for */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span className="tf-section-label-caps">Looking for</span>
+                  {detailTarget.match > 0 && (
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--success-text, #15803D)' }}>
+                      {detailTarget.match === detailTarget.want.length ? 'You have all of these' : `You have ${detailTarget.match} of ${detailTarget.want.length}`}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {detailTarget.want.length > 0 ? (
+                    detailTarget.want.map((w, idx) => (
+                      <span key={idx} className="tf-skill-pill-needed" style={{ padding: '4px 9px' }}>
+                        {w}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="tf-skill-pill-welcome" style={{ padding: '4px 9px' }}>
+                      All skills welcome
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Lead brings */}
+              {detailTarget.have && detailTarget.have.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span className="tf-section-label-caps">{detailTarget.lead.split(' ')[0]} brings</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {detailTarget.have.map((h, idx) => (
+                      <span key={idx} style={{ background: 'var(--surface, #FFFFFF)', color: 'var(--ink-secondary, #55534D)', border: '1px solid var(--line, #E7E6E2)', borderRadius: '6px', padding: '4px 9px', fontSize: '12px', fontWeight: 500 }}>
+                        {h}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom sticky action bar */}
+            <div className="tf-sheet-footer">
+              {detailTarget.state === 'open' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      handleRequestJoin(e, detailTarget);
+                      setDetailPostId(null);
+                    }}
+                    className="tf-join-btn"
+                    style={{ width: '100%', padding: '11px 14px', fontSize: '14px' }}
+                  >
+                    Request to join
+                  </button>
+                  <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)', textAlign: 'center' }}>
+                    {detailTarget.lead.split(' ')[0]} sees your profile and a short note. Your number is shared only if you're accepted.
+                  </span>
+                </>
+              )}
+
+              {detailTarget.state === 'requested' && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: 'var(--surface-sunken, #F9F9F7)', border: '1px solid var(--line, #E7E6E2)', borderRadius: '9px', padding: '10px 12px' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', color: 'var(--ink-secondary, #55534D)' }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    Request sent. Waiting on {detailTarget.lead.split(' ')[0]}.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      handleWithdraw(e, detailTarget);
+                      setDetailPostId(null);
+                    }}
+                    style={{ color: 'var(--ink-muted, #75736C)', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', background: 'none', border: 'none', cursor: 'pointer' }}
+                  >
+                    Withdraw
+                  </button>
+                </div>
+              )}
+
+              {detailTarget.state === 'accepted' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => handleOpenWhatsAppPost(e, detailTarget)}
+                    className="tf-wa-accepted-btn"
+                    style={{ width: '100%', padding: '11px 14px', fontSize: '14px' }}
+                  >
+                    Message {detailTarget.lead.split(' ')[0]} on WhatsApp
+                  </button>
+                  <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)', textAlign: 'center' }}>
+                    You're on the team. The rest of the squad can see your number.
+                  </span>
+                </>
+              )}
+
+              {detailTarget.state === 'full' && (
+                <div className="tf-full-block">
+                  This squad is full. Look for another team or post your own.
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
-    </>
-  )}
 
-      {/* IN-CARD APPLICANT REVIEW MODAL (SSCBS OS Core Parity) */}
-      {reviewTargetPost && (
-        <div
-          onClick={() => setReviewModalPostId(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            zIndex: 65
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 'min(580px, 100%)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              background: 'var(--surface)',
-              border: '1px solid var(--line)',
-              borderRadius: '14px',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-            }}
-          >
-            {/* Review Header */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '16px 20px',
-                borderBottom: '1px solid var(--line)',
-                position: 'sticky',
-                top: 0,
-                background: 'var(--surface)',
-                zIndex: 2
-              }}
-            >
-              <div>
-                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
-                  Review Applicants
-                </h2>
-                <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-muted)' }}>
-                  {reviewTargetPost.displayTitle} · {reviewTargetPost.displaySpotsLeft} open spots
-                </p>
+      {/* ── Review Requests Modal (Own Listing) ── */}
+      {reviewTarget && (
+        <div className="tf-modal-center-wrap">
+          <div className="tf-backdrop" onClick={() => setReviewPostId(null)} />
+          <div className="tf-modal-card">
+            {/* Header */}
+            <div className="tf-review-header">
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink, #1A1A19)' }}>
+                    {reviewTarget.comp.title}
+                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+                    {/* Overlapping member circles */}
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--primary, #0F3FFE)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, boxShadow: '0 0 0 2px var(--surface, #FFFFFF)', flex: 'none' }}>
+                        {initialsOf(userName)}
+                      </span>
+                      {reviewTarget.members.map((m, i) => (
+                        <span key={i} style={{ width: '22px', height: '22px', borderRadius: '50%', marginLeft: '-5px', background: 'var(--line, #E7E6E2)', color: 'var(--ink-secondary, #55534D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, boxShadow: '0 0 0 2px var(--surface, #FFFFFF)', flex: 'none' }}>
+                          {initialsOf(m.name)}
+                        </span>
+                      ))}
+                      {Array.from({ length: reviewTarget.openN }).map((_, i) => (
+                        <span key={i} style={{ width: '22px', height: '22px', borderRadius: '50%', marginLeft: '-5px', background: 'var(--surface, #FFFFFF)', border: '1.5px dashed var(--checkbox-border, #CFCDC7)', boxShadow: '0 0 0 2px var(--surface, #FFFFFF)', flex: 'none' }} />
+                      ))}
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--ink-secondary, #55534D)' }}>
+                      {reviewTarget.openN} of {reviewTarget.total} spots open
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setReviewPostId(null)}
+                  className="tf-sheet-close-btn"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setReviewModalPostId(null)}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '8px',
-                  background: 'var(--surface)',
-                  color: 'var(--ink-muted)',
-                  width: '32px',
-                  height: '32px',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                ×
-              </button>
+
+              {/* Underline Tabs */}
+              <div className="tf-underline-tabs">
+                {[
+                  ['pending', 'Pending'],
+                  ['accepted', 'Accepted'],
+                  ['declined', 'Declined']
+                ].map(([id, label]) => {
+                  const count = reviewTarget.apps.filter(a => a.status === id).length;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setReviewTab(id)}
+                      className={`tf-underline-tab-btn ${reviewTab === id ? 'active' : ''}`}
+                    >
+                      <span>{label}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-muted, #75736C)' }}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Applicants List */}
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {reviewTargetPost.postApps.length === 0 ? (
-                <div style={{ padding: '32px 16px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '28px', marginBottom: '6px' }}>📭</div>
-                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--ink)' }}>
-                    No applications yet
+            {/* Body */}
+            <div className="tf-review-body">
+              {reviewTarget.apps.filter(a => a.status === reviewTab).length === 0 ? (
+                <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                    {reviewTab === 'pending'
+                      ? 'No pending requests'
+                      : reviewTab === 'accepted'
+                      ? 'Nobody accepted yet'
+                      : 'Nothing declined'}
                   </h4>
-                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--ink-muted)' }}>
-                    When competitors apply to your squad, their profile, pitch, and contact will appear here.
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-muted, #75736C)' }}>
+                    {reviewTab === 'pending'
+                      ? 'New requests show up here.'
+                      : reviewTab === 'accepted'
+                      ? 'Accept a request to add them to the team.'
+                      : 'Requests you decline stay here in case you change your mind.'}
                   </p>
                 </div>
               ) : (
-                reviewTargetPost.postApps.map((app) => {
-                  const applicantName = app.applicant_name || app.who || 'Competitor';
-                  const applicantCollege = app.applicant_college || app.meta || 'Collegiate';
-                  const applicantYear = app.applicant_year || 'UG';
-                  const pitch = app.pitch_note || app.pitch;
-                  const skills = app.highlighted_skills || app.skills || [];
-                  const isAccepted = app.status === 'accepted';
-                  const isDeclined = app.status === 'declined' || app.status === 'rejected';
-                  const isRemoved = app.status === 'removed';
+                reviewTarget.apps
+                  .filter(a => a.status === reviewTab)
+                  .map((app) => {
+                    const matchCount = app.skills.filter(s => reviewTarget.want.includes(s)).length;
+                    return (
+                      <div key={app.id} className="tf-applicant-card">
+                        {/* Info row */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                          <span style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--surface-muted, #F2F1ED)', color: 'var(--ink-secondary, #55534D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flex: 'none' }}>
+                            {initialsOf(app.name)}
+                          </span>
+                          <div style={{ minWidth: 0, flex: 1, lineHeight: 1.3 }}>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink, #1A1A19)' }}>
+                              {app.name}
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+                              {app.college} · {app.year}
+                            </div>
+                          </div>
+                          {matchCount > 0 && (
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--success-text, #15803D)', whiteSpace: 'nowrap' }}>
+                              Has {matchCount} of {reviewTarget.want.length} you need
+                            </span>
+                          )}
+                        </div>
 
-                  return (
-                    <div
-                      key={app.id}
-                      style={{
-                        background: 'var(--surface-sunken)',
-                        border: isAccepted ? '1px solid #16A34A' : '1px solid var(--line)',
-                        borderRadius: '11px',
-                        padding: '14px 16px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '10px'
-                      }}
-                    >
-                      {/* Applicant Info Row */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <strong style={{ fontSize: '14px', color: 'var(--ink)' }}>
-                              {applicantName}
-                            </strong>
-                            {isAccepted && (
+                        {/* Pitch box */}
+                        {app.pitch && (
+                          <p className="tf-pitch-box">"{app.pitch}"</p>
+                        )}
+
+                        {/* Skills chips */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                          {app.skills.map((sk, idx) => {
+                            const isHit = reviewTarget.want.includes(sk);
+                            return (
                               <span
+                                key={idx}
                                 style={{
-                                  background: 'rgba(22, 163, 74, 0.15)',
-                                  color: '#16A34A',
-                                  border: '1px solid rgba(22, 163, 74, 0.35)',
-                                  borderRadius: '4px',
-                                  padding: '1px 6px',
-                                  fontSize: '10px',
-                                  fontWeight: 700
+                                  background: isHit ? 'var(--success-tint, rgba(23,163,74,0.08))' : 'var(--surface-muted, #F2F1ED)',
+                                  color: isHit ? 'var(--success-text, #15803D)' : 'var(--ink-secondary, #55534D)',
+                                  border: isHit ? '1px solid var(--success-border, rgba(23,163,74,0.30))' : '1px solid var(--surface-muted, #F2F1ED)',
+                                  borderRadius: '6px',
+                                  padding: '3px 8px',
+                                  fontSize: '12px',
+                                  fontWeight: 500
                                 }}
                               >
-                                SQUAD MEMBER
+                                {sk}
                               </span>
-                            )}
-                            {isDeclined && (
-                              <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>Declined</span>
-                            )}
-                            {isRemoved && (
-                              <span style={{ fontSize: '11px', color: 'var(--ink-muted)' }}>Removed</span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '12px', color: 'var(--ink-muted)', marginTop: '2px' }}>
-                            {applicantCollege} · {applicantYear}
-                          </div>
+                            );
+                          })}
                         </div>
 
-                        {/* WhatsApp launcher if accepted or for interview */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const prefillMsg = `Hey ${applicantName.split(' ')[0]}! Saw your application for our squad for "${reviewTargetPost.displayTitle}". Wanted to connect!`;
-                            const waUrl = formatWhatsAppUrl(app.applicant_phone || app.phone, prefillMsg);
-                            if (waUrl && waUrl !== '#') {
-                              window.open(waUrl, '_blank', 'noopener,noreferrer');
-                            } else {
-                              alert('No phone number shared for this applicant.');
-                            }
-                          }}
-                          style={{
-                            border: '1px solid #16A34A',
-                            borderRadius: '7px',
-                            background: 'var(--surface)',
-                            color: '#16A34A',
-                            padding: '6px 11px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                          }}
-                        >
-                          💬 WhatsApp
-                        </button>
-                      </div>
+                        {/* Action buttons */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {app.status === 'pending' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleAcceptApplicant(app.id)}
+                                style={{
+                                  border: '1px solid var(--primary, #0F3FFE)',
+                                  borderRadius: '9px',
+                                  background: 'var(--primary, #0F3FFE)',
+                                  color: '#FFFFFF',
+                                  padding: '8px 16px',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Accept
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeclineApplicant(app.id)}
+                                className="tf-btn-secondary"
+                                style={{ padding: '8px 14px' }}
+                              >
+                                Decline
+                              </button>
+                            </>
+                          )}
 
-                      {/* Pitch Note */}
-                      {pitch && (
-                        <div
-                          style={{
-                            background: 'var(--surface)',
-                            border: '1px solid var(--line)',
-                            borderRadius: '8px',
-                            padding: '9px 12px',
-                            fontSize: '13px',
-                            color: 'var(--ink)',
-                            lineHeight: 1.45
-                          }}
-                        >
-                          "{pitch}"
-                        </div>
-                      )}
+                          {app.status === 'accepted' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const leadFirst = userName.split(' ')[0];
+                                  const msg = `Hey ${app.name.split(' ')[0]}! Welcoming you to our squad for "${reviewTarget.comp.title}". Connecting!`;
+                                  const url = formatWhatsAppUrl(app.phone || '9876543210', msg);
+                                  if (url && url !== '#') window.open(url, '_blank', 'noopener,noreferrer');
+                                  else alert('No WhatsApp number available for this applicant.');
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  border: '1px solid var(--success-border, rgba(23, 163, 74, 0.30))',
+                                  borderRadius: '9px',
+                                  background: 'var(--success-tint, rgba(23, 163, 74, 0.08))',
+                                  color: 'var(--success-text, #15803D)',
+                                  padding: '7px 12px',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366">
+                                  <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path>
+                                  <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path>
+                                </svg>
+                                WhatsApp
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveApplicant(app.id)}
+                                style={{ marginLeft: 'auto', color: 'var(--ink-muted, #75736C)', fontSize: '13px', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
+                              >
+                                Remove from squad
+                              </button>
+                            </>
+                          )}
 
-                      {/* Highlighted Skills */}
-                      {skills.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                          {skills.map((s, idx) => (
-                            <span
-                              key={idx}
-                              style={{
-                                background: 'var(--surface)',
-                                border: '1px solid var(--line)',
-                                borderRadius: '4px',
-                                padding: '2px 7px',
-                                fontSize: '11px',
-                                fontWeight: 500,
-                                color: 'var(--primary)'
-                              }}
-                            >
-                              {s}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                        {app.status === 'pending' && (
-                          <>
+                          {app.status === 'declined' && (
                             <button
                               type="button"
-                              onClick={() => onAcceptApp(app.id)}
-                              style={{
-                                flex: 1,
-                                border: '1px solid #0F3FFE',
-                                borderRadius: '7px',
-                                background: '#0F3FFE',
-                                color: '#FFFFFF',
-                                padding: '8px',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                cursor: 'pointer'
-                              }}
-                              onMouseEnter={(e) => (e.currentTarget.style.background = '#0C33CC')}
-                              onMouseLeave={(e) => (e.currentTarget.style.background = '#0F3FFE')}
+                              onClick={() => handleUndoDecline(app.id)}
+                              style={{ color: 'var(--ink-muted, #75736C)', fontSize: '13px', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
                             >
-                              ✓ Accept to Squad
+                              Move back to pending
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => onDeclineApp(app.id)}
-                              style={{
-                                border: '1px solid var(--line)',
-                                borderRadius: '7px',
-                                background: 'var(--surface)',
-                                color: 'var(--ink-secondary)',
-                                padding: '8px 14px',
-                                fontSize: '12px',
-                                fontWeight: 500,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              Decline
-                            </button>
-                          </>
-                        )}
-
-                        {isAccepted && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Remove ${applicantName} from the squad? This will re-open a spot.`)) {
-                                onRemoveApp(app.id);
-                              }
-                            }}
-                            style={{
-                              border: '1px solid rgba(239, 68, 68, 0.4)',
-                              borderRadius: '7px',
-                              background: 'rgba(239, 68, 68, 0.1)',
-                              color: '#F87171',
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Remove Member (Re-open Spot)
-                          </button>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmPostId && (
-        <div
-          onClick={() => setDeleteConfirmPostId(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.65)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            zIndex: 70
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 'min(400px, 100%)',
-              background: 'var(--surface)',
-              border: '1px solid var(--line)',
-              borderRadius: '12px',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}
-          >
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>
-              Delete squad listing?
-            </h3>
-            <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
-              This will permanently remove this squad opening and cancel any pending applications.
-            </p>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '6px' }}>
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmPostId(null)}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '7px',
-                  background: 'var(--surface)',
-                  color: 'var(--ink-secondary)',
-                  padding: '8px 14px',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onDeleteSquadPost(deleteConfirmPostId);
-                  setDeleteConfirmPostId(null);
-                }}
-                style={{
-                  border: '1px solid #DC2626',
-                  borderRadius: '7px',
-                  background: '#DC2626',
-                  color: '#FFFFFF',
-                  padding: '8px 14px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Post Squad / Edit Squad Modal ── */}
+      <PostSquadModal
+        isOpen={postModalOpen}
+        onClose={() => {
+          setPostModalOpen(false);
+          setEditingPostData(null);
+        }}
+        competitions={competitions.length > 0 ? competitions : SAMPLE_COMPS}
+        editingPost={editingPostData}
+        profile={profile}
+        onSubmitPost={(draft) => {
+          if (onSubmitPost) {
+            onSubmitPost(draft);
+          } else {
+            // Local fallback
+            if (draft.isEdit && draft.postId) {
+              setLocalOwnState(prev => prev.map(o => o.id === draft.postId ? { ...o, compId: draft.compId, total: draft.total_members, want: draft.skills_looking_for, have: draft.skills_have, desc: draft.desc } : o));
+            } else {
+              const newOwn = {
+                id: 'own_' + Date.now(),
+                compId: draft.compId,
+                posted: 'just now',
+                total: draft.total_members,
+                closed: false,
+                want: draft.skills_looking_for || [],
+                have: draft.skills_have || [],
+                desc: draft.desc,
+                phone: draft.phone_number,
+                apps: []
+              };
+              setLocalOwnState(prev => [newOwn, ...prev]);
+            }
+          }
+          handlePostSuccess();
+        }}
+        onSuccess={handlePostSuccess}
+      />
+
+      {/* ── Request to Join Modal (ApplyModal) ── */}
+      <ApplyModal
+        isOpen={applyModalOpen}
+        onClose={() => {
+          setApplyModalOpen(false);
+          setApplyTargetPost(null);
+        }}
+        post={applyTargetPost}
+        competition={applyTargetPost ? competitions.find(c => String(c.id) === String(applyTargetPost.compId)) : null}
+        profile={profile}
+        onSubmitApply={(targetPost, pitch, highlightedSkills, applicantPhone) => {
+          setLocalPostsState(prev => prev.map(p => p.id === targetPost.id ? { ...p, state: 'requested' } : p));
+          setApplyModalOpen(false);
+          setApplyTargetPost(null);
+          if (showToast) showToast(`Request sent to ${targetPost.lead.split(' ')[0]}`);
+        }}
+      />
+
     </div>
   );
 }

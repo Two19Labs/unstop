@@ -1,10 +1,23 @@
 // src/components/PostSquadModal.jsx
+// Redesigned Post a Squad / Edit Squad Modal according to OneStop Team Finder handoff
 import React, { useState, useEffect, useMemo } from 'react';
-import { SKILLS } from '../data/initialData';
+import { SKILLS, initialsOf } from '../data/initialData';
 import { sanitizeIndianPhone } from '../context/AuthContext';
-import SearchableCollegeSelect from './SearchableCollegeSelect';
-import { YEAR_OPTIONS, normalizeYear } from '../data/colleges';
-import InstitutionLogo from './InstitutionLogo';
+import { normalizeYear } from '../data/colleges';
+
+function formatDueText(comp) {
+  if (!comp) return '';
+  let h = 24;
+  if (comp.deadline) {
+    const diff = new Date(comp.deadline).getTime() - Date.now();
+    if (!isNaN(diff)) h = Math.max(1, Math.round(diff / 3600000));
+  } else if (comp.days !== undefined && comp.days !== null) {
+    h = Math.max(1, Math.round(Number(comp.days) * 24));
+  }
+  if (h < 24) return `${h}h left`;
+  const d = Math.round(h / 24);
+  return `${d}d left`;
+}
 
 export default function PostSquadModal({
   isOpen,
@@ -13,77 +26,87 @@ export default function PostSquadModal({
   initialCompId = null,
   editingPost = null,
   profile = null,
-  onSubmitPost
+  onSubmitPost,
+  onSuccess
 }) {
-  const [mode, setMode] = useState('unstop'); // 'unstop' | 'custom'
+  const [custom, setCustom] = useState(false);
+  const [compQ, setCompQ] = useState('');
   const [selectedCompId, setSelectedCompId] = useState('');
-  const [compSearch, setCompSearch] = useState('');
 
   // Custom competition fields
   const [customTitle, setCustomTitle] = useState('');
   const [customHost, setCustomHost] = useState('');
   const [customLink, setCustomLink] = useState('');
 
-  // Squad details
-  const [spots, setSpots] = useState('2');
-  const [totalMembers, setTotalMembers] = useState('4');
-  const [skillsLooking, setSkillsLooking] = useState([]);
-  const [skillsHave, setSkillsHave] = useState([]);
-  const [customSkillInput, setCustomSkillInput] = useState('');
-  const [desc, setDesc] = useState('');
+  // Squad steppers
+  const [total, setTotal] = useState(4);
+  const [open, setOpen] = useState(2);
+
+  // Skill toggles
+  const [want, setWant] = useState([]);
+  const [have, setHave] = useState([]);
+
+  // Note to applicants
+  const [note, setNote] = useState('');
+
+  // WhatsApp phone
   const [phone, setPhone] = useState('');
-  const [college, setCollege] = useState('');
-  const [year, setYear] = useState('UG 2nd Year');
 
   const [formError, setFormError] = useState('');
 
-  // Populate draft on open / edit
+  // Pre-fill fields on open / edit
   useEffect(() => {
     if (!isOpen) return;
     setFormError('');
 
     if (editingPost) {
-      // Editing mode
-      const isLiveComp = competitions.some(c => String(c.id) === String(editingPost.compId));
-      if (isLiveComp) {
-        setMode('unstop');
+      const matchComp = competitions.find(c => String(c.id) === String(editingPost.compId));
+      if (matchComp) {
+        setCustom(false);
         setSelectedCompId(String(editingPost.compId));
       } else {
-        setMode('custom');
+        setCustom(true);
         setCustomTitle(editingPost.competition_name || editingPost.title || '');
-        setCustomHost(editingPost.organizer || '');
+        setCustomHost(editingPost.organizer || editingPost.host || '');
         setCustomLink(editingPost.competition_link || '');
       }
 
-      setSpots(String(editingPost.spots_left !== undefined ? editingPost.spots_left : (editingPost.spots || 1)));
-      setTotalMembers(String(editingPost.total_members || editingPost.size || 4));
-      setSkillsLooking(Array.isArray(editingPost.skills_looking_for) ? editingPost.skills_looking_for : (editingPost.want || []));
-      setSkillsHave(Array.isArray(editingPost.skills_have) ? editingPost.skills_have : []);
-      setDesc(editingPost.description || editingPost.desc || '');
-      setPhone(sanitizeIndianPhone(editingPost.phone_number || editingPost.phone || profile?.phone || ''));
-      setCollege(editingPost.college || profile?.college || '');
-      setYear(normalizeYear(editingPost.year || profile?.year || profile?.batch || 'UG 2nd Year'));
+      const tot = Number(editingPost.total_members || editingPost.size || 4);
+      const spots = Number(editingPost.spots_left !== undefined ? editingPost.spots_left : (editingPost.spots || Math.max(1, tot - 1)));
+      setTotal(tot);
+      setOpen(Math.min(spots, tot - 1));
+
+      const looking = Array.isArray(editingPost.skills_looking_for)
+        ? editingPost.skills_looking_for
+        : (Array.isArray(editingPost.want) ? editingPost.want : []);
+      const brings = Array.isArray(editingPost.skills_have)
+        ? editingPost.skills_have
+        : (Array.isArray(editingPost.have) ? editingPost.have : []);
+
+      setWant(looking);
+      setHave(brings);
+      setNote(editingPost.description || editingPost.desc || '');
+      setPhone(sanitizeIndianPhone(editingPost.phone_number || editingPost.phone || editingPost.leadPhone || profile?.phone || ''));
     } else {
-      // Creating new
       if (initialCompId) {
-        setMode('unstop');
+        setCustom(false);
         setSelectedCompId(String(initialCompId));
       } else if (competitions.length > 0 && !selectedCompId) {
-        setMode('unstop');
+        setCustom(false);
         setSelectedCompId(String(competitions[0].id));
+      } else {
+        setCustom(false);
       }
 
       setCustomTitle('');
       setCustomHost('');
       setCustomLink('');
-      setSpots('2');
-      setTotalMembers('4');
-      setSkillsLooking([]);
-      setSkillsHave([]);
-      setDesc('');
+      setTotal(4);
+      setOpen(2);
+      setWant([]);
+      setHave([]);
+      setNote('');
       setPhone(sanitizeIndianPhone(profile?.phone || ''));
-      setCollege(profile?.college || '');
-      setYear(normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year'));
     }
   }, [isOpen, editingPost, initialCompId, competitions, profile]);
 
@@ -96,38 +119,57 @@ export default function PostSquadModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Filter top 4 Unstop competitions for picker
   const filteredComps = useMemo(() => {
-    if (!compSearch.trim()) return competitions.slice(0, 40);
-    const q = compSearch.toLowerCase().trim();
-    return competitions.filter(c =>
-      (c.title || '').toLowerCase().includes(q) ||
-      (c.host || '').toLowerCase().includes(q)
-    ).slice(0, 40);
-  }, [competitions, compSearch]);
+    if (!compQ.trim()) return competitions.slice(0, 4);
+    const q = compQ.trim().toLowerCase();
+    return competitions
+      .filter(c => (c.title || '').toLowerCase().includes(q) || (c.host || c.orgName || '').toLowerCase().includes(q))
+      .slice(0, 4);
+  }, [competitions, compQ]);
 
   if (!isOpen) return null;
 
-  const toggleSkillLooking = (skill) => {
-    setSkillsLooking(prev =>
-      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
-    );
+  // Stepper handlers
+  const decTotal = () => {
+    const nextTotal = Math.max(2, total - 1);
+    setTotal(nextTotal);
+    if (open >= nextTotal) setOpen(nextTotal - 1);
   };
 
-  const toggleSkillHave = (skill) => {
-    setSkillsHave(prev =>
-      prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]
-    );
+  const incTotal = () => {
+    const nextTotal = Math.min(6, total + 1);
+    setTotal(nextTotal);
   };
 
-  const handleAddCustomSkill = (targetType) => {
-    const trimmed = customSkillInput.trim();
-    if (!trimmed) return;
-    if (targetType === 'looking' && !skillsLooking.includes(trimmed)) {
-      setSkillsLooking(prev => [...prev, trimmed]);
-    } else if (targetType === 'have' && !skillsHave.includes(trimmed)) {
-      setSkillsHave(prev => [...prev, trimmed]);
+  const decOpen = () => {
+    setOpen(prev => Math.max(1, prev - 1));
+  };
+
+  const incOpen = () => {
+    setOpen(prev => Math.min(total - 1, prev + 1));
+  };
+
+  // Skill toggle handlers
+  const toggleWant = (skill) => {
+    if (want.includes(skill)) {
+      setWant(want.filter(s => s !== skill));
+    } else {
+      if (want.length >= 3) {
+        setFormError('You can pick up to 3 skills for "Looking for".');
+        return;
+      }
+      setFormError('');
+      setWant([...want, skill]);
     }
-    setCustomSkillInput('');
+  };
+
+  const toggleHave = (skill) => {
+    if (have.includes(skill)) {
+      setHave(have.filter(s => s !== skill));
+    } else {
+      setHave([...have, skill]);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -137,17 +179,17 @@ export default function PostSquadModal({
     let compTitle = '';
     let compHost = '';
     let compLink = '';
-    let compLogo = editingPost?.compLogo || editingPost?.logo || null;
     let finalCompId = null;
+    let compLogo = editingPost?.compLogo || editingPost?.logo || null;
 
-    if (mode === 'unstop') {
+    if (!custom) {
       const match = competitions.find(c => String(c.id) === String(selectedCompId));
       if (!match) {
-        setFormError('Please select a competition from the list or switch to Custom Competition.');
+        setFormError('Please select a competition from the Unstop list or switch to "Not on Unstop?".');
         return;
       }
       compTitle = match.title;
-      compHost = match.host || match.orgName || '';
+      compHost = match.host || match.orgName || 'Organizer';
       compLink = match.unstopUrl || '';
       finalCompId = match.id;
       compLogo = match.logo || match.orgLogo || null;
@@ -167,12 +209,13 @@ export default function PostSquadModal({
 
     const cleanPhone = sanitizeIndianPhone(phone);
     if (!cleanPhone || cleanPhone.length !== 10) {
-      setFormError('Compulsory WhatsApp number: Please enter a valid 10-digit Indian phone number.');
+      setFormError('Please enter a valid 10-digit WhatsApp number.');
       return;
     }
 
-    const spotsNum = Math.max(1, parseInt(spots, 10) || 1);
-    const totalNum = Math.max(spotsNum + 1, parseInt(totalMembers, 10) || (spotsNum + 1));
+    const creatorName = profile?.name || 'Aarav Mehta';
+    const creatorCollege = profile?.college || 'SRCC';
+    const creatorYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
 
     onSubmitPost({
       isEdit: Boolean(editingPost),
@@ -184,16 +227,32 @@ export default function PostSquadModal({
       logo: compLogo,
       competition_link: compLink,
       phone_number: cleanPhone,
-      spots: spotsNum,
-      total_members: totalNum,
-      skills: skillsLooking.length > 0 ? skillsLooking : ['Open to anyone'],
-      skills_looking_for: skillsLooking.length > 0 ? skillsLooking : ['Open to anyone'],
-      skills_have: skillsHave,
-      desc: desc.trim() || `Building a squad for ${compTitle}. Looking for dedicated teammates.`,
-      college: college.trim() || profile?.college || '',
-      year: year,
+      leadPhone: cleanPhone,
+      spots: open,
+      spots_left: open,
+      total_members: total,
+      size: total,
+      want,
+      skills: want.length > 0 ? want : ['All skills welcome'],
+      skills_looking_for: want.length > 0 ? want : ['All skills welcome'],
+      have,
+      skills_have: have,
+      desc: note.trim() || `Squad for ${compTitle}. Message me on WhatsApp if you want to team up!`,
+      description: note.trim() || `Squad for ${compTitle}. Message me on WhatsApp if you want to team up!`,
+      college: creatorCollege,
+      year: creatorYear,
+      lead: creatorName,
+      created_by_name: creatorName
     });
+
+    if (onSuccess) onSuccess();
+    onClose();
   };
+
+  const userInitial = (profile?.name || 'U').charAt(0).toUpperCase();
+  const userName = profile?.name || 'Collegiate Lead';
+  const userCollege = profile?.college || 'SRCC';
+  const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
 
   return (
     <div
@@ -201,492 +260,636 @@ export default function PostSquadModal({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'var(--scrim)',
+        zIndex: 60,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
-        zIndex: 60
+        boxSizing: 'border-box'
       }}
     >
+      {/* Backdrop */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(26, 26, 25, 0.35)'
+        }}
+      />
+
+      {/* Modal Dialog */}
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: 'min(540px, 100%)',
+          position: 'relative',
+          width: 'min(560px, 100%)',
           maxHeight: '92vh',
-          overflowY: 'auto',
-          background: 'var(--surface)',
-          border: '1px solid var(--line)',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--surface, #FFFFFF)',
+          border: '1px solid var(--line, #E7E6E2)',
           borderRadius: '14px',
-          boxShadow: '0 20px 40px rgba(0,0,0,0.25)'
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+          overflow: 'hidden',
+          boxSizing: 'border-box'
         }}
       >
-        {/* Modal Header */}
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '18px 20px 16px',
+            borderBottom: '1px solid var(--line, #E7E6E2)',
+            flexShrink: 0
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink, #1A1A19)' }}>
+              {editingPost ? 'Edit squad' : 'Post a squad'}
+            </h2>
+            <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--ink-muted, #75736C)' }}>
+              People apply with a short note. You pick who joins.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            style={{
+              width: '32px',
+              height: '32px',
+              flex: 'none',
+              border: '1px solid var(--line, #E7E6E2)',
+              borderRadius: '8px',
+              background: 'var(--surface-sunken, #F9F9F7)',
+              color: 'var(--ink-secondary, #55534D)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'background-color 0.15s ease'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrollable Body */}
+        <div
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            padding: '18px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '22px'
+          }}
+        >
+          {formError && (
+            <div
+              style={{
+                background: 'rgba(220, 38, 38, 0.10)',
+                border: '1px solid rgba(220, 38, 38, 0.35)',
+                borderRadius: '8px',
+                padding: '9px 13px',
+                fontSize: '13px',
+                color: 'var(--urgency-red, #DC2626)',
+                fontWeight: 500
+              }}
+            >
+              {formError}
+            </div>
+          )}
+
+          {/* 1. Competition Picker */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                Competition
+              </span>
+              <button
+                type="button"
+                onClick={() => setCustom(!custom)}
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  color: 'var(--primary, #0F3FFE)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+              >
+                {custom ? 'Pick from Unstop' : 'Not on Unstop?'}
+              </button>
+            </div>
+
+            {!custom ? (
+              <>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '9px',
+                    border: '1px solid var(--line, #E7E6E2)',
+                    borderRadius: '9px',
+                    padding: '0 12px',
+                    color: 'var(--ink-muted, #75736C)',
+                    background: 'var(--surface, #FFFFFF)'
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                  </svg>
+                  <input
+                    value={compQ}
+                    onChange={(e) => setCompQ(e.target.value)}
+                    placeholder="Search competitions on Unstop"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      border: 0,
+                      background: 'transparent',
+                      padding: '10px 0',
+                      fontSize: '14px',
+                      color: 'var(--ink, #1A1A19)',
+                      outline: 'none'
+                    }}
+                  />
+                </label>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {filteredComps.map((c) => {
+                    const isSelected = String(selectedCompId) === String(c.id);
+                    const inits = initialsOf(c.host || c.orgName || 'Host');
+                    const dueStr = formatDueText(c);
+                    const teamInfo = c.team || (c.maxTeam ? `Teams of ${c.maxTeam}` : 'Teams of 2–4');
+
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCompId(String(c.id));
+                          setFormError('');
+                        }}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '32px minmax(0, 1fr) auto',
+                          gap: '10px',
+                          alignItems: 'center',
+                          textAlign: 'left',
+                          border: isSelected ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
+                          background: isSelected ? 'var(--primary-tint-7, rgba(15,63,254,0.07))' : 'var(--surface, #FFFFFF)',
+                          borderRadius: '10px',
+                          padding: '9px 11px',
+                          cursor: 'pointer',
+                          transition: 'border-color 0.15s ease'
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--line-lighter, #EFEEEA)',
+                            background: 'var(--surface-muted, #F2F1ED)',
+                            color: 'var(--ink-secondary, #55534D)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            flex: 'none'
+                          }}
+                        >
+                          {inits}
+                        </span>
+                        <span style={{ minWidth: 0, lineHeight: 1.3 }}>
+                          <span style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {c.title}
+                          </span>
+                          <span style={{ display: 'block', fontSize: '12px', color: 'var(--ink-muted, #75736C)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {c.host || c.orgName || 'Organizer'} · {teamInfo}
+                          </span>
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)', whiteSpace: 'nowrap' }}>
+                          {dueStr}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <input
+                  value={customTitle}
+                  onChange={(e) => setCustomTitle(e.target.value)}
+                  placeholder="Competition name *"
+                  style={{
+                    border: '1px solid var(--line, #E7E6E2)',
+                    borderRadius: '9px',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    background: 'var(--surface, #FFFFFF)',
+                    color: 'var(--ink, #1A1A19)',
+                    outline: 'none'
+                  }}
+                />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <input
+                    value={customHost}
+                    onChange={(e) => setCustomHost(e.target.value)}
+                    placeholder="Organiser"
+                    style={{
+                      minWidth: 0,
+                      border: '1px solid var(--line, #E7E6E2)',
+                      borderRadius: '9px',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      background: 'var(--surface, #FFFFFF)',
+                      color: 'var(--ink, #1A1A19)',
+                      outline: 'none'
+                    }}
+                  />
+                  <input
+                    value={customLink}
+                    onChange={(e) => setCustomLink(e.target.value)}
+                    placeholder="Link (optional)"
+                    style={{
+                      minWidth: 0,
+                      border: '1px solid var(--line, #E7E6E2)',
+                      borderRadius: '9px',
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      background: 'var(--surface, #FFFFFF)',
+                      color: 'var(--ink, #1A1A19)',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Team size and Open spots steppers */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                Team size
+              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  border: '1px solid var(--line, #E7E6E2)',
+                  borderRadius: '9px',
+                  padding: '4px',
+                  background: 'var(--surface, #FFFFFF)'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={decTotal}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '7px',
+                    background: 'var(--surface-muted, #F2F1ED)',
+                    color: 'var(--ink, #1A1A19)',
+                    fontSize: '17px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  −
+                </button>
+                <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink, #1A1A19)' }}>
+                  {total}
+                </span>
+                <button
+                  type="button"
+                  onClick={incTotal}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '7px',
+                    background: 'var(--surface-muted, #F2F1ED)',
+                    color: 'var(--ink, #1A1A19)',
+                    fontSize: '17px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                Open spots
+              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  border: '1px solid var(--line, #E7E6E2)',
+                  borderRadius: '9px',
+                  padding: '4px',
+                  background: 'var(--surface, #FFFFFF)'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={decOpen}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '7px',
+                    background: 'var(--surface-muted, #F2F1ED)',
+                    color: 'var(--ink, #1A1A19)',
+                    fontSize: '17px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  −
+                </button>
+                <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink, #1A1A19)' }}>
+                  {open}
+                </span>
+                <button
+                  type="button"
+                  onClick={incOpen}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '7px',
+                    background: 'var(--surface-muted, #F2F1ED)',
+                    color: 'var(--ink, #1A1A19)',
+                    fontSize: '17px',
+                    fontWeight: 500,
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Skill Pill Groups */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                Looking for
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+                Pick up to 3 {want.length > 0 ? `(${want.length}/3)` : ''}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {SKILLS.map((sk) => {
+                const on = want.includes(sk);
+                return (
+                  <button
+                    key={sk}
+                    type="button"
+                    onClick={() => toggleWant(sk)}
+                    style={{
+                      border: on ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
+                      borderRadius: '20px',
+                      background: on ? 'var(--primary, #0F3FFE)' : 'var(--surface, #FFFFFF)',
+                      color: on ? '#FFFFFF' : 'var(--ink, #1A1A19)',
+                      padding: '5px 12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {sk}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                You bring
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+                Helps people decide
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {SKILLS.map((sk) => {
+                const on = have.includes(sk);
+                return (
+                  <button
+                    key={sk}
+                    type="button"
+                    onClick={() => toggleHave(sk)}
+                    style={{
+                      border: on ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
+                      borderRadius: '20px',
+                      background: on ? 'var(--primary, #0F3FFE)' : 'var(--surface, #FFFFFF)',
+                      color: on ? '#FFFFFF' : 'var(--ink, #1A1A19)',
+                      padding: '5px 12px',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {sk}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4. Note to applicants */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+                Note to applicants
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>Optional</span>
+            </div>
+            <textarea
+              rows="3"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="What you're aiming for, how you'll work, when you meet."
+              style={{
+                border: '1px solid var(--line, #E7E6E2)',
+                borderRadius: '9px',
+                padding: '10px 12px',
+                fontSize: '14px',
+                lineHeight: 1.5,
+                background: 'var(--surface, #FFFFFF)',
+                color: 'var(--ink, #1A1A19)',
+                resize: 'vertical',
+                outline: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+
+          {/* 5. WhatsApp number */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+              WhatsApp number
+            </span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid var(--line, #E7E6E2)',
+                borderRadius: '9px',
+                overflow: 'hidden',
+                background: 'var(--surface, #FFFFFF)'
+              }}
+            >
+              <span
+                style={{
+                  padding: '10px 12px',
+                  background: 'var(--surface-sunken, #F9F9F7)',
+                  borderRight: '1px solid var(--line, #E7E6E2)',
+                  fontSize: '14px',
+                  color: 'var(--ink-secondary, #55534D)',
+                  fontWeight: 600
+                }}
+              >
+                +91
+              </span>
+              <input
+                type="tel"
+                maxLength={10}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                placeholder="10-digit number"
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  border: 0,
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                  background: 'transparent',
+                  color: 'var(--ink, #1A1A19)',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+            <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+              Only shared with people you accept.
+            </span>
+          </div>
+
+          {/* 6. Posting as banner */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: 'var(--surface-sunken, #F9F9F7)',
+              border: '1px solid var(--line-lighter, #EFEEEA)',
+              borderRadius: '9px',
+              padding: '9px 11px'
+            }}
+          >
+            <span
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: 'var(--surface-muted, #F2F1ED)',
+                color: 'var(--ink-secondary, #55534D)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '10px',
+                fontWeight: 700,
+                flex: 'none'
+              }}
+            >
+              {userInitial}
+            </span>
+            <span style={{ flex: 1, fontSize: '12px', color: 'var(--ink-secondary, #55534D)' }}>
+              Posting as <strong style={{ color: 'var(--ink, #1A1A19)' }}>{userName}</strong> · {userCollege} · {userYear}
+            </span>
+          </div>
+        </div>
+
+        {/* Footer */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            padding: '16px 20px',
-            borderBottom: '1px solid var(--line)',
-            position: 'sticky',
-            top: 0,
-            background: 'var(--surface)',
-            zIndex: 2
+            gap: '8px',
+            padding: '14px 20px',
+            borderTop: '1px solid var(--line, #E7E6E2)',
+            background: 'var(--surface, #FFFFFF)',
+            flexShrink: 0
           }}
         >
-          <div>
-            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--ink)' }}>
-              {editingPost ? 'Edit squad listing' : 'Post a squad'}
-            </h2>
-            <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--ink-secondary)' }}>
-              SSCBS OS Teammate Matching Engine · Open for all colleges & universities
-            </p>
-          </div>
-
+          <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+            {open} open of {total}
+          </span>
           <button
             type="button"
             onClick={onClose}
             style={{
-              border: '1px solid var(--line)',
-              borderRadius: '8px',
-              background: 'var(--surface-sunken)',
-              color: 'var(--ink-secondary)',
-              width: '32px',
-              height: '32px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 120ms ease'
-            }}
-          >
-            ×
-          </button>
-        </div>
-
-        {/* Error Alert */}
-        {formError && (
-          <div
-            style={{
-              margin: '14px 20px 0',
-              padding: '10px 14px',
-              background: 'rgba(220, 38, 38, 0.12)',
-              border: '1px solid rgba(220, 38, 38, 0.35)',
-              borderRadius: '8px',
-              fontSize: '13px',
-              color: 'var(--urgency-red)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span>⚠️</span>
-            <span>{formError}</span>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Mode Switcher */}
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', display: 'block', marginBottom: '6px' }}>
-              Competition Source
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', background: 'var(--surface-sunken)', padding: '3px', borderRadius: '9px', border: '1px solid var(--line)' }}>
-              <button
-                type="button"
-                onClick={() => setMode('unstop')}
-                style={{
-                  border: 0,
-                  borderRadius: '7px',
-                  background: mode === 'unstop' ? 'var(--surface)' : 'transparent',
-                  color: mode === 'unstop' ? 'var(--primary)' : 'var(--ink-secondary)',
-                  fontWeight: mode === 'unstop' ? 700 : 500,
-                  padding: '8px 10px',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  boxShadow: mode === 'unstop' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                }}
-              >
-                Live Unstop List ({competitions.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode('custom')}
-                style={{
-                  border: 0,
-                  borderRadius: '7px',
-                  background: mode === 'custom' ? 'var(--surface)' : 'transparent',
-                  color: mode === 'custom' ? 'var(--primary)' : 'var(--ink-secondary)',
-                  fontWeight: mode === 'custom' ? 700 : 500,
-                  padding: '8px 10px',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  boxShadow: mode === 'custom' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
-                }}
-              >
-                + Custom Competition
-              </button>
-            </div>
-          </div>
-
-          {/* Unstop Selection */}
-          {mode === 'unstop' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Select Competition</span>
-              <input
-                type="text"
-                placeholder="Type to filter competitions..."
-                value={compSearch}
-                onChange={(e) => setCompSearch(e.target.value)}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '8px',
-                  background: 'var(--surface)',
-                  color: 'var(--ink)',
-                  padding: '8px 12px',
-                  fontSize: '13px',
-                  marginBottom: '4px'
-                }}
-              />
-              <select
-                value={selectedCompId}
-                onChange={(e) => setSelectedCompId(e.target.value)}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '9px',
-                  background: 'var(--surface)',
-                  padding: '10px 12px',
-                  fontSize: '14px',
-                  color: 'var(--ink)',
-                  width: '100%'
-                }}
-              >
-                {filteredComps.map((c) => (
-                  <option key={c.id} value={c.id} style={{ background: 'var(--surface)', color: 'var(--ink)' }}>
-                    {c.title}  -  {c.host || c.orgName}
-                  </option>
-                ))}
-              </select>
-
-              {selectedCompId && (() => {
-                const sel = competitions.find(c => String(c.id) === String(selectedCompId));
-                if (!sel) return null;
-                return (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', background: 'var(--surface-sunken)', borderRadius: '8px', border: '1px solid var(--line)', marginTop: '4px' }}>
-                    <InstitutionLogo logo={sel.logo || sel.orgLogo} name={sel.host || sel.orgName} size={28} borderRadius={6} fontSize={10} />
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {sel.title}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
-                        {sel.host || sel.orgName}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Competition Name *</span>
-                <input
-                  type="text"
-                  placeholder="e.g. HUL L.I.M.E, Harvard Case Competition, Local Hackathon..."
-                  value={customTitle}
-                  onChange={(e) => setCustomTitle(e.target.value)}
-                  style={{
-                    border: '1px solid var(--line)',
-                    borderRadius: '8px',
-                    background: 'var(--surface)',
-                    color: 'var(--ink)',
-                    padding: '9px 12px',
-                    fontSize: '14px'
-                  }}
-                />
-              </label>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-secondary)' }}>Organizer / Host</span>
-                  <input
-                    type="text"
-                    placeholder="e.g. IIM Bangalore, Bain & Co..."
-                    value={customHost}
-                    onChange={(e) => setCustomHost(e.target.value)}
-                    style={{
-                      border: '1px solid var(--line)',
-                      borderRadius: '8px',
-                      background: 'var(--surface)',
-                      color: 'var(--ink)',
-                      padding: '8px 12px',
-                      fontSize: '13px'
-                    }}
-                  />
-                </label>
-                <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-secondary)' }}>Competition URL</span>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={customLink}
-                    onChange={(e) => setCustomLink(e.target.value)}
-                    style={{
-                      border: '1px solid var(--line)',
-                      borderRadius: '8px',
-                      background: 'var(--surface)',
-                      color: 'var(--ink)',
-                      padding: '8px 12px',
-                      fontSize: '13px'
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* Spots & Total Members */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Open Spots Needed</span>
-              <input
-                type="number"
-                min="1"
-                max="8"
-                value={spots}
-                onChange={(e) => setSpots(e.target.value)}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '8px',
-                  background: 'var(--surface)',
-                  color: 'var(--ink)',
-                  padding: '9px 12px',
-                  fontSize: '14px'
-                }}
-              />
-            </label>
-
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Total Squad Size</span>
-              <input
-                type="number"
-                min="2"
-                max="10"
-                value={totalMembers}
-                onChange={(e) => setTotalMembers(e.target.value)}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '8px',
-                  background: 'var(--surface)',
-                  color: 'var(--ink)',
-                  padding: '9px 12px',
-                  fontSize: '14px'
-                }}
-              />
-            </label>
-          </div>
-
-          {/* Skills Looking For */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Skills Needed (Looking for)</span>
-              <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>{skillsLooking.length} selected</span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {SKILLS.map((skill) => {
-                const on = skillsLooking.includes(skill);
-                return (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => toggleSkillLooking(skill)}
-                    style={{
-                      border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
-                      borderRadius: '20px',
-                      background: on ? 'var(--primary)' : 'var(--surface-sunken)',
-                      color: on ? '#FFFFFF' : 'var(--ink)',
-                      padding: '5px 12px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      transition: 'all 120ms ease'
-                    }}
-                  >
-                    {skill}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Custom Skill Input */}
-            <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-              <input
-                type="text"
-                placeholder="Add custom skill needed..."
-                value={customSkillInput}
-                onChange={(e) => setCustomSkillInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddCustomSkill('looking');
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  border: '1px solid var(--line)',
-                  borderRadius: '8px',
-                  background: 'var(--surface)',
-                  color: 'var(--ink)',
-                  padding: '7px 11px',
-                  fontSize: '12px'
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => handleAddCustomSkill('looking')}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '8px',
-                  background: 'var(--surface-muted)',
-                  color: 'var(--ink)',
-                  padding: '7px 12px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                + Add
-              </button>
-            </div>
-          </div>
-
-          {/* Skills Host Brings */}
-          <div>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', display: 'block', marginBottom: '6px' }}>
-              Skills You Bring (Optional)
-            </span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {SKILLS.slice(0, 8).map((skill) => {
-                const on = skillsHave.includes(skill);
-                return (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => toggleSkillHave(skill)}
-                    style={{
-                      border: `1px solid ${on ? 'var(--success)' : 'var(--line)'}`,
-                      borderRadius: '20px',
-                      background: on ? 'var(--success)' : 'var(--surface-sunken)',
-                      color: on ? '#FFFFFF' : 'var(--ink)',
-                      padding: '5px 12px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      transition: 'all 120ms ease'
-                    }}
-                  >
-                    {skill}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Description */}
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Pitch & Approach</span>
-            <textarea
-              rows="3"
-              placeholder="What are your goals, work style, or past competition experience?"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              style={{
-                border: '1px solid var(--line)',
-                borderRadius: '8px',
-                background: 'var(--surface)',
-                color: 'var(--ink)',
-                padding: '9px 12px',
-                fontSize: '13px',
-                lineHeight: 1.5
-              }}
-            />
-          </label>
-
-          {/* WhatsApp Phone & College */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-                WhatsApp Number *
-              </span>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: 'var(--ink-secondary)', fontWeight: 500 }}>
-                  +91
-                </span>
-                <input
-                  type="tel"
-                  placeholder="9876543210"
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  style={{
-                    width: '100%',
-                    border: '1px solid var(--line)',
-                    borderRadius: '8px',
-                    background: 'var(--surface)',
-                    color: 'var(--ink)',
-                    padding: '9px 12px 9px 42px',
-                    fontSize: '14px',
-                    fontFamily: 'monospace'
-                  }}
-                />
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>Shared with teammates once accepted</span>
-            </label>
-
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>Host College</span>
-              <input
-                type="text"
-                placeholder="e.g. SSCBS, SRCC, IIT Delhi..."
-                value={college}
-                onChange={(e) => setCollege(e.target.value)}
-                style={{
-                  border: '1px solid var(--line)',
-                  borderRadius: '8px',
-                  background: 'var(--surface)',
-                  color: 'var(--ink)',
-                  padding: '9px 12px',
-                  fontSize: '13px'
-                }}
-              />
-            </label>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            style={{
-              marginTop: '4px',
-              border: '1px solid var(--primary)',
+              marginLeft: 'auto',
+              border: '1px solid var(--line, #E7E6E2)',
               borderRadius: '9px',
-              background: 'var(--primary)',
-              color: '#FFFFFF',
-              padding: '13px',
-              cursor: 'pointer',
-              fontSize: '14px',
+              background: 'var(--surface, #FFFFFF)',
+              color: 'var(--ink, #1A1A19)',
+              padding: '9px 14px',
+              fontSize: '13px',
               fontWeight: 600,
-              transition: 'background 120ms ease'
+              cursor: 'pointer'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--primary-hover)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            style={{
+              border: '1px solid var(--primary, #0F3FFE)',
+              borderRadius: '9px',
+              background: 'var(--primary, #0F3FFE)',
+              color: '#FFFFFF',
+              padding: '9px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background-color 0.15s ease'
+            }}
           >
             {editingPost ? 'Save changes' : 'Post squad'}
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );

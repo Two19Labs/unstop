@@ -953,11 +953,12 @@ function OneStopInner() {
   const detailSquadCount = detailCompId ? posts.filter(p => p.compId === detailCompId).length : 0;
 
   const isBrowseMode = screen === 'browse' || screen === 'saved';
+  const isStandaloneMode = isBrowseMode || screen === 'teams';
 
   return (
-    <div className={isBrowseMode ? "onestop-app onestop-app-browse-mode" : "onestop-app"}>
+    <div className={isStandaloneMode ? "onestop-app onestop-app-browse-mode" : "onestop-app"}>
       {/* Mobile Topbar */}
-      {!isBrowseMode && (
+      {!isStandaloneMode && (
         <div className="mobile-topbar">
           <button
             className="mobile-hamburger-btn"
@@ -987,7 +988,7 @@ function OneStopInner() {
       )}
 
       {/* Sidebar */}
-      {!isBrowseMode && (
+      {!isStandaloneMode && (
         <Sidebar
           screen={screen}
           onNavigate={handleNavigate}
@@ -1017,6 +1018,46 @@ function OneStopInner() {
           externalSortBy={browseSort}
           onSortChange={handleUpdateSort}
           onFilterPrefsChange={handleFilterPrefsChange}
+          headerAction={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ThemeToggle variant="compact" />
+              <NotificationCenter
+                applications={applications}
+                competitions={competitions}
+                bookmarks={bookmarks}
+                posts={posts}
+                profile={profile}
+                onOpenWhatsApp={handleOpenWhatsApp}
+                onOpenDetail={(id) => setDetailCompId(id)}
+                onNavigate={handleNavigate}
+                onToggleBookmark={handleToggleBookmark}
+              />
+            </div>
+          }
+        />
+      ) : screen === 'teams' ? (
+        <TeamFinderScreen
+          key="teams"
+          onBack={() => handleNavigate('home')}
+          onNavigate={handleNavigate}
+          posts={posts}
+          competitions={visibleCompetitions.length > 0 ? visibleCompetitions : competitions}
+          profile={profile}
+          applications={applications}
+          user={user}
+          onOpenPostSquad={handleOpenCreateSquad}
+          onOpenEditSquad={handleOpenEditSquad}
+          onOpenApply={handleOpenApply}
+          onOpenWhatsApp={handleOpenWhatsApp}
+          onGoRequests={() => handleNavigate('requests')}
+          onTogglePostOpen={handleTogglePostOpen}
+          onDeleteSquadPost={handleDeleteSquadPost}
+          onAcceptApp={handleAcceptApp}
+          onDeclineApp={handleDeclineApp}
+          onRemoveApp={handleRemoveApp}
+          onWithdrawApp={handleWithdrawApp}
+          showToast={flash}
+          onSubmitPost={handleSubmitPost}
           headerAction={
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ThemeToggle variant="compact" />
@@ -1075,43 +1116,6 @@ function OneStopInner() {
                 onNavigate={handleNavigate}
                 onRequestJoin={(post) => handleOpenApply(post)}
                 onOpenWhatsApp={handleOpenWhatsApp}
-              />
-            )}
-
-            {screen === 'teams' && (
-              <TeamFinderScreen
-                key="teams"
-                posts={posts}
-                competitions={visibleCompetitions}
-                profile={profile}
-                applications={applications}
-                user={user}
-                onOpenPostSquad={handleOpenCreateSquad}
-                onOpenEditSquad={handleOpenEditSquad}
-                onOpenApply={handleOpenApply}
-                onOpenWhatsApp={handleOpenWhatsApp}
-                onGoRequests={() => handleNavigate('requests')}
-                onTogglePostOpen={handleTogglePostOpen}
-                onDeleteSquadPost={handleDeleteSquadPost}
-                onAcceptApp={handleAcceptApp}
-                onDeclineApp={handleDeclineApp}
-                onRemoveApp={handleRemoveApp}
-                headerAction={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <ThemeToggle variant="compact" />
-                    <NotificationCenter
-                      applications={applications}
-                      competitions={competitions}
-                      bookmarks={bookmarks}
-                      posts={posts}
-                      profile={profile}
-                      onOpenWhatsApp={handleOpenWhatsApp}
-                      onOpenDetail={(id) => setDetailCompId(id)}
-                      onNavigate={handleNavigate}
-                      onToggleBookmark={handleToggleBookmark}
-                    />
-                  </div>
-                }
               />
             )}
 

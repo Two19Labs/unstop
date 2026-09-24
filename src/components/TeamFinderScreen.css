@@ -1,0 +1,1303 @@
+/* src/components/TeamFinderScreen.css */
+/* OneStop Team Finder Standalone Page - Two19 Labs High-Fidelity Design System */
+
+.tf-page {
+  min-height: 100vh;
+  background-color: var(--canvas, #F6F6F4);
+  color: var(--ink, #1A1A19);
+  padding: 24px clamp(16px, 3vw, 32px) 32px;
+  box-sizing: border-box;
+}
+
+.tf-container {
+  max-width: 1480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Top Header ── */
+.tf-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line, #E7E6E2);
+}
+
+.tf-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.tf-back-btn {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  margin-top: 2px;
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 8px;
+  background: var(--surface, #FFFFFF);
+  color: var(--ink, #1A1A19);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.tf-back-btn:hover {
+  border-color: var(--ink, #1A1A19);
+  background: var(--surface-muted, #F2F1ED);
+}
+
+.tf-title-block {
+  min-width: 0;
+}
+
+.tf-title {
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink, #1A1A19);
+  line-height: 1.25;
+}
+
+.tf-subtitle {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: var(--ink-muted, #75736C);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.tf-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.tf-post-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  border: 1px solid var(--primary, #0F3FFE);
+  border-radius: 9px;
+  background: var(--primary, #0F3FFE);
+  color: #FFFFFF;
+  padding: 0 16px;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tf-post-btn:hover {
+  background: var(--primary-hover, #0C33CC);
+  border-color: var(--primary-hover, #0C33CC);
+}
+
+/* ── Main Layout Body ── */
+.tf-body-grid {
+  display: grid;
+  grid-template-columns: minmax(216px, 256px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .tf-body-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Filter Sidebar (Left) ── */
+.tf-sidebar {
+  position: sticky;
+  top: 16px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 12px;
+  padding: 16px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.tf-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tf-sidebar-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tf-sidebar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink, #1A1A19);
+}
+
+.tf-filter-count-badge {
+  background: var(--primary, #0F3FFE);
+  color: #FFFFFF;
+  border-radius: 20px;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.tf-clear-all-btn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-muted, #75736C);
+  white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.tf-clear-all-btn:hover {
+  color: var(--primary, #0F3FFE);
+}
+
+/* Browse Filter Callout */
+.tf-browse-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-sunken, #F9F9F7);
+  border: 1px solid var(--line-lighter, #EFEEEA);
+  border-radius: 9px;
+  padding: 10px 11px;
+}
+
+.tf-browse-callout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tf-browse-callout-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary, #55534D);
+}
+
+.tf-browse-callout-apply {
+  font-size: 12px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.tf-browse-callout-apply:hover {
+  color: var(--ink, #1A1A19);
+}
+
+.tf-browse-callout-desc {
+  font-size: 12px;
+  color: var(--ink-muted, #75736C);
+  line-height: 1.4;
+}
+
+/* Filter Blocks */
+.tf-filter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line-light, #F0EFEB);
+}
+
+.tf-filter-block-first {
+  padding-top: 0;
+  border-top: none;
+}
+
+.tf-filter-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.tf-filter-block-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #1A1A19);
+}
+
+.tf-filter-all-link {
+  font-size: 12px;
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.tf-filter-all-link:hover {
+  color: var(--primary, #0F3FFE);
+}
+
+/* Checkbox Row Buttons */
+.tf-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 0;
+  font-size: 13px;
+  color: var(--ink, #1A1A19);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.tf-checkbox-row:hover {
+  opacity: 0.85;
+}
+
+.tf-checkbox-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--checkbox-border, #CFCDC7);
+  background: var(--surface, #FFFFFF);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tf-checkbox-box.checked {
+  background: var(--primary, #0F3FFE);
+  border-color: var(--primary, #0F3FFE);
+}
+
+.tf-checkbox-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tf-checkbox-count {
+  font-size: 12px;
+  color: var(--ink-muted, #75736C);
+  flex: none;
+}
+
+.tf-expand-link {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary, #0F3FFE);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.tf-expand-link:hover {
+  color: var(--ink, #1A1A19);
+}
+
+/* Segmented Control */
+.tf-segment-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted, #75736C);
+  margin-bottom: 2px;
+}
+
+.tf-segment-track {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--canvas, #F6F6F4);
+  border: 1px solid var(--line-lighter, #EFEEEA);
+  border-radius: 8px;
+}
+
+.tf-segment-btn {
+  flex: 1;
+  border-radius: 6px;
+  padding: 5px 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink-secondary, #55534D);
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tf-segment-btn.active {
+  background: var(--surface, #FFFFFF);
+  color: var(--ink, #1A1A19);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Results Column (Right) ── */
+.tf-results-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Toolbar */
+.tf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tf-tabs-segmented {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  height: 40px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.tf-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-secondary, #55534D);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tf-tab-btn:hover {
+  color: var(--ink, #1A1A19);
+}
+
+.tf-tab-btn.active {
+  background: var(--surface-muted, #F2F1ED);
+  color: var(--ink, #1A1A19);
+  font-weight: 600;
+}
+
+.tf-tab-pill {
+  background: var(--line, #E7E6E2);
+  color: var(--ink-secondary, #55534D);
+  border-radius: 20px;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.tf-tab-btn.active .tf-tab-pill {
+  background: var(--primary, #0F3FFE);
+  color: #FFFFFF;
+}
+
+.tf-search-wrapper {
+  flex: 1 1 240px;
+  min-width: 210px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 40px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 10px;
+  padding: 0 12px;
+  color: var(--ink-muted, #75736C);
+  box-sizing: border-box;
+}
+
+.tf-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--ink, #1A1A19);
+  outline: none;
+}
+
+.tf-search-input::placeholder {
+  color: var(--ink-muted, #75736C);
+}
+
+.tf-sort-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 10px;
+  padding: 0 10px 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary, #55534D);
+  box-sizing: border-box;
+}
+
+.tf-sort-select {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #1A1A19);
+  cursor: pointer;
+  outline: none;
+}
+
+/* Status Row & Active Chips */
+.tf-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 26px;
+}
+
+.tf-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #17A34A;
+  flex: none;
+}
+
+.tf-status-text {
+  flex: none;
+  font-size: 13px;
+  color: var(--ink-secondary, #55534D);
+  white-space: nowrap;
+}
+
+.tf-filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--primary-tint-7, rgba(15, 63, 254, 0.07));
+  color: var(--primary, #0F3FFE);
+  border: 1px solid rgba(15, 63, 254, 0.20);
+  border-radius: 20px;
+  padding: 3px 8px 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.tf-filter-chip:hover {
+  border-color: rgba(15, 63, 254, 0.35);
+}
+
+/* Listings Grid */
+.tf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: 14px;
+}
+
+.tf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tf-section-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.tf-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--ink, #1A1A19);
+}
+
+.tf-section-count-pill {
+  background: var(--line, #E7E6E2);
+  color: var(--ink-secondary, #55534D);
+  border-radius: 20px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ── Squad Card Component ── */
+.tf-card {
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 12px;
+  padding: 16px 17px 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.tf-card:hover {
+  border-color: var(--card-hover-border, #D6D4CE);
+}
+
+.tf-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tf-card-tags-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tf-cat-tag {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-muted, #F2F1ED);
+  color: var(--ink, #1A1A19);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tf-cat-square {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.tf-circuit-tag {
+  min-width: 0;
+  border: 1px solid var(--line, #E7E6E2);
+  color: var(--ink-secondary, #55534D);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tf-deadline-badge {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tf-card-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tf-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--ink, #1A1A19);
+  text-wrap: pretty;
+  margin: 0;
+}
+
+.tf-card-host-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tf-card-host-name {
+  min-width: 0;
+  font-size: 12px;
+  color: var(--ink-secondary, #55534D);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tf-card-view-link {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary, #0F3FFE);
+  text-decoration: none;
+}
+
+.tf-card-view-link:hover {
+  color: var(--ink, #1A1A19);
+}
+
+.tf-card-note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-secondary, #55534D);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.tf-card-spots-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.tf-card-spots-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tf-card-spots-indicator {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tf-dots-cluster {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.tf-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.tf-dot.filled {
+  background: var(--primary, #0F3FFE);
+  border: 0;
+}
+
+.tf-dot.hollow {
+  background: var(--surface, #FFFFFF);
+  border: 1.5px solid var(--checkbox-border, #CFCDC7);
+}
+
+.tf-spots-text {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tf-fit-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success-text, #15803D);
+}
+
+.tf-skills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tf-skill-pill-needed {
+  background: var(--primary-tint-7, rgba(15, 63, 254, 0.07));
+  color: var(--primary, #0F3FFE);
+  border: 1px solid rgba(15, 63, 254, 0.20);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tf-skill-pill-welcome {
+  background: var(--surface, #FFFFFF);
+  color: var(--ink-secondary, #55534D);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Card Footer */
+.tf-card-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-light, #F0EFEB);
+}
+
+.tf-lead-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tf-lead-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex: none;
+}
+
+.tf-lead-avatar.other {
+  background: var(--primary, #0F3FFE);
+  color: #FFFFFF;
+}
+
+.tf-lead-avatar.own {
+  background: var(--surface-muted, #F2F1ED);
+  color: var(--ink-secondary, #55534D);
+}
+
+.tf-lead-details {
+  min-width: 0;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.tf-lead-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink, #1A1A19);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tf-lead-meta {
+  font-size: 12px;
+  color: var(--ink-muted, #75736C);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tf-badge {
+  flex: none;
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tf-badge-requested {
+  border: 1px solid var(--line, #E7E6E2);
+  background: var(--surface-sunken, #F9F9F7);
+  color: var(--ink-secondary, #55534D);
+}
+
+.tf-badge-accepted {
+  border: 1px solid var(--success-border, rgba(23, 163, 74, 0.30));
+  background: var(--success-tint, rgba(23, 163, 74, 0.08));
+  color: var(--success-text, #15803D);
+}
+
+.tf-badge-full, .tf-badge-closed {
+  border: 1px solid var(--line, #E7E6E2);
+  background: var(--surface-muted, #F2F1ED);
+  color: var(--ink-muted, #75736C);
+}
+
+.tf-badge-pending-count {
+  border: none;
+  background: var(--primary, #0F3FFE);
+  color: #FFFFFF;
+}
+
+.tf-posted-time {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-muted, #75736C);
+  white-space: nowrap;
+}
+
+/* Card Action Buttons */
+.tf-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tf-wa-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 9px;
+  background: var(--surface, #FFFFFF);
+  color: var(--ink, #1A1A19);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tf-wa-btn:hover {
+  background: var(--surface-muted, #F2F1ED);
+  border-color: var(--card-hover-border, #D6D4CE);
+}
+
+.tf-join-btn {
+  flex: 1;
+  border: 1px solid var(--primary, #0F3FFE);
+  border-radius: 9px;
+  background: var(--primary, #0F3FFE);
+  color: #FFFFFF;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tf-join-btn:hover {
+  background: var(--primary-hover, #0C33CC);
+  border-color: var(--primary-hover, #0C33CC);
+}
+
+.tf-withdraw-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 9px;
+  background: var(--surface-sunken, #F9F9F7);
+  color: var(--ink-secondary, #55534D);
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.tf-withdraw-btn:hover {
+  color: var(--urgency-red, #DC2626);
+}
+
+.tf-wa-accepted-btn {
+  flex: 1;
+  border: 1px solid var(--success, #17A34A);
+  border-radius: 9px;
+  background: var(--success, #17A34A);
+  color: #FFFFFF;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.tf-wa-accepted-btn:hover {
+  background: var(--success-text, #15803D);
+  border-color: var(--success-text, #15803D);
+}
+
+.tf-full-block {
+  flex: 1;
+  text-align: center;
+  border-radius: 9px;
+  background: var(--surface-muted, #F2F1ED);
+  color: var(--ink-muted, #75736C);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tf-review-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tf-btn-secondary {
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 9px;
+  background: var(--surface, #FFFFFF);
+  color: var(--ink, #1A1A19);
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tf-btn-secondary:hover {
+  background: var(--surface-muted, #F2F1ED);
+}
+
+/* ── Loading Skeleton ── */
+@keyframes tfpulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.tf-skeleton-card {
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 12px;
+  padding: 16px 17px 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: tfpulse 1.4s ease-in-out infinite;
+}
+
+.tf-sk-block {
+  border-radius: 4px;
+  background: var(--surface-muted, #F2F1ED);
+}
+
+/* ── Empty State ── */
+.tf-empty-state {
+  background: var(--surface, #FFFFFF);
+  border: 1px dashed var(--card-hover-border, #D6D4CE);
+  border-radius: 12px;
+  padding: 44px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.tf-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink, #1A1A19);
+}
+
+.tf-empty-text {
+  font-size: 13px;
+  color: var(--ink-muted, #75736C);
+  max-width: 420px;
+  line-height: 1.5;
+  text-wrap: pretty;
+  margin: 0;
+}
+
+.tf-empty-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ── Squad Detail Slide-Over Sheet (Right) ── */
+.tf-detail-sheet-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tf-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim, rgba(26, 26, 25, 0.35));
+}
+
+.tf-detail-sheet {
+  position: relative;
+  width: min(480px, 100%);
+  height: 100vh;
+  background: var(--surface, #FFFFFF);
+  border-left: 1px solid var(--line, #E7E6E2);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  animation: tfSlideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tfSlideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.tf-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line, #E7E6E2);
+}
+
+.tf-sheet-posted {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted, #75736C);
+}
+
+.tf-sheet-close-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 8px;
+  background: var(--surface-sunken, #F9F9F7);
+  color: var(--ink-secondary, #55534D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tf-sheet-close-btn:hover {
+  background: var(--surface-muted, #F2F1ED);
+}
+
+.tf-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tf-host-initials-tile {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--line-lighter, #EFEEEA);
+  background: var(--surface-muted, #F2F1ED);
+  color: var(--ink-secondary, #55534D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex: none;
+}
+
+.tf-section-label-caps {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted, #75736C);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tf-roster-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tf-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+}
+
+.tf-sheet-footer {
+  padding: 14px 20px 18px;
+  border-top: 1px solid var(--line, #E7E6E2);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface, #FFFFFF);
+}
+
+/* ── Review Requests Modal (Own Listing) ── */
+.tf-modal-center-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.tf-modal-card {
+  position: relative;
+  width: min(580px, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  animation: tfPopIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tfPopIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.tf-review-header {
+  padding: 18px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tf-underline-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--line, #E7E6E2);
+}
+
+.tf-underline-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  margin-bottom: -1px;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  color: var(--ink-secondary, #55534D);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tf-underline-tab-btn.active {
+  border-bottom-color: var(--primary, #0F3FFE);
+  color: var(--ink, #1A1A19);
+  font-weight: 600;
+}
+
+.tf-review-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tf-applicant-card {
+  border: 1px solid var(--line, #E7E6E2);
+  border-radius: 12px;
+  padding: 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.tf-pitch-box {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink, #1A1A19);
+  background: var(--surface-sunken, #F9F9F7);
+  border: 1px solid var(--line-lighter, #EFEEEA);
+  border-radius: 9px;
+  padding: 9px 11px;
+  text-wrap: pretty;
+  margin: 0;
+}
