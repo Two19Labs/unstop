@@ -45,6 +45,15 @@ const CheckIcon = ({ size = 18 }) => (
   </svg>
 );
 
+const ArrowUpDownIcon = ({ size = 13, className = '' }) => (
+  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+    <path d="m21 16-4 4-4-4" />
+    <path d="M17 20V4" />
+    <path d="m3 8 4-4 4 4" />
+    <path d="M7 4v16" />
+  </svg>
+);
+
 // Sample fallback squad data from design handoff to ensure full fidelity when database has no posts yet
 const SAMPLE_COMPS = [
   { id: 'c1', title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', days: 5 / 24, team: '2–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
@@ -431,9 +440,26 @@ export default function TeamFinderScreen({
 
   // Sort function
   const sortComparator = (a, b) => {
-    if (sort === 'closing') return a.comp.days - b.comp.days;
-    if (sort === 'spots') return b.openN - a.openN;
-    return a.idx - b.idx;
+    switch (sort) {
+      case 'closing':
+        return (a.comp.days || 99) - (b.comp.days || 99);
+      case 'closing-latest':
+        return (b.comp.days || 0) - (a.comp.days || 0);
+      case 'match':
+        if (b.match !== a.match) return b.match - a.match;
+        return a.idx - b.idx;
+      case 'spots':
+        if (b.openN !== a.openN) return b.openN - a.openN;
+        return a.idx - b.idx;
+      case 'almost-full':
+        if (a.openN !== b.openN) return a.openN - b.openN;
+        return (a.comp.days || 99) - (b.comp.days || 99);
+      case 'title-asc':
+        return (a.comp.title || '').localeCompare(b.comp.title || '');
+      case 'newest':
+      default:
+        return a.idx - b.idx;
+    }
   };
 
   // Clear all filters
@@ -968,21 +994,28 @@ export default function TeamFinderScreen({
                 />
               </label>
 
-              {/* Sort Dropdown */}
-              <label className="tf-sort-wrapper">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m21 16-4 4-4-4"></path>
-                  <path d="M17 20V4"></path>
-                  <path d="m3 8 4-4 4 4"></path>
-                  <path d="M7 4v16"></path>
-                </svg>
-                Sort:
-                <select value={sort} onChange={(e) => setSort(e.target.value)} className="tf-sort-select">
-                  <option value="newest">Newest</option>
-                  <option value="closing">Closing soonest</option>
-                  <option value="spots">Most spots open</option>
-                </select>
-              </label>
+              {/* Sort Selector */}
+              <div className="tf-sort-box">
+                <ArrowUpDownIcon size={13} className="tf-sort-icon" />
+                <label htmlFor="tf-sort-select" className="tf-sort-label">Sort:</label>
+                <div className="tf-sort-select-wrapper">
+                  <select
+                    id="tf-sort-select"
+                    className="tf-sort-select"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="match">Best skill match</option>
+                    <option value="closing">Closing soonest</option>
+                    <option value="closing-latest">Closing latest</option>
+                    <option value="spots">Most spots open</option>
+                    <option value="almost-full">Almost full (1 left)</option>
+                    <option value="title-asc">Competition: A → Z</option>
+                  </select>
+                  <ChevronDownIcon size={11} className="tf-sort-chevron" />
+                </div>
+              </div>
             </div>
 
             {/* Status Row + Removable Active Chips */}
