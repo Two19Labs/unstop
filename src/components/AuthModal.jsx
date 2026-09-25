@@ -194,7 +194,7 @@ export default function AuthModal() {
             {mode === 'forgot'
               ? 'Reset Password'
               : mode === 'signup'
-              ? 'Create Account'
+              ? (authModalConfig?.title || 'Create Account')
               : authModalConfig?.title || 'Sign In to OneStop'}
           </h2>
 

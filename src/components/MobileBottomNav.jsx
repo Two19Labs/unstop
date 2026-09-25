@@ -7,7 +7,8 @@ export default function MobileBottomNav({
   onNavigate,
   pendingInboxCount = 0,
   bookmarksCount = 0,
-  profile
+  profile,
+  user = null
 }) {
   const initials = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/).filter(Boolean).map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase() || 'UG'
@@ -98,9 +99,16 @@ export default function MobileBottomNav({
         aria-label="Your Profile"
       >
         <div className="mobile-nav-icon-wrap">
-          <span className="mobile-nav-avatar">
-            {initials}
-          </span>
+          {user ? (
+            <span className="mobile-nav-avatar">
+              {initials}
+            </span>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={isProfile ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={isProfile ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          )}
         </div>
         <span className="mobile-nav-label">Profile</span>
       </button>

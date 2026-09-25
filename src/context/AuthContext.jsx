@@ -859,9 +859,9 @@ export function AuthProvider({ children }) {
   const createSquadPost = async (postData) => {
     if (!user) {
       openAuthModal({
-        title: 'Sign In to Post a Squad',
-        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
-        initialTab: 'signin',
+        title: 'Sign Up to Post a Squad',
+        subtitle: 'Create your collegiate account to recruit teammates and coordinate over WhatsApp.',
+        initialTab: 'signup',
       });
       throw new Error('Please sign in to post a squad opening.');
     }
@@ -979,9 +979,9 @@ export function AuthProvider({ children }) {
   const applyToSquad = async (appData) => {
     if (!user) {
       openAuthModal({
-        title: 'Sign In to Apply',
-        subtitle: 'You must be signed in to apply to join a squad.',
-        initialTab: 'signin',
+        title: 'Sign Up to Join this Squad',
+        subtitle: 'Create your collegiate account to apply to join a squad and connect on WhatsApp.',
+        initialTab: 'signup',
       });
       throw new Error('Please sign in to apply to this squad.');
     }

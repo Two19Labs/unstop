@@ -328,10 +328,14 @@ function OneStopInner() {
   }, [authProfile, user]);
 
   const handleSaveProfile = useCallback(async (updatedData) => {
+    if (!user) {
+      flash('Please sign in or create an account to save your profile.');
+      return;
+    }
     setProfile(updatedData);
     localStorage.setItem('onestop_user_profile', JSON.stringify(updatedData));
 
-    if (user && authUpdateProfile) {
+    if (authUpdateProfile) {
       try {
         const yr = updatedData.year || updatedData.batch || 'UG 2nd Year';
         const isPg = yr.startsWith('PG') || (updatedData.education_level || '').toLowerCase().includes('post');
@@ -350,8 +354,6 @@ function OneStopInner() {
         flash(err.message || 'Could not update profile');
         return;
       }
-    } else {
-      flash('Profile updated');
     }
   }, [user, authUpdateProfile, flash]);
 
@@ -589,9 +591,9 @@ function OneStopInner() {
     });
     if (!user) {
       openAuthModal({
-        title: 'Sign In to Post a Squad',
-        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
-        initialTab: 'signin',
+        title: 'Sign Up to Recruit Teammates',
+        subtitle: 'Create your collegiate account to recruit teammates and coordinate over WhatsApp.',
+        initialTab: 'signup',
       });
       return;
     }
@@ -609,9 +611,9 @@ function OneStopInner() {
     });
     if (!user) {
       openAuthModal({
-        title: 'Sign In to Post a Squad',
-        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
-        initialTab: 'signin',
+        title: 'Sign Up to Post a Squad',
+        subtitle: 'Create your collegiate account to recruit teammates and coordinate over WhatsApp.',
+        initialTab: 'signup',
       });
       return;
     }
@@ -632,9 +634,9 @@ function OneStopInner() {
   const handleSubmitPost = async (draft) => {
     if (!user) {
       openAuthModal({
-        title: 'Sign In to Post a Squad',
-        subtitle: 'You must be signed in with your collegiate account to recruit teammates.',
-        initialTab: 'signin',
+        title: 'Sign Up to Post a Squad',
+        subtitle: 'Create your collegiate account to recruit teammates and coordinate over WhatsApp.',
+        initialTab: 'signup',
       });
       return;
     }
@@ -759,9 +761,13 @@ function OneStopInner() {
     });
     if (!user) {
       openAuthModal({
-        title: 'Sign In to Apply',
-        subtitle: 'You must be signed in with your collegiate account to apply to join a squad.',
-        initialTab: 'signin',
+        title: 'Sign Up to Join this Squad',
+        subtitle: 'Create your collegiate account to apply and connect directly with squad leads on WhatsApp.',
+        initialTab: 'signup',
+        postLoginAction: () => {
+          setApplyTargetPost(post);
+          setApplyModalOpen(true);
+        }
       });
       return;
     }
@@ -1003,6 +1009,7 @@ function OneStopInner() {
           bookmarksCount={bookmarks.length}
           pendingInboxCount={pendingInboxCount}
           profile={profile}
+          user={user}
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={() => setMobileSidebarOpen(false)}
         />
@@ -1205,6 +1212,7 @@ function OneStopInner() {
         pendingInboxCount={pendingInboxCount}
         bookmarksCount={bookmarks.length}
         profile={profile}
+        user={user}
       />
 
       {/* Global Toast */}

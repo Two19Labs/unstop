@@ -10,6 +10,7 @@ export default function Sidebar({
   bookmarksCount = 0,
   pendingInboxCount = 0,
   profile,
+  user = null,
   mobileOpen = false,
   onCloseMobile = () => {}
 }) {
@@ -48,10 +49,15 @@ export default function Sidebar({
     ? profile.name.trim().split(/\s+/).filter(Boolean).map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase() || 'UG'
     : 'UG';
 
-  const profileName = profile?.name || 'Your Profile';
-  const profileMeta = profile?.college
-    ? `${profile.college}${profile.batch ? ` · ${profile.batch}` : ''}`
-    : 'Click to edit details';
+  const profileName = user
+    ? (profile?.name || user?.email?.split('@')[0] || 'Your Profile')
+    : 'Log In / Sign Up';
+
+  const profileMeta = user
+    ? (profile?.college
+        ? `${profile.college}${profile.batch ? ` · ${profile.batch}` : ''}`
+        : 'View & edit details')
+    : 'Sign in to access profile';
 
   const handleNav = (id) => {
     onNavigate(id);
@@ -206,8 +212,8 @@ export default function Sidebar({
                 width: '30px',
                 height: '30px',
                 borderRadius: '50%',
-                background: 'var(--surface-muted)',
-                color: 'var(--ink-secondary)',
+                background: user ? 'var(--surface-muted)' : 'var(--primary-tint-8, rgba(15, 63, 254, 0.08))',
+                color: user ? 'var(--ink-secondary)' : 'var(--primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -216,7 +222,14 @@ export default function Sidebar({
                 fontWeight: 700
               }}
             >
-              {initials}
+              {user ? (
+                initials
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              )}
             </span>
             <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3, minWidth: 0 }}>
               <span

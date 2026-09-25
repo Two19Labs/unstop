@@ -12,6 +12,7 @@ import {
   CloseIcon
 } from './icons';
 import { getProfileCooldown } from '../context/AuthContext';
+import ProfileAuthGate from './ProfileAuthGate';
 import './ProfileScreen.css';
 
 const YEARS = {
@@ -37,7 +38,7 @@ function parseAcademicStanding(profile) {
   return { level: 'UG', yearNum: '2nd' };
 }
 
-export default function ProfileScreen({
+function ProfileScreenContent({
   profile,
   onSaveProfile,
   user,
@@ -309,61 +310,39 @@ export default function ProfileScreen({
 
           {/* Card B: Account Card */}
           <div className="profile-account-card">
-            {user ? (
-              <>
-                <div className="profile-account-header">
-                  <span className="profile-account-title">Account</span>
-                  <span className="profile-account-email" title={user.email}>
-                    Signed in as {user.email}
-                  </span>
-                </div>
-                <div className="profile-account-actions">
-                  <button
-                    type="button"
-                    className="profile-account-action-btn"
-                    onClick={() => setIsChangePasswordOpen(true)}
-                  >
-                    <LockIcon size={15} color="var(--ink-muted)" />
-                    <span>Change password</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="profile-account-action-btn"
-                    onClick={onSignOut}
-                  >
-                    <LogOutIcon size={15} color="var(--ink-muted)" />
-                    <span>Sign out</span>
-                  </button>
-                  <div className="profile-account-divider" />
-                  <button
-                    type="button"
-                    className="profile-account-action-btn danger"
-                    onClick={() => setIsDeleteAccountOpen(true)}
-                  >
-                    <AlertCircleIcon size={15} color="currentColor" />
-                    <span>Delete account</span>
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="profile-account-header">
-                  <span className="profile-account-title">Account</span>
-                  <span className="profile-account-subtitle">
-                    Sign in to sync your bookmarks, squad applications, and collegiate profile across all devices.
-                  </span>
-                </div>
-                <div className="profile-account-guest-body">
-                  <button
-                    type="button"
-                    className="profile-account-signin-btn"
-                    onClick={onOpenAuthModal}
-                  >
-                    Sign in to Cloud Sync
-                  </button>
-                </div>
-              </>
-            )}
+            <div className="profile-account-header">
+              <span className="profile-account-title">Account</span>
+              <span className="profile-account-email" title={user.email}>
+                Signed in as {user.email}
+              </span>
+            </div>
+            <div className="profile-account-actions">
+              <button
+                type="button"
+                className="profile-account-action-btn"
+                onClick={() => setIsChangePasswordOpen(true)}
+              >
+                <LockIcon size={15} color="var(--ink-muted)" />
+                <span>Change password</span>
+              </button>
+              <button
+                type="button"
+                className="profile-account-action-btn"
+                onClick={onSignOut}
+              >
+                <LogOutIcon size={15} color="var(--ink-muted)" />
+                <span>Sign out</span>
+              </button>
+              <div className="profile-account-divider" />
+              <button
+                type="button"
+                className="profile-account-action-btn danger"
+                onClick={() => setIsDeleteAccountOpen(true)}
+              >
+                <AlertCircleIcon size={15} color="currentColor" />
+                <span>Delete account</span>
+              </button>
+            </div>
           </div>
         </aside>
 
@@ -824,3 +803,11 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
     </div>
   );
 }
+
+export default function ProfileScreen(props) {
+  if (!props.user) {
+    return <ProfileAuthGate initialMode="signup" />;
+  }
+  return <ProfileScreenContent {...props} />;
+}
+
