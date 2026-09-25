@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import InstitutionLogo from './InstitutionLogo';
 import SectionLoadingWidget from './SectionLoadingWidget';
+import CompetitionRoundsTracker from './CompetitionRoundsTracker';
 import { BROWSE_PUNS } from './FunLoadingScreen';
 import Footer from './Footer';
 const trackCaseCompsEvent = () => {};
@@ -526,6 +527,7 @@ export default function CompetitionsPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
   const bookmarkedOnly = Boolean(propBookmarkedOnly);
+  const [savedViewMode, setSavedViewMode] = useState('tracker'); // 'tracker' | 'grid'
   const [selectedTracks, setSelectedTracks] = useState(() => initialPrefs?.selectedTracks || []); // [] = All tracks; otherwise: 'case' | 'hackathon' | 'writing' | 'quiz' | 'simulation' | 'debate'
   const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
   const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
@@ -1337,6 +1339,51 @@ export default function CompetitionsPage({
                 </span>
               </div>
 
+              {bookmarkedOnly && filteredCompetitions.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+                  <button
+                    type="button"
+                    onClick={() => setSavedViewMode('tracker')}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--line)',
+                      background: savedViewMode === 'tracker' ? 'var(--ink)' : 'var(--surface)',
+                      color: savedViewMode === 'tracker' ? 'var(--surface)' : 'var(--ink-secondary)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span>🎯</span>
+                    <span>Timeline Tracker</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSavedViewMode('grid')}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--line)',
+                      background: savedViewMode === 'grid' ? 'var(--ink)' : 'var(--surface)',
+                      color: savedViewMode === 'grid' ? 'var(--surface)' : 'var(--ink-secondary)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}
+                  >
+                    <span>🗂️</span>
+                    <span>Card Grid</span>
+                  </button>
+                </div>
+              )}
+
               {hasActiveFilters && (
                 <div className="cc-inline-active-filters">
                   <div className="cc-active-pills-list">
@@ -1432,6 +1479,14 @@ export default function CompetitionsPage({
             {bookmarkedOnly ? (bookmarkedIds.length === 0 ? 'Browse Competitions' : 'Clear All Filters') : 'Clear All Filters'}
           </button>
         </div>
+      ) : bookmarkedOnly && savedViewMode === 'tracker' ? (
+        <CompetitionRoundsTracker
+          competitions={filteredCompetitions}
+          onToggleBookmark={onToggleBookmark}
+          onFindTeammates={onFindTeammates}
+          onOpenDetail={onOpenDetail}
+          showToast={showToast}
+        />
       ) : (
         <div className="cc-grid">
           {filteredCompetitions.map((comp) => {

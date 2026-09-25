@@ -1,0 +1,635 @@
+/* src/components/CompetitionRoundsTracker.css */
+
+.rounds-tracker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Urgent Alert Banner */
+.rounds-urgent-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid rgba(225, 29, 72, 0.35);
+  border-left: 4px solid var(--accent, #e11d48);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(225, 29, 72, 0.08);
+}
+
+.rounds-urgent-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+  animation: pulse-urgent 2s infinite ease-in-out;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+
+.rounds-urgent-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rounds-urgent-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rounds-urgent-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(225, 29, 72, 0.12);
+  color: #e11d48;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rounds-urgent-desc {
+  font-size: 12.5px;
+  color: var(--ink-secondary);
+}
+
+/* Controls Bar */
+.rounds-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.rounds-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rounds-filter-btn {
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rounds-filter-btn:hover {
+  background: var(--surface-sunken);
+  color: var(--ink);
+  border-color: var(--line-strong, var(--ink-muted));
+}
+
+.rounds-filter-btn.active {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+
+
+/* Competition Card */
+.rounds-comp-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rounds-comp-card:hover {
+  border-color: var(--line-strong, #ccc);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+}
+
+/* Card Header */
+.rounds-comp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rounds-comp-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+}
+
+.rounds-comp-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-sunken);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rounds-comp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rounds-comp-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rounds-comp-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.rounds-comp-title:hover {
+  color: var(--accent, #e11d48);
+}
+
+.rounds-comp-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--ink-secondary);
+  flex-wrap: wrap;
+}
+
+.rounds-comp-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
+  border: 1px solid var(--line);
+}
+
+.rounds-comp-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.rounds-btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.rounds-btn-icon:hover {
+  background: var(--surface-sunken);
+  color: var(--ink);
+  border-color: var(--line-strong, #ccc);
+}
+
+.rounds-btn-icon.active {
+  color: #e11d48;
+  border-color: rgba(225, 29, 72, 0.4);
+  background: rgba(225, 29, 72, 0.06);
+}
+
+/* Card Progress & Next Action Bar */
+.rounds-next-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--surface-sunken);
+  font-size: 12.5px;
+  flex-wrap: wrap;
+}
+
+.rounds-next-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.rounds-progress-track {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rounds-progress-bar-bg {
+  width: 100px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.rounds-progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent, #e11d48);
+  transition: width 0.3s ease;
+}
+
+.rounds-progress-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+/* Pipeline Stepper */
+.rounds-pipeline-wrapper {
+  overflow-x: auto;
+  padding: 8px 4px 12px;
+}
+
+.rounds-pipeline {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  min-width: 600px;
+}
+
+.rounds-stage-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  padding: 0 8px;
+  text-align: center;
+}
+
+/* Connector line */
+.rounds-stage-connector {
+  position: absolute;
+  top: 14px;
+  left: -50%;
+  right: 50%;
+  height: 2px;
+  background: var(--line);
+  z-index: 1;
+}
+
+.rounds-stage-connector.completed {
+  background: var(--ink);
+}
+
+.rounds-stage-item:first-child .rounds-stage-connector {
+  display: none;
+}
+
+/* Stage Bead/Node */
+.rounds-stage-node {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-secondary);
+  z-index: 2;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.rounds-stage-item.completed .rounds-stage-node {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface);
+}
+
+.rounds-stage-item.live .rounds-stage-node {
+  background: var(--accent, #e11d48);
+  border-color: var(--accent, #e11d48);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.2);
+  animation: pulse-node 2s infinite ease-in-out;
+}
+
+@keyframes pulse-node {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.2); }
+  50% { box-shadow: 0 0 0 7px rgba(225, 29, 72, 0.35); }
+}
+
+.rounds-stage-item.selected .rounds-stage-node {
+  outline: 2px solid var(--accent, #e11d48);
+  outline-offset: 2px;
+}
+
+.rounds-stage-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.rounds-stage-timing {
+  font-size: 11px;
+  color: var(--ink-secondary);
+  line-height: 1.2;
+}
+
+.rounds-stage-pill {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.rounds-stage-pill.completed {
+  background: var(--surface-sunken);
+  color: var(--ink-muted, #888);
+}
+
+.rounds-stage-pill.live {
+  background: rgba(225, 29, 72, 0.12);
+  color: #e11d48;
+}
+
+.rounds-stage-pill.upcoming {
+  background: rgba(37, 99, 235, 0.09);
+  color: #2563eb;
+}
+
+.rounds-stage-pill.tba {
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
+}
+
+/* Expanded Detail Drawer / Box */
+.rounds-stage-expanded-box {
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  animation: fadeInDown 0.2s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rounds-expanded-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.rounds-expanded-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rounds-expanded-timing-badge {
+  font-size: 11.5px;
+  color: var(--ink-secondary);
+  font-weight: 500;
+}
+
+.rounds-expanded-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rounds-meta-chip {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-secondary);
+}
+
+.rounds-expanded-body {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.rounds-expanded-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+}
+
+.rounds-btn-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 6px;
+}
+
+.rounds-btn-text:hover {
+  color: var(--ink);
+}
+
+.rounds-btn-primary {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--surface);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.rounds-btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* State 1: Pre-Registration Box */
+.rounds-pre-reg-box {
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rounds-pre-reg-info {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.rounds-pre-reg-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rounds-pre-reg-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+
+.rounds-pre-reg-value {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.rounds-reg-countdown {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent, #e11d48);
+}
+
+.rounds-pre-reg-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.rounds-pre-reg-note {
+  font-size: 12px;
+  color: var(--ink-secondary);
+  font-style: italic;
+}
+
+.rounds-btn-action {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.rounds-btn-action:hover {
+  background: var(--surface-sunken);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.rounds-btn-apply {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--surface);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.rounds-btn-apply:hover {
+  opacity: 0.9;
+}
+
+.rounds-status-tag-closed {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+}
+
+.rounds-next-title {
+  font-weight: 600;
+  color: var(--ink);
+}

@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 function devApiPlugin() {
-  const handler = async (req, res) => {
+  const compHandler = async (req, res) => {
     try {
       const { fetchCompetitionsFromUnstop } = await import('./api/competitions.js');
       const data = await fetchCompetitionsFromUnstop();
@@ -16,13 +16,39 @@ function devApiPlugin() {
     }
   };
 
+  const roundsHandler = async (req, res) => {
+    try {
+      const { fetchRoundsForMultipleCompetitions } = await import('./api/rounds.js');
+      const url = new URL(req.url, 'http://localhost');
+      const rawIds = url.searchParams.get('ids') || url.searchParams.get('id') || '';
+      const ids = rawIds.split(',').map(s => s.trim()).filter(Boolean);
+
+      if (ids.length === 0) {
+        res.statusCode = 400;
+        res.setHeader('Content-Type', 'application/json');
+        return res.end(JSON.stringify({ success: false, error: 'Missing required "ids" query parameter' }));
+      }
+
+      const data = await fetchRoundsForMultipleCompetitions(ids);
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({ success: true, count: Object.keys(data).length, data }));
+    } catch (err) {
+      console.error('Error fetching rounds in dev:', err.message);
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({ success: false, error: err.message }));
+    }
+  };
+
   return {
     name: 'dev-api-competitions',
     configureServer(server) {
-      server.middlewares.use('/api/competitions', handler);
+      server.middlewares.use('/api/competitions', compHandler);
+      server.middlewares.use('/api/rounds', roundsHandler);
     },
     configurePreviewServer(server) {
-      server.middlewares.use('/api/competitions', handler);
+      server.middlewares.use('/api/competitions', compHandler);
+      server.middlewares.use('/api/rounds', roundsHandler);
     },
   };
 }
