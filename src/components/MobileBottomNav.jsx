@@ -15,7 +15,7 @@ export default function MobileBottomNav({
     : 'UG';
 
   const isHome = screen === 'home';
-  const isBrowse = screen === 'browse' || screen === 'saved';
+  const isBrowse = screen === 'browse';
   const isTeams = screen === 'teams';
   const isRequests = screen === 'requests';
   const isProfile = screen === 'profile';

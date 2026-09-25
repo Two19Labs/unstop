@@ -159,9 +159,28 @@ export async function fetchRoundsForSingleCompetition(compId) {
   const lastRound = rounds[rounds.length - 1];
   const finalDeadline = lastRound?.endDate || regEnd;
 
+  const minTeam = comp.regnRequirements?.min_team_size || 1;
+  const maxTeam = comp.regnRequirements?.max_team_size || 4;
+  const isFree = !comp.isPaid;
+  const host = comp.organisation?.name || comp.host || 'Host Institution';
+  const logo = comp.organisation?.logoUrl2 || comp.organisation?.logoUrl || comp.logoUrl2 || null;
+
   const normalized = {
     id: comp.id,
     title: comp.title,
+    host,
+    orgName: host,
+    logo,
+    orgLogo: logo,
+    unstopUrl: comp.seo_url || `https://unstop.com/competitions/${comp.public_url || comp.id}`,
+    minTeam,
+    maxTeam,
+    teamSizeDisplay: minTeam === maxTeam 
+      ? (minTeam === 1 ? 'Solo / Individual' : `${minTeam} Members`) 
+      : `${minTeam} - ${maxTeam} Members`,
+    isFree,
+    fee: isFree ? 'Free' : (comp.fee || 'Paid'),
+    deadline: regEnd,
     rounds,
     totalStages: rounds.length,
     completedStages: completedCount,

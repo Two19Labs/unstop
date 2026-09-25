@@ -27,12 +27,6 @@ export default function Sidebar({
       badge: null
     },
     {
-      id: 'saved',
-      label: 'Bookmarked',
-      badge: bookmarksCount > 0 ? String(bookmarksCount) : null,
-      accentBadge: false
-    },
-    {
       id: 'teams',
       label: 'Team finder',
       badge: null

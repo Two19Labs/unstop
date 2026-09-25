@@ -50,14 +50,15 @@ const DEFAULT_FILTERS = {
   sort: 'deadline'
 };
 
-const VALID_SCREENS = ['home', 'browse', 'saved', 'teams', 'requests', 'profile'];
+const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile'];
 
 function getInitialScreen() {
   try {
     if (typeof window !== 'undefined') {
-      // 1. Check URL hash (e.g. #browse, #/browse, #teams, #/teams, #saved, #requests, #profile)
+      // 1. Check URL hash (e.g. #browse, #/browse, #teams, #/teams, #requests, #profile)
       if (window.location.hash) {
         const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
+        if (hash === 'saved' || hash === 'bookmarked') return 'home';
         if (VALID_SCREENS.includes(hash)) {
           return hash;
         }
@@ -66,6 +67,7 @@ function getInitialScreen() {
       // 2. Check URL pathname (e.g. /browse, /teams)
       if (window.location.pathname) {
         const path = window.location.pathname.replace(/^\//, '').split('/')[0].toLowerCase();
+        if (path === 'saved' || path === 'bookmarked') return 'home';
         if (VALID_SCREENS.includes(path)) {
           return path;
         }
@@ -168,10 +170,18 @@ function OneStopInner() {
   useEffect(() => {
     const handleLocationChange = () => {
       const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
+      if (hash === 'saved' || hash === 'bookmarked') {
+        setScreen('home');
+        return;
+      }
       if (VALID_SCREENS.includes(hash)) {
         setScreen(hash);
       } else if (!window.location.hash || window.location.hash === '#') {
         const path = window.location.pathname.replace(/^\//, '').split('/')[0].toLowerCase();
+        if (path === 'saved' || path === 'bookmarked') {
+          setScreen('home');
+          return;
+        }
         if (VALID_SCREENS.includes(path)) {
           setScreen(path);
         } else {
@@ -519,6 +529,7 @@ function OneStopInner() {
               discipline: disciplineVal,
               days: c.daysRemainingNum !== undefined ? c.daysRemainingNum : 7,
               deadline: c.deadline,
+              startDate: c.startDate || null,
               remainDaysText: c.remainDaysText,
               prize: c.prizes || 'Recognition',
               team: c.teamSizeDisplay || `${c.minTeam || 1}-${c.maxTeam || 4}`,
@@ -568,15 +579,17 @@ function OneStopInner() {
 
   // Navigation Handler
   const handleNavigate = (newScreen) => {
-    if (VALID_SCREENS.includes(newScreen)) {
-      if (newScreen !== screen) {
-        const targetHash = newScreen === 'home' ? window.location.pathname + window.location.search : `#${newScreen}`;
-        window.history.pushState({ screen: newScreen }, '', targetHash);
+    let target = newScreen;
+    if (target === 'saved' || target === 'bookmarked') target = 'home';
+    if (VALID_SCREENS.includes(target)) {
+      if (target !== screen) {
+        const targetHash = target === 'home' ? window.location.pathname + window.location.search : `#${target}`;
+        window.history.pushState({ screen: target }, '', targetHash);
       }
-      setScreen(newScreen);
+      setScreen(target);
       try {
-        sessionStorage.setItem('onestop_current_screen', newScreen);
-        localStorage.setItem('onestop_current_screen', newScreen);
+        sessionStorage.setItem('onestop_current_screen', target);
+        localStorage.setItem('onestop_current_screen', target);
       } catch (e) {}
     }
     setDetailCompId(null);
@@ -965,7 +978,7 @@ function OneStopInner() {
   const selectedDetailComp = detailCompId ? (visibleCompetitions.find(c => c.id === detailCompId) || competitions.find(c => c.id === detailCompId)) : null;
   const detailSquadCount = detailCompId ? posts.filter(p => p.compId === detailCompId).length : 0;
 
-  const isBrowseMode = screen === 'browse' || screen === 'saved';
+  const isBrowseMode = screen === 'browse';
   const isStandaloneMode = isBrowseMode || screen === 'teams';
 
   return (
@@ -1026,7 +1039,7 @@ function OneStopInner() {
           showToast={flash}
           bookmarks={bookmarks}
           onToggleBookmark={handleToggleBookmark}
-          bookmarkedOnly={screen === 'saved'}
+          bookmarkedOnly={false}
           isPostgraduate={isPostgraduate}
           initialCompetitions={competitions}
           externalSortBy={browseSort}

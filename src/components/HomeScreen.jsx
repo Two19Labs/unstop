@@ -12,6 +12,7 @@ import {
   ClockIcon,
   ExternalLinkIcon
 } from './icons';
+import { useCompetitionRounds } from '../hooks/useCompetitionRounds';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
 
@@ -539,14 +540,15 @@ export default function HomeScreen({
   })();
 
   const newForYouCount = useMemo(() => {
-    if (!firstSeenMap) return 0;
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
     return competitions.filter(c => {
-      const seenAt = firstSeenMap[String(c.id)];
-      if (!seenAt) return false;
-      if (now - seenAt > oneDayMs) return false;
-      return matchCompetition(c, effectiveFilter || {});
+      if (!matchCompetition(c, effectiveFilter || {})) return false;
+      const startTimestamp = c.startDate ? new Date(c.startDate).getTime() : 0;
+      const isNewByStartDate = startTimestamp > 0 && (now - startTimestamp <= oneDayMs);
+      const seenAt = firstSeenMap ? firstSeenMap[String(c.id)] : null;
+      const isNewByFirstSeen = seenAt && (now - seenAt <= oneDayMs);
+      return isNewByStartDate || isNewByFirstSeen;
     }).length;
   }, [competitions, firstSeenMap, effectiveFilter]);
 
@@ -578,7 +580,9 @@ export default function HomeScreen({
         ...(Array.isArray(post.skills) ? post.skills : [])
       ].map(s => String(s).toLowerCase().trim()).filter(Boolean);
 
-      return lookingFor.some(sk => userSkills.includes(sk));
+      return lookingFor.some(sk => 
+        userSkills.some(userSk => sk.includes(userSk) || userSk.includes(sk))
+      );
     }).length;
   }, [posts, userSkills, user?.id, user?.email]);
 
@@ -693,14 +697,66 @@ export default function HomeScreen({
 
   const hasFilter = filterChips.length > 0;
 
-  // 1. Bookmarks Rail (Filters do NOT apply here; sorted by soonest deadline)
+  // 1. Bookmarks Rail: Unified single line, multi-round deadline tracker
   const bookmarkIds = useMemo(() => (Array.isArray(bookmarks) ? bookmarks.map(String) : []), [bookmarks]);
+  const { roundsMap, getRoundsForComp } = useCompetitionRounds(bookmarkIds);
 
   const allBookmarkComps = useMemo(() => {
-    return competitions
-      .filter(c => bookmarkIds.includes(String(c.id)))
-      .sort((a, b) => (a.days ?? 999) - (b.days ?? 999));
-  }, [competitions, bookmarkIds]);
+    const now = Date.now();
+    const map = new Map();
+
+    // 1. Add from active competitions list
+    competitions.forEach(c => {
+      if (bookmarkIds.includes(String(c.id))) {
+        map.set(String(c.id), { ...c });
+      }
+    });
+
+    // 2. For any bookmark ID not in competitions list (e.g. registration closed and dropped from search), reconstruct from roundsMap
+    bookmarkIds.forEach(id => {
+      const sId = String(id);
+      if (!map.has(sId) && roundsMap && roundsMap[sId]) {
+        const r = roundsMap[sId];
+        map.set(sId, {
+          id: r.id,
+          title: r.title,
+          host: r.host || 'Host Institution',
+          orgName: r.orgName || r.host || 'Host Institution',
+          logo: r.logo,
+          orgLogo: r.orgLogo,
+          unstopUrl: r.unstopUrl || 'https://unstop.com',
+          deadline: r.deadline,
+          fee: r.fee || 'Free',
+          isFree: r.isFree ?? true,
+          days: r.daysRemaining ?? 0,
+          remainDaysText: r.daysRemaining !== null ? `${r.daysRemaining} days left` : 'Registration closed',
+          team: r.teamSizeDisplay || 'Solo / Team',
+          minTeam: r.minTeam || 1,
+          maxTeam: r.maxTeam || 4,
+          teamSizeDisplay: r.teamSizeDisplay || 'Solo / Team',
+          prizes: 'Certificates & Recognition',
+          regs: 0
+        });
+      }
+    });
+
+    // 3. Filter out concluded competitions (State 3: Auto-removal when all rounds have completed)
+    const activeList = Array.from(map.values()).filter(c => {
+      const rData = roundsMap ? roundsMap[String(c.id)] : null;
+      if (rData?.isConcluded) return false;
+      if (rData?.rounds && rData.rounds.length > 0) {
+        const allEnded = rData.rounds.every(rnd => rnd.endDate && new Date(rnd.endDate).getTime() < now);
+        if (allEnded) return false;
+      }
+      return true;
+    });
+
+    return activeList.sort((a, b) => {
+      const timeA = a.deadline ? new Date(a.deadline).getTime() : 9999999999999;
+      const timeB = b.deadline ? new Date(b.deadline).getTime() : 9999999999999;
+      return timeA - timeB;
+    });
+  }, [competitions, bookmarkIds, roundsMap]);
 
   const bookmarkTotal = allBookmarkComps.length;
   const displayedBookmarks = allBookmarkComps.slice(0, CARDS_PER_RAIL);
@@ -878,25 +934,6 @@ export default function HomeScreen({
           <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
             soonest deadlines first
           </span>
-          <button
-            type="button"
-            onClick={() => handleNavigate('saved')}
-            className="home-more-btn"
-            style={{
-              marginLeft: 'auto',
-              border: '1px solid var(--line)',
-              borderRadius: '9px',
-              background: 'var(--surface)',
-              color: 'var(--ink)',
-              padding: '8px 13px',
-              fontSize: '13px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              cursor: 'pointer'
-            }}
-          >
-            More →
-          </button>
         </div>
 
         <div className="rail">
@@ -942,6 +979,16 @@ export default function HomeScreen({
             </div>
           ) : (
             allBookmarkComps.map((b) => {
+              const rData = getRoundsForComp(b.id);
+              const regDeadlineTime = b.deadline ? new Date(b.deadline).getTime() : 0;
+              const isRegClosed = rData?.isRegistrationClosed !== undefined
+                ? rData.isRegistrationClosed
+                : (regDeadlineTime > 0 && regDeadlineTime <= Date.now());
+
+              const isSolo = b.isSolo || b.maxTeam === 1 ||
+                (b.teamSizeDisplay && b.teamSizeDisplay.toLowerCase().startsWith('solo')) ||
+                (b.team && (String(b.team).trim() === '1' || String(b.team).toLowerCase().startsWith('solo') || String(b.team).toLowerCase().includes('individual')));
+
               const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
               const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
               const deadlineFormatted = formatDeadlineDateTime(b.deadline);
@@ -951,6 +998,112 @@ export default function HomeScreen({
               const teamText = b.team || b.teamSizeDisplay || 'Solo / Team';
               const prizeText = (b.prize || b.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool');
 
+              // ── State 2: Post-Registration Deadline Rounds Tracker Mode ──
+              if (isRegClosed) {
+                return (
+                  <div
+                    key={b.id}
+                    className="home-rail-card home-rail-card--compact card-urgency-blue"
+                    onClick={() => onOpenDetail && onOpenDetail(b.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {/* Top row: Logo, Host, Remove button */}
+                    <div className="home-compact-top-row">
+                      <InstitutionLogo
+                        logo={b.logo || b.orgLogo}
+                        name={b.host || b.orgName}
+                        size={30}
+                        borderRadius={7}
+                        fontSize={10.5}
+                      />
+                      <span className="home-compact-host" title={b.host || b.orgName}>
+                        {b.host || b.orgName}
+                      </span>
+                      <button
+                        type="button"
+                        className="home-compact-remove-btn"
+                        title="Remove bookmark"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onToggleBookmark) onToggleBookmark(b.id);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="home-compact-title" title={b.title}>
+                      {b.title}
+                    </h3>
+
+                    {/* Status Strip: Registration closed indicator */}
+                    <div className="home-rounds-status-strip">
+                      <span>🔒 Registration Closed</span>
+                      <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Rounds Active</span>
+                    </div>
+
+                    {/* Next Deadline Banner */}
+                    {rData?.nextRound && (
+                      <div className="home-rounds-next-banner">
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          ⚡ Next: {rData.nextRound.title}
+                        </span>
+                        {rData.daysRemaining !== null && (
+                          <span style={{ marginLeft: 'auto', fontSize: '10px', background: 'var(--primary)', color: '#FFF', padding: '1px 6px', borderRadius: '4px', flexShrink: 0 }}>
+                            {rData.daysRemaining === 0 ? 'Due Today' : `Due in ${rData.daysRemaining}d`}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Subsequent Rounds List */}
+                    {rData?.rounds && rData.rounds.length > 0 ? (
+                      <div className="home-rounds-timeline-list">
+                        {rData.rounds.filter(r => r.type !== 'registration').slice(0, 3).map((rnd, i) => {
+                          const isLive = rnd.status === 'live';
+                          const isCompleted = rnd.status === 'completed';
+                          const badgeClass = isLive ? 'badge-live' : isCompleted ? 'badge-completed' : 'badge-upcoming';
+                          const badgeText = isLive ? 'Live Now' : isCompleted ? 'Done' : (rnd.displayText || 'Upcoming');
+                          return (
+                            <div key={rnd.id || i} className={`home-rounds-item ${isLive ? 'is-live' : ''}`}>
+                              <div className="home-rounds-item-info">
+                                <span className="home-rounds-item-title">
+                                  {rnd.typeEmoji ? `${rnd.typeEmoji} ` : ''}{rnd.title}
+                                </span>
+                                <span className="home-rounds-item-sub">
+                                  {rnd.displayText || (rnd.totalQuestions ? `${rnd.totalQuestions} Questions` : (rnd.duration ? `${rnd.duration} mins` : 'Guidelines on Unstop'))}
+                                </span>
+                              </div>
+                              <span className={`home-rounds-item-badge ${badgeClass}`}>
+                                {badgeText}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '11px', color: 'var(--ink-muted)', padding: '6px 0', minHeight: '50px' }}>
+                        Tracking round milestones from Unstop...
+                      </div>
+                    )}
+
+                    {/* Direct Round Portal Link (Zero recruitment clutter) */}
+                    <a
+                      href={rData?.activeRound?.publicUrl || b.unstopUrl || 'https://unstop.com'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="home-rounds-portal-btn"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span>Open Unstop Portal</span>
+                      <ExternalLinkIcon size={12} color="#FFFFFF" />
+                    </a>
+                  </div>
+                );
+              }
+
+              // ── State 1: Pre-Registration Deadline Formation & Apply Mode ──
               return (
                 <div
                   key={b.id}
@@ -1031,7 +1184,7 @@ export default function HomeScreen({
                   </div>
 
                   {/* Actions Grid */}
-                  <div className="home-compact-actions">
+                  <div className={`home-compact-actions ${isSolo ? 'home-compact-actions--solo' : ''}`}>
                     <a
                       href={b.unstopUrl || 'https://unstop.com'}
                       target="_blank"
@@ -1042,18 +1195,20 @@ export default function HomeScreen({
                       <span>Apply</span>
                       <ExternalLinkIcon size={11} color="#FFFFFF" />
                     </a>
-                    <button
-                      type="button"
-                      className="home-compact-btn-squad"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (onSquadUp) onSquadUp(b);
-                        else if (onFindTeammates) onFindTeammates(b);
-                      }}
-                    >
-                      <UsersIcon size={12} />
-                      <span>Squad up</span>
-                    </button>
+                    {!isSolo && (
+                      <button
+                        type="button"
+                        className="home-compact-btn-squad"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onSquadUp) onSquadUp(b);
+                          else if (onFindTeammates) onFindTeammates(b);
+                        }}
+                      >
+                        <UsersIcon size={12} />
+                        <span>Squad up</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );

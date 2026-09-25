@@ -492,6 +492,7 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
       bannerUrl: item.logoUrl2 || item.banner_mobile?.url || item.banner_desktop?.url || null,
       unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
       deadline: item.regnRequirements?.end_regn_dt || item.end_date,
+      startDate: item.regnRequirements?.start_regn_dt || item.start_date || null,
       remainDaysText,
       daysRemainingNum,
       urgency,
