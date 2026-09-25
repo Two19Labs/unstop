@@ -1,0 +1,312 @@
+/* src/components/BookmarkRoundTrackerCard.css */
+
+.br-card {
+  flex: 0 0 302px;
+  width: 302px;
+  min-height: 285px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E5E7EB);
+  border-radius: 14px;
+  padding: 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  position: relative;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  user-select: none;
+  cursor: pointer;
+}
+
+.br-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.br-card.is-critical {
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+}
+
+.br-card.is-urgent {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.15);
+}
+
+.br-card.is-live {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+}
+
+/* Top Row */
+.br-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.br-host-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.br-host-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-secondary, #6B7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.br-remove-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted, #9CA3AF);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 120ms ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.br-remove-btn:hover {
+  background: var(--surface-muted, #F3F4F6);
+  color: var(--ink, #111827);
+}
+
+/* Title */
+.br-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink, #111827);
+  line-height: 1.35;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 35px;
+}
+
+/* Hero Deadline Box */
+.br-hero-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 11px;
+  background: var(--surface-muted, #F9FAFB);
+  border: 1px solid var(--line, #E5E7EB);
+  border-radius: 10px;
+}
+
+.br-hero-box.hero-critical {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+.br-hero-box.hero-urgent {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.br-hero-box.hero-live {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.32);
+}
+
+/* Hero Status Header */
+.br-hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.br-stage-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-secondary, #6B7280);
+}
+
+.br-live-tag {
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.br-live-tag.tag-live {
+  background: #10B981;
+  color: #FFFFFF;
+  animation: brPulse 1.8s infinite ease-in-out;
+}
+
+.br-live-tag.tag-critical {
+  background: #EF4444;
+  color: #FFFFFF;
+  animation: brPulse 1.4s infinite ease-in-out;
+}
+
+.br-live-tag.tag-urgent {
+  background: rgba(245, 158, 11, 0.15);
+  color: #D97706;
+}
+
+.br-live-tag.tag-normal {
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E5E7EB);
+  color: var(--ink-secondary, #6B7280);
+}
+
+@keyframes brPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+/* Round Name (Hero) */
+.br-round-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.br-round-emoji {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.br-round-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Deadline Time Row */
+.br-deadline-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.br-deadline-label {
+  font-weight: 600;
+  color: var(--ink-muted, #9CA3AF);
+  text-transform: uppercase;
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
+}
+
+.br-deadline-time {
+  font-weight: 700;
+  color: var(--ink, #111827);
+  font-size: 11.5px;
+}
+
+/* Countdown Banner (High Emphasis) */
+.br-countdown-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: var(--ink, #111827);
+  color: var(--surface, #FFFFFF);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.br-hero-box.hero-critical .br-countdown-banner {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+
+.br-hero-box.hero-urgent .br-countdown-banner {
+  background: #D97706;
+  color: #FFFFFF;
+}
+
+.br-hero-box.hero-live .br-countdown-banner {
+  background: #059669;
+  color: #FFFFFF;
+}
+
+/* Subsequent Round Strip */
+.br-subsequent-strip {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-secondary, #6B7280);
+  background: var(--surface-muted, #F9FAFB);
+  border: 1px dashed var(--line, #E5E7EB);
+  border-radius: 6px;
+  padding: 4px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.br-subsequent-strip strong {
+  color: var(--ink, #111827);
+}
+
+/* Portal Action Button */
+.br-portal-btn {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--ink, #111827);
+  color: var(--surface, #FFFFFF);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 120ms ease;
+  box-sizing: border-box;
+}
+
+.br-portal-btn:hover {
+  opacity: 0.88;
+}
+
+[data-theme='dark'] .br-card {
+  background: #18191E;
+  border-color: #2D3039;
+}
+
+[data-theme='dark'] .br-hero-box {
+  background: #1F2128;
+  border-color: #2D3039;
+}
+
+[data-theme='dark'] .br-portal-btn {
+  background: #FFFFFF;
+  color: #111827;
+}

@@ -2,6 +2,11 @@
 import React, { useState, useMemo } from 'react';
 import { useCompetitionRounds } from '../hooks/useCompetitionRounds';
 import InstitutionLogo from './InstitutionLogo';
+import {
+  formatRoundDeadlineTime,
+  getRoundCountdown,
+  useLiveSecondTicker
+} from '../utils/roundDeadlineUtils';
 import './CompetitionRoundsTracker.css';
 
 // SVG Icons
@@ -122,7 +127,7 @@ export default function CompetitionRoundsTracker({
     });
   }, [competitions, roundsMap, activeFilter, getRoundsForComp]);
 
-  const nowMs = Date.now();
+  const nowMs = useLiveSecondTicker();
 
   return (
     <div className="rounds-tracker-container">
@@ -305,12 +310,17 @@ export default function CompetitionRoundsTracker({
                     <span className="rounds-status-tag-closed">🔒 Registration Closed</span>
                     <span>⚡ Next Up:</span>
                     <span className="rounds-next-title">
-                      {compData?.nextDeadlineLabel ? `${compData.nextDeadlineLabel}` : 'Check round dates'}
-                      {compData?.daysRemaining !== null && (
-                        <span style={{ color: compData.daysRemaining <= 2 ? '#e11d48' : 'var(--ink-secondary)', marginLeft: '6px' }}>
-                          ({compData.daysRemaining === 0 ? 'Due Today!' : `Due in ${compData.daysRemaining} days`})
-                        </span>
-                      )}
+                      {compData?.nextRound?.title || compData?.nextDeadlineLabel || 'Round'}
+                      {(() => {
+                        const targetEndDate = compData?.nextRound?.endDate || compData?.nextDeadline;
+                        if (!targetEndDate) return null;
+                        const cd = getRoundCountdown(targetEndDate, nowMs);
+                        return (
+                          <span style={{ color: cd.isCritical ? '#e11d48' : (cd.isUrgent ? '#d97706' : 'var(--ink-secondary)'), marginLeft: '6px', fontWeight: 700 }}>
+                            ({cd.text})
+                          </span>
+                        );
+                      })()}
                     </span>
                   </div>
 
@@ -363,57 +373,70 @@ export default function CompetitionRoundsTracker({
                 </div>
 
                 {/* Selected Stage Expanded Guidelines */}
-                {selectedRound && (
-                  <div className="rounds-stage-expanded-box">
-                    <div className="rounds-expanded-header">
-                      <div className="rounds-expanded-title">
-                        <span>{selectedRound.typeEmoji}</span>
-                        <span>{selectedRound.title}</span>
-                      </div>
-                      <div className="rounds-expanded-timing-badge">
-                        {formatRoundDateRange(selectedRound.startDate, selectedRound.endDate)}
-                      </div>
-                    </div>
+                {selectedRound && (() => {
+                  const stageCountdown = getRoundCountdown(selectedRound.endDate, nowMs);
+                  const stageDeadline = formatRoundDeadlineTime(selectedRound.endDate);
 
-                    <div className="rounds-expanded-meta-chips">
-                      {selectedRound.typeLabel && (
-                        <span className="rounds-meta-chip">{selectedRound.typeLabel}</span>
-                      )}
-                      {selectedRound.duration && (
-                        <span className="rounds-meta-chip">⏱️ Duration: {selectedRound.duration}</span>
-                      )}
-                      {selectedRound.totalQuestions && (
-                        <span className="rounds-meta-chip">❓ {selectedRound.totalQuestions} Questions</span>
-                      )}
-                    </div>
-
-                    {selectedRound.displayText && (
-                      <div className="rounds-expanded-body">
-                        {selectedRound.displayText}
+                  return (
+                    <div className="rounds-stage-expanded-box">
+                      <div className="rounds-expanded-header">
+                        <div className="rounds-expanded-title">
+                          <span>{selectedRound.typeEmoji || '🎯'}</span>
+                          <span>{selectedRound.title}</span>
+                        </div>
+                        <div className="rounds-expanded-timing-badge">
+                          {formatRoundDateRange(selectedRound.startDate, selectedRound.endDate)}
+                        </div>
                       </div>
-                    )}
 
-                    <div className="rounds-expanded-actions">
-                      <button
-                        className="rounds-btn-text"
-                        onClick={() => onOpenDetail && onOpenDetail(comp.id)}
-                      >
-                        View Full Details
-                      </button>
-                      {selectedRound.publicUrl && (
-                        <a
-                          href={selectedRound.publicUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="rounds-btn-primary"
+                      <div className="rounds-expanded-meta-chips">
+                        {selectedRound.typeLabel && (
+                          <span className="rounds-meta-chip">{selectedRound.typeLabel}</span>
+                        )}
+                        {selectedRound.duration && (
+                          <span className="rounds-meta-chip">⏱️ Duration: {selectedRound.duration}</span>
+                        )}
+                        {selectedRound.totalQuestions && (
+                          <span className="rounds-meta-chip">❓ {selectedRound.totalQuestions} Questions</span>
+                        )}
+                      </div>
+
+                      {/* Emphasized Round Deadline & Live Ticking Countdown (NO descriptions) */}
+                      {selectedRound.endDate && (
+                        <div className="rounds-stage-deadline-hero">
+                          <div className="rounds-stage-deadline-info">
+                            <span className="rounds-stage-deadline-label">Round Deadline</span>
+                            <span className="rounds-stage-deadline-val">{stageDeadline}</span>
+                          </div>
+                          <div className={`rounds-stage-countdown-banner ${stageCountdown.urgency}`}>
+                            <span>⏱️</span>
+                            <span>{stageCountdown.text}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="rounds-expanded-actions">
+                        <button
+                          className="rounds-btn-text"
+                          onClick={() => onOpenDetail && onOpenDetail(comp.id)}
                         >
-                          <span>Open Round on Unstop</span>
-                          <ExternalLinkIcon size={12} />
-                        </a>
-                      )}
+                          View Full Details
+                        </button>
+                        {selectedRound.publicUrl && (
+                          <a
+                            href={selectedRound.publicUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounds-btn-primary"
+                          >
+                            <span>Open Round on Unstop</span>
+                            <ExternalLinkIcon size={12} />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             )}
           </div>

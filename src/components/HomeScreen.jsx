@@ -13,6 +13,7 @@ import {
   ExternalLinkIcon
 } from './icons';
 import { useCompetitionRounds } from '../hooks/useCompetitionRounds';
+import BookmarkRoundTrackerCard from './BookmarkRoundTrackerCard';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
 
@@ -1001,105 +1002,13 @@ export default function HomeScreen({
               // ── State 2: Post-Registration Deadline Rounds Tracker Mode ──
               if (isRegClosed) {
                 return (
-                  <div
+                  <BookmarkRoundTrackerCard
                     key={b.id}
-                    className="home-rail-card home-rail-card--compact card-urgency-blue"
-                    onClick={() => onOpenDetail && onOpenDetail(b.id)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {/* Top row: Logo, Host, Remove button */}
-                    <div className="home-compact-top-row">
-                      <InstitutionLogo
-                        logo={b.logo || b.orgLogo}
-                        name={b.host || b.orgName}
-                        size={30}
-                        borderRadius={7}
-                        fontSize={10.5}
-                      />
-                      <span className="home-compact-host" title={b.host || b.orgName}>
-                        {b.host || b.orgName}
-                      </span>
-                      <button
-                        type="button"
-                        className="home-compact-remove-btn"
-                        title="Remove bookmark"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onToggleBookmark) onToggleBookmark(b.id);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="home-compact-title" title={b.title}>
-                      {b.title}
-                    </h3>
-
-                    {/* Status Strip: Registration closed indicator */}
-                    <div className="home-rounds-status-strip">
-                      <span>🔒 Registration Closed</span>
-                      <span style={{ color: 'var(--primary)', fontWeight: 700 }}>Rounds Active</span>
-                    </div>
-
-                    {/* Next Deadline Banner */}
-                    {rData?.nextRound && (
-                      <div className="home-rounds-next-banner">
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          ⚡ Next: {rData.nextRound.title}
-                        </span>
-                        {rData.daysRemaining !== null && (
-                          <span style={{ marginLeft: 'auto', fontSize: '10px', background: 'var(--primary)', color: '#FFF', padding: '1px 6px', borderRadius: '4px', flexShrink: 0 }}>
-                            {rData.daysRemaining === 0 ? 'Due Today' : `Due in ${rData.daysRemaining}d`}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Subsequent Rounds List */}
-                    {rData?.rounds && rData.rounds.length > 0 ? (
-                      <div className="home-rounds-timeline-list">
-                        {rData.rounds.filter(r => r.type !== 'registration').slice(0, 3).map((rnd, i) => {
-                          const isLive = rnd.status === 'live';
-                          const isCompleted = rnd.status === 'completed';
-                          const badgeClass = isLive ? 'badge-live' : isCompleted ? 'badge-completed' : 'badge-upcoming';
-                          const badgeText = isLive ? 'Live Now' : isCompleted ? 'Done' : (rnd.displayText || 'Upcoming');
-                          return (
-                            <div key={rnd.id || i} className={`home-rounds-item ${isLive ? 'is-live' : ''}`}>
-                              <div className="home-rounds-item-info">
-                                <span className="home-rounds-item-title">
-                                  {rnd.typeEmoji ? `${rnd.typeEmoji} ` : ''}{rnd.title}
-                                </span>
-                                <span className="home-rounds-item-sub">
-                                  {rnd.displayText || (rnd.totalQuestions ? `${rnd.totalQuestions} Questions` : (rnd.duration ? `${rnd.duration} mins` : 'Guidelines on Unstop'))}
-                                </span>
-                              </div>
-                              <span className={`home-rounds-item-badge ${badgeClass}`}>
-                                {badgeText}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: '11px', color: 'var(--ink-muted)', padding: '6px 0', minHeight: '50px' }}>
-                        Tracking round milestones from Unstop...
-                      </div>
-                    )}
-
-                    {/* Direct Round Portal Link (Zero recruitment clutter) */}
-                    <a
-                      href={rData?.activeRound?.publicUrl || b.unstopUrl || 'https://unstop.com'}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="home-rounds-portal-btn"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <span>Open Unstop Portal</span>
-                      <ExternalLinkIcon size={12} color="#FFFFFF" />
-                    </a>
-                  </div>
+                    competition={b}
+                    roundsData={rData}
+                    onOpenDetail={onOpenDetail}
+                    onToggleBookmark={onToggleBookmark}
+                  />
                 );
               }
 

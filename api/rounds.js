@@ -107,12 +107,8 @@ export async function fetchRoundsForSingleCompetition(compId) {
       computedStatus = 'completed';
     }
 
-    // Clean display text (strip simple tags or keep excerpt)
-    let cleanText = d.display_text || d.description || '';
-    if (cleanText) {
-      cleanText = cleanText.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
-      if (cleanText.length > 300) cleanText = cleanText.slice(0, 300) + '...';
-    }
+    // Clean display text (strip descriptions to keep cards uncluttered)
+    let cleanText = null;
 
     let publicUrl = d.public_url || r.public_url || null;
     if (publicUrl && !publicUrl.startsWith('http')) {
@@ -133,7 +129,7 @@ export async function fetchRoundsForSingleCompetition(compId) {
       status: computedStatus,
       duration: d.duration || null,
       totalQuestions: d.total_questions || null,
-      displayText: cleanText || null,
+      displayText: null,
       publicUrl
     });
   });
@@ -146,12 +142,22 @@ export async function fetchRoundsForSingleCompetition(compId) {
   let nextDeadline = null;
   let nextDeadlineLabel = null;
   let daysRemaining = null;
+  let hoursRemaining = null;
+  let minutesRemaining = null;
 
   if (nextRound && nextRound.endDate) {
     nextDeadline = nextRound.endDate;
     nextDeadlineLabel = nextRound.title;
     const diffMs = new Date(nextRound.endDate).getTime() - now;
-    daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    if (diffMs > 0) {
+      daysRemaining = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      hoursRemaining = Math.floor(diffMs / (1000 * 60 * 60));
+      minutesRemaining = Math.floor(diffMs / (1000 * 60));
+    } else {
+      daysRemaining = 0;
+      hoursRemaining = 0;
+      minutesRemaining = 0;
+    }
   }
 
   const isRegistrationClosed = Boolean(regIsClosed);
@@ -193,6 +199,8 @@ export async function fetchRoundsForSingleCompetition(compId) {
     nextDeadline,
     nextDeadlineLabel,
     daysRemaining,
+    hoursRemaining,
+    minutesRemaining,
     fetchedAt: new Date().toISOString()
   };
 

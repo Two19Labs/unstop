@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-const STORAGE_CACHE_KEY = 'onestop_comp_rounds_cache_v1';
+const STORAGE_CACHE_KEY = 'onestop_comp_rounds_cache_v2';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute client cache
 
 function readStorageCache() {

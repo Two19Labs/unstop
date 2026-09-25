@@ -468,12 +468,67 @@
   color: var(--ink-secondary);
 }
 
-.rounds-expanded-body {
-  font-size: 12.5px;
-  line-height: 1.5;
+/* Emphasized Round Deadline & Live Countdown Ticker */
+.rounds-stage-deadline-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 4px;
+}
+
+.rounds-stage-deadline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rounds-stage-deadline-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ink-secondary);
+}
+
+.rounds-stage-deadline-val {
+  font-size: 13.5px;
+  font-weight: 700;
   color: var(--ink);
-  max-height: 180px;
-  overflow-y: auto;
+}
+
+.rounds-stage-countdown-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.rounds-stage-countdown-banner.critical {
+  background: #DC2626;
+  color: #FFFFFF;
+}
+
+.rounds-stage-countdown-banner.urgent {
+  background: #D97706;
+  color: #FFFFFF;
+}
+
+.rounds-stage-countdown-banner.live {
+  background: #059669;
+  color: #FFFFFF;
 }
 
 .rounds-expanded-actions {
