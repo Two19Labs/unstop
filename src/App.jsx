@@ -240,6 +240,18 @@ function OneStopInner() {
   // Boot loading screen: displays for exactly 1.5s on initial boot so users trust live data is real
   const [showBootScreen, setShowBootScreen] = useState(true);
 
+  const handleBootComplete = useCallback(() => {
+    setShowBootScreen(false);
+  }, []);
+
+  // Hard safety watchdog: ensure boot screen is ALWAYS dismissed within 3.5s no matter what
+  useEffect(() => {
+    const watchdog = setTimeout(() => {
+      setShowBootScreen(false);
+    }, 3500);
+    return () => clearTimeout(watchdog);
+  }, []);
+
   // Bookmarks State (String-normalized, zero mock IDs)
   const [localBookmarks, setLocalBookmarks] = useState(() => {
     try {
@@ -250,7 +262,9 @@ function OneStopInner() {
     }
   });
 
-  const bookmarks = (user ? (authBookmarks || []) : localBookmarks).filter(b => !isMockBookmark(b)).map(String);
+  const bookmarks = useMemo(() => {
+    return (user ? (authBookmarks || []) : localBookmarks).filter(b => !isMockBookmark(b)).map(String);
+  }, [user, authBookmarks, localBookmarks]);
 
   // Multi-round competition timelines & snapshot diffing for bookmarked opportunities
   const { roundsMap, refreshRounds } = useCompetitionRounds(bookmarks);
@@ -299,7 +313,9 @@ function OneStopInner() {
     }
   });
 
-  const posts = (authSquadPosts && authSquadPosts.length > 0 ? authSquadPosts : localPosts).filter(p => !isMockPost(p));
+  const posts = useMemo(() => {
+    return (authSquadPosts && authSquadPosts.length > 0 ? authSquadPosts : localPosts).filter(p => !isMockPost(p));
+  }, [authSquadPosts, localPosts]);
 
   useEffect(() => {
     try {
@@ -317,7 +333,9 @@ function OneStopInner() {
     }
   });
 
-  const applications = (user ? (authSquadApps || []) : localApplications).filter(a => !isMockApp(a));
+  const applications = useMemo(() => {
+    return (user ? (authSquadApps || []) : localApplications).filter(a => !isMockApp(a));
+  }, [user, authSquadApps, localApplications]);
 
   useEffect(() => {
     try {
@@ -1289,7 +1307,7 @@ function OneStopInner() {
           maxDurationMs={3000}
           headline="Fetching live opportunities from Unstop..."
           customPuns={GENERAL_PUNS}
-          onComplete={() => setShowBootScreen(false)}
+          onComplete={handleBootComplete}
         />
       )}
     </div>

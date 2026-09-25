@@ -1,5 +1,5 @@
 // src/components/FunLoadingScreen.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import OneStopLogo from './OneStopLogo';
 import './FunLoadingScreen.css';
 import './SectionLoadingWidget.css';
@@ -105,6 +105,14 @@ export default function FunLoadingScreen({
   customPuns = null,
 }) {
   const [isDismissing, setIsDismissing] = useState(false);
+  const [isExited, setIsExited] = useState(false);
+
+  // Stable references that persist across re-renders without resetting timers
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const mountTimeRef = useRef(Date.now());
+  const completedRef = useRef(false);
 
   // Exactly one quote per full loading screen, shuffled at random
   const quote = useMemo(() => {
@@ -119,38 +127,61 @@ export default function FunLoadingScreen({
     return candidate;
   }, [customPuns]);
 
-  // Handle completion: stays visible for exactly 1.5s (minDurationMs) when ready, capped at maxDurationMs
+  // Complete helper: smoothly transitions out, calls onComplete, and self-exits
+  const triggerFinish = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setIsDismissing(true);
+
+    setTimeout(() => {
+      try {
+        if (typeof onCompleteRef.current === 'function') {
+          onCompleteRef.current();
+        }
+      } catch (err) {
+        console.warn('[FunLoadingScreen] onComplete error:', err);
+      }
+      setIsExited(true);
+    }, 220);
+  }, []);
+
+  // 1. Guaranteed Maximum Duration Watchdog: unconditional dismiss after maxDurationMs
   useEffect(() => {
+    const maxTimer = setTimeout(() => {
+      triggerFinish();
+    }, maxDurationMs);
+
+    return () => clearTimeout(maxTimer);
+  }, [maxDurationMs, triggerFinish]);
+
+  // 2. Minimum Duration + isReady Poller
+  useEffect(() => {
+    if (completedRef.current) return;
+
     let timer = null;
-    let completed = false;
-    const start = Date.now();
-
-    const finish = () => {
-      if (completed) return;
-      completed = true;
-      setIsDismissing(true);
-      timer = setTimeout(() => {
-        if (onComplete) onComplete();
-      }, 180);
-    };
-
-    const checkDone = () => {
-      const elapsed = Date.now() - start;
+    const checkStatus = () => {
+      if (completedRef.current) return;
+      const elapsed = Date.now() - mountTimeRef.current;
       if (elapsed >= minDurationMs && isReady) {
-        finish();
+        triggerFinish();
       } else if (elapsed >= maxDurationMs) {
-        finish();
+        triggerFinish();
       } else {
-        const remaining = Math.max(30, minDurationMs - elapsed);
-        timer = setTimeout(checkDone, remaining);
+        const remaining = Math.max(40, minDurationMs - elapsed);
+        timer = setTimeout(checkStatus, remaining);
       }
     };
 
-    checkDone();
+    checkStatus();
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isReady, minDurationMs, maxDurationMs, onComplete]);
+  }, [isReady, minDurationMs, maxDurationMs, triggerFinish]);
+
+  // If already exited and completed, unmount from DOM immediately
+  if (isExited) {
+    return null;
+  }
 
   return (
     <div

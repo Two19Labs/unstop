@@ -1,7 +1,7 @@
 // src/hooks/useCompetitionRounds.js
 // Client hook to fetch, cache, and provide multi-round competition timelines
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 const STORAGE_CACHE_KEY = 'onestop_comp_rounds_cache_v2';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute client cache
@@ -38,14 +38,18 @@ function writeStorageCache(updatedMap) {
 }
 
 export function useCompetitionRounds(competitionIds = []) {
-  const ids = useMemo(() => {
-    if (!Array.isArray(competitionIds)) return [];
-    return Array.from(new Set(competitionIds.map(String).filter(Boolean)));
+  // Stable string serialization of IDs to eliminate array reference churn
+  const idsKey = useMemo(() => {
+    if (!Array.isArray(competitionIds)) return '';
+    return Array.from(new Set(competitionIds.map(String).filter(Boolean))).sort().join(',');
   }, [competitionIds]);
+
+  const ids = useMemo(() => (idsKey ? idsKey.split(',') : []), [idsKey]);
 
   const [roundsMap, setRoundsMap] = useState(() => readStorageCache());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const inFlightRef = useRef(false);
 
   const fetchRounds = useCallback(async (targetIds, force = false) => {
     if (!targetIds || targetIds.length === 0) return;
@@ -54,10 +58,21 @@ export function useCompetitionRounds(competitionIds = []) {
     const missing = targetIds.filter(id => !currentCached[id]);
 
     if (missing.length === 0) {
-      setRoundsMap(prev => ({ ...prev, ...currentCached }));
+      setRoundsMap(prev => {
+        let hasDiff = false;
+        for (const id of targetIds) {
+          if (currentCached[id] && prev[id] !== currentCached[id]) {
+            hasDiff = true;
+            break;
+          }
+        }
+        return hasDiff ? { ...prev, ...currentCached } : prev;
+      });
       return;
     }
 
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -77,6 +92,7 @@ export function useCompetitionRounds(competitionIds = []) {
       console.warn('[useCompetitionRounds] Fetch error:', err.message);
       setError(err.message);
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   }, []);
@@ -85,7 +101,7 @@ export function useCompetitionRounds(competitionIds = []) {
     if (ids.length > 0) {
       fetchRounds(ids);
     }
-  }, [ids, fetchRounds]);
+  }, [idsKey, fetchRounds]);
 
   const refreshRounds = useCallback(() => {
     if (ids.length > 0) {
