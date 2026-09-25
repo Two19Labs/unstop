@@ -9,8 +9,17 @@ import {
   LockIcon,
   LogOutIcon,
   AlertCircleIcon,
-  CloseIcon
+  CloseIcon,
+  BellIcon
 } from './icons';
+import {
+  isPushSupported,
+  getPushPermission,
+  isPushEnabled,
+  setPushEnabled,
+  requestPushPermission,
+  dispatchBrowserNotification
+} from '../lib/browserPushService';
 import { getProfileCooldown } from '../context/AuthContext';
 import ProfileAuthGate from './ProfileAuthGate';
 import './ProfileScreen.css';
@@ -79,6 +88,43 @@ function ProfileScreenContent({
   // Modals for Account features
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
+
+  // Desktop Push Notifications State
+  const [pushPermission, setPushPermission] = useState(getPushPermission);
+  const [pushEnabled, setPushEnabledState] = useState(isPushEnabled);
+
+  const handleRequestPush = async () => {
+    const res = await requestPushPermission();
+    setPushPermission(res);
+    setPushEnabledState(isPushEnabled());
+    if (res === 'granted' && flashToast) {
+      flashToast('Desktop notifications enabled!');
+    }
+  };
+
+  const handleTogglePush = () => {
+    if (pushPermission !== 'granted') {
+      handleRequestPush();
+      return;
+    }
+    const next = !pushEnabled;
+    setPushEnabled(next);
+    setPushEnabledState(next);
+    if (flashToast) {
+      flashToast(next ? 'Desktop alerts enabled' : 'Desktop alerts muted');
+    }
+  };
+
+  const handleSendTestPush = () => {
+    const dispatched = dispatchBrowserNotification({
+      title: '🔔 OneStop Notification Radar',
+      body: 'Desktop alerts are active! You will be notified 1h before registration cutoffs and 30m before round deadlines.',
+      tag: 'test_push_' + Date.now()
+    });
+    if (dispatched && flashToast) {
+      flashToast('Test notification sent!');
+    }
+  };
 
   // Sync state if profile prop changes externally (e.g. initial cloud sync load)
   useEffect(() => {
@@ -328,6 +374,14 @@ function ProfileScreenContent({
               <button
                 type="button"
                 className="profile-account-action-btn"
+                onClick={handleTogglePush}
+              >
+                <BellIcon size={15} color={pushEnabled && pushPermission === 'granted' ? "#10B981" : "var(--ink-muted)"} />
+                <span>{pushEnabled && pushPermission === 'granted' ? 'Desktop alerts: Active' : 'Enable desktop alerts'}</span>
+              </button>
+              <button
+                type="button"
+                className="profile-account-action-btn"
                 onClick={onSignOut}
               >
                 <LogOutIcon size={15} color="var(--ink-muted)" />
@@ -505,6 +559,112 @@ function ProfileScreenContent({
                   </button>
                 );
               })}
+            </div>
+          </section>
+
+          {/* Section 4: Reminders & Notification Preferences */}
+          <section className="profile-section-card">
+            <div className="profile-section-header">
+              <h2 className="profile-section-title">Reminders &amp; Notification Preferences</h2>
+              <p className="profile-section-subtitle">
+                Configure browser alerts and radar reminders for deadlines, round cutoffs, and squad activity.
+              </p>
+            </div>
+
+            <div className="profile-notif-setting-box">
+              <div className="profile-notif-setting-info">
+                <div className="profile-notif-setting-title-row">
+                  <span className="profile-notif-setting-title">Desktop Browser Notifications</span>
+                  {pushPermission === 'granted' && (
+                    <span className={`profile-notif-status-badge ${pushEnabled ? 'active' : 'disabled'}`}>
+                      {pushEnabled ? 'Active' : 'Muted'}
+                    </span>
+                  )}
+                </div>
+                <p className="profile-notif-setting-desc">
+                  Receive native OS alerts 1 hour before registration deadlines, 30 minutes before round cutoffs, and instantly when deadlines get extended.
+                </p>
+              </div>
+
+              <div className="profile-notif-setting-control">
+                {pushPermission === 'unsupported' ? (
+                  <span className="profile-notif-note">Not supported in this browser</span>
+                ) : pushPermission === 'denied' ? (
+                  <span className="profile-notif-denied-note">
+                    Blocked in browser settings. Please allow notifications in your site permissions.
+                  </span>
+                ) : pushPermission === 'granted' ? (
+                  <div className="profile-notif-toggle-row">
+                    <button
+                      type="button"
+                      className={`profile-notif-toggle-switch ${pushEnabled ? 'enabled' : ''}`}
+                      onClick={handleTogglePush}
+                      role="switch"
+                      aria-checked={pushEnabled}
+                      aria-label="Toggle desktop notifications"
+                    >
+                      <span className="profile-notif-toggle-knob" />
+                    </button>
+                    {pushEnabled && (
+                      <button
+                        type="button"
+                        className="profile-notif-test-btn"
+                        onClick={handleSendTestPush}
+                        title="Send a sample desktop notification"
+                      >
+                        Send Test Alert
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="profile-notif-enable-btn"
+                    onClick={handleRequestPush}
+                  >
+                    Enable Desktop Alerts
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Monitored Radar Channels */}
+            <div className="profile-notif-channels-grid">
+              <div className="profile-notif-channel-item">
+                <div className="profile-notif-channel-icon">⏱️</div>
+                <div className="profile-notif-channel-text">
+                  <strong>Registration Deadlines</strong>
+                  <span>1 hour, 6 hours, and 24 hours prior</span>
+                </div>
+                <span className="profile-notif-channel-active">Monitored</span>
+              </div>
+
+              <div className="profile-notif-channel-item">
+                <div className="profile-notif-channel-icon">🎯</div>
+                <div className="profile-notif-channel-text">
+                  <strong>Multi-Round Timelines</strong>
+                  <span>Round start notices &amp; 30m cutoff alerts</span>
+                </div>
+                <span className="profile-notif-channel-active">Monitored</span>
+              </div>
+
+              <div className="profile-notif-channel-item">
+                <div className="profile-notif-channel-icon">🎉</div>
+                <div className="profile-notif-channel-text">
+                  <strong>Deadline Extensions</strong>
+                  <span>Automated diff detection for rescheduled dates</span>
+                </div>
+                <span className="profile-notif-channel-active">Monitored</span>
+              </div>
+
+              <div className="profile-notif-channel-item">
+                <div className="profile-notif-channel-icon">💬</div>
+                <div className="profile-notif-channel-text">
+                  <strong>Squad Handshakes</strong>
+                  <span>Incoming applicants &amp; WhatsApp connects</span>
+                </div>
+                <span className="profile-notif-channel-active">Monitored</span>
+              </div>
             </div>
           </section>
 

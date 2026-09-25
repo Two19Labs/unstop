@@ -1113,3 +1113,216 @@
   color: #FFFFFF;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Section 4: Reminders & Notification Preferences Styles
+   ══════════════════════════════════════════════════════════════════════════ */
+.profile-notif-setting-box {
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 680px) {
+  .profile-notif-setting-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.profile-notif-setting-info {
+  flex: 1;
+}
+
+.profile-notif-setting-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.profile-notif-setting-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.profile-notif-status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-notif-status-badge.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.profile-notif-status-badge.disabled {
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+}
+
+.profile-notif-setting-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-secondary);
+  line-height: 1.45;
+}
+
+.profile-notif-setting-control {
+  flex-shrink: 0;
+}
+
+.profile-notif-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-notif-toggle-switch {
+  width: 44px;
+  height: 24px;
+  background: var(--line);
+  border: 0;
+  border-radius: 999px;
+  padding: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s ease;
+  outline: none;
+}
+
+.profile-notif-toggle-switch.enabled {
+  background: #10B981;
+}
+
+.profile-notif-toggle-knob {
+  width: 20px;
+  height: 20px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  display: block;
+  transition: transform 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.profile-notif-toggle-switch.enabled .profile-notif-toggle-knob {
+  transform: translateX(20px);
+}
+
+.profile-notif-enable-btn {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.profile-notif-enable-btn:hover {
+  background: #4338CA;
+}
+
+.profile-notif-test-btn {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.profile-notif-test-btn:hover {
+  background: var(--surface-muted);
+}
+
+.profile-notif-denied-note {
+  font-size: 11px;
+  color: #DC2626;
+  max-width: 260px;
+  display: block;
+  line-height: 1.35;
+}
+
+.profile-notif-note {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* Channels Grid */
+.profile-notif-channels-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .profile-notif-channels-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-notif-channel-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line-light);
+  border-radius: 10px;
+  padding: 12px 14px;
+  transition: border-color 0.12s ease;
+}
+
+.profile-notif-channel-item:hover {
+  border-color: var(--line);
+}
+
+.profile-notif-channel-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.profile-notif-channel-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-notif-channel-text strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.profile-notif-channel-text span {
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.profile-notif-channel-active {
+  font-size: 10px;
+  font-weight: 600;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+
