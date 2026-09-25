@@ -209,8 +209,8 @@ export default function TeamFinderScreen({
   });
 
   const profileSkills = useMemo(() => profile?.skills || ['Market research', 'Deck design', 'Copywriting'], [profile]);
-  const userCollege = (profile?.college || user?.user_metadata?.college || 'SRCC').trim();
-  const userName = profile?.name || 'Aarav Mehta';
+  const userCollege = (profile?.college || user?.user_metadata?.college || '').trim();
+  const userName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
 
 
@@ -421,7 +421,7 @@ export default function TeamFinderScreen({
   // Filter testing predicate
   const passFilter = (p, skip = null) => {
     if (skip !== 'match' && fMatch && p.match === 0) return false;
-    if (skip !== 'myCollege' && fMyCollege && p.college.toLowerCase() !== userCollege.toLowerCase()) return false;
+    if (skip !== 'myCollege' && fMyCollege && (!userCollege || p.college.toLowerCase() !== userCollege.toLowerCase())) return false;
     if (skip !== 'cats' && fCats.length > 0 && !fCats.includes(p.comp.cat)) return false;
     if (skip !== 'circuits' && fCircuits.length > 0 && !fCircuits.includes(p.comp.circuit)) return false;
     if (skip !== 'skills' && fSkills.length > 0 && !p.want.some(w => fSkills.includes(w))) return false;
@@ -765,7 +765,7 @@ export default function TeamFinderScreen({
                       {fMyCollege && <CheckIcon size={10} />}
                     </span>
                     <span className="cc-checkbox-label-text">Teams From My College</span>
-                    <span className="cc-filter-num">({countIn(p => p.college.toLowerCase() === userCollege.toLowerCase(), 'myCollege')})</span>
+                    <span className="cc-filter-num">({countIn(p => Boolean(userCollege && p.college.toLowerCase() === userCollege.toLowerCase()), 'myCollege')})</span>
                   </label>
                 </div>
               </div>

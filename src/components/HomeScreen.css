@@ -63,6 +63,38 @@
   background: var(--surface-muted);
 }
 
+.home-campus-tag-unauth {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.home-campus-tag-unauth:hover {
+  border-color: var(--primary);
+  background: var(--primary-tint-7, rgba(15, 63, 254, 0.07));
+}
+
+.home-campus-tag-unauth:hover .home-campus-signup-prompt,
+.home-campus-tag-unauth:hover .home-campus-arrow {
+  color: var(--primary);
+}
+
+.home-campus-signup-prompt {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.home-campus-arrow {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 700;
+  margin-left: 2px;
+  transition: transform 140ms ease;
+}
+
+.home-campus-tag-unauth:hover .home-campus-arrow {
+  transform: translateX(2px);
+}
+
 .home-campus-icon {
   display: flex;
   align-items: center;

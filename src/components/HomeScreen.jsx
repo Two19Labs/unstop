@@ -439,7 +439,8 @@ export default function HomeScreen({
     return 'Working late';
   }, []);
 
-  const collegeName = profile?.college?.trim() || 'Shaheed Sukhdev College of Business Studies';
+  const hasUserCollege = Boolean(user && profile?.college?.trim());
+  const collegeName = profile?.college?.trim() || '';
   const batchStatus = profile?.batch?.trim() || profile?.year?.trim() || (isPostgraduate ? 'Postgraduate Track' : 'UG 2nd Year');
 
   const [isHomeLoading, setIsHomeLoading] = useState(true);
@@ -643,26 +644,45 @@ export default function HomeScreen({
         <div className="home-greeting-header-row">
           <div className="home-greeting-meta">
             {/* Campus & Academic Track Tag */}
-            <div
-              className="home-campus-tag"
-              onClick={() => handleNavigate('profile')}
-              title="Click to view or edit profile details"
-            >
-              <span className="home-campus-icon">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                  <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                </svg>
-              </span>
-              <span className="home-campus-name">
-                {collegeName}
-              </span>
-              <span className="home-campus-divider">·</span>
-              <span className="home-status-badge">
-                <span className="home-status-dot" />
-                {batchStatus}
-              </span>
-            </div>
+            {hasUserCollege ? (
+              <div
+                className="home-campus-tag"
+                onClick={() => handleNavigate('profile')}
+                title="Click to view or edit profile details"
+              >
+                <span className="home-campus-icon">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                  </svg>
+                </span>
+                <span className="home-campus-name">
+                  {collegeName}
+                </span>
+                <span className="home-campus-divider">·</span>
+                <span className="home-status-badge">
+                  <span className="home-status-dot" />
+                  {batchStatus}
+                </span>
+              </div>
+            ) : (
+              <div
+                className="home-campus-tag home-campus-tag-unauth"
+                onClick={() => handleNavigate('profile')}
+                title={user ? 'Click to choose your college' : 'Sign up to choose your college and track campus competitions'}
+              >
+                <span className="home-campus-icon">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                  </svg>
+                </span>
+                <span className="home-campus-name home-campus-signup-prompt">
+                  {user ? 'Choose your college' : 'Sign up to choose your college'}
+                </span>
+                <span className="home-campus-arrow">→</span>
+              </div>
+            )}
 
             {/* Time-aware Greeting */}
             <h1 className="home-greeting-title">
