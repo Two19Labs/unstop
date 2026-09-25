@@ -18,6 +18,7 @@ import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
+import { useCompetitionRounds } from './hooks/useCompetitionRounds';
 
 import {
   describeFilter,
@@ -250,6 +251,30 @@ function OneStopInner() {
   });
 
   const bookmarks = (user ? (authBookmarks || []) : localBookmarks).filter(b => !isMockBookmark(b)).map(String);
+
+  // Multi-round competition timelines & snapshot diffing for bookmarked opportunities
+  const { roundsMap, refreshRounds } = useCompetitionRounds(bookmarks);
+
+  // Background Revalidation & Tab-Focus Sync for Live Deadlines & Extensions
+  useEffect(() => {
+    function handleWindowFocus() {
+      if (typeof refreshRounds === 'function') {
+        refreshRounds();
+      }
+    }
+
+    const intervalTimer = setInterval(() => {
+      if (typeof refreshRounds === 'function') {
+        refreshRounds();
+      }
+    }, 5 * 60 * 1000);
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+      clearInterval(intervalTimer);
+    };
+  }, [refreshRounds]);
 
   const handleToggleBookmark = useCallback((compId) => {
     const sCompId = String(compId);
@@ -1004,6 +1029,7 @@ function OneStopInner() {
               bookmarks={bookmarks}
               posts={posts}
               profile={profile}
+              roundsMap={roundsMap}
               onOpenWhatsApp={handleOpenWhatsApp}
               onOpenDetail={(id) => setDetailCompId(id)}
               onNavigate={handleNavigate}
@@ -1054,6 +1080,7 @@ function OneStopInner() {
                 bookmarks={bookmarks}
                 posts={posts}
                 profile={profile}
+                roundsMap={roundsMap}
                 onOpenWhatsApp={handleOpenWhatsApp}
                 onOpenDetail={(id) => setDetailCompId(id)}
                 onNavigate={handleNavigate}
@@ -1094,6 +1121,7 @@ function OneStopInner() {
                 bookmarks={bookmarks}
                 posts={posts}
                 profile={profile}
+                roundsMap={roundsMap}
                 onOpenWhatsApp={handleOpenWhatsApp}
                 onOpenDetail={(id) => setDetailCompId(id)}
                 onNavigate={handleNavigate}
@@ -1114,6 +1142,7 @@ function OneStopInner() {
                 bookmarks={bookmarks}
                 posts={posts}
                 profile={profile}
+                roundsMap={roundsMap}
                 onOpenWhatsApp={handleOpenWhatsApp}
                 onOpenDetail={(id) => setDetailCompId(id)}
                 onNavigate={handleNavigate}
@@ -1152,6 +1181,7 @@ function OneStopInner() {
                       bookmarks={bookmarks}
                       posts={posts}
                       profile={profile}
+                      roundsMap={roundsMap}
                       onOpenWhatsApp={handleOpenWhatsApp}
                       onOpenDetail={(id) => setDetailCompId(id)}
                       onNavigate={handleNavigate}

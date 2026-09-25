@@ -21,6 +21,12 @@ import {
   dismissNotification,
   formatRelativeTime
 } from '../lib/notificationService';
+import {
+  isPushSupported,
+  getPushPermission,
+  isPushEnabled,
+  requestPushPermission
+} from '../lib/browserPushService';
 import './NotificationCenter.css';
 
 export default function NotificationCenter({
@@ -29,6 +35,7 @@ export default function NotificationCenter({
   bookmarks = [],
   posts = [],
   profile = {},
+  roundsMap = {},
   onOpenWhatsApp = () => {},
   onOpenDetail = () => {},
   onNavigate = () => {},
@@ -43,9 +50,14 @@ export default function NotificationCenter({
   const authDismiss = auth?.dismissNotification;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'squads'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'deadlines' | 'squads'
   const [localReadIds, setLocalReadIds] = useState(getReadNotificationIds);
   const [localDismissedIds, setLocalDismissedIds] = useState(getDismissedNotificationIds);
+
+  // Browser Push State
+  const [pushPermission, setPushPermission] = useState(getPushPermission);
+  const pushSupported = useMemo(() => isPushSupported(), []);
+  const pushActive = useMemo(() => isPushEnabled(), [pushPermission]);
 
   const wrapperRef = useRef(null);
 
@@ -82,16 +94,17 @@ export default function NotificationCenter({
     return localDismissedIds;
   }, [user, notificationStates, localDismissedIds]);
 
-  // Generate notifications list (strictly based on active bookmarks and real state)
+  // Generate notifications list (strictly based on active bookmarks, real rounds, and snapshot diffing)
   const allNotifications = useMemo(() => {
     return generateNotifications({
       applications,
       competitions,
       bookmarks,
       posts,
-      profile
+      profile,
+      roundsMap
     }).filter(n => !activeDismissedIds.includes(n.id));
-  }, [applications, competitions, bookmarks, posts, profile, activeDismissedIds]);
+  }, [applications, competitions, bookmarks, posts, profile, roundsMap, activeDismissedIds]);
 
   // Helper to check if a specific notification is unread (Supabase priority, localStorage fallback)
   const checkIsUnread = useCallback((notifId) => {
@@ -106,16 +119,24 @@ export default function NotificationCenter({
     return allNotifications.filter(n => checkIsUnread(n.id)).length;
   }, [allNotifications, checkIsUnread]);
 
-  // Filtered by active tab (All or Squads)
+  // Check if any critical deadline or extension is unread
+  const hasCriticalAlert = useMemo(() => {
+    return allNotifications.some(n => checkIsUnread(n.id) && (n.urgency === 'critical' || n.urgency === 'extension'));
+  }, [allNotifications, checkIsUnread]);
+
+  // Filtered by active tab (All, Deadlines & Rounds, Squads)
   const filteredNotifications = useMemo(() => {
     if (activeTab === 'all') return allNotifications;
-    return allNotifications.filter(n => n.category === activeTab);
+    if (activeTab === 'deadlines') return allNotifications.filter(n => n.category === 'deadlines');
+    if (activeTab === 'squads') return allNotifications.filter(n => n.category === 'squads');
+    return allNotifications;
   }, [allNotifications, activeTab]);
 
   // Tab counts
   const tabCounts = useMemo(() => {
     return {
       all: allNotifications.length,
+      deadlines: allNotifications.filter(n => n.category === 'deadlines').length,
       squads: allNotifications.filter(n => n.category === 'squads').length,
     };
   }, [allNotifications]);
@@ -156,7 +177,12 @@ export default function NotificationCenter({
     markNotificationAsRead(notif.id);
     setLocalReadIds(getReadNotificationIds());
 
-    if (action.actionType === 'whatsapp') {
+    if (action.actionType === 'portal') {
+      const url = action.url || notif.data?.url || notif.data?.publicUrl || notif.data?.competition?.unstopUrl;
+      if (url) {
+        window.open(url, '_blank');
+      }
+    } else if (action.actionType === 'whatsapp') {
       const payload = notif.data?.application || notif.data?.post || notif.data;
       onOpenWhatsApp(payload);
     } else if (action.actionType === 'detail') {
@@ -176,6 +202,11 @@ export default function NotificationCenter({
     }
   }, [user, authMarkRead, onOpenWhatsApp, onOpenDetail, onNavigate]);
 
+  const handleEnablePush = async () => {
+    const res = await requestPushPermission();
+    setPushPermission(res);
+  };
+
   const getNotificationIcon = (notif) => {
     if (notif.type === 'squad_accepted') {
       return <WhatsAppIcon size={16} />;
@@ -183,16 +214,19 @@ export default function NotificationCenter({
     if (notif.category === 'squads') {
       return <UsersIcon size={16} />;
     }
-    if (notif.type === 'deadline_imminent') {
+    if (notif.type === 'deadline_extended' || notif.type === 'round_extended') {
+      return <SparklesIcon size={16} />;
+    }
+    if (notif.type === 'round_live') {
+      return <TrophyIcon size={16} />;
+    }
+    if (notif.urgency === 'critical') {
       return <AlertCircleIcon size={16} />;
     }
     if (notif.category === 'deadlines') {
       return <ClockIcon size={16} />;
     }
-    if (notif.type === 'smart_match') {
-      return <SparklesIcon size={16} />;
-    }
-    return <TrophyIcon size={16} />;
+    return <BellIcon size={16} />;
   };
 
   return (
@@ -211,13 +245,13 @@ export default function NotificationCenter({
         type="button"
         className={`onestop-notif-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(prev => !prev)}
-        title="Opportunity & Squad Notifications"
+        title="Deadlines, Rounds & Squad Reminders"
         aria-label={`Notifications, ${unreadCount} unread`}
         aria-expanded={isOpen}
       >
         <BellIcon size={18} />
         {unreadCount > 0 && (
-          <span className={`onestop-notif-badge ${unreadCount > 0 ? 'has-pulse' : ''}`}>
+          <span className={`onestop-notif-badge ${hasCriticalAlert ? 'has-pulse' : ''}`}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -229,7 +263,7 @@ export default function NotificationCenter({
           {/* Header */}
           <div className="onestop-notif-header">
             <div className="onestop-notif-title-row">
-              <h3 className="onestop-notif-title">Notifications</h3>
+              <h3 className="onestop-notif-title">Reminders & Radar</h3>
               {unreadCount > 0 && (
                 <span className="onestop-notif-count-pill">{unreadCount} new</span>
               )}
@@ -245,6 +279,32 @@ export default function NotificationCenter({
             )}
           </div>
 
+          {/* Browser Desktop Push Prompt */}
+          {pushSupported && pushPermission === 'default' && (
+            <div className="onestop-notif-push-banner">
+              <div className="onestop-notif-push-banner-left">
+                <span>🔔</span>
+                <span>Get 1h & 30m deadline push alerts</span>
+              </div>
+              <button
+                type="button"
+                className="onestop-notif-push-enable-btn"
+                onClick={handleEnablePush}
+              >
+                Enable
+              </button>
+            </div>
+          )}
+
+          {pushSupported && pushPermission === 'granted' && pushActive && (
+            <div className="onestop-notif-push-banner" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+              <div className="onestop-notif-push-active-tag">
+                <CheckIcon size={12} />
+                <span>Desktop alerts active for bookmarked deadlines</span>
+              </div>
+            </div>
+          )}
+
           {/* Filter Tabs */}
           <div className="onestop-notif-tabs" role="tablist">
             <button
@@ -256,6 +316,16 @@ export default function NotificationCenter({
             >
               <span>All</span>
               {tabCounts.all > 0 && <span className="onestop-notif-tab-badge">{tabCounts.all}</span>}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'deadlines'}
+              className={`onestop-notif-tab ${activeTab === 'deadlines' ? 'active' : ''}`}
+              onClick={() => setActiveTab('deadlines')}
+            >
+              <span>Deadlines & Rounds</span>
+              {tabCounts.deadlines > 0 && <span className="onestop-notif-tab-badge">{tabCounts.deadlines}</span>}
             </button>
             <button
               type="button"
@@ -279,8 +349,10 @@ export default function NotificationCenter({
                 <h4 className="onestop-notif-empty-title">All quiet on your radar</h4>
                 <p className="onestop-notif-empty-desc">
                   {activeTab === 'squads'
-                    ? 'No pending squad applications or handshakes right now.'
-                    : 'You are all caught up! New squad requests and bookmarked competition deadlines will land here.'}
+                    ? 'No pending squad applications or accepted handshakes right now.'
+                    : activeTab === 'deadlines'
+                    ? 'No urgent deadlines or extensions right now. Bookmark competitions to track their rounds.'
+                    : 'You are all caught up! Bookmarked deadlines, round cutoffs, and squad requests will appear here.'}
                 </p>
               </div>
             ) : (
@@ -329,6 +401,7 @@ export default function NotificationCenter({
                           </span>
                           {notif.badgeText && (
                             <span className={`onestop-notif-tag ${notif.urgency}`}>
+                              {notif.urgency === 'live' && <span className="onestop-notif-live-dot" />}
                               {notif.badgeText}
                             </span>
                           )}
@@ -341,7 +414,7 @@ export default function NotificationCenter({
                               <button
                                 key={i}
                                 type="button"
-                                className={`onestop-notif-action-btn ${act.actionType === 'whatsapp' ? 'whatsapp' : (act.isPrimary ? 'primary' : 'secondary')}`}
+                                className={`onestop-notif-action-btn ${act.actionType === 'portal' ? 'portal' : act.actionType === 'whatsapp' ? 'whatsapp' : (act.isPrimary ? 'primary' : 'secondary')}`}
                                 onClick={(e) => handleActionClick(e, notif, act)}
                               >
                                 {act.actionType === 'whatsapp' && <WhatsAppIcon size={13} />}
@@ -368,7 +441,7 @@ export default function NotificationCenter({
                 setIsOpen(false);
               }}
             >
-              <span>View all squad requests in Inbox</span>
+              <span>View squad requests &amp; handshakes</span>
               <ExternalLinkIcon size={12} />
             </button>
           </div>
