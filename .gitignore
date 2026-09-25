@@ -32,3 +32,6 @@ coverage/
 
 # Archives
 *.zip
+
+# Design Handoffs
+design_handoff_home_v2/

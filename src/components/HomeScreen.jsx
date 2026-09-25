@@ -286,6 +286,38 @@ function RailCardSkeleton() {
   );
 }
 
+function CompactBookmarkSkeleton() {
+  return (
+    <div
+      className="home-rail-card home-rail-card--compact home-rail-card-skeleton"
+      aria-hidden="true"
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: '30px minmax(0, 1fr) 24px', alignItems: 'center', gap: '9px' }}>
+        <div className="skeleton-box" style={{ width: '30px', height: '30px', borderRadius: '7px' }} />
+        <div className="skeleton-box" style={{ height: '11px', width: '70%', borderRadius: '4px' }} />
+        <div className="skeleton-box" style={{ width: '24px', height: '24px', borderRadius: '7px' }} />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: '2px 0' }}>
+        <div className="skeleton-box" style={{ height: '14px', width: '90%', borderRadius: '4px' }} />
+        <div className="skeleton-box" style={{ height: '14px', width: '60%', borderRadius: '4px' }} />
+      </div>
+      <div className="skeleton-box" style={{ height: '26px', width: '100%', borderRadius: '8px' }} />
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <div className="skeleton-box" style={{ height: '16px', width: '65px', borderRadius: '4px' }} />
+        <div className="skeleton-box" style={{ height: '16px', width: '80px', borderRadius: '4px' }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '20px' }}>
+        <div className="skeleton-box" style={{ height: '12px', width: '95px', borderRadius: '4px' }} />
+        <div className="skeleton-box" style={{ height: '18px', width: '65px', borderRadius: '20px' }} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px', marginTop: 'auto', paddingTop: '2px' }}>
+        <div className="skeleton-box" style={{ height: '32px', borderRadius: '8px' }} />
+        <div className="skeleton-box" style={{ height: '32px', borderRadius: '8px' }} />
+      </div>
+    </div>
+  );
+}
+
 function RailSquadCardSkeleton() {
   return (
     <div
@@ -420,11 +452,12 @@ export default function HomeScreen({
   user,
   onNavigate,
   onRequestJoin,
-  onOpenWhatsApp
+  onOpenWhatsApp,
+  headerAction = null,
 }) {
   const firstName = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/)[0]
-    : (user?.email ? user.email.split('@')[0] : 'there');
+    : (profile?.full_name?.trim() ? profile.full_name.trim().split(/\s+/)[0] : (user?.email ? user.email.split('@')[0] : 'there'));
 
   const isPostgraduate =
     (profile?.education_level || '').toLowerCase() === 'postgraduate' ||
@@ -454,6 +487,47 @@ export default function HomeScreen({
 
   const showRailLoading = isHomeLoading || competitionsLoading;
 
+  // KPI 1: Competitions matching Browse filter listed in the last 24h
+  const [firstSeenMap, setFirstSeenMap] = useState(() => {
+    try {
+      const raw = localStorage.getItem('onestop_comp_first_seen');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (!Array.isArray(competitions) || competitions.length === 0) return;
+    const now = Date.now();
+    let updated = false;
+    let nextMap = { ...(firstSeenMap || {}) };
+
+    if (!firstSeenMap) {
+      // First visit: seed silently with past timestamps so existing competitions don't all show as "new today"
+      const seededPast = now - 25 * 60 * 60 * 1000;
+      competitions.forEach(c => {
+        nextMap[String(c.id)] = seededPast;
+      });
+      updated = true;
+    } else {
+      competitions.forEach(c => {
+        const sId = String(c.id);
+        if (!nextMap[sId]) {
+          nextMap[sId] = now;
+          updated = true;
+        }
+      });
+    }
+
+    if (updated) {
+      setFirstSeenMap(nextMap);
+      try {
+        localStorage.setItem('onestop_comp_first_seen', JSON.stringify(nextMap));
+      } catch {}
+    }
+  }, [competitions, firstSeenMap]);
+
   // Last chosen Browse filter preferences (from props or localStorage fallback)
   const effectiveFilter = savedFilter || (() => {
     try {
@@ -463,6 +537,55 @@ export default function HomeScreen({
     } catch (e) {}
     return null;
   })();
+
+  const newForYouCount = useMemo(() => {
+    if (!firstSeenMap) return 0;
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    return competitions.filter(c => {
+      const seenAt = firstSeenMap[String(c.id)];
+      if (!seenAt) return false;
+      if (now - seenAt > oneDayMs) return false;
+      return matchCompetition(c, effectiveFilter || {});
+    }).length;
+  }, [competitions, firstSeenMap, effectiveFilter]);
+
+  // KPI 2: Open squads looking for skills on user profile
+  const userSkills = useMemo(() => {
+    const raw = Array.isArray(profile?.skills) ? profile.skills : [];
+    return raw.map(s => String(s).toLowerCase().trim()).filter(Boolean);
+  }, [profile?.skills]);
+
+  const kpi2Tooltip = userSkills.length === 0
+    ? 'Add skills to your profile to see matches'
+    : 'Open squads looking for skills on your profile';
+
+  const squadsNeedSkillsCount = useMemo(() => {
+    if (userSkills.length === 0) return 0;
+    return posts.filter(post => {
+      const spotsLeft = post.spots_left !== undefined
+        ? Number(post.spots_left)
+        : (post.spots !== undefined ? Number(post.spots) : 1);
+      const isOpen = post.is_open !== false && post.status !== 'closed' && spotsLeft > 0;
+      if (!isOpen) return false;
+
+      // Do not count user's own squads
+      const isMine = (user?.id && post.user_id === user.id) || (user?.email && post.created_by_email === user.email);
+      if (isMine) return false;
+
+      const lookingFor = [
+        ...(Array.isArray(post.skills_looking_for) ? post.skills_looking_for : []),
+        ...(Array.isArray(post.skills) ? post.skills : [])
+      ].map(s => String(s).toLowerCase().trim()).filter(Boolean);
+
+      return lookingFor.some(sk => userSkills.includes(sk));
+    }).length;
+  }, [posts, userSkills, user?.id, user?.email]);
+
+  // KPI 3: Incoming join requests on user's squads
+  const requestsToReviewCount = useMemo(() => {
+    return applications.filter(a => a.dir === 'in' && a.status === 'pending').length;
+  }, [applications]);
 
   // Active sort order (defaults to last chosen sort filter in Browse tab)
   const effectiveSort = browseSort || effectiveFilter?.sortBy || (() => {
@@ -639,108 +762,101 @@ export default function HomeScreen({
 
   return (
     <div className="home-container" ref={containerRef}>
-      {/* 1. Elevated Time-Aware Hero Greeting & Campus Radar */}
-      <div className="home-greeting-block">
-        <div className="home-greeting-header-row">
-          <div className="home-greeting-meta">
-            {/* Campus & Academic Track Tag */}
-            {hasUserCollege ? (
-              <div
-                className="home-campus-tag"
-                onClick={() => handleNavigate('profile')}
-                title="Click to view or edit profile details"
-              >
-                <span className="home-campus-icon">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                  </svg>
-                </span>
-                <span className="home-campus-name">
-                  {collegeName}
-                </span>
-                <span className="home-campus-divider">·</span>
-                <span className="home-status-badge">
-                  <span className="home-status-dot" />
-                  {batchStatus}
-                </span>
-              </div>
-            ) : (
-              <div
-                className="home-campus-tag home-campus-tag-unauth"
-                onClick={() => handleNavigate('profile')}
-                title={user ? 'Click to choose your college' : 'Sign up to choose your college and track campus competitions'}
-              >
-                <span className="home-campus-icon">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
-                  </svg>
-                </span>
-                <span className="home-campus-name home-campus-signup-prompt">
-                  {user ? 'Choose your college' : 'Sign up to choose your college'}
-                </span>
-                <span className="home-campus-arrow">→</span>
-              </div>
-            )}
-
-            {/* Time-aware Greeting */}
-            <h1 className="home-greeting-title">
-              {greeting}, {firstName}
-            </h1>
+      {/* ── 1. Home v2 Header: Single Row Identity + 3 KPIs + Actions ── */}
+      <div className="home-header">
+        <div className="home-header-identity">
+          <h1 className="home-header-greeting">
+            {greeting}, {firstName}
+          </h1>
+          <div
+            className="home-header-meta"
+            onClick={() => handleNavigate('profile')}
+            title="Click to view or edit profile details"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="home-header-meta-icon"
+            >
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c3 3 9 3 12 0v-5" />
+            </svg>
+            <span className="home-header-meta-text">
+              {hasUserCollege ? `${collegeName} · ${batchStatus}` : (user ? 'Choose your college' : 'Sign up to choose your college')}
+            </span>
           </div>
         </div>
 
-        {/* Dynamic Pulse Subline tuned to last Browse filters */}
-        <div className="home-pulse-container">
-          <p className="home-pulse-subline">
-            <span className="home-pulse-live-indicator" title="Live radar synced with Unstop">
-              <span className="home-pulse-live-dot" />
+        {/* 3 KPI Buttons */}
+        <div className="home-header-kpis">
+          {/* KPI 1: New for you today */}
+          <button
+            type="button"
+            className="home-kpi-item"
+            title="Competitions matching your Browse filter, listed in the last 24 hours"
+            onClick={() => handleNavigate('browse')}
+          >
+            <span
+              className="home-kpi-number"
+              style={{ color: showRailLoading || newForYouCount === 0 ? 'var(--ink-muted)' : 'var(--ink)' }}
+            >
+              {showRailLoading ? '–' : newForYouCount}
             </span>
-            {showRailLoading ? (
-              <span>Syncing live campus opportunities and squad signals…</span>
-            ) : hasFilter ? (
-              <span>
-                Radar tuned to{' '}
-                <span className="home-pulse-filter-highlight">
-                  {filterChips.join(' · ')}
-                </span>
-                {' '}— tracking <strong>{compTotal}</strong> {compTotal === 1 ? 'competition' : 'competitions'} and{' '}
-                <strong>{squadTotal}</strong> {squadTotal === 1 ? 'squad' : 'squads'} recruiting right now.
-              </span>
-            ) : (
-              <span>
-                Tracking <strong>{compTotal}</strong> live competitions and{' '}
-                <strong>{squadTotal}</strong> open squads recruiting batchmates across premier circuits.
-              </span>
-            )}
-          </p>
+            <span className="home-kpi-label">New for you today</span>
+          </button>
 
-          {/* Quick Filter Actions (compact & inline) */}
-          {hasFilter && (
-            <div className="home-pulse-actions">
-              <button
-                type="button"
-                onClick={() => handleNavigate('browse')}
-                className="home-pulse-btn-edit"
-                title="Edit filters in Browse"
-              >
-                Edit in Browse
-              </button>
-              <button
-                type="button"
-                onClick={onResetFilter}
-                className="home-pulse-btn-clear"
-                title="Reset to all competitions"
-              >
-                Clear filter
-              </button>
-            </div>
-          )}
+          {/* KPI 2: Squads need your skills */}
+          <button
+            type="button"
+            className="home-kpi-item"
+            title={kpi2Tooltip}
+            onClick={() => handleNavigate('teams')}
+          >
+            <span
+              className="home-kpi-number"
+              style={{ color: showRailLoading || squadsNeedSkillsCount === 0 ? 'var(--ink-muted)' : 'var(--ink)' }}
+            >
+              {showRailLoading ? '–' : squadsNeedSkillsCount}
+            </span>
+            <span className="home-kpi-label">Squads need your skills</span>
+          </button>
+
+          {/* KPI 3: Requests to review */}
+          <button
+            type="button"
+            className="home-kpi-item"
+            title="Incoming join requests on your squads"
+            onClick={() => handleNavigate('requests')}
+          >
+            <span
+              className="home-kpi-number"
+              style={{
+                color: showRailLoading
+                  ? 'var(--ink-muted)'
+                  : (requestsToReviewCount > 0 ? 'var(--primary)' : 'var(--ink-muted)')
+              }}
+            >
+              {showRailLoading ? '–' : requestsToReviewCount}
+            </span>
+            <span className="home-kpi-label">Requests to review</span>
+          </button>
         </div>
+
+        {/* Action Cluster (Theme Toggle + Bell) */}
+        {headerAction && (
+          <div className="home-header-actions-wrap">
+            {headerAction}
+          </div>
+        )}
       </div>
 
-      {/* 3. Bookmarks Rail */}
+      {/* ── 2. Bookmarks Rail: Compact Carousel of ALL Bookmarks ── */}
       <section className="home-section">
         <div className="home-section-header">
           <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
@@ -760,11 +876,12 @@ export default function HomeScreen({
             {showRailLoading ? '...' : bookmarkTotal}
           </span>
           <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
-            Soonest deadline first · filters don't apply
+            soonest deadlines first
           </span>
           <button
+            type="button"
             onClick={() => handleNavigate('saved')}
-            className="home-btn-hover"
+            className="home-more-btn"
             style={{
               marginLeft: 'auto',
               border: '1px solid var(--line)',
@@ -785,12 +902,13 @@ export default function HomeScreen({
         <div className="rail">
           {showRailLoading ? (
             <>
-              <RailPunLoadingCard badge="SYNCING DEADLINES" category="bookmarks" />
-              <RailCardSkeleton />
-              <RailCardSkeleton />
+              <RailPunLoadingCard category="bookmarks" headline="Syncing saved competitions..." />
+              <CompactBookmarkSkeleton />
+              <CompactBookmarkSkeleton />
             </>
-          ) : displayedBookmarks.length === 0 ? (
+          ) : allBookmarkComps.length === 0 ? (
             <div
+              className="home-rail-empty"
               style={{
                 flex: '1 1 100%',
                 background: 'var(--surface)',
@@ -807,6 +925,7 @@ export default function HomeScreen({
                 Nothing saved yet. Bookmark a competition and it shows up here.
               </span>
               <button
+                type="button"
                 onClick={() => handleNavigate('browse')}
                 style={{
                   border: 0,
@@ -822,384 +941,128 @@ export default function HomeScreen({
               </button>
             </div>
           ) : (
-            <>
-              {displayedBookmarks.map(b => {
-                const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
-                const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
-                const urgencyConfig = getUrgencyConfig(urgencyLevel);
-                const deadlineFormatted = formatDeadlineDateTime(b.deadline);
-                const isFree = b.isFree ?? (typeof b.fee === 'string' ? b.fee.toLowerCase().includes('free') : true);
-                const registeredCount = Number(b.regs || b.registeredCount || 0);
-                const feeText = isFree ? 'Free Entry' : (b.fee ? (b.fee.toLowerCase().includes('entry') ? b.fee : `${b.fee} Entry`) : 'Paid');
-                const teamText = b.team || b.teamSizeDisplay || 'Solo / Team';
-                const prizeText = (b.prize || b.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool');
+            allBookmarkComps.map((b) => {
+              const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
+              const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
+              const deadlineFormatted = formatDeadlineDateTime(b.deadline);
+              const isFree = b.isFree ?? (typeof b.fee === 'string' ? b.fee.toLowerCase().includes('free') : true);
+              const registeredCount = Number(b.regs || b.registeredCount || 0);
+              const feeText = isFree ? 'Free Entry' : (b.fee ? (b.fee.toLowerCase().includes('entry') ? b.fee : `${b.fee} Entry`) : 'Paid Entry');
+              const teamText = b.team || b.teamSizeDisplay || 'Solo / Team';
+              const prizeText = (b.prize || b.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool');
 
-                return (
-                  <div
-                    key={b.id}
-                    className={`home-rail-card card-urgency-${urgencyLevel}`}
-                    onClick={() => onOpenDetail && onOpenDetail(b.id)}
-                    style={{
-                      flex: '0 0 302px',
-                      width: '302px',
-                      padding: '16px 17px 17px',
-                      gap: '12px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {/* Top Bar: Host Profile & Remove Bookmark Button */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '36px minmax(0, 1fr) auto', alignItems: 'start', gap: '10px' }}>
-                      <InstitutionLogo
-                        logo={b.logo || b.orgLogo}
-                        name={b.host}
-                        size={36}
-                        borderRadius={8}
-                        fontSize={12}
-                      />
-                      <div style={{ minWidth: 0 }}>
-                        <span
-                          title={b.host}
-                          style={{
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            color: 'var(--ink-secondary)',
-                            lineHeight: 1.35,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textWrap: 'pretty'
-                          }}
-                        >
-                          {b.host}
-                        </span>
-                      </div>
-                      <button
-                        title="Remove bookmark"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleBookmark(b.id);
-                        }}
-                        className="home-btn-remove"
-                        style={{
-                          border: '1px solid var(--line)',
-                          borderRadius: '8px',
-                          background: 'var(--surface-muted)',
-                          color: 'var(--ink-secondary)',
-                          width: '28px',
-                          height: '28px',
-                          flex: 'none',
-                          fontSize: '14px',
-                          lineHeight: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-
-                    {/* Competition Title */}
-                    <h3
-                      title={b.title}
-                      style={{
-                        margin: 0,
-                        fontSize: '16px',
-                        fontWeight: 700,
-                        lineHeight: 1.35,
-                        letterSpacing: '-0.01em',
-                        color: 'var(--ink)',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        minHeight: '42px',
-                        textWrap: 'pretty'
-                      }}
-                    >
-                      {b.title}
-                    </h3>
-
-                    {/* Featured Prize & Entry Bar */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '8px',
-                        background: 'rgba(16, 185, 129, 0.08)',
-                        border: '1px solid rgba(16, 185, 129, 0.22)',
-                        borderRadius: '10px',
-                        padding: '8px 12px'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0, flex: 1 }}>
-                        <TrophyIcon size={14} color="#059669" />
-                        <span
-                          title={prizeText}
-                          style={{
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            color: '#047857',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }}
-                        >
-                          {prizeText}
-                        </span>
-                      </div>
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          padding: '2px 7px',
-                          borderRadius: '5px',
-                          letterSpacing: '0.2px',
-                          flexShrink: 0,
-                          background: isFree ? 'var(--surface)' : 'var(--surface-muted)',
-                          color: isFree ? '#10B981' : 'var(--ink-secondary)',
-                          border: isFree ? '1px solid rgba(16, 185, 129, 0.32)' : '1px solid var(--line)'
-                        }}
-                      >
-                        {feeText}
-                      </span>
-                    </div>
-
-                    {/* Metadata: Format & Exact Deadline (Specs Row) */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        fontSize: '12px',
-                        color: 'var(--ink-secondary)',
-                        fontWeight: 600,
-                        minHeight: '20px',
-                        flexWrap: 'wrap'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }} title={teamText}>
-                        <UsersIcon size={13} color="var(--ink-secondary)" />
-                        <span>{teamText}</span>
-                      </div>
-                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--line)', flexShrink: 0 }} />
-                      <div
-                        style={{ display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                        title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
-                      >
-                        <CalendarIcon size={13} color="var(--ink-secondary)" />
-                        <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : (b.mode || 'Online')}</span>
-                      </div>
-                    </div>
-
-                    {/* Social Proof & Deadline Status (Metrics Row) */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', minHeight: '22px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--ink-muted)' }}>
-                        {registeredCount > 0 ? (
-                          <>
-                            <FlameIcon size={13} color="#f97316" />
-                            <span>
-                              <strong style={{ color: 'var(--ink)' }}>{registeredCount.toLocaleString()}</strong> registrations
-                            </span>
-                          </>
-                        ) : (
-                          <span style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '11px' }}>Recently Listed</span>
-                        )}
-                      </div>
-
-                      <span
-                        title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          border: urgencyConfig.border,
-                          borderRadius: '20px',
-                          background: urgencyConfig.background,
-                          color: urgencyConfig.color,
-                          padding: '3px 9px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        <span
-                          style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            background: urgencyConfig.dotColor,
-                            display: 'inline-block'
-                          }}
-                        />
-                        <ClockIcon size={11} color={urgencyConfig.color} />
-                        <span>{countdownText}</span>
-                      </span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
-                      <a
-                        href={b.unstopUrl || 'https://unstop.com'}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="home-btn-primary-hover"
-                        style={{
-                          border: '1px solid #0F3FFE',
-                          borderRadius: '9px',
-                          background: '#0F3FFE',
-                          color: '#FFFFFF',
-                          padding: '9px 10px',
-                          textAlign: 'center',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '5px',
-                          textDecoration: 'none'
-                        }}
-                      >
-                        <span>Apply</span>
-                        <ExternalLinkIcon size={12} color="#FFFFFF" />
-                      </a>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onSquadUp) onSquadUp(b);
-                          else if (onFindTeammates) onFindTeammates(b);
-                        }}
-                        className="home-btn-hover"
-                        style={{
-                          border: '1px solid var(--line)',
-                          borderRadius: '9px',
-                          background: 'var(--surface)',
-                          color: 'var(--ink)',
-                          padding: '9px 10px',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          whiteSpace: 'nowrap',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '5px'
-                        }}
-                      >
-                        <UsersIcon size={13} color="var(--ink)" />
-                        <span>Squad up</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* 4th Card: More Bookmarks */}
-              {(bookmarkTotal > displayedBookmarks.length || bookmarkTotal >= 3) && (
+              return (
                 <div
-                  className="home-rail-card home-more-card"
-                  onClick={() => handleNavigate('saved')}
-                  style={{
-                    flex: '0 0 302px',
-                    width: '302px',
-                    padding: '16px 17px 17px',
-                    gap: '12px',
-                    cursor: 'pointer',
-                    background: 'linear-gradient(180deg, var(--surface) 0%, var(--surface-sunken) 100%)',
-                    border: '1px solid var(--line)',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxSizing: 'border-box'
-                  }}
+                  key={b.id}
+                  className={`home-rail-card home-rail-card--compact card-urgency-${urgencyLevel}`}
+                  onClick={() => onOpenDetail && onOpenDetail(b.id)}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '9px',
-                        background: 'rgba(15, 63, 254, 0.08)',
-                        border: '1px solid rgba(15, 63, 254, 0.20)',
-                        color: 'var(--primary)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flex: 'none'
+                  {/* Top row: Logo, Host, Remove button */}
+                  <div className="home-compact-top-row">
+                    <InstitutionLogo
+                      logo={b.logo || b.orgLogo}
+                      name={b.host || b.orgName}
+                      size={30}
+                      borderRadius={7}
+                      fontSize={10.5}
+                    />
+                    <span className="home-compact-host" title={b.host || b.orgName}>
+                      {b.host || b.orgName}
+                    </span>
+                    <button
+                      type="button"
+                      className="home-compact-remove-btn"
+                      title="Remove bookmark"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onToggleBookmark) onToggleBookmark(b.id);
                       }}
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
-                      </svg>
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="home-compact-title" title={b.title}>
+                    {b.title}
+                  </h3>
+
+                  {/* Prize Strip */}
+                  <div className="home-compact-prize-strip">
+                    <div className="home-compact-prize-left">
+                      <TrophyIcon size={12} color="#059669" />
+                      <span className="home-compact-prize-text" title={prizeText}>
+                        {prizeText}
+                      </span>
                     </div>
-                    <span
-                      style={{
-                        background: 'rgba(15, 63, 254, 0.08)',
-                        color: 'var(--primary)',
-                        border: '1px solid rgba(15, 63, 254, 0.25)',
-                        borderRadius: '20px',
-                        padding: '3px 10px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        letterSpacing: '0.02em',
-                        whiteSpace: 'nowrap'
+                    <span className={`home-compact-fee-badge ${isFree ? 'free' : 'paid'}`}>
+                      {feeText}
+                    </span>
+                  </div>
+
+                  {/* Specs Row */}
+                  <div className="home-compact-specs-row">
+                    <span className="home-compact-specs-item" title={teamText}>
+                      <UsersIcon size={12} />
+                      <span>{teamText}</span>
+                    </span>
+                    <span className="home-compact-dot" />
+                    <span className="home-compact-specs-item" title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}>
+                      <CalendarIcon size={12} />
+                      <span>Ends {deadlineFormatted || (b.mode || 'Online')}</span>
+                    </span>
+                  </div>
+
+                  {/* Metrics Row */}
+                  <div className="home-compact-metrics-row">
+                    <span className="home-compact-metrics-regs">
+                      <FlameIcon size={12} />
+                      {registeredCount > 0 ? (
+                        <span><strong>{registeredCount.toLocaleString()}</strong> registrations</span>
+                      ) : (
+                        <span>Recently Listed</span>
+                      )}
+                    </span>
+                    <span className={`home-compact-pill pill-${urgencyLevel}`}>
+                      <ClockIcon size={10} />
+                      <span>{countdownText}</span>
+                    </span>
+                  </div>
+
+                  {/* Actions Grid */}
+                  <div className="home-compact-actions">
+                    <a
+                      href={b.unstopUrl || 'https://unstop.com'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="home-compact-btn-apply"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span>Apply</span>
+                      <ExternalLinkIcon size={11} color="#FFFFFF" />
+                    </a>
+                    <button
+                      type="button"
+                      className="home-compact-btn-squad"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onSquadUp) onSquadUp(b);
+                        else if (onFindTeammates) onFindTeammates(b);
                       }}
                     >
-                      {bookmarkTotal > displayedBookmarks.length
-                        ? `+${bookmarkTotal - displayedBookmarks.length} more`
-                        : `${bookmarkTotal} saved`}
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: 'auto 0' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--primary)' }}>
-                      Saved List
-                    </span>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.35, letterSpacing: '-0.01em' }}>
-                      More Bookmarks
-                    </h3>
-                    <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--ink-muted)', lineHeight: 1.45 }}>
-                      Explore all your bookmarked competitions, review upcoming deadlines, and organize your squad entries.
-                    </p>
-                  </div>
-
-                  <div
-                    className="home-more-btn"
-                    style={{
-                      marginTop: 'auto',
-                      border: '1px solid var(--primary)',
-                      borderRadius: '9px',
-                      background: 'rgba(15, 63, 254, 0.06)',
-                      color: 'var(--primary)',
-                      padding: '9px 12px',
-                      textAlign: 'center',
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px'
-                    }}
-                  >
-                    <span>Explore all ({bookmarkTotal})</span>
-                    <span style={{ fontSize: '14px', lineHeight: 1 }}>→</span>
+                      <UsersIcon size={12} />
+                      <span>Squad up</span>
+                    </button>
                   </div>
                 </div>
-            )}
-          </>
-        )}
+              );
+            })
+          )}
         </div>
       </section>
 
-      {/* 4. Top Competitions Rail */}
+      {/* ── 3. Top Competitions Rail ── */}
       <section className="home-section">
         <div className="home-section-header">
           <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
@@ -1218,7 +1081,7 @@ export default function HomeScreen({
           >
             {showRailLoading ? 'Loading...' : `${compTotal} match`}
           </span>
-          {/* Read-only indicators for Sort and Filters last chosen in Browse */}
+
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
               Sort: <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>{SORT_LABELS[effectiveSort] || 'Closing soonest first'}</strong>
@@ -1227,7 +1090,7 @@ export default function HomeScreen({
               <>
                 <span style={{ color: 'var(--line)' }}>·</span>
                 <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Filters:</span>
-                {filterChips.slice(0, 3).map((chip, idx) => (
+                {filterChips.map((chip, idx) => (
                   <span
                     key={idx}
                     style={{
@@ -1244,17 +1107,22 @@ export default function HomeScreen({
                     {chip}
                   </span>
                 ))}
-                {filterChips.length > 3 && (
-                  <span style={{ fontSize: '11px', color: 'var(--ink-muted)', fontWeight: 600 }}>
-                    +{filterChips.length - 3} more
-                  </span>
-                )}
+                <button
+                  type="button"
+                  title="Edit filters in Browse"
+                  onClick={() => handleNavigate('browse')}
+                  className="home-filter-edit-btn"
+                >
+                  Edit filter
+                </button>
               </>
             )}
           </div>
+
           <button
+            type="button"
             onClick={() => handleNavigate('browse')}
-            className="home-btn-hover"
+            className="home-more-btn"
             style={{
               marginLeft: 'auto',
               border: '1px solid var(--line)',

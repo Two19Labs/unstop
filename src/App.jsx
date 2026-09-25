@@ -1092,7 +1092,7 @@ function OneStopInner() {
       ) : (
         <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
           {/* Top-Right Theme Toggle & Notification Center (for screens that don't embed it in their header) */}
-          {screen !== 'teams' && (
+          {screen !== 'teams' && screen !== 'home' && (
             <div className="onestop-top-actions">
               <ThemeToggle variant="compact" />
               <NotificationCenter
@@ -1130,6 +1130,22 @@ function OneStopInner() {
                 onNavigate={handleNavigate}
                 onRequestJoin={(post) => handleOpenApply(post)}
                 onOpenWhatsApp={handleOpenWhatsApp}
+                headerAction={
+                  <div className="home-header-actions">
+                    <ThemeToggle variant="compact" />
+                    <NotificationCenter
+                      applications={applications}
+                      competitions={competitions}
+                      bookmarks={bookmarks}
+                      posts={posts}
+                      profile={profile}
+                      onOpenWhatsApp={handleOpenWhatsApp}
+                      onOpenDetail={(id) => setDetailCompId(id)}
+                      onNavigate={handleNavigate}
+                      onToggleBookmark={handleToggleBookmark}
+                    />
+                  </div>
+                }
               />
             )}
 
