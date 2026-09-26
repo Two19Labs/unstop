@@ -441,6 +441,8 @@ export default function TeamFinderScreen({
   });
 
   const profileSkills = useMemo(() => (profile?.skills?.length ? profile.skills : ['Market research', 'Deck design', 'Copywriting']), [profile]);
+  const userCollege = (profile?.college || user?.user_metadata?.college || 'SRCC').trim();
+  const userName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
 
   const activeChatApp = useMemo(() => {
