@@ -117,13 +117,16 @@ export function evaluateExtensions({
           const newStr = formatRoundDeadlineTime(incomingRegMs);
           const extraStr = formatDurationDiff(diffMs);
 
+          const compName = comp.title || 'Competition';
+          const compactCompTitle = compName.length > 36 ? `${compName.slice(0, 34).trim()}…` : compName;
+
           const extItem = {
             id: notifId,
             type: 'deadline_extended',
             category: 'deadlines',
             urgency: 'extension',
-            title: `🎉 Registration Extended: ${comp.title}`,
-            subtitle: `Initially set to close at ${oldStr}, now extended to ${newStr} (${extraStr} extra!).`,
+            title: `🎉 Registration Extended · ${compactCompTitle}`,
+            subtitle: `Cutoff extended from ${oldStr} to ${newStr} (${extraStr} extra!).`,
             timestamp: now,
             badgeText: `Extended ${extraStr}`,
             data: {
@@ -179,26 +182,30 @@ export function evaluateExtensions({
               const newStr = formatRoundDeadlineTime(incomingEndMs);
               const extraStr = formatDurationDiff(diffMs);
 
+              const compName = comp.title || 'Competition';
+              const compactCompTitle = compName.length > 34 ? `${compName.slice(0, 32).trim()}…` : compName;
+
               const roundExtItem = {
                 id: notifId,
                 type: 'round_extended',
                 category: 'deadlines',
                 urgency: 'extension',
-                title: `⏳ Round Extended: ${round.title}`,
-                subtitle: `Organizers extended cutoff from ${oldStr} to ${newStr} (${extraStr} extra!).`,
+                title: `⏳ Round Extended · ${compactCompTitle}`,
+                subtitle: `${round.title} · Cutoff extended from ${oldStr} to ${newStr} (${extraStr} extra!).`,
                 timestamp: now,
-                badgeText: `Round Extended`,
+                badgeText: extraStr ? `Extended ${extraStr}` : 'Round Extended',
                 data: {
                   compId: comp.id,
+                  competition: comp,
                   roundId: round.id,
                   round,
-                  publicUrl: round.publicUrl,
+                  publicUrl: round.publicUrl || comp.unstopUrl,
                   oldDeadline: storedRound.endDate,
                   newDeadline: round.endDate,
                   diffMs
                 },
                 actions: [
-                  { label: 'Enter Round Portal', actionType: 'portal', isPrimary: true, url: round.publicUrl }
+                  { label: 'Enter Round Portal', actionType: 'portal', isPrimary: true, url: round.publicUrl || comp.unstopUrl }
                 ]
               };
 
@@ -227,10 +234,29 @@ export function evaluateExtensions({
   // Collect all active non-dismissed extensions across bookmarked competitions
   const allExtensions = [];
   bookmarkSet.forEach(compId => {
+    const comp = compMap.get(compId);
     const compSnapshot = snapshots[compId];
     if (compSnapshot && Array.isArray(compSnapshot.activeExtensions)) {
       compSnapshot.activeExtensions.forEach(ext => {
         if (!dismissedSet.has(ext.id)) {
+          // Normalize legacy cached extensions to compact competition format
+          if (ext.type === 'round_extended' && comp) {
+            const cName = comp.title || compSnapshot.title || 'Competition';
+            const compactC = cName.length > 34 ? `${cName.slice(0, 32).trim()}…` : cName;
+            if (!ext.title.includes('·')) {
+              ext.title = `⏳ Round Extended · ${compactC}`;
+              hasChanges = true;
+            }
+            const rTitle = ext.data?.round?.title || 'Round';
+            if (ext.subtitle && !ext.subtitle.startsWith(rTitle) && !ext.subtitle.includes(cName)) {
+              ext.subtitle = `${rTitle} · ${ext.subtitle.replace(/^Organizers extended cutoff/i, 'Cutoff extended')}`;
+              hasChanges = true;
+            }
+            if (ext.data && !ext.data.competition) {
+              ext.data.competition = comp;
+              hasChanges = true;
+            }
+          }
           // Check if newDeadline hasn't expired by more than 24 hours
           const deadlineStr = ext.data?.newDeadline;
           if (deadlineStr) {

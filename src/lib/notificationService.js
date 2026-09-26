@@ -303,6 +303,9 @@ export function generateNotifications({
     const roundsData = roundsMap[sId];
     if (!roundsData || !Array.isArray(roundsData.rounds)) return;
 
+    const compName = comp?.title || 'Competition';
+    const compactComp = compName.length > 32 ? `${compName.slice(0, 30).trim()}…` : compName;
+
     roundsData.rounds.forEach(round => {
       // Exclude Stage 0 (Registration already handled above)
       if (round.type === 'registration' || round.order === 0) return;
@@ -321,11 +324,11 @@ export function generateNotifications({
             type: 'round_starting',
             category: 'deadlines',
             urgency: 'warning',
-            title: `⏳ Round Starts in ${minsToStart}m: ${round.title}`,
-            subtitle: `${comp?.title || 'Competition'} · Round begins at ${formatRoundDeadlineTime(startMs)}. Get ready!`,
+            title: `⏳ Starts in ${minsToStart}m · ${compactComp}`,
+            subtitle: `${round.title} begins at ${formatRoundDeadlineTime(startMs)}. Get ready!`,
             timestamp: startMs,
             badgeText: `In ${minsToStart}m`,
-            data: { compId: sId, roundId, round, url: round.publicUrl || comp?.unstopUrl },
+            data: { compId: sId, competition: comp, roundId, round, url: round.publicUrl || comp?.unstopUrl },
             actions: [
               { label: 'Open Round Info', actionType: 'portal', url: round.publicUrl || comp?.unstopUrl, isPrimary: true }
             ]
@@ -345,11 +348,11 @@ export function generateNotifications({
             type: 'round_live',
             category: 'deadlines',
             urgency: 'live',
-            title: `🚀 Round is Live: ${round.title}`,
-            subtitle: `${comp?.title || 'Competition'} · Portal is open. Closes at ${formatRoundDeadlineTime(endMs)}.`,
+            title: `🚀 Round is Live · ${compactComp}`,
+            subtitle: `${round.title} portal is open! Closes at ${formatRoundDeadlineTime(endMs)}.`,
             timestamp: startMs || now,
             badgeText: 'Live Now',
-            data: { compId: sId, roundId, round, url: round.publicUrl || comp?.unstopUrl },
+            data: { compId: sId, competition: comp, roundId, round, url: round.publicUrl || comp?.unstopUrl },
             actions: [
               { label: 'Enter Round Portal ↗', actionType: 'portal', url: round.publicUrl || comp?.unstopUrl, isPrimary: true }
             ]
@@ -357,8 +360,8 @@ export function generateNotifications({
 
           // Dispatch native desktop notification for live round
           dispatchBrowserNotification({
-            title: `🚀 Round is Live: ${round.title}`,
-            body: `${comp?.title || 'Competition'} round is now live. Enter portal to submit.`,
+            title: `🚀 Round is Live · ${compactComp}`,
+            body: `${round.title} portal is open! Closes at ${formatRoundDeadlineTime(endMs)}.`,
             tag: `push_rnd_live_${roundId}`,
             url: round.publicUrl || comp?.unstopUrl
           });
@@ -382,39 +385,39 @@ export function generateNotifications({
           // Emergency 15 mins
           shouldEmit = true;
           urgency = 'critical';
-          title = `🚨 Final 15 Minutes: ${round.title}`;
-          subtitle = `Emergency submission window for ${comp?.title || 'competition'}! Upload your response immediately.`;
+          title = `🚨 Final 15m · ${compactComp}`;
+          subtitle = `${round.title} emergency window closing! Submit before server lock.`;
           badgeText = `${totalMinutes}m left`;
           pushTag = `push_rnd_15m_${roundId}`;
         } else if (endDiffMs <= 30 * 60 * 1000) {
           // Hard Cutoff 30 mins
           shouldEmit = true;
           urgency = 'critical';
-          title = `⚠️ 30 Minutes Left: ${round.title}`;
-          subtitle = `${comp?.title || 'Competition'} cutoff in under 30 minutes! Submit now to avoid server lock.`;
+          title = `⚠️ 30m Cutoff · ${compactComp}`;
+          subtitle = `${round.title} cutoff in under 30 minutes! Submit now to avoid server lock.`;
           badgeText = `${totalMinutes}m left`;
           pushTag = `push_rnd_30m_${roundId}`;
         } else if (endDiffMs <= 60 * 60 * 1000) {
           // 1 Hour Left
           shouldEmit = true;
           urgency = 'critical';
-          title = `⏳ 1 Hour Remaining: ${round.title}`;
-          subtitle = `Final 60 minutes for ${comp?.title || 'competition'}. Verify all file attachments.`;
+          title = `⏳ 1h Remaining · ${compactComp}`;
+          subtitle = `Final 60 minutes for ${round.title}. Verify all submission files.`;
           badgeText = '1h left';
           pushTag = `push_rnd_1h_${roundId}`;
         } else if (!isLiveNow && endDiffMs <= 6 * 60 * 60 * 1000) {
           // 6 Hours Left (only when not live)
           shouldEmit = true;
           urgency = 'warning';
-          title = `⚠️ 6 Hours Left: ${round.title}`;
-          subtitle = `${comp?.title || 'Competition'} closes today at ${formatRoundDeadlineTime(endMs)}.`;
+          title = `⚠️ 6 Hours Left · ${compactComp}`;
+          subtitle = `${round.title} closes today at ${formatRoundDeadlineTime(endMs)}.`;
           badgeText = `${totalHours}h left`;
         } else if (!isLiveNow && endDiffMs <= 24 * 60 * 60 * 1000) {
           // 24 Hours Left (only when not live)
           shouldEmit = true;
           urgency = 'info';
-          title = `📅 Closes Tomorrow: ${round.title}`;
-          subtitle = `${comp?.title || 'Competition'} submission deadline is tomorrow at ${formatRoundDeadlineTime(endMs)}.`;
+          title = `📅 Closes Tomorrow · ${compactComp}`;
+          subtitle = `${round.title} submission deadline is tomorrow at ${formatRoundDeadlineTime(endMs)}.`;
           badgeText = 'Tomorrow';
         }
 
@@ -430,7 +433,7 @@ export function generateNotifications({
               subtitle,
               timestamp: endMs,
               badgeText,
-              data: { compId: sId, roundId, round, url: round.publicUrl || comp?.unstopUrl },
+              data: { compId: sId, competition: comp, roundId, round, url: round.publicUrl || comp?.unstopUrl },
               actions: [
                 { label: 'Enter Submission Portal ↗', actionType: 'portal', url: round.publicUrl || comp?.unstopUrl, isPrimary: true }
               ]
