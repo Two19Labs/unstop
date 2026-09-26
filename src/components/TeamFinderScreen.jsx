@@ -7,6 +7,8 @@ import { normalizeYear } from '../data/colleges';
 import PostSquadModal from './PostSquadModal';
 import ApplyModal from './ApplyModal';
 import SectionLoadingWidget from './SectionLoadingWidget';
+import InstitutionLogo from './InstitutionLogo';
+import CompetitionChatModal from './CompetitionChatModal';
 import { SQUAD_PUNS } from './FunLoadingScreen';
 import './TeamFinderScreen.css';
 
@@ -30,13 +32,51 @@ function formatDue(daysOrDeadline) {
   } else if (daysOrDeadline !== undefined && daysOrDeadline !== null) {
     h = Math.max(1, Math.round(Number(daysOrDeadline) * 24));
   }
-  const color = h < 6 ? '#DC2626' : h < 24 ? '#B45309' : '#15803D';
-  const text = h < 72 ? `${h}h left to register` : `${Math.round(h / 24)}d left to register`;
-  return { text, color, hours: h, days: h / 24 };
+
+  let text = '';
+  let color = '';
+  let bg = '';
+  let border = '';
+
+  if (h < 24) {
+    text = `${h}h left`;
+    color = '#DC2626';
+    bg = 'rgba(220, 38, 38, 0.08)';
+    border = '1px solid rgba(220, 38, 38, 0.25)';
+  } else {
+    const d = Math.round(h / 24);
+    text = `${d}d left`;
+    if (d < 7) {
+      color = '#B45309';
+      bg = 'rgba(217, 119, 6, 0.08)';
+      border = '1px solid rgba(217, 119, 6, 0.25)';
+    } else {
+      color = '#15803D';
+      bg = 'rgba(23, 163, 74, 0.08)';
+      border = '1px solid rgba(23, 163, 74, 0.25)';
+    }
+  }
+  return { text, color, bg, border, hours: h, days: h / 24 };
 }
 
-const ChevronDownIcon = ({ size = 12, className = '' }) => (
-  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+const ChevronIcon = ({ open = false, className = '' }) => (
+  <svg
+    className={className}
+    width={12}
+    height={12}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{
+      transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+      transition: 'transform 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+      display: 'inline-block',
+      flex: 'none'
+    }}
+  >
     <polyline points="6 9 12 15 18 9" />
   </svg>
 );
@@ -56,28 +96,219 @@ const ArrowUpDownIcon = ({ size = 13, className = '' }) => (
   </svg>
 );
 
-// Sample fallback squad data from design handoff to ensure full fidelity when database has no posts yet
+const ChatBubbleIcon = ({ size = 15, color = "#0F3FFE" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+  </svg>
+);
+
+const WhatsAppIcon = ({ size = 15 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="#25D366" style={{ flex: 'none' }}>
+    <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path>
+    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path>
+  </svg>
+);
+
+// High-fidelity fallback squad data matching designer screenshot
 const SAMPLE_COMPS = [
-  { id: 'c1', title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', days: 5 / 24, team: '2–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
-  { id: 'c2', title: 'Prayaas Case Challenge', host: 'Shri Ram College of Commerce', days: 20 / 24, team: '3–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
-  { id: 'c3', title: "L'Oréal Brandstorm 2026", host: "L'Oréal", days: 11, team: '3 members', cat: 'Case Comps', circuit: 'Corporate & Global', url: 'https://unstop.com' },
-  { id: 'c4', title: 'Smart India Hackathon — Campus Round', host: 'Ministry of Education', days: 23, team: '6 members', cat: 'Hackathons', circuit: 'Others', url: 'https://unstop.com' },
-  { id: 'c5', title: 'Tata Crucible Campus Quiz', host: 'Tata Group', days: 4, team: '2 members', cat: 'Quizzes', circuit: 'Corporate & Global', url: 'https://unstop.com' },
-  { id: 'c6', title: 'Bain Business Bowl', host: 'Bain & Company', days: 17, team: '3–4 members', cat: 'Case Comps', circuit: 'Corporate & Global', url: 'https://unstop.com' },
-  { id: 'c7', title: 'Wall Street Simulation League', host: 'IIT Delhi', days: 8, team: '2–3 members', cat: 'Simulations', circuit: 'IIMs, IITs & Premier', url: 'https://unstop.com' },
-  { id: 'c8', title: 'Consult-a-thon', host: 'Kirori Mal College', days: 15, team: '3–4 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' },
-  { id: 'c9', title: 'Revive the Failed — Business Case Competition', host: 'Lady Shri Ram College for Women', days: 6, team: '2–3 members', cat: 'Case Comps', circuit: 'DU Circuit', url: 'https://unstop.com' }
+  {
+    id: 'c1',
+    title: 'Envision 2026 — National Case Challenge',
+    host: 'Shaheed Sukhdev College of Business Studies',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/2/29/Shaheed_Sukhdev_College_of_Business_Studies_logo.png',
+    days: 5 / 24,
+    team: '2–4 members',
+    cat: 'Case Comps',
+    circuit: 'DU Circuit',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c9',
+    title: 'Revive the Failed — Business Case Competition',
+    host: 'Lady Shri Ram College for Women',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/3/30/Lady_Shri_Ram_College_logo.png',
+    days: 6,
+    team: '2–3 members',
+    cat: 'Case Comps',
+    circuit: 'DU Circuit',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c5',
+    title: 'Business & Economics Quiz',
+    host: 'Shri Ram College of Commerce',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/8/87/Shri_Ram_College_of_Commerce_logo.png',
+    days: 4,
+    team: '2 members',
+    cat: 'Quizzes',
+    circuit: 'DU Circuit',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c6',
+    title: 'Bain Business Bowl',
+    host: 'Bain & Company',
+    logo: 'https://logo.clearbit.com/bain.com',
+    days: 17,
+    team: '3–4 members',
+    cat: 'Case Comps',
+    circuit: 'Corporate & Global',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c7',
+    title: 'Market Mayhem — Trading Simulation',
+    host: 'IIM Ahmedabad',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/IIM_Ahmedabad_Logo.svg/512px-IIM_Ahmedabad_Logo.svg.png',
+    days: 8,
+    team: '2–3 members',
+    cat: 'Simulations',
+    circuit: 'IIMs, IITs & Premier',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c8',
+    title: 'Consult-a-thon',
+    host: 'Kirori Mal College',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/92/Kirori_Mal_College_logo.png/220px-Kirori_Mal_College_logo.png',
+    days: 15,
+    team: '3–4 members',
+    cat: 'Case Comps',
+    circuit: 'DU Circuit',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c2',
+    title: 'Prayaas Case Challenge',
+    host: 'Shri Ram College of Commerce',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/8/87/Shri_Ram_College_of_Commerce_logo.png',
+    days: 20 / 24,
+    team: '3–4 members',
+    cat: 'Case Comps',
+    circuit: 'DU Circuit',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c3',
+    title: "L'Oréal Brandstorm 2026",
+    host: "L'Oréal",
+    logo: 'https://logo.clearbit.com/loreal.com',
+    days: 11,
+    team: '3 members',
+    cat: 'Case Comps',
+    circuit: 'Corporate & Global',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c4',
+    title: 'Smart India Hackathon — Campus Round',
+    host: 'Ministry of Education',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Smart_India_Hackathon_Logo.png/250px-Smart_India_Hackathon_Logo.png',
+    days: 23,
+    team: '6 members',
+    cat: 'Hackathons',
+    circuit: 'Others',
+    url: 'https://unstop.com'
+  }
 ];
 
 const SAMPLE_POSTS = [
-  { id: 'demo_p1', compId: 'c1', lead: 'Ananya Rao', college: 'Lady Shri Ram College', year: '3rd year', posted: '4h ago', total: 4, members: [{ name: 'Riya Kapoor', college: 'LSR', year: '3rd year' }], state: 'open', want: ['Market research', 'Deck design'], have: ['Finance modelling', 'Public speaking'], desc: 'We made the semis last year and want to go further. Looking for one person who can dig up market data fast and one who can make a deck look sharp. We meet on Meet most evenings after 8.', phone: '9811042278' },
-  { id: 'demo_p8', compId: 'c9', lead: 'Riddhi Sharma', college: 'Lady Shri Ram College', year: 'BMS, 1st year', posted: '6h ago', total: 3, members: [], state: 'open', want: [], have: ['Market research'], desc: 'First case comp for me. All skills and backgrounds welcome, just be ready to put in a few evenings.', phone: '9811042278' },
-  { id: 'demo_p2', compId: 'c3', lead: 'Kabir Sethi', college: 'SRCC', year: '2nd year', posted: '9h ago', total: 3, members: [], state: 'requested', want: ['Copywriting', 'Design'], have: ['Market research'], desc: 'Brandstorm Round 1 closes soon. I have the idea, need a writer and a designer to make it land.', phone: '9811042278' },
-  { id: 'demo_p3', compId: 'c4', lead: 'Nikhil Arora', college: 'SSCBS', year: '2nd year', posted: 'Yesterday', total: 6, members: [{ name: 'Aarav Mehta', college: 'SRCC', year: '2nd year' }, { name: 'Tanvi Shah', college: 'DTU', year: '3rd year' }, { name: 'Ishaan Verma', college: 'DTU', year: '2nd year' }], state: 'accepted', want: ['Backend', 'ML / Data'], have: ['Frontend', 'Design'], desc: 'Building a grievance-routing tool. Frontend and design sorted, need backend and someone who knows basic ML.', phone: '9811042278' },
-  { id: 'demo_p4', compId: 'c5', lead: 'Meher Gill', college: 'Hindu College', year: '1st year', posted: '2 days ago', total: 2, members: [{ name: 'Arjun Nair', college: 'Hindu College', year: '1st year' }], state: 'full', want: ['Public speaking'], have: ['Copywriting'], desc: 'Quiz pair. Full for now.', phone: '9811042278' },
-  { id: 'demo_p5', compId: 'c6', lead: 'Devansh Iyer', college: 'Hansraj College', year: '2nd year', posted: '2 days ago', total: 4, members: [], state: 'open', want: ['Finance modelling', 'Valuation', 'Public speaking'], have: ['Market research'], desc: 'First Bain Bowl for all of us. Serious about prep: two mock cases a week before the deadline.', phone: '9811042278' },
-  { id: 'demo_p6', compId: 'c7', lead: 'Sara Thomas', college: 'IIT Delhi', year: '3rd year', posted: '3 days ago', total: 3, members: [{ name: 'Kunal Jain', college: 'IIT Delhi', year: '3rd year' }], state: 'open', want: ['Finance modelling', 'ML / Data'], have: ['Valuation'], desc: 'Trading sim with a quant bent. Comfort with Excel or Python matters more than finance theory.', phone: '9811042278' },
-  { id: 'demo_p7', compId: 'c1', lead: 'Rohan Das', college: 'SRCC', year: '2nd year', posted: '4 days ago', total: 3, members: [], state: 'open', want: ['Deck design', 'Copywriting'], have: ['Finance modelling'], desc: 'Second SRCC team for Kurukshetra. Need a storyteller and a slide person.', phone: '9811042278' }
+  {
+    id: 'demo_p1',
+    compId: 'c1',
+    lead: 'Ananya Rao',
+    college: 'LSR',
+    year: '3rd year',
+    posted: '4h ago',
+    total: 4,
+    members: [{ name: 'Riya Kapoor', college: 'LSR', year: '3rd year' }],
+    state: 'open',
+    want: ['Market research', 'Deck design'],
+    have: ['Finance modelling', 'Public speaking'],
+    desc: 'We made the semis last year and want to go further. Looking for one person who can dig up market data fast and one who can make a deck look sharp. We meet on Meet most evenings after 8.',
+    comm_method: 'whatsapp',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p8',
+    compId: 'c9',
+    lead: 'Riddhi Sharma',
+    college: 'LSR',
+    year: 'BMS, 1st year',
+    posted: '6h ago',
+    total: 3,
+    members: [],
+    state: 'open',
+    want: [],
+    have: ['Market research'],
+    desc: 'First case comp for me. All skills and backgrounds welcome, just be ready to put in a few evenings.',
+    comm_method: 'chat',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p4',
+    compId: 'c5',
+    lead: 'Meher Gill',
+    college: 'SSCBS',
+    year: '1st year',
+    posted: '2 days ago',
+    total: 2,
+    members: [{ name: 'Arjun Nair', college: 'SSCBS', year: '1st year' }],
+    state: 'full',
+    want: ['Public speaking'],
+    have: ['Copywriting'],
+    desc: 'Quiz pair. Full for now.',
+    comm_method: 'none',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p5',
+    compId: 'c6',
+    lead: 'Devansh Iyer',
+    college: 'SRCC',
+    year: '2nd year',
+    posted: '2 days ago',
+    total: 4,
+    members: [],
+    state: 'open',
+    want: ['Finance modelling', 'Valuation', 'Public speaking'],
+    have: ['Market research'],
+    desc: 'First Bain Bowl for all of us. Serious about prep: two mock cases a week before the deadline.',
+    comm_method: 'chat',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p6',
+    compId: 'c7',
+    lead: 'Sara Thomas',
+    college: 'IIM Ahmedabad',
+    year: 'PGP, 1st year',
+    posted: '3 days ago',
+    total: 3,
+    members: [{ name: 'Kunal Jain', college: 'IIT Delhi', year: '3rd year' }],
+    state: 'open',
+    want: ['Finance modelling', 'ML / Data'],
+    have: ['Valuation'],
+    desc: 'Trading sim with a quant bent. Comfort with Excel or Python matters more than finance theory.',
+    comm_method: 'whatsapp',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p7',
+    compId: 'c1',
+    lead: 'Rohan Das',
+    college: 'SRCC',
+    year: '2nd year',
+    posted: '4 days ago',
+    total: 3,
+    members: [],
+    state: 'open',
+    want: ['Deck design', 'Copywriting'],
+    have: ['Finance modelling'],
+    desc: 'Second SRCC team for Envision. Need a storyteller and a slide person.',
+    comm_method: 'chat',
+    phone: '9811042278'
+  }
 ];
 
 const SAMPLE_OWN = [
@@ -135,7 +366,7 @@ export default function TeamFinderScreen({
   onSubmitPost
 }) {
   const [tab, setTab] = useState('other'); // 'other' | 'mine'
-  const [showSquadLoader, setShowSquadLoader] = useState(true);
+  const [showSquadLoader, setShowSquadLoader] = useState(false);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('newest'); // 'newest' | 'closing' | 'spots'
   const [skillsOpen, setSkillsOpen] = useState(false);
@@ -191,6 +422,7 @@ export default function TeamFinderScreen({
   const [detailPostId, setDetailPostId] = useState(null);
   const [reviewPostId, setReviewPostId] = useState(null);
   const [reviewTab, setReviewTab] = useState('pending'); // 'pending' | 'accepted' | 'declined'
+  const [chatModalPost, setChatModalPost] = useState(null);
 
   // Post / Edit Squad Modal State
   const [postModalOpen, setPostModalOpen] = useState(false);
@@ -208,11 +440,23 @@ export default function TeamFinderScreen({
     return SAMPLE_OWN.map(o => ({ ...o, apps: o.apps.map(a => ({ ...a })) }));
   });
 
-  const profileSkills = useMemo(() => profile?.skills || ['Market research', 'Deck design', 'Copywriting'], [profile]);
-  const userCollege = (profile?.college || user?.user_metadata?.college || '').trim();
-  const userName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
+  const profileSkills = useMemo(() => (profile?.skills?.length ? profile.skills : ['Market research', 'Deck design', 'Copywriting']), [profile]);
   const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
 
+  const activeChatApp = useMemo(() => {
+    if (!chatModalPost) return null;
+    const existing = applications.find(a => String(a.postId || a.post_id) === String(chatModalPost.id));
+    if (existing) return existing;
+    return {
+      id: `chat_app_${chatModalPost.id}`,
+      post_id: chatModalPost.id,
+      applicant_name: userName || 'You',
+      applicant_college: userCollege,
+      applicant_year: userYear,
+      status: 'pending',
+      dir: 'out'
+    };
+  }, [chatModalPost, applications, userName, userCollege, userYear]);
 
   // Helper to find competition metadata
   const getCompMeta = (compId, fallbackTitle, fallbackHost) => {
@@ -236,11 +480,14 @@ export default function TeamFinderScreen({
         id: live.id,
         title: live.title,
         host: live.host || live.orgName || 'Organizer',
+        logo: live.orgLogo || live.logo || live.bannerUrl || null,
         cat,
         circuit: circ,
         url: live.unstopUrl || 'https://unstop.com',
         dueText: dueInfo.text,
         dueColor: dueInfo.color,
+        dueBg: dueInfo.bg,
+        dueBorder: dueInfo.border,
         days: dueInfo.days
       };
     }
@@ -248,7 +495,14 @@ export default function TeamFinderScreen({
     const sample = SAMPLE_COMPS.find(c => c.id === compId);
     if (sample) {
       const dueInfo = formatDue(sample.days);
-      return { ...sample, dueText: dueInfo.text, dueColor: dueInfo.color, days: dueInfo.days };
+      return {
+        ...sample,
+        dueText: dueInfo.text,
+        dueColor: dueInfo.color,
+        dueBg: dueInfo.bg,
+        dueBorder: dueInfo.border,
+        days: dueInfo.days
+      };
     }
 
     const dueInfo = formatDue(7);
@@ -256,11 +510,14 @@ export default function TeamFinderScreen({
       id: compId || 'custom',
       title: fallbackTitle || 'Collegiate Challenge',
       host: fallbackHost || 'University Host',
+      logo: null,
       cat: 'Case Comps',
       circuit: 'DU Circuit',
       url: 'https://unstop.com',
       dueText: dueInfo.text,
       dueColor: dueInfo.color,
+      dueBg: dueInfo.bg,
+      dueBorder: dueInfo.border,
       days: 7
     };
   };
@@ -323,6 +580,7 @@ export default function TeamFinderScreen({
         have,
         desc: p.description || p.desc || '',
         phone: p.phone_number || p.phone || p.leadPhone || '',
+        comm_method: p.comm_method || p.commMethod || (p.phone || p.phone_number || p.leadPhone ? 'whatsapp' : 'chat'),
         state,
         isOwn: isMine,
         apps: postApps.map(a => ({
@@ -369,6 +627,7 @@ export default function TeamFinderScreen({
         have: p.have,
         desc: p.desc,
         phone: p.phone,
+        comm_method: p.comm_method || 'chat',
         state: p.state,
         isOwn: false,
         apps: [],
@@ -418,10 +677,17 @@ export default function TeamFinderScreen({
 
   const activePool = tab === 'other' ? otherPool : myTotalPool;
 
+  const collegeMatches = (postCollege, myCollege) => {
+    if (!postCollege || !myCollege) return false;
+    const p = postCollege.toLowerCase().trim();
+    const m = myCollege.toLowerCase().trim();
+    return p === m || p.includes(m) || m.includes(p);
+  };
+
   // Filter testing predicate
   const passFilter = (p, skip = null) => {
     if (skip !== 'match' && fMatch && p.match === 0) return false;
-    if (skip !== 'myCollege' && fMyCollege && (!userCollege || p.college.toLowerCase() !== userCollege.toLowerCase())) return false;
+    if (skip !== 'myCollege' && fMyCollege && !collegeMatches(p.college, userCollege)) return false;
     if (skip !== 'cats' && fCats.length > 0 && !fCats.includes(p.comp.cat)) return false;
     if (skip !== 'circuits' && fCircuits.length > 0 && !fCircuits.includes(p.comp.circuit)) return false;
     if (skip !== 'skills' && fSkills.length > 0 && !p.want.some(w => fSkills.includes(w))) return false;
@@ -765,7 +1031,7 @@ export default function TeamFinderScreen({
                       {fMyCollege && <CheckIcon size={10} />}
                     </span>
                     <span className="cc-checkbox-label-text">Teams From My College</span>
-                    <span className="cc-filter-num">({countIn(p => Boolean(userCollege && p.college.toLowerCase() === userCollege.toLowerCase()), 'myCollege')})</span>
+                    <span className="cc-filter-num">({countIn(p => collegeMatches(p.college, userCollege), 'myCollege')})</span>
                   </label>
                 </div>
               </div>
@@ -780,7 +1046,7 @@ export default function TeamFinderScreen({
                     aria-expanded={openSections.categories}
                   >
                     <div className="cc-accordion-header-left">
-                      <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+                      <ChevronIcon open={openSections.categories} size={13} className="cc-accordion-chevron" />
                       <span className="cc-accordion-title">Categories</span>
                     </div>
                     {fCats.length > 0 && (
@@ -834,7 +1100,7 @@ export default function TeamFinderScreen({
                     aria-expanded={openSections.circuits}
                   >
                     <div className="cc-accordion-header-left">
-                      <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+                      <ChevronIcon open={openSections.circuits} size={13} className="cc-accordion-chevron" />
                       <span className="cc-accordion-title">Circuits</span>
                     </div>
                     {fCircuits.length > 0 && (
@@ -888,7 +1154,7 @@ export default function TeamFinderScreen({
                     aria-expanded={openSections.skills}
                   >
                     <div className="cc-accordion-header-left">
-                      <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+                      <ChevronIcon open={openSections.skills} size={13} className="cc-accordion-chevron" />
                       <span className="cc-accordion-title">Skills needed</span>
                     </div>
                     {fSkills.length > 0 && (
@@ -942,7 +1208,7 @@ export default function TeamFinderScreen({
 
               {/* Subgroup 5: Open spots */}
               <div className="cc-filter-subgroup cc-segmented-subgroup">
-                <span className="cc-subgroup-label">Open Spots</span>
+                <span className="cc-subgroup-label">OPEN SPOTS</span>
                 <div className="cc-segmented-bar">
                   {[
                     ['any', 'Any'],
@@ -963,7 +1229,7 @@ export default function TeamFinderScreen({
 
               {/* Subgroup 6: Competition Closes */}
               <div className="cc-filter-subgroup cc-segmented-subgroup">
-                <span className="cc-subgroup-label">Competition Closes</span>
+                <span className="cc-subgroup-label">COMPETITION CLOSES</span>
                 <div className="cc-segmented-bar">
                   {[
                     ['any', 'Any'],
@@ -980,6 +1246,11 @@ export default function TeamFinderScreen({
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Sidebar bottom indicator */}
+              <div className="tf-sidebar-footer-count">
+                Show {totalCardsShown} Squad{totalCardsShown === 1 ? '' : 's'}
               </div>
 
             </div>
@@ -1169,7 +1440,6 @@ export default function TeamFinderScreen({
                     const isOwn = post.isOwn;
                     const catColor = CAT_COLORS[post.comp.cat] || '#75736C';
                     const hasFit = !isOwn && post.match > 0;
-                    const fitLabel = post.match === post.want.length ? 'You fit' : `${post.match} of ${post.want.length} match you`;
                     const pendingAppsCount = post.apps.filter(a => a.status === 'pending').length;
 
                     return (
@@ -1195,34 +1465,32 @@ export default function TeamFinderScreen({
                             <span className="tf-circuit-tag">{post.comp.circuit}</span>
                           </div>
 
-                          <span className="tf-deadline-badge" style={{ color: post.comp.dueColor }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
+                          <span
+                            className="tf-deadline-badge"
+                            style={{
+                              color: post.comp.dueColor,
+                              backgroundColor: post.comp.dueBg,
+                              borderColor: post.comp.dueBorder
+                            }}
+                          >
+                            <span className="tf-deadline-dot" style={{ backgroundColor: post.comp.dueColor }} />
                             {post.comp.dueText}
                           </span>
                         </div>
 
-                        {/* 2. Title & Host */}
-                        <div className="tf-card-title-block">
-                          <h3 className="tf-card-title">{post.comp.title}</h3>
-                          <div className="tf-card-host-row">
-                            <span className="tf-card-host-name">{post.comp.host}</span>
-                            <a
-                              href={post.comp.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="tf-card-view-link"
-                            >
-                              View competition
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                <polyline points="15 3 21 3 21 9"></polyline>
-                                <line x1="10" y1="14" x2="21" y2="3"></line>
-                              </svg>
-                            </a>
+                        {/* 2. Logo, Title & Host */}
+                        <div className="tf-card-header-inner">
+                          <div className="tf-comp-logo-wrap">
+                            <InstitutionLogo
+                              organizer={post.comp.host}
+                              title={post.comp.title}
+                              logoUrl={post.comp.logo}
+                              size={40}
+                            />
+                          </div>
+                          <div className="tf-card-title-meta">
+                            <h3 className="tf-card-title" title={post.comp.title}>{post.comp.title}</h3>
+                            <div className="tf-card-host-name" title={post.comp.host}>{post.comp.host}</div>
                           </div>
                         </div>
 
@@ -1231,44 +1499,26 @@ export default function TeamFinderScreen({
                           <p className="tf-card-note">{post.desc}</p>
                         )}
 
-                        {/* 4. Spots & Skills */}
-                        <div className="tf-card-spots-skills">
-                          <div className="tf-card-spots-row">
-                            <div className="tf-card-spots-indicator">
-                              <div className="tf-dots-cluster">
-                                {Array.from({ length: post.total }, (_, i) => (
-                                  <span
-                                    key={i}
-                                    className={`tf-dot ${i < post.filled ? 'filled' : 'hollow'}`}
-                                  />
-                                ))}
-                              </div>
-                              <span
-                                className="tf-spots-text"
-                                style={{ color: post.openN > 0 ? 'var(--ink, #1A1A19)' : 'var(--ink-muted, #75736C)' }}
-                              >
-                                {post.openN > 0 ? `${post.openN} of ${post.total} open` : `${post.total} of ${post.total} filled`}
-                              </span>
-                            </div>
-
-                            {hasFit && (
-                              <span className="tf-fit-hint">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                {fitLabel}
-                              </span>
-                            )}
-                          </div>
-
+                        {/* 4. Skills Needed row (ABOVE spots) */}
+                        <div className="tf-card-skills-row">
                           <div className="tf-skills-wrap">
                             {post.want && post.want.length > 0 ? (
                               <>
-                                {post.want.slice(0, 2).map((w, idx) => (
-                                  <span key={idx} className="tf-skill-pill-needed">
-                                    {w}
-                                  </span>
-                                ))}
+                                {post.want.slice(0, 2).map((w, idx) => {
+                                  const isUserSkill = profileSkills.includes(w);
+                                  return isUserSkill ? (
+                                    <span key={idx} className="tf-skill-pill tf-skill-pill-fit">
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                      </svg>
+                                      {w}
+                                    </span>
+                                  ) : (
+                                    <span key={idx} className="tf-skill-pill tf-skill-pill-needed">
+                                      {w}
+                                    </span>
+                                  );
+                                })}
                                 {post.want.length > 2 && (
                                   <span className="tf-skill-pill-more">
                                     +{post.want.length - 2}
@@ -1281,22 +1531,59 @@ export default function TeamFinderScreen({
                               </span>
                             )}
                           </div>
+
+                          {hasFit && (
+                            <span className="tf-fit-hint">
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                              You fit
+                            </span>
+                          )}
                         </div>
 
-                        {/* 5. Footer */}
-                        <div className="tf-card-footer">
-                          {/* Lead row */}
-                          <div className="tf-lead-info-row">
-                            <span className={`tf-lead-avatar ${isOwn ? 'own' : 'other'}`}>
-                              {isOwn ? 'You' : initialsOf(post.lead)}
+                        {/* 5. Spots row (BELOW skills) */}
+                        <div className="tf-card-spots-row">
+                          <div className="tf-card-spots-indicator">
+                            <div className="tf-dots-cluster">
+                              {Array.from({ length: post.total }, (_, i) => (
+                                <span
+                                  key={i}
+                                  className={`tf-dot ${i < post.filled ? 'filled' : 'hollow'}`}
+                                />
+                              ))}
+                            </div>
+                            <span
+                              className="tf-spots-text"
+                              style={{ color: post.openN > 0 ? 'var(--ink, #1A1A19)' : 'var(--ink-muted, #75736C)' }}
+                            >
+                              {post.openN > 0 ? `${post.openN} of ${post.total} open` : (post.total ? `${post.total} of ${post.total} filled` : 'Full')}
                             </span>
-                            <div className="tf-lead-details">
-                              <div className="tf-lead-name">{isOwn ? 'You' : post.lead}</div>
-                              <div className="tf-lead-meta">{post.college} · {post.year}</div>
+                          </div>
+                        </div>
+
+                        {/* 6. Footer */}
+                        <div className="tf-card-footer">
+                          {/* Lead info row with avatar, name, and Chat button */}
+                          <div className="tf-lead-info-row">
+                            <div className="tf-lead-left">
+                              <span className={`tf-lead-avatar ${isOwn ? 'own' : 'other'}`}>
+                                {isOwn ? 'You' : initialsOf(post.lead)}
+                              </span>
+                              <div className="tf-lead-details">
+                                <div className="tf-lead-name">{isOwn ? 'You' : post.lead}</div>
+                                <div className="tf-lead-meta">{post.college} · {post.year}</div>
+                              </div>
                             </div>
 
-                            {/* Badge or Posted Time */}
-                            {post.state === 'requested' ? (
+                            {/* Right side of lead row */}
+                            {isOwn ? (
+                              pendingAppsCount > 0 ? (
+                                <span className="tf-badge tf-badge-pending-count">{pendingAppsCount} new</span>
+                              ) : (
+                                <span className="tf-posted-time">{post.posted}</span>
+                              )
+                            ) : post.state === 'requested' ? (
                               <span className="tf-badge tf-badge-requested">Requested</span>
                             ) : post.state === 'accepted' ? (
                               <span className="tf-badge tf-badge-accepted">You're in</span>
@@ -1304,100 +1591,100 @@ export default function TeamFinderScreen({
                               <span className="tf-badge tf-badge-full">Full</span>
                             ) : post.state === 'closed' ? (
                               <span className="tf-badge tf-badge-closed">Closed</span>
-                            ) : isOwn && pendingAppsCount > 0 ? (
-                              <span className="tf-badge tf-badge-pending-count">{pendingAppsCount} new</span>
                             ) : (
-                              <span className="tf-posted-time">{post.posted}</span>
-                            )}
-                          </div>
-
-                          {/* Actions */}
-                          {isOwn ? (
-                            <div className="tf-actions-row">
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setReviewPostId(post.id);
-                                  setReviewTab(pendingAppsCount > 0 ? 'pending' : 'accepted');
+                                  if (post.comm_method === 'whatsapp') {
+                                    handleOpenWhatsAppPost(e, post);
+                                  } else {
+                                    setChatModalPost(post);
+                                  }
                                 }}
-                                className="tf-review-btn"
-                                style={{
-                                  border: pendingAppsCount > 0 ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
-                                  background: pendingAppsCount > 0 ? 'var(--primary, #0F3FFE)' : 'var(--surface, #FFFFFF)',
-                                  color: pendingAppsCount > 0 ? '#FFFFFF' : 'var(--ink, #1A1A19)'
-                                }}
+                                className={`tf-chat-btn ${post.comm_method === 'whatsapp' ? 'tf-chat-wa' : 'tf-chat-inapp'}`}
+                                title={post.comm_method === 'whatsapp' ? "Chat on WhatsApp" : "In-app Chat"}
                               >
-                                {pendingAppsCount > 0 ? `Review ${pendingAppsCount} request${pendingAppsCount > 1 ? 's' : ''}` : 'Manage team'}
+                                {post.comm_method === 'whatsapp' ? (
+                                  <WhatsAppIcon size={14} />
+                                ) : (
+                                  <ChatBubbleIcon size={14} />
+                                )}
+                                <span>Chat</span>
                               </button>
-                              <button
-                                type="button"
-                                onClick={(e) => handleOpenEdit(e, post)}
-                                className="tf-btn-secondary"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => handleToggleClosed(e, post)}
-                                className="tf-btn-secondary"
-                                style={{ color: 'var(--ink-secondary, #55534D)' }}
-                              >
-                                {post.state === 'closed' || post.closed ? 'Reopen' : 'Close'}
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="tf-actions-row">
-                              {post.state === 'full' || post.openN === 0 ? (
-                                <span className="tf-full-block">Squad full</span>
-                              ) : post.state === 'requested' ? (
+                            )}
+                          </div>
+
+                          {/* 7. Full-width Action CTA */}
+                          <div className="tf-actions-row">
+                            {isOwn ? (
+                              <>
                                 <button
                                   type="button"
-                                  onClick={(e) => handleWithdraw(e, post)}
-                                  className="tf-withdraw-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReviewPostId(post.id);
+                                    setReviewTab(pendingAppsCount > 0 ? 'pending' : 'accepted');
+                                  }}
+                                  className="tf-join-btn"
+                                  style={{
+                                    border: pendingAppsCount > 0 ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
+                                    background: pendingAppsCount > 0 ? 'var(--primary, #0F3FFE)' : 'var(--surface, #FFFFFF)',
+                                    color: pendingAppsCount > 0 ? '#FFFFFF' : 'var(--ink, #1A1A19)'
+                                  }}
                                 >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                  </svg>
-                                  Requested · Withdraw
+                                  {pendingAppsCount > 0 ? `Review ${pendingAppsCount} request${pendingAppsCount > 1 ? 's' : ''}` : 'Manage team'}
                                 </button>
-                              ) : post.state === 'accepted' ? (
                                 <button
                                   type="button"
-                                  onClick={(e) => handleOpenWhatsAppPost(e, post)}
-                                  className="tf-wa-accepted-btn"
+                                  onClick={(e) => handleOpenEdit(e, post)}
+                                  className="tf-btn-secondary"
                                 >
-                                  Message {post.lead.split(' ')[0]} on WhatsApp
+                                  Edit
                                 </button>
-                              ) : (
-                                <>
-                                  {(post.comm_method === 'whatsapp' || post.commMethod === 'whatsapp' || (!post.comm_method && !post.commMethod && (post.phone || post.phone_number || post.leadPhone))) && (
-                                    <button
-                                      type="button"
-                                      aria-label="Message on WhatsApp"
-                                      onClick={(e) => handleOpenWhatsAppPost(e, post)}
-                                      className="tf-wa-btn tf-wa-icon-only-btn"
-                                      title="Message lead on WhatsApp"
-                                    >
-                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366">
-                                        <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path>
-                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path>
-                                      </svg>
-                                      <span className="tf-wa-btn-text">WhatsApp</span>
-                                    </button>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleRequestJoin(e, post)}
-                                    className="tf-join-btn"
-                                  >
-                                    Request to join
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleToggleClosed(e, post)}
+                                  className="tf-btn-secondary"
+                                  style={{ color: 'var(--ink-secondary, #55534D)' }}
+                                >
+                                  {post.state === 'closed' || post.closed ? 'Reopen' : 'Close'}
+                                </button>
+                              </>
+                            ) : post.state === 'full' || post.openN === 0 ? (
+                              <button type="button" disabled className="tf-full-btn">
+                                Squad full
+                              </button>
+                            ) : post.state === 'requested' ? (
+                              <button
+                                type="button"
+                                onClick={(e) => handleWithdraw(e, post)}
+                                className="tf-withdraw-btn"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <circle cx="12" cy="12" r="10"></circle>
+                                  <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                Requested · Withdraw
+                              </button>
+                            ) : post.state === 'accepted' ? (
+                              <button
+                                type="button"
+                                onClick={(e) => handleOpenWhatsAppPost(e, post)}
+                                className="tf-wa-accepted-btn"
+                              >
+                                Message {post.lead.split(' ')[0]} on WhatsApp
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => handleRequestJoin(e, post)}
+                                className="tf-join-btn"
+                              >
+                                Request to join
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </article>
                     );
@@ -1457,9 +1744,12 @@ export default function TeamFinderScreen({
               {/* Competition header */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px minmax(0, 1fr)', gap: '12px', alignItems: 'start' }}>
-                  <span className="tf-host-initials-tile">
-                    {initialsOf(detailTarget.comp.host)}
-                  </span>
+                  <InstitutionLogo
+                    organizer={detailTarget.comp.host}
+                    title={detailTarget.comp.title}
+                    logoUrl={detailTarget.comp.logo}
+                    size={44}
+                  />
                   <div style={{ minWidth: 0 }}>
                     <h2 style={{ margin: 0, fontSize: '19px', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.015em', textWrap: 'pretty', color: 'var(--ink, #1A1A19)' }}>
                       {detailTarget.comp.title}
@@ -1954,7 +2244,7 @@ export default function TeamFinderScreen({
           setApplyTargetPost(null);
         }}
         post={applyTargetPost}
-        competition={applyTargetPost ? competitions.find(c => String(c.id) === String(applyTargetPost.compId)) : null}
+        competition={applyTargetPost?.comp || (applyTargetPost ? competitions.find(c => String(c.id) === String(applyTargetPost.compId)) : null)}
         profile={profile}
         onSubmitApply={(targetPost, pitch, highlightedSkills, applicantPhone) => {
           setLocalPostsState(prev => prev.map(p => p.id === targetPost.id ? { ...p, state: 'requested' } : p));
@@ -1963,6 +2253,19 @@ export default function TeamFinderScreen({
           if (showToast) showToast(`Request sent to ${targetPost.lead.split(' ')[0]}`);
         }}
       />
+
+      {/* ── In-App Chat Modal ── */}
+      {chatModalPost && (
+        <CompetitionChatModal
+          isOpen={Boolean(chatModalPost)}
+          onClose={() => setChatModalPost(null)}
+          application={activeChatApp}
+          post={chatModalPost.rawPost || chatModalPost}
+          competition={chatModalPost.comp}
+          currentUser={user}
+          profile={profile}
+        />
+      )}
 
     </div>
   );
