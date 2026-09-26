@@ -19,8 +19,10 @@ export const SCREEN_COLORS = {
   admin: { bg: 'rgba(220, 38, 38, 0.12)', color: '#DC2626', border: 'rgba(220, 38, 38, 0.3)' }
 };
 
+const LOCAL_STORAGE_KEY = 'onestop_active_sessions_v1';
+
 let tabSessionId = null;
-function getTabSessionId() {
+export function getTabSessionId() {
   if (!tabSessionId) {
     try {
       tabSessionId = sessionStorage.getItem('onestop_tab_session_id');
@@ -35,7 +37,7 @@ function getTabSessionId() {
   return tabSessionId;
 }
 
-function getDeviceType() {
+export function getDeviceType() {
   if (typeof window === 'undefined') return 'Desktop';
   const ua = navigator.userAgent || '';
   if (/Android/i.test(ua)) return 'Android';
@@ -51,17 +53,127 @@ let presenceSubscribers = new Set();
 let latestPresenceMap = {};
 let heartbeatTimer = null;
 let isVisibilityListenerAttached = false;
+
 let globalCurrentUser = null;
 let globalCurrentProfile = null;
 let globalCurrentScreen = 'home';
 
+function buildPresencePayload() {
+  const sid = getTabSessionId();
+  const isAuth = Boolean(globalCurrentUser && globalCurrentUser.email);
+  const userName =
+    globalCurrentProfile?.full_name ||
+    globalCurrentProfile?.name ||
+    globalCurrentUser?.user_metadata?.full_name ||
+    (globalCurrentUser?.email ? globalCurrentUser.email.split('@')[0] : 'Guest Visitor');
+
+  const userCollege = globalCurrentProfile?.college || (isAuth ? 'College Setup Pending' : 'Visiting OneStop');
+  const userCourse = globalCurrentProfile?.course || '';
+  const userYear = globalCurrentProfile?.year || globalCurrentProfile?.batch || 'UG 2nd Year';
+  const userPhone = globalCurrentProfile?.phone || '';
+
+  return {
+    sessionId: sid,
+    userId: globalCurrentUser?.id || sid,
+    email: globalCurrentUser?.email || 'guest@onestop.internal',
+    name: userName,
+    college: userCollege,
+    course: userCourse,
+    year: userYear,
+    phone: userPhone,
+    currentScreen: globalCurrentScreen || 'home',
+    device: getDeviceType(),
+    lastPing: Date.now(),
+    isRegistered: isAuth,
+    skills: globalCurrentProfile?.skills || []
+  };
+}
+
+function updateLocalSessions(payload) {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    let map = raw ? JSON.parse(raw) : {};
+    if (typeof map !== 'object' || !map) map = {};
+
+    const now = Date.now();
+    if (payload && payload.sessionId) {
+      map[payload.sessionId] = payload;
+    }
+
+    // Retain sessions active in the last 60 seconds
+    const cleanMap = {};
+    Object.keys(map).forEach((k) => {
+      const item = map[k];
+      if (item && Math.abs(now - (item.lastPing || 0)) < 60000) {
+        cleanMap[k] = item;
+      }
+    });
+
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanMap));
+    return cleanMap;
+  } catch {
+    return {};
+  }
+}
+
+function computeConsolidatedPresence() {
+  const now = Date.now();
+  const merged = {};
+
+  // 1. Local storage active sessions
+  const localMap = updateLocalSessions(null);
+  Object.values(localMap).forEach((p) => {
+    if (p && p.sessionId && Math.abs(now - (p.lastPing || 0)) < 60000) {
+      merged[p.sessionId] = p;
+    }
+  });
+
+  // 2. Realtime WebSocket channel presence
+  if (activeChannel && typeof activeChannel.presenceState === 'function') {
+    try {
+      const state = activeChannel.presenceState();
+      if (state) {
+        Object.values(state).forEach((presences) => {
+          if (Array.isArray(presences)) {
+            presences.forEach((p) => {
+              if (p && (p.sessionId || p.email)) {
+                const key = p.sessionId || p.email;
+                merged[key] = {
+                  ...p,
+                  lastPing: p.lastPing || now
+                };
+              }
+            });
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
+  // 3. Deduplicate: one card per unique student (keyed by email if registered, else sessionId)
+  const uniqueUsers = {};
+  Object.values(merged).forEach((p) => {
+    if (!p) return;
+    const isGuest = !p.isRegistered || p.email.endsWith('@onestop.internal');
+    const key = isGuest ? p.sessionId : p.email.toLowerCase();
+
+    const existing = uniqueUsers[key];
+    if (!existing || (p.lastPing || 0) >= (existing.lastPing || 0)) {
+      uniqueUsers[key] = p;
+    }
+  });
+
+  latestPresenceMap = uniqueUsers;
+  notifySubscribers();
+}
+
 function notifySubscribers() {
-  const presenceList = Object.values(latestPresenceMap);
+  const list = Object.values(latestPresenceMap);
   presenceSubscribers.forEach((cb) => {
     try {
-      cb(presenceList);
+      cb(list);
     } catch (e) {
-      console.warn('Presence subscriber callback error:', e);
+      console.warn('Presence subscriber error:', e);
     }
   });
 }
@@ -71,34 +183,43 @@ export function sendPresencePing(user = globalCurrentUser, profile = globalCurre
   if (profile) globalCurrentProfile = profile;
   if (screen) globalCurrentScreen = screen;
 
-  if (!hasValidCredentials || !activeChannel) return;
+  const payload = buildPresencePayload();
+  updateLocalSessions(payload);
 
-  const sessionId = getTabSessionId();
-  const userName = globalCurrentProfile?.name || globalCurrentUser?.user_metadata?.full_name || globalCurrentUser?.email?.split('@')[0] || 'Student';
-  const userCollege = globalCurrentProfile?.college || 'University';
-  const userYear = globalCurrentProfile?.year || globalCurrentProfile?.batch || 'Undergraduate';
+  if (!hasValidCredentials) {
+    computeConsolidatedPresence();
+    return;
+  }
 
-  const payload = {
-    sessionId,
-    userId: globalCurrentUser?.id || sessionId,
-    email: globalCurrentUser?.email || 'Anonymous',
-    name: userName,
-    college: userCollege,
-    year: userYear,
-    currentScreen: globalCurrentScreen,
-    device: getDeviceType(),
-    lastPing: Date.now()
-  };
+  if (!activeChannel) {
+    initGlobalPresence(user, profile, screen);
+    return;
+  }
 
   try {
     activeChannel.track(payload).catch(() => {});
-  } catch (e) {
-    // Non-blocking
-  }
+  } catch (e) {}
+
+  computeConsolidatedPresence();
 }
 
-function initPresenceChannel() {
-  if (!hasValidCredentials || activeChannel) return;
+export function initGlobalPresence(user, profile, screen) {
+  if (user) globalCurrentUser = user;
+  if (profile) globalCurrentProfile = profile;
+  if (screen) globalCurrentScreen = screen;
+
+  const initialPayload = buildPresencePayload();
+  updateLocalSessions(initialPayload);
+
+  if (!hasValidCredentials) {
+    computeConsolidatedPresence();
+    return;
+  }
+
+  if (activeChannel) {
+    sendPresencePing();
+    return;
+  }
 
   try {
     const sid = getTabSessionId();
@@ -107,22 +228,7 @@ function initPresenceChannel() {
     });
 
     const handleSync = () => {
-      try {
-        const state = activeChannel.presenceState();
-        const nextMap = {};
-        Object.keys(state).forEach((key) => {
-          const presences = state[key];
-          if (Array.isArray(presences) && presences.length > 0) {
-            // Pick most recent entry for this session
-            const latest = presences[presences.length - 1];
-            nextMap[key] = latest;
-          }
-        });
-        latestPresenceMap = nextMap;
-        notifySubscribers();
-      } catch (err) {
-        console.warn('Presence sync parsing error:', err);
-      }
+      computeConsolidatedPresence();
     };
 
     activeChannel
@@ -132,15 +238,17 @@ function initPresenceChannel() {
 
     activeChannel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
-        sendPresencePing();
+        const payload = buildPresencePayload();
+        activeChannel.track(payload).catch(() => {});
+        computeConsolidatedPresence();
       }
     });
 
     if (!heartbeatTimer) {
-      // Periodic ping every 75s
+      // Periodic ping every 30s for live freshness
       heartbeatTimer = setInterval(() => {
         sendPresencePing();
-      }, 75000);
+      }, 30000);
     }
 
     if (typeof document !== 'undefined' && !isVisibilityListenerAttached) {
@@ -150,20 +258,17 @@ function initPresenceChannel() {
           sendPresencePing();
         }
       });
+      window.addEventListener('focus', () => {
+        sendPresencePing();
+      });
     }
   } catch (err) {
-    console.warn('Error setting up Supabase presence channel:', err);
+    console.warn('Realtime presence init error:', err);
   }
 }
 
 /**
- * Subscribes a listener to live online presence updates.
- *
- * @param {object} user - Current user object
- * @param {object} profile - Current user profile
- * @param {string} screen - Current screen name
- * @param {function} onSync - Callback receiving active presence list
- * @returns {function} Unsubscribe function
+ * Subscribes a listener in AdminConsolePage to live online presence list.
  */
 export function subscribeToPresence(user, profile, screen, onSync) {
   if (user) globalCurrentUser = user;
@@ -177,7 +282,7 @@ export function subscribeToPresence(user, profile, screen, onSync) {
     } catch (e) {}
   }
 
-  initPresenceChannel();
+  initGlobalPresence(user, profile, screen);
   sendPresencePing();
 
   return () => {

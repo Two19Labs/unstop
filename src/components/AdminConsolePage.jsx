@@ -7,101 +7,12 @@ import {
   SCREEN_LABELS,
   SCREEN_COLORS
 } from '../lib/presenceService';
-import { formatWhatsAppUrl } from '../context/AuthContext';
+import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import './AdminConsolePage.css';
-
-// Mock student fallback if database has zero rows or during offline preview
-const MOCK_PROFILES_FALLBACK = [
-  {
-    id: 'p_aditya',
-    full_name: 'Aditya Singhani',
-    email: 'aditya.25015@sscbs.du.ac.in',
-    college: 'Shaheed Sukhdev College of Business Studies',
-    course: 'BMS',
-    year: 'UG 2nd Year',
-    education_level: 'undergraduate',
-    phone: '9876543210',
-    created_at: new Date(Date.now() - 86400000 * 14).toISOString(),
-    updated_at: new Date(Date.now() - 60000 * 2).toISOString(),
-  },
-  {
-    id: 'p_manthan',
-    full_name: 'Manthan Kabra',
-    email: 'manthan.25042@sscbs.du.ac.in',
-    college: 'Shaheed Sukhdev College of Business Studies',
-    course: 'BMS',
-    year: 'UG 2nd Year',
-    education_level: 'undergraduate',
-    phone: '9871122334',
-    created_at: new Date(Date.now() - 86400000 * 12).toISOString(),
-    updated_at: new Date(Date.now() - 60000 * 10).toISOString(),
-  },
-  {
-    id: 'p_riya',
-    full_name: 'Riya Gupta',
-    email: 'riya.gupta@srcc.du.ac.in',
-    college: 'Shri Ram College of Commerce (SRCC)',
-    course: 'B.Com (Hons)',
-    year: 'UG 3rd Year',
-    education_level: 'undergraduate',
-    phone: '9810234567',
-    created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
-    updated_at: new Date(Date.now() - 60000 * 35).toISOString(),
-  },
-  {
-    id: 'p_divya',
-    full_name: 'Divya Sen',
-    email: 'divya.sen@hindu.du.ac.in',
-    college: 'Hindu College',
-    course: 'B.A. (Hons) Economics',
-    year: 'UG 2nd Year',
-    education_level: 'undergraduate',
-    phone: '9920145678',
-    created_at: new Date(Date.now() - 86400000 * 8).toISOString(),
-    updated_at: new Date(Date.now() - 60000 * 120).toISOString(),
-  },
-  {
-    id: 'p_tushar',
-    full_name: 'Tushar Mehta',
-    email: 'tushar.mehta@iitd.ac.in',
-    college: 'IIT Delhi',
-    course: 'B.Tech Computer Science',
-    year: 'UG 4th Year',
-    education_level: 'undergraduate',
-    phone: '9819876543',
-    created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
-    updated_at: new Date(Date.now() - 60000 * 400).toISOString(),
-  },
-  {
-    id: 'p_mehak',
-    full_name: 'Mehak Preet',
-    email: 'mehak.preet@fms.edu',
-    college: 'Faculty of Management Studies (FMS)',
-    course: 'MBA General',
-    year: 'PG 1st Year',
-    education_level: 'postgraduate',
-    phone: '9988776655',
-    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-  },
-  {
-    id: 'p_ishaan',
-    full_name: 'Ishaan Malhotra',
-    email: 'ishaan.malhotra@hansraj.du.ac.in',
-    college: 'Hansraj College',
-    course: 'B.Com (Hons)',
-    year: 'UG 1st Year',
-    education_level: 'undergraduate',
-    phone: '',
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  }
-];
 
 export default function AdminConsolePage({ onBack, user }) {
   const isAuthorized = isAdminEmail(user?.email);
 
-  // If unauthorized, show 403 Access Denied View
   if (!isAuthorized) {
     return (
       <div className="admin-console-container">
@@ -139,8 +50,10 @@ function AdminConsoleContent({ onBack, user }) {
   const [onlinePresence, setOnlinePresence] = useState([]);
   const [squadEngagement, setSquadEngagement] = useState({ posts: 0, applications: 0 });
   const [tickerNow, setTickerNow] = useState(Date.now());
+  const [selectedStudentForInspect, setSelectedStudentForInspect] = useState(null);
+  const [copyFeedback, setCopyFeedback] = useState('');
 
-  // Filter & Search states
+  // Search & Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCollege, setFilterCollege] = useState('All');
   const [filterStanding, setFilterStanding] = useState('All');
@@ -152,7 +65,7 @@ function AdminConsoleContent({ onBack, user }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Subscribe to live online presence
+  // Real-Time Online Presence Subscription
   useEffect(() => {
     const unsubscribe = subscribeToPresence(user, null, 'admin', (presenceList) => {
       setOnlinePresence(presenceList || []);
@@ -162,51 +75,38 @@ function AdminConsoleContent({ onBack, user }) {
     };
   }, [user]);
 
-  // Fetch registered user profiles & squad metrics from Supabase
+  // Fetch 100% Real Data from Supabase
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let profilesData = [];
-
       if (hasValidCredentials && supabase) {
-        // Query profiles
+        // 1. Fetch real profiles
         const { data: dbProfiles, error: profileErr } = await supabase
           .from('profiles')
-          .select('id, email, full_name, college, course, year, phone, bio, education_level, created_at, updated_at')
+          .select('id, email, full_name, college, course, year, phone, bio, avatar_url, education_level, skills, created_at, updated_at, profile_last_updated_at')
           .order('created_at', { ascending: false });
 
-        if (!profileErr && Array.isArray(dbProfiles) && dbProfiles.length > 0) {
-          profilesData = dbProfiles;
+        if (!profileErr && Array.isArray(dbProfiles)) {
+          setStudents(dbProfiles);
         }
 
-        // Query engagement counts (squad posts & applications)
-        try {
-          const { count: postCount } = await supabase
-            .from('squad_posts')
-            .select('*', { count: 'exact', head: true });
+        // 2. Fetch real squad posts count
+        const { count: postCount } = await supabase
+          .from('squad_posts')
+          .select('*', { count: 'exact', head: true });
 
-          const { count: appCount } = await supabase
-            .from('squad_applications')
-            .select('*', { count: 'exact', head: true });
+        // 3. Fetch real squad applications count
+        const { count: appCount } = await supabase
+          .from('squad_applications')
+          .select('*', { count: 'exact', head: true });
 
-          setSquadEngagement({
-            posts: postCount || 0,
-            applications: appCount || 0
-          });
-        } catch (e) {
-          // Non-blocking
-        }
-      }
-
-      // If database has profiles, use them; if empty, merge with realistic mock data
-      if (profilesData.length > 0) {
-        setStudents(profilesData);
-      } else {
-        setStudents(MOCK_PROFILES_FALLBACK);
+        setSquadEngagement({
+          posts: postCount || 0,
+          applications: appCount || 0
+        });
       }
     } catch (err) {
-      console.warn('Error fetching admin demographics:', err);
-      setStudents(MOCK_PROFILES_FALLBACK);
+      console.warn('Error fetching real admin demographics:', err);
     } finally {
       setLoading(false);
     }
@@ -216,53 +116,60 @@ function AdminConsoleContent({ onBack, user }) {
     fetchData();
   }, [fetchData]);
 
-  // Compute online presence lookup map
+  // Realtime PostgreSQL changes listener on profiles and squad posts
+  useEffect(() => {
+    if (!hasValidCredentials || !supabase) return;
+
+    const channel = supabase
+      .channel('onestop-admin-realtime-feed')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
+
+  // Online Lookup Map
   const onlineEmailSet = useMemo(() => {
-    const set = new Set();
+    const map = new Map();
     onlinePresence.forEach((p) => {
-      if (p.email) set.add(p.email.toLowerCase());
+      if (p.email) map.set(p.email.toLowerCase(), p);
     });
-    return set;
+    return map;
   }, [onlinePresence]);
 
-  // Aggregate metrics
+  // 100% Real Aggregated Metrics
   const totalUsers = students.length;
-  const onlineCount = Math.max(onlinePresence.length, 1); // at least current admin is online
+  const onlineCount = onlinePresence.length;
   const ugCount = students.filter(s => (s.education_level || '').toLowerCase().includes('under') || (s.year || '').startsWith('UG')).length;
   const pgCount = totalUsers - ugCount;
   const whatsappCount = students.filter(s => Boolean(s.phone && String(s.phone).trim())).length;
   const whatsappPct = totalUsers > 0 ? Math.round((whatsappCount / totalUsers) * 100) : 0;
 
-  // College distribution for Donut Chart
+  // Dynamic College Distribution (100% Real from Profiles)
   const collegeStats = useMemo(() => {
     const map = {};
     students.forEach((s) => {
-      const col = (s.college || 'Unspecified').trim();
-      let group = 'Other Colleges';
-      if (/Shaheed Sukhdev|SSCBS/i.test(col)) group = 'SSCBS';
-      else if (/Shri Ram College|SRCC/i.test(col)) group = 'SRCC';
-      else if (/Hindu/i.test(col)) group = 'Hindu College';
-      else if (/Hansraj/i.test(col)) group = 'Hansraj';
-      else if (/IIT|Indian Institute of Technology/i.test(col)) group = 'IITs';
-      else if (/IIM|FMS/i.test(col)) group = 'IIMs / FMS';
-      map[group] = (map[group] || 0) + 1;
+      const col = (s.college || '').trim();
+      const name = col || 'Setup Pending';
+      map[name] = (map[name] || 0) + 1;
     });
 
-    const colors = {
-      SSCBS: '#0F3FFE',
-      SRCC: '#10B981',
-      'Hindu College': '#8B5CF6',
-      Hansraj: '#EC4899',
-      IITs: '#F59E0B',
-      'IIMs / FMS': '#06B6D4',
-      'Other Colleges': '#6B7280'
-    };
-
+    const palette = ['#0F3FFE', '#10B981', '#8B5CF6', '#EC4899', '#F59E0B', '#06B6D4', '#64748B'];
     const entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
     const total = students.length || 1;
 
     let accumulatedPct = 0;
-    const slices = entries.map(([name, count]) => {
+    const slices = entries.map(([name, count], index) => {
       const pct = Math.round((count / total) * 100);
       const strokeDash = (pct / 100) * 314.15;
       const strokeOffset = -((accumulatedPct / 100) * 314.15);
@@ -271,49 +178,54 @@ function AdminConsoleContent({ onBack, user }) {
         name,
         count,
         pct,
-        color: colors[name] || '#9CA3AF',
+        color: palette[index % palette.length],
         strokeDash,
         strokeOffset
       };
     });
 
-    return { total, slices };
+    return { total: students.length, slices };
   }, [students]);
 
-  // Academic Standing distribution for Bar Chart
+  // Dynamic Academic Standing Breakdown (100% Real)
   const standingStats = useMemo(() => {
-    const categories = [
-      { key: 'UG 1st Year', label: 'UG 1st Year' },
-      { key: 'UG 2nd Year', label: 'UG 2nd Year' },
-      { key: 'UG 3rd Year', label: 'UG 3rd Year' },
-      { key: 'UG 4th Year', label: 'UG 4th Year' },
-      { key: 'PG 1st Year', label: 'PG 1st Year' },
-      { key: 'PG 2nd Year', label: 'PG 2nd Year' },
-    ];
-
-    const counts = categories.map((cat) => {
-      const c = students.filter((s) => (s.year || '').toLowerCase().includes(cat.label.toLowerCase())).length;
-      return { label: cat.label, count: c };
+    const counts = {};
+    students.forEach((s) => {
+      const yr = (s.year || s.batch || 'UG 2nd Year').trim();
+      counts[yr] = (counts[yr] || 0) + 1;
     });
 
-    const maxVal = Math.max(...counts.map(c => c.count), 1);
-    return counts.map(item => ({
-      ...item,
-      pct: Math.round((item.count / maxVal) * 100)
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const maxVal = Math.max(...entries.map(e => e[1]), 1);
+
+    return entries.map(([label, count]) => ({
+      label,
+      count,
+      pct: Math.round((count / maxVal) * 100)
     }));
   }, [students]);
 
-  // Filtered Students Directory
+  // Unique Colleges for Filter Dropdown
+  const uniqueColleges = useMemo(() => {
+    const set = new Set();
+    students.forEach((s) => {
+      if (s.college && s.college.trim()) set.add(s.college.trim());
+    });
+    return Array.from(set);
+  }, [students]);
+
+  // Filtered Student Directory
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
-      const nameMatch = (s.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      const nameMatch =
+        (s.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.college || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (s.phone || '').includes(searchQuery);
 
-      const colMatch = filterCollege === 'All' || (s.college || '').includes(filterCollege);
+      const colMatch = filterCollege === 'All' || (s.college || '') === filterCollege;
       const standingMatch = filterStanding === 'All' || (s.year || '').includes(filterStanding);
-      
+
       const isOnline = onlineEmailSet.has((s.email || '').toLowerCase());
       const statusMatch = filterStatus === 'All' || (filterStatus === 'online' ? isOnline : !isOnline);
 
@@ -323,15 +235,16 @@ function AdminConsoleContent({ onBack, user }) {
 
   // Export CSV Handler
   const handleExportCSV = () => {
-    const headers = ['Serial No', 'Full Name', 'Email', 'College', 'Course', 'Academic Standing', 'Phone', 'Created At'];
+    const headers = ['Serial No', 'Full Name', 'Email', 'College', 'Course', 'Academic Standing', 'Phone', 'Skills', 'Created At'];
     const rows = filteredStudents.map((s, idx) => [
       idx + 1,
       `"${(s.full_name || '').replace(/"/g, '""')}"`,
       `"${(s.email || '').replace(/"/g, '""')}"`,
-      `"${(s.college || '').replace(/"/g, '""')}"`,
+      `"${(s.college || 'Pending Setup').replace(/"/g, '""')}"`,
       `"${(s.course || '').replace(/"/g, '""')}"`,
-      `"${(s.year || '').replace(/"/g, '""')}"`,
+      `"${(s.year || 'UG 2nd Year').replace(/"/g, '""')}"`,
       `"${s.phone || ''}"`,
+      `"${Array.isArray(s.skills) ? s.skills.join(', ') : ''}"`,
       `"${s.created_at || ''}"`
     ]);
 
@@ -339,10 +252,17 @@ function AdminConsoleContent({ onBack, user }) {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `onestop_student_demographics_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `onestop_students_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleCopyText = (text, label) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopyFeedback(label);
+    setTimeout(() => setCopyFeedback(''), 2000);
   };
 
   return (
@@ -359,7 +279,7 @@ function AdminConsoleContent({ onBack, user }) {
           </button>
           <div className="header-title-block">
             <h2>Admin Console Workspace</h2>
-            <p className="header-subtitle-admin">Student Demographics, Real-Time Online Presence &amp; Directory</p>
+            <p className="header-subtitle-admin">Real-Time Online Presence, Student Demographics &amp; Directory</p>
           </div>
         </div>
 
@@ -369,7 +289,7 @@ function AdminConsoleContent({ onBack, user }) {
             <span className="admin-email">{user?.email}</span>
           </div>
 
-          <button className="btn-admin-action" onClick={fetchData} title="Refresh data">
+          <button className="btn-admin-action" onClick={fetchData} title="Refresh real-time data">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
               <polyline points="1 20 1 14 7 14"></polyline>
@@ -391,7 +311,7 @@ function AdminConsoleContent({ onBack, user }) {
 
       {/* ── Main Content Area ── */}
       <main className="admin-console-content">
-        {/* 1. Metric Cards Grid */}
+        {/* 1. Real Metric Cards Grid */}
         <section className="analytics-stats-grid">
           <div className="stat-card-admin highlight-online">
             <div className="card-icon">🟢</div>
@@ -410,21 +330,29 @@ function AdminConsoleContent({ onBack, user }) {
           <div className="stat-card-admin">
             <div className="card-icon">🎓</div>
             <h4>UG / PG Split</h4>
-            <p className="stat-number">{ugCount} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>/ {pgCount}</span></p>
-            <p className="stat-subtitle">{Math.round((ugCount / Math.max(1, totalUsers)) * 100)}% Undergraduate · {Math.round((pgCount / Math.max(1, totalUsers)) * 100)}% Postgraduate</p>
+            <p className="stat-number">
+              {ugCount} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>/ {pgCount}</span>
+            </p>
+            <p className="stat-subtitle">
+              {Math.round((ugCount / Math.max(1, totalUsers)) * 100)}% Undergraduate · {Math.round((pgCount / Math.max(1, totalUsers)) * 100)}% Postgraduate
+            </p>
           </div>
 
           <div className="stat-card-admin">
             <div className="card-icon">📱</div>
             <h4>WhatsApp Verified</h4>
-            <p className="stat-number">{whatsappCount} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>({whatsappPct}%)</span></p>
+            <p className="stat-number">
+              {whatsappCount} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>({whatsappPct}%)</span>
+            </p>
             <p className="stat-subtitle">Direct contact available for squads</p>
           </div>
 
           <div className="stat-card-admin">
             <div className="card-icon">🤝</div>
             <h4>Squad Activity</h4>
-            <p className="stat-number">{squadEngagement.posts} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>posts</span></p>
+            <p className="stat-number">
+              {squadEngagement.posts} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>posts</span>
+            </p>
             <p className="stat-subtitle">{squadEngagement.applications} teammate applications submitted</p>
           </div>
         </section>
@@ -438,7 +366,7 @@ function AdminConsoleContent({ onBack, user }) {
                 <span>Real-Time Online Presence Roster</span>
               </h3>
               <p className="section-desc-small">
-                Students currently active across OneStop (live WebSocket presence heartbeat).
+                Students currently connected to OneStop (live WebSocket presence heartbeat).
               </p>
             </div>
 
@@ -450,7 +378,7 @@ function AdminConsoleContent({ onBack, user }) {
 
           {onlinePresence.length === 0 ? (
             <div className="no-registry-results">
-              <p>You are currently the only active administrator session connected to the real-time presence channel.</p>
+              <p>Connecting to real-time presence channel...</p>
             </div>
           ) : (
             <div className="table-scroll-container-admin">
@@ -462,6 +390,7 @@ function AdminConsoleContent({ onBack, user }) {
                     <th>Active Screen / Feature</th>
                     <th>Device</th>
                     <th>Last Ping</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -472,8 +401,14 @@ function AdminConsoleContent({ onBack, user }) {
                       const scrKey = item.currentScreen || 'home';
                       const chipStyle = SCREEN_COLORS[scrKey] || SCREEN_COLORS.home;
 
+                      // Find profile for this user if registered
+                      const matchedProfile = students.find(s => s.email && s.email.toLowerCase() === (item.email || '').toLowerCase());
+
                       return (
-                        <tr key={item.sessionId || item.userId || item.email}>
+                        <tr
+                          key={item.sessionId || item.userId || item.email}
+                          onClick={() => setSelectedStudentForInspect(matchedProfile || item)}
+                        >
                           <td>
                             <div className="student-name-cell">
                               <span className="online-avatar-badge">
@@ -487,7 +422,7 @@ function AdminConsoleContent({ onBack, user }) {
                           </td>
                           <td>
                             <span className="course-sem-chip">
-                              {item.college} · {item.year}
+                              {item.college || 'Setup Pending'} · {item.year || 'UG'}
                             </span>
                           </td>
                           <td>
@@ -513,6 +448,18 @@ function AdminConsoleContent({ onBack, user }) {
                               {pingSec <= 3 ? 'Live (Just now)' : `${pingSec}s ago`}
                             </span>
                           </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              className="btn-inspect-profile"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudentForInspect(matchedProfile || item);
+                              }}
+                            >
+                              Inspect Details →
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -522,20 +469,20 @@ function AdminConsoleContent({ onBack, user }) {
           )}
         </section>
 
-        {/* 3. Visual Charts Row (Donut Chart & Bar Chart) */}
+        {/* 3. Real Visual Charts Row */}
         <section className="analytics-charts-row">
-          {/* College Distribution Donut Chart */}
+          {/* Dynamic College Distribution Donut Chart */}
           <div className="chart-container-admin">
             <div className="chart-header-admin">
-              <h3>College Distribution</h3>
-              <span className="section-desc-small">{totalUsers} Total Students</span>
+              <h3>Collegiate Distribution</h3>
+              <span className="section-desc-small">{totalUsers} Registered Students</span>
             </div>
 
             <div className="donut-chart-wrapper">
               <div className="donut-svg-container">
                 <svg viewBox="0 0 120 120" style={{ width: '100%', height: '100%' }}>
                   <circle cx="60" cy="60" r="50" fill="transparent" stroke="var(--line)" strokeWidth="12" />
-                  {collegeStats.slices.map((slice, i) => (
+                  {collegeStats.slices.map((slice) => (
                     <circle
                       key={slice.name}
                       cx="60"
@@ -553,7 +500,7 @@ function AdminConsoleContent({ onBack, user }) {
                 </svg>
                 <div className="donut-center-text">
                   <span className="donut-center-num">{collegeStats.total}</span>
-                  <span className="donut-center-lbl">Students</span>
+                  <span className="donut-center-lbl">Profiles</span>
                 </div>
               </div>
 
@@ -561,7 +508,7 @@ function AdminConsoleContent({ onBack, user }) {
                 {collegeStats.slices.map((slice) => (
                   <div className="legend-item-admin" key={slice.name}>
                     <span className="legend-color-dot" style={{ backgroundColor: slice.color }}></span>
-                    <span className="legend-label-text">{slice.name}</span>
+                    <span className="legend-label-text" title={slice.name}>{slice.name}</span>
                     <span className="legend-val-text">{slice.pct}% ({slice.count})</span>
                   </div>
                 ))}
@@ -572,8 +519,8 @@ function AdminConsoleContent({ onBack, user }) {
           {/* Academic Standing Bar Chart */}
           <div className="chart-container-admin">
             <div className="chart-header-admin">
-              <h3>Academic Standing Enrollment</h3>
-              <span className="section-desc-small">Batch &amp; Level Breakdown</span>
+              <h3>Academic Standing Breakdown</h3>
+              <span className="section-desc-small">Batch &amp; Level Enrollment</span>
             </div>
 
             <div className="bar-chart-wrapper">
@@ -581,7 +528,7 @@ function AdminConsoleContent({ onBack, user }) {
                 <div className="bar-item-admin" key={item.label}>
                   <div className="bar-item-label-row">
                     <span>{item.label}</span>
-                    <span>{item.count} Students</span>
+                    <span>{item.count} {item.count === 1 ? 'Student' : 'Students'}</span>
                   </div>
                   <div className="bar-track-admin">
                     <div
@@ -604,7 +551,7 @@ function AdminConsoleContent({ onBack, user }) {
             <div>
               <h3>Registered Students Directory</h3>
               <p className="section-desc-small">
-                Showing {filteredStudents.length} of {totalUsers} registered student profiles
+                Showing {filteredStudents.length} of {totalUsers} registered collegiate profiles (click any row to inspect)
               </p>
             </div>
           </div>
@@ -631,13 +578,10 @@ function AdminConsoleContent({ onBack, user }) {
                 onChange={(e) => setFilterCollege(e.target.value)}
                 className="admin-select"
               >
-                <option value="All">All Colleges</option>
-                <option value="Shaheed Sukhdev">SSCBS</option>
-                <option value="Shri Ram College">SRCC</option>
-                <option value="Hindu">Hindu College</option>
-                <option value="Hansraj">Hansraj College</option>
-                <option value="IIT">IIT</option>
-                <option value="FMS">FMS</option>
+                <option value="All">All Colleges ({uniqueColleges.length})</option>
+                {uniqueColleges.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
 
               <select
@@ -669,7 +613,7 @@ function AdminConsoleContent({ onBack, user }) {
           {/* Directory Table */}
           {loading ? (
             <div className="no-registry-results">
-              <p>Loading student directory from Supabase...</p>
+              <p>Loading real-time student directory from Supabase...</p>
             </div>
           ) : filteredStudents.length === 0 ? (
             <div className="no-registry-results">
@@ -688,6 +632,7 @@ function AdminConsoleContent({ onBack, user }) {
                       <th>Standing</th>
                       <th>WhatsApp / Contact</th>
                       <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -698,7 +643,10 @@ function AdminConsoleContent({ onBack, user }) {
                         : null;
 
                       return (
-                        <tr key={student.id || student.email}>
+                        <tr
+                          key={student.id || student.email}
+                          onClick={() => setSelectedStudentForInspect(student)}
+                        >
                           <td style={{ textAlign: 'center' }}>
                             <span className="registry-serial-num">#{idx + 1}</span>
                           </td>
@@ -717,7 +665,7 @@ function AdminConsoleContent({ onBack, user }) {
                           </td>
                           <td>
                             <div>
-                              <strong>{student.college || 'College Unspecified'}</strong>
+                              <strong>{student.college || 'Setup Pending'}</strong>
                               {student.course && (
                                 <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
                                   {student.course}
@@ -738,6 +686,7 @@ function AdminConsoleContent({ onBack, user }) {
                                 rel="noopener noreferrer"
                                 className="btn-whatsapp-cell"
                                 title="Open WhatsApp Chat"
+                                onClick={(e) => e.stopPropagation()}
                               >
                                 <span>💬</span>
                                 <span>+91 {student.phone}</span>
@@ -755,6 +704,18 @@ function AdminConsoleContent({ onBack, user }) {
                               <span className="registry-status-offline">Offline</span>
                             )}
                           </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              className="btn-inspect-profile"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudentForInspect(student);
+                              }}
+                            >
+                              Inspect Details →
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -771,7 +732,11 @@ function AdminConsoleContent({ onBack, user }) {
                     : null;
 
                   return (
-                    <div className="registry-student-card" key={student.id || student.email}>
+                    <div
+                      className="registry-student-card"
+                      key={student.id || student.email}
+                      onClick={() => setSelectedStudentForInspect(student)}
+                    >
                       <div className="student-card-header">
                         <span className="registry-serial-num">#{idx + 1}</span>
                         <span className="registry-user-avatar">
@@ -786,7 +751,7 @@ function AdminConsoleContent({ onBack, user }) {
                       </div>
 
                       <div style={{ fontSize: '0.84rem' }}>
-                        <div><strong>College:</strong> {student.college || 'Unspecified'}</div>
+                        <div><strong>College:</strong> {student.college || 'Setup Pending'}</div>
                         {student.course && <div><strong>Course:</strong> {student.course}</div>}
                         <div><strong>Standing:</strong> {student.year || 'UG 2nd Year'}</div>
                       </div>
@@ -799,6 +764,7 @@ function AdminConsoleContent({ onBack, user }) {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="btn-whatsapp-cell"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <span>💬</span>
                               <span>+91 {student.phone}</span>
@@ -824,6 +790,180 @@ function AdminConsoleContent({ onBack, user }) {
           )}
         </section>
       </main>
+
+      {/* ── Interactive Student Profile Inspection Drawer ── */}
+      {selectedStudentForInspect && (
+        <div className="profile-drawer-backdrop" onClick={() => setSelectedStudentForInspect(null)}>
+          <div className="profile-drawer-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="drawer-header">
+              <h3>
+                <span>🔍</span>
+                <span>Student Profile Inspector</span>
+              </h3>
+              <button
+                type="button"
+                className="drawer-close-btn"
+                onClick={() => setSelectedStudentForInspect(null)}
+                aria-label="Close inspector"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="drawer-body">
+              {/* Hero Identification Card */}
+              <div className="drawer-hero-card">
+                <div className="drawer-avatar-large">
+                  {selectedStudentForInspect.avatar_url ? (
+                    <img src={selectedStudentForInspect.avatar_url} alt="" />
+                  ) : (
+                    (selectedStudentForInspect.full_name || selectedStudentForInspect.name || 'S').charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="drawer-hero-info">
+                  <h4 className="drawer-student-name">
+                    {selectedStudentForInspect.full_name || selectedStudentForInspect.name || 'Anonymous Student'}
+                  </h4>
+                  <div className="drawer-student-email">
+                    <span>{selectedStudentForInspect.email}</span>
+                  </div>
+                  {onlineEmailSet.has((selectedStudentForInspect.email || '').toLowerCase()) ? (
+                    <span className="drawer-status-pill online">
+                      🟢 Online Right Now
+                    </span>
+                  ) : (
+                    <span className="drawer-status-pill offline">
+                      ⚪ Offline
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact & Outreach Actions */}
+              <div className="drawer-section-card">
+                <h5 className="drawer-section-title">Direct Outreach &amp; WhatsApp</h5>
+                {selectedStudentForInspect.phone ? (
+                  <div className="drawer-actions-row">
+                    <a
+                      href={formatWhatsAppUrl(selectedStudentForInspect.phone, `Hey ${selectedStudentForInspect.full_name ? selectedStudentForInspect.full_name.split(' ')[0] : ''}! Connecting with you from OneStop Admin.`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="drawer-btn-whatsapp"
+                    >
+                      <span>💬 Chat on WhatsApp</span>
+                    </a>
+                    <button
+                      type="button"
+                      className="drawer-btn-copy"
+                      onClick={() => handleCopyText(selectedStudentForInspect.phone, 'phone')}
+                    >
+                      {copyFeedback === 'phone' ? '✓ Copied' : 'Copy Phone'}
+                    </button>
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--ink-muted)' }}>
+                    No contact number provided by this student yet.
+                  </p>
+                )}
+              </div>
+
+              {/* Collegiate Profile Details */}
+              <div className="drawer-section-card">
+                <h5 className="drawer-section-title">Collegiate Information</h5>
+                <div className="drawer-info-grid">
+                  <div className="drawer-info-item">
+                    <span className="drawer-info-label">College</span>
+                    <span className="drawer-info-value">
+                      {selectedStudentForInspect.college || 'Setup Pending'}
+                    </span>
+                  </div>
+                  <div className="drawer-info-item">
+                    <span className="drawer-info-label">Course</span>
+                    <span className="drawer-info-value">
+                      {selectedStudentForInspect.course || 'Unset'}
+                    </span>
+                  </div>
+                  <div className="drawer-info-item">
+                    <span className="drawer-info-label">Academic Standing</span>
+                    <span className="drawer-info-value">
+                      {selectedStudentForInspect.year || 'UG 2nd Year'}
+                    </span>
+                  </div>
+                  <div className="drawer-info-item">
+                    <span className="drawer-info-label">Education Level</span>
+                    <span className="drawer-info-value" style={{ textTransform: 'capitalize' }}>
+                      {selectedStudentForInspect.education_level || 'Undergraduate'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Highlighted Skills */}
+              <div className="drawer-section-card">
+                <h5 className="drawer-section-title">Highlighted Skills</h5>
+                {Array.isArray(selectedStudentForInspect.skills) && selectedStudentForInspect.skills.length > 0 ? (
+                  <div className="drawer-skills-wrap">
+                    {selectedStudentForInspect.skills.map((skill) => (
+                      <span className="drawer-skill-chip" key={skill}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--ink-muted)' }}>
+                    No skills highlighted on profile yet.
+                  </p>
+                )}
+              </div>
+
+              {/* Bio / Pitch */}
+              {selectedStudentForInspect.bio && (
+                <div className="drawer-section-card">
+                  <h5 className="drawer-section-title">Personal Bio</h5>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ink)', lineHeight: 1.5 }}>
+                    {selectedStudentForInspect.bio}
+                  </p>
+                </div>
+              )}
+
+              {/* Platform Metadata & Timestamps */}
+              <div className="drawer-section-card">
+                <h5 className="drawer-section-title">Platform Account Metadata</h5>
+                <div className="drawer-info-grid">
+                  <div className="drawer-info-item">
+                    <span className="drawer-info-label">Account Created</span>
+                    <span className="drawer-info-value" style={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                      {selectedStudentForInspect.created_at ? new Date(selectedStudentForInspect.created_at).toLocaleString() : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="drawer-info-item">
+                    <span className="drawer-info-label">Profile Last Updated</span>
+                    <span className="drawer-info-value" style={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                      {selectedStudentForInspect.profile_last_updated_at || selectedStudentForInspect.updated_at
+                        ? new Date(selectedStudentForInspect.profile_last_updated_at || selectedStudentForInspect.updated_at).toLocaleString()
+                        : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+                {selectedStudentForInspect.id && (
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--ink-muted)', fontFamily: 'monospace' }}>
+                      UUID: {selectedStudentForInspect.id}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-inspect-profile"
+                      onClick={() => handleCopyText(selectedStudentForInspect.id, 'uuid')}
+                    >
+                      {copyFeedback === 'uuid' ? '✓ Copied' : 'Copy ID'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

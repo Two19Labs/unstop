@@ -20,7 +20,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
 import AdminConsolePage from './components/AdminConsolePage';
 import { isAdminEmail } from './lib/admin';
-import { sendPresencePing } from './lib/presenceService';
+import { sendPresencePing, initGlobalPresence } from './lib/presenceService';
 import { useCompetitionRounds } from './hooks/useCompetitionRounds';
 
 import {
@@ -207,9 +207,9 @@ function OneStopInner() {
     trackScreenView(screen);
   }, [screen]);
 
-  // Live Online Presence heartbeat sync across devices
+  // Live Online Presence tracking for all active sessions & devices
   useEffect(() => {
-    sendPresencePing(user, authProfile, screen);
+    initGlobalPresence(user, authProfile, screen);
   }, [user, authProfile, screen]);
 
   // Toast System (Declared early so all callbacks can access flash safely)
