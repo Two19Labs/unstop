@@ -27,7 +27,8 @@ export default function PostSquadModal({
   editingPost = null,
   profile = null,
   onSubmitPost,
-  onSuccess
+  onSuccess,
+  onDeletePost
 }) {
   const [custom, setCustom] = useState(false);
   const [compQ, setCompQ] = useState('');
@@ -925,6 +926,39 @@ export default function PostSquadModal({
           <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
             {open} open of {total}
           </span>
+          {editingPost && onDeletePost && (
+            <button
+              type="button"
+              onClick={() => {
+                const compName = editingPost.comp?.title || editingPost.competition_name || editingPost.title || 'this squad';
+                if (window.confirm(`Are you sure you want to delete your squad listing for "${compName}"? This action cannot be undone.`)) {
+                  onDeletePost(editingPost.id);
+                  onClose();
+                }
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                border: '1px solid rgba(220, 38, 38, 0.25)',
+                borderRadius: '9px',
+                background: 'rgba(220, 38, 38, 0.05)',
+                color: '#DC2626',
+                padding: '8px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginLeft: '8px'
+              }}
+              title="Delete squad listing"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              <span>Delete squad</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}

@@ -1263,6 +1263,7 @@ function OneStopInner() {
         editingPost={editingPost}
         profile={profile}
         onSubmitPost={handleSubmitPost}
+        onDeletePost={handleDeleteSquadPost}
       />
 
       {/* Request to Join Modal */}

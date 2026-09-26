@@ -141,10 +141,10 @@ const SAMPLE_COMPS = [
   },
   {
     id: 'c5',
-    title: 'Business & Economics Quiz',
+    title: 'Business & Economics Quiz 2026',
     host: 'Shri Ram College of Commerce',
     logo: 'https://upload.wikimedia.org/wikipedia/en/8/87/Shri_Ram_College_of_Commerce_logo.png',
-    days: 4,
+    days: 17,
     team: '2 members',
     cat: 'Quizzes',
     circuit: 'DU Circuit',
@@ -152,10 +152,10 @@ const SAMPLE_COMPS = [
   },
   {
     id: 'c6',
-    title: 'Bain Business Bowl',
+    title: 'Bain Business Bowl 2026',
     host: 'Bain & Company',
     logo: 'https://logo.clearbit.com/bain.com',
-    days: 17,
+    days: 11,
     team: '3–4 members',
     cat: 'Case Comps',
     circuit: 'Corporate & Global',
@@ -163,18 +163,73 @@ const SAMPLE_COMPS = [
   },
   {
     id: 'c7',
-    title: 'Market Mayhem — Trading Simulation',
+    title: 'Market Mayhem — Quant Trading Simulation',
     host: 'IIM Ahmedabad',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/IIM_Ahmedabad_Logo.svg/512px-IIM_Ahmedabad_Logo.svg.png',
-    days: 8,
+    days: 23,
     team: '2–3 members',
     cat: 'Simulations',
     circuit: 'IIMs, IITs & Premier',
     url: 'https://unstop.com'
   },
   {
+    id: 'c3',
+    title: "L'Oréal Brandstorm 2026",
+    host: "L'Oréal",
+    logo: 'https://logo.clearbit.com/loreal.com',
+    days: 14,
+    team: '3 members',
+    cat: 'Case Comps',
+    circuit: 'Corporate & Global',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c4',
+    title: 'Flipkart GRiD 7.0 — Tech Challenge',
+    host: 'Flipkart',
+    logo: 'https://logo.clearbit.com/flipkart.com',
+    days: 19,
+    team: '2–3 members',
+    cat: 'Hackathons',
+    circuit: 'Corporate & Global',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c10',
+    title: 'Tata Crucible Campus Quiz 2026',
+    host: 'Tata Group',
+    logo: 'https://logo.clearbit.com/tata.com',
+    days: 8,
+    team: '2 members',
+    cat: 'Quizzes',
+    circuit: 'Corporate & Global',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c11',
+    title: 'Smart India Hackathon 2026 — Campus Round',
+    host: 'Ministry of Education',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Smart_India_Hackathon_Logo.png/250px-Smart_India_Hackathon_Logo.png',
+    days: 21,
+    team: '6 members',
+    cat: 'Hackathons',
+    circuit: 'Others',
+    url: 'https://unstop.com'
+  },
+  {
+    id: 'c12',
+    title: 'McKinsey Next Generation Women Leaders',
+    host: 'McKinsey & Company',
+    logo: 'https://logo.clearbit.com/mckinsey.com',
+    days: 12,
+    team: '3 members',
+    cat: 'Case Comps',
+    circuit: 'Corporate & Global',
+    url: 'https://unstop.com'
+  },
+  {
     id: 'c8',
-    title: 'Consult-a-thon',
+    title: 'Consult-a-thon 2026',
     host: 'Kirori Mal College',
     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/92/Kirori_Mal_College_logo.png/220px-Kirori_Mal_College_logo.png',
     days: 15,
@@ -185,35 +240,35 @@ const SAMPLE_COMPS = [
   },
   {
     id: 'c2',
-    title: 'Prayaas Case Challenge',
+    title: 'Prayaas Case Challenge 2026',
     host: 'Shri Ram College of Commerce',
     logo: 'https://upload.wikimedia.org/wikipedia/en/8/87/Shri_Ram_College_of_Commerce_logo.png',
-    days: 20 / 24,
+    days: 2,
     team: '3–4 members',
     cat: 'Case Comps',
     circuit: 'DU Circuit',
     url: 'https://unstop.com'
   },
   {
-    id: 'c3',
-    title: "L'Oréal Brandstorm 2026",
-    host: "L'Oréal",
-    logo: 'https://logo.clearbit.com/loreal.com',
-    days: 11,
+    id: 'c13',
+    title: 'Premchand Memorial Parliamentary Debate 2026',
+    host: 'Hindu College',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/22/Hindu_College%2C_Delhi_logo.png/220px-Hindu_College%2C_Delhi_logo.png',
+    days: 9,
     team: '3 members',
-    cat: 'Case Comps',
-    circuit: 'Corporate & Global',
+    cat: 'Debates',
+    circuit: 'DU Circuit',
     url: 'https://unstop.com'
   },
   {
-    id: 'c4',
-    title: 'Smart India Hackathon — Campus Round',
-    host: 'Ministry of Education',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Smart_India_Hackathon_Logo.png/250px-Smart_India_Hackathon_Logo.png',
-    days: 23,
-    team: '6 members',
-    cat: 'Hackathons',
-    circuit: 'Others',
+    id: 'c14',
+    title: 'Gargi Policy & Empirical Research Challenge 2026',
+    host: 'Gargi College',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Gargi_College_logo.png/220px-Gargi_College_logo.png',
+    days: 13,
+    team: '2–3 members',
+    cat: 'Writing & Research',
+    circuit: 'DU Circuit',
     url: 'https://unstop.com'
   }
 ];
@@ -314,6 +369,122 @@ const SAMPLE_POSTS = [
     desc: 'Second SRCC team for Envision. Need a storyteller and a slide person.',
     comm_method: 'chat',
     phone: '9811042278'
+  },
+  {
+    id: 'demo_p3',
+    compId: 'c3',
+    lead: 'Tanya Sen',
+    college: "St. Stephen's College",
+    year: '3rd year',
+    posted: '1 day ago',
+    total: 3,
+    members: [{ name: 'Kavya Pillai', college: "St. Stephen's College", year: '3rd year' }],
+    state: 'open',
+    want: ['Deck design', 'Market research'],
+    have: ['Public speaking', 'Copywriting'],
+    desc: 'Pitching a circular packaging concept for salon haircare. Looking for a slide designer who can create clean renders.',
+    comm_method: 'whatsapp',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p9',
+    compId: 'c4',
+    lead: 'Siddharth Mehta',
+    college: 'IIT Delhi',
+    year: '3rd year',
+    posted: '2 days ago',
+    total: 3,
+    members: [],
+    state: 'open',
+    want: ['ML / Data', 'Frontend'],
+    have: ['Backend'],
+    desc: 'Autonomous supply chain track. Developing an edge compute model for warehouse robotics. Need 1 ML engineer and 1 React dev.',
+    comm_method: 'chat',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p10',
+    compId: 'c10',
+    lead: 'Kabir Varma',
+    college: 'Hansraj College',
+    year: '2nd year',
+    posted: '3 days ago',
+    total: 2,
+    members: [],
+    state: 'open',
+    want: ['Public speaking'],
+    have: ['Copywriting'],
+    desc: 'Aiming for regional finals. Looking for a quiz partner strong on business history, corporate trivia, and brand campaigns.',
+    comm_method: 'whatsapp',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p11',
+    compId: 'c11',
+    lead: 'Aarav Gupta',
+    college: 'NSUT',
+    year: '2nd year',
+    posted: '4 days ago',
+    total: 6,
+    members: [
+      { name: 'Sameer Khan', college: 'NSUT', year: '2nd year' },
+      { name: 'Pooja Verma', college: 'NSUT', year: '3rd year' },
+      { name: 'Nikhil Roy', college: 'NSUT', year: '2nd year' }
+    ],
+    state: 'open',
+    want: ['Frontend', 'Backend'],
+    have: ['Design'],
+    desc: 'Smart logistics problem statement for Indian Railways. Need a clean UI dev and someone comfortable with GIS/mapping APIs.',
+    comm_method: 'whatsapp',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p12',
+    compId: 'c12',
+    lead: 'Priyanshi Singhal',
+    college: 'Miranda House',
+    year: '3rd year',
+    posted: '5 days ago',
+    total: 3,
+    members: [{ name: 'Aarushi Jain', college: 'Miranda House', year: '3rd year' }],
+    state: 'open',
+    want: ['Finance modelling', 'Valuation'],
+    have: ['Market research', 'Deck design'],
+    desc: 'Consulting prep squad. Running 2 market-entry cases a week with strict timing. Need someone confident in financial valuation.',
+    comm_method: 'chat',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p13',
+    compId: 'c13',
+    lead: 'Devansh Bhardwaj',
+    college: 'Hindu College',
+    year: '2nd year',
+    posted: '12h ago',
+    total: 3,
+    members: [{ name: 'Sanjana Roy', college: 'Hindu College', year: '2nd year' }],
+    state: 'open',
+    want: ['Public speaking'],
+    have: ['Copywriting'],
+    desc: 'Asian Parliamentary format (3v3). Need a 3rd speaker / whip. We practice motions on Discord 3 evenings a week.',
+    comm_method: 'whatsapp',
+    phone: '9811042278'
+  },
+  {
+    id: 'demo_p14',
+    compId: 'c14',
+    lead: 'Meera Nambiar',
+    college: 'Gargi College',
+    year: '3rd year',
+    posted: '1 day ago',
+    total: 3,
+    members: [],
+    state: 'open',
+    want: ['Market research', 'Valuation'],
+    have: ['Copywriting'],
+    desc: 'Writing a policy brief on urban mobility electrification. Need someone strong on statistical data analysis and secondary literature.',
+    comm_method: 'chat',
+    phone: '9811042278'
   }
 ];
 
@@ -343,6 +514,20 @@ const SAMPLE_OWN = [
     want: ['Market research'],
     have: ['Deck design'],
     desc: 'Looking for a researcher who enjoys digging into industry reports.',
+    phone: '9811042278',
+    apps: [
+      { id: 'demo_a4', name: 'Kabir Joshi', college: 'Hindu College', year: '2nd year', status: 'pending', skills: ['Market research', 'Copywriting'], pitch: 'Consistently write industry briefs for our commerce cell. Can take on secondary research.', phone: '9876543213' }
+    ]
+  },
+  {
+    id: 'demo_o3',
+    compId: 'c3',
+    posted: '1 day ago',
+    total: 3,
+    closed: false,
+    want: ['Deck design'],
+    have: ['Market research', 'Public speaking'],
+    desc: 'Forming an SRCC team for Brandstorm. Looking for a deck wizard.',
     phone: '9811042278',
     apps: []
   }
@@ -611,11 +796,6 @@ export default function TeamFinderScreen({
       };
     });
 
-    if (mappedReal.length > 0) {
-      return mappedReal;
-    }
-
-    // Otherwise use design demo state
     const others = localPostsState.map((p, i) => {
       const comp = getCompMeta(p.compId);
       const filled = 1 + (p.members?.length || 0);
@@ -674,7 +854,15 @@ export default function TeamFinderScreen({
       };
     });
 
-    return [...others, ...mine];
+    if (mappedReal.length === 0) {
+      return [...others, ...mine];
+    }
+
+    const realPostIds = new Set(mappedReal.map(p => String(p.id)));
+    const remainingOthers = others.filter(p => !realPostIds.has(String(p.id)));
+    const remainingMine = mine.filter(p => !realPostIds.has(String(p.id)));
+
+    return [...mappedReal, ...remainingOthers, ...remainingMine];
   }, [realCleanPosts, competitions, applications, user, userName, userCollege, userYear, profileSkills, localPostsState, localOwnState]);
 
   // Pools
@@ -838,6 +1026,23 @@ export default function TeamFinderScreen({
       setEditingPostData(post);
       setPostModalOpen(true);
     }
+  };
+
+  const handleDeletePost = (e, post) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!post || !post.id) return;
+    const compName = post.comp?.title || post.competition_name || post.title || 'this squad';
+    if (!window.confirm(`Are you sure you want to delete your squad listing for "${compName}"? This action cannot be undone.`)) {
+      return;
+    }
+    if (onDeleteSquadPost) {
+      onDeleteSquadPost(post.id);
+    }
+    setLocalOwnState(prev => prev.filter(o => String(o.id) !== String(post.id)));
+    setLocalPostsState(prev => prev.filter(p => String(p.id) !== String(post.id)));
+    if (reviewPostId === post.id) setReviewPostId(null);
+    if (detailPostId === post.id) setDetailPostId(null);
+    if (showToast) showToast('Squad listing deleted');
   };
 
   // Review modal target
@@ -1658,6 +1863,18 @@ export default function TeamFinderScreen({
                                 >
                                   {post.state === 'closed' || post.closed ? 'Reopen' : 'Close'}
                                 </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeletePost(e, post)}
+                                  className="tf-btn-secondary tf-btn-delete"
+                                  title="Delete squad listing"
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                  </svg>
+                                  <span>Delete</span>
+                                </button>
                               </>
                             ) : post.state === 'full' || post.openN === 0 ? (
                               <button type="button" disabled className="tf-full-btn">
@@ -2004,16 +2221,31 @@ export default function TeamFinderScreen({
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setReviewPostId(null)}
-                  className="tf-sheet-close-btn"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeletePost(e, reviewTarget)}
+                    className="tf-btn-secondary tf-btn-delete"
+                    style={{ padding: '6px 11px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                    title="Delete squad listing"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}>
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Delete squad</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReviewPostId(null)}
+                    className="tf-sheet-close-btn"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               {/* Underline Tabs */}
@@ -2242,6 +2474,11 @@ export default function TeamFinderScreen({
           handlePostSuccess();
         }}
         onSuccess={handlePostSuccess}
+        onDeletePost={(postId) => {
+          handleDeletePost(null, { id: postId, comp: { title: 'this squad' } });
+          setPostModalOpen(false);
+          setEditingPostData(null);
+        }}
       />
 
       {/* ── Request to Join Modal (ApplyModal) ── */}

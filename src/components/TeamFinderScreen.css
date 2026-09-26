@@ -1480,6 +1480,35 @@
   background: var(--surface-muted, #F2F1ED);
 }
 
+.tf-btn-delete {
+  color: #DC2626 !important;
+  border-color: rgba(220, 38, 38, 0.25) !important;
+  background: rgba(220, 38, 38, 0.05) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tf-btn-delete:hover {
+  background: rgba(220, 38, 38, 0.12) !important;
+  border-color: rgba(220, 38, 38, 0.45) !important;
+  color: #B91C1C !important;
+}
+
+[data-theme='dark'] .tf-btn-delete,
+body.dark .tf-btn-delete {
+  color: #EF4444 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+[data-theme='dark'] .tf-btn-delete:hover,
+body.dark .tf-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  color: #F87171 !important;
+}
+
 /* ── Loading Skeleton ── */
 @keyframes tfpulse {
   0%, 100% { opacity: 1; }
