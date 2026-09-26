@@ -478,6 +478,31 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
     else if (disciplineVal.includes('Debate') || disciplineVal.includes('MUN')) disciplineVal = 'Debate & MUN';
     else disciplineVal = 'Case';
 
+    const extractValidUrl = (...urls) => {
+      for (const u of urls) {
+        if (typeof u === 'string' && u.trim().length > 0 && u.trim() !== 'null' && u.trim() !== 'undefined') {
+          const trimmed = u.trim();
+          if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+          if (trimmed.startsWith('//')) return `https:${trimmed}`;
+          if (trimmed.startsWith('/')) return `https://d8it4huxumps7.cloudfront.net${trimmed}`;
+          return trimmed;
+        }
+      }
+      return null;
+    };
+
+    const orgLogoUrl = extractValidUrl(
+      item.organisation?.logoUrl2,
+      item.organisation?.logoUrl,
+      item.organisation?.logo,
+      item.organisation?.image
+    );
+    const compLogoUrl = extractValidUrl(item.logoUrl2, item.logo);
+    const bannerImgUrl = extractValidUrl(item.banner_mobile?.url, item.banner_desktop?.url, item.banner?.url);
+
+    const finalOrgLogo = orgLogoUrl || compLogoUrl || null;
+    const finalCompLogo = orgLogoUrl || compLogoUrl || bannerImgUrl || null;
+
     return {
       id: item.id || item.short_id,
       title: item.title,
@@ -487,9 +512,9 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
       discipline: disciplineVal,
       days: daysRemainingNum,
       fee: isFree ? 'Free' : (item.fee || 'Free'),
-      orgLogo: item.organisation?.logoUrl2 || item.organisation?.logoUrl || item.logoUrl2 || null,
-      logo: item.organisation?.logoUrl2 || item.organisation?.logoUrl || item.logoUrl2 || null,
-      bannerUrl: item.logoUrl2 || item.banner_mobile?.url || item.banner_desktop?.url || null,
+      orgLogo: finalOrgLogo,
+      logo: finalCompLogo,
+      bannerUrl: bannerImgUrl || compLogoUrl || null,
       unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
       deadline: item.regnRequirements?.end_regn_dt || item.end_date,
       startDate: item.regnRequirements?.start_regn_dt || item.start_date || null,

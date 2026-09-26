@@ -1049,7 +1049,7 @@ export default function HomeScreen({
                   {/* Top row: Logo, Host, Remove button */}
                   <div className="home-compact-top-row">
                     <InstitutionLogo
-                      logo={b.logo || b.orgLogo}
+                      logo={b.orgLogo || b.logo || b.bannerUrl}
                       name={b.host || b.orgName}
                       size={30}
                       borderRadius={7}
@@ -1266,8 +1266,8 @@ export default function HomeScreen({
                   {/* Top Bar: Host Profile */}
                   <div style={{ display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr)', alignItems: 'start', gap: '11px' }}>
                     <InstitutionLogo
-                      logo={c.logo || c.orgLogo}
-                      name={c.host}
+                      logo={c.orgLogo || c.logo || c.bannerUrl}
+                      name={c.host || c.orgName}
                       size={40}
                       borderRadius={9}
                       fontSize={12}
@@ -1768,14 +1768,7 @@ export default function HomeScreen({
                     <h3 style={{ margin: '3px 0 0', fontSize: '15px', fontWeight: 700, color: 'var(--ink)', lineHeight: 1.35, textWrap: 'pretty' }}>
                       {compTitle}
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-                      <InstitutionLogo
-                        logo={compLogo}
-                        name={compHost}
-                        size={20}
-                        borderRadius={5}
-                        fontSize={9}
-                      />
+                    <div style={{ marginTop: '5px' }}>
                       <span style={{ fontSize: '12px', color: 'var(--ink-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {compHost}
                       </span>

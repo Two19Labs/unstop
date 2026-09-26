@@ -1,7 +1,6 @@
 // src/components/InstitutionLogo.jsx
 import React, { useState } from 'react';
 import { initialsOf } from '../data/initialData';
-import { getInstitutionSvg } from '../data/institutionLogos';
 
 export default function InstitutionLogo({
   logo,
@@ -22,9 +21,6 @@ export default function InstitutionLogo({
   const effectiveName = name || organizer || host || '';
   const effectiveLogo = logo || logoUrl || icon;
 
-  // 1. First priority: Exact authentic vector SVG match
-  const matchedSvg = getInstitutionSvg(`${effectiveName} ${title}`);
-
   const containerStyle = {
     width: `${size}px`,
     height: `${size}px`,
@@ -43,17 +39,7 @@ export default function InstitutionLogo({
     ...style
   };
 
-  if (matchedSvg) {
-    return (
-      <div className={`institution-logo-wrap tf-comp-logo-wrap ${className}`} style={containerStyle}>
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {matchedSvg}
-        </div>
-      </div>
-    );
-  }
-
-  // 2. Second priority: Valid remote image URL if not failed
+  // Valid remote image URL from Unstop if not failed
   const showImg = Boolean(
     effectiveLogo &&
     typeof effectiveLogo === 'string' &&
@@ -65,10 +51,9 @@ export default function InstitutionLogo({
     return (
       <div className={`institution-logo-wrap tf-comp-logo-wrap ${className}`} style={containerStyle}>
         <img
-          src={effectiveLogo}
+          src={effectiveLogo.trim()}
           alt={effectiveName ? `${effectiveName} logo` : 'Institution logo'}
           referrerPolicy="no-referrer"
-          crossOrigin="anonymous"
           onError={() => setFailedUrl(effectiveLogo)}
           style={{
             width: '100%',
@@ -84,7 +69,7 @@ export default function InstitutionLogo({
     );
   }
 
-  // 3. Fallback: Clean initials badge
+  // Fallback: Clean initials badge
   return (
     <div
       className={`institution-logo-fallback tf-comp-logo-wrap ${className}`}
