@@ -19,6 +19,7 @@ import {
   markAllNotificationsAsRead,
   getDismissedNotificationIds,
   dismissNotification,
+  dismissAllNotifications,
   formatRelativeTime
 } from '../lib/notificationService';
 import {
@@ -48,6 +49,7 @@ export default function NotificationCenter({
   const authMarkRead = auth?.markNotificationRead;
   const authMarkAllRead = auth?.markAllNotificationsRead;
   const authDismiss = auth?.dismissNotification;
+  const authDismissAll = auth?.dismissAllNotifications;
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'deadlines' | 'squads'
@@ -151,22 +153,23 @@ export default function NotificationCenter({
     setLocalReadIds(getReadNotificationIds());
   }, [allNotifications, user, authMarkAllRead]);
 
-  const handleDismiss = useCallback((e, notifId, notif) => {
+  const handleDismiss = useCallback((e, notifId) => {
     e.stopPropagation();
     if (user && authDismiss) {
       authDismiss(notifId);
     }
     dismissNotification(notifId);
     setLocalDismissedIds(getDismissedNotificationIds());
+  }, [user, authDismiss]);
 
-    // If removing a bookmarked competition's alert with X, unbookmark it
-    if (notif?.type === 'deadline_alert' && notif?.data?.compId) {
-      const compIdStr = String(notif.data.compId);
-      if (bookmarks.some(b => String(b) === compIdStr) && onToggleBookmark) {
-        onToggleBookmark(notif.data.compId);
-      }
+  const handleDismissAll = useCallback(() => {
+    const ids = allNotifications.map(n => n.id);
+    if (user && authDismissAll) {
+      authDismissAll(ids);
     }
-  }, [user, authDismiss, bookmarks, onToggleBookmark]);
+    dismissAllNotifications(ids);
+    setLocalDismissedIds(getDismissedNotificationIds());
+  }, [allNotifications, user, authDismissAll]);
 
   const handleActionClick = useCallback((e, notif, action) => {
     e.stopPropagation();
@@ -268,15 +271,27 @@ export default function NotificationCenter({
                 <span className="onestop-notif-count-pill">{unreadCount} new</span>
               )}
             </div>
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                className="onestop-notif-mark-read-btn"
-                onClick={handleMarkAllRead}
-              >
-                Mark all as read
-              </button>
-            )}
+            <div className="onestop-notif-header-actions">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  className="onestop-notif-mark-read-btn"
+                  onClick={handleMarkAllRead}
+                >
+                  Mark all as read
+                </button>
+              )}
+              {allNotifications.length > 0 && (
+                <button
+                  type="button"
+                  className="onestop-notif-clear-all-btn"
+                  onClick={handleDismissAll}
+                  title="Clear all notifications"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Browser Desktop Push Prompt */}
@@ -384,9 +399,9 @@ export default function NotificationCenter({
                         <button
                           type="button"
                           className="onestop-notif-dismiss-btn"
-                          onClick={(e) => handleDismiss(e, notif.id, notif)}
-                          title={notif.type === 'deadline_alert' ? "Remove alert / unbookmark" : "Dismiss notification"}
-                          aria-label="Remove"
+                          onClick={(e) => handleDismiss(e, notif.id)}
+                          title="Dismiss notification"
+                          aria-label="Dismiss notification"
                         >
                           <CloseIcon size={14} />
                         </button>

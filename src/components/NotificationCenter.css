@@ -140,6 +140,12 @@
   color: var(--primary);
 }
 
+.onestop-notif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .onestop-notif-mark-read-btn {
   background: transparent;
   border: 0;
@@ -154,6 +160,23 @@
 
 .onestop-notif-mark-read-btn:hover {
   background: var(--primary-tint-8);
+}
+
+.onestop-notif-clear-all-btn {
+  background: transparent;
+  border: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.12s ease;
+}
+
+.onestop-notif-clear-all-btn:hover {
+  color: var(--ink);
+  background: var(--surface-muted);
 }
 
 /* Browser Desktop Push Banner */

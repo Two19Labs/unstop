@@ -55,6 +55,16 @@ export function dismissNotification(id) {
   }
 }
 
+export function dismissAllNotifications(notificationIds = []) {
+  try {
+    const dismissed = new Set(getDismissedNotificationIds());
+    notificationIds.forEach(id => dismissed.add(id));
+    localStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify([...dismissed]));
+  } catch (e) {
+    console.warn('Failed to dismiss all notifications:', e);
+  }
+}
+
 /**
  * Format relative time (e.g., 'Just now', '10m ago', '2h ago', '1d ago')
  */

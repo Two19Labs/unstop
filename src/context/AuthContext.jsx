@@ -1366,6 +1366,37 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const dismissAllNotifications = useCallback(async (notifIds = []) => {
+    if (!Array.isArray(notifIds) || notifIds.length === 0) return;
+    setNotificationStates(prev => {
+      const next = { ...prev };
+      notifIds.forEach(id => {
+        const sId = String(id);
+        next[sId] = { ...(next[sId] || {}), is_dismissed: true, is_read: true };
+      });
+      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
+      return next;
+    });
+
+    const activeUser = userRef.current;
+    if (supabase && activeUser?.id) {
+      try {
+        const rows = notifIds.map(id => ({
+          user_id: activeUser.id,
+          notification_id: String(id),
+          is_read: true,
+          is_dismissed: true,
+          updated_at: new Date().toISOString()
+        }));
+        await supabase
+          .from('user_notification_states')
+          .upsert(rows, { onConflict: 'user_id,notification_id' });
+      } catch (err) {
+        console.warn('Sync all notifications dismiss error:', err.message);
+      }
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -1410,6 +1441,7 @@ export function AuthProvider({ children }) {
         markNotificationRead,
         markAllNotificationsRead,
         dismissNotification,
+        dismissAllNotifications,
         hasSupabase: hasValidCredentials,
       }}
     >

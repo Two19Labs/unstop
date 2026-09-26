@@ -4,7 +4,7 @@
 .br-card {
   flex: 0 0 296px;
   width: 296px;
-  min-height: 274px;
+  min-height: 284px;
   background: var(--surface, #FFFFFF);
   border: 1.5px solid var(--line, #E5E7EB);
   border-radius: 16px;

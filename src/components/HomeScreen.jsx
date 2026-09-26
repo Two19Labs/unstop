@@ -304,18 +304,14 @@ function CompactBookmarkSkeleton() {
         <div className="skeleton-box" style={{ height: '14px', width: '90%', borderRadius: '4px' }} />
         <div className="skeleton-box" style={{ height: '14px', width: '60%', borderRadius: '4px' }} />
       </div>
-      <div className="skeleton-box" style={{ height: '26px', width: '100%', borderRadius: '8px' }} />
       <div style={{ display: 'flex', gap: '6px' }}>
-        <div className="skeleton-box" style={{ height: '16px', width: '65px', borderRadius: '4px' }} />
-        <div className="skeleton-box" style={{ height: '16px', width: '80px', borderRadius: '4px' }} />
+        <div className="skeleton-box" style={{ height: '24px', width: '95px', borderRadius: '20px' }} />
+        <div className="skeleton-box" style={{ height: '24px', width: '65px', borderRadius: '20px' }} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '20px' }}>
-        <div className="skeleton-box" style={{ height: '12px', width: '95px', borderRadius: '4px' }} />
-        <div className="skeleton-box" style={{ height: '18px', width: '65px', borderRadius: '20px' }} />
-      </div>
+      <div className="skeleton-box" style={{ height: '82px', width: '100%', borderRadius: '11px' }} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '7px', marginTop: 'auto', paddingTop: '2px' }}>
-        <div className="skeleton-box" style={{ height: '32px', borderRadius: '8px' }} />
-        <div className="skeleton-box" style={{ height: '32px', borderRadius: '8px' }} />
+        <div className="skeleton-box" style={{ height: '38px', borderRadius: '10px' }} />
+        <div className="skeleton-box" style={{ height: '38px', borderRadius: '10px' }} />
       </div>
     </div>
   );
@@ -1076,7 +1072,7 @@ export default function HomeScreen({
                   {/* Prize Strip */}
                   <div className="home-compact-prize-strip">
                     <span className="home-compact-prize-pill">
-                      <TrophyIcon size={12} color="#059669" />
+                      <TrophyIcon size={13} color="#059669" />
                       <span className="home-compact-prize-text" title={prizeText}>
                         {prizeText}
                       </span>
@@ -1086,33 +1082,36 @@ export default function HomeScreen({
                     </span>
                   </div>
 
-                  {/* Specs Row */}
-                  <div className="home-compact-specs-row">
-                    <span className="home-compact-specs-item" title={isSolo ? 'Solo' : teamText}>
-                      <UsersIcon size={12} color="#4B5563" />
-                      <span>{isSolo ? 'Solo' : teamText}</span>
-                    </span>
-                    <span className="home-compact-dot">·</span>
-                    <span className="home-compact-specs-item" title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}>
-                      <CalendarIcon size={12} color="#4B5563" />
-                      <span>Ends {deadlineFormatted || (b.mode || 'Online')}</span>
-                    </span>
-                  </div>
+                  {/* Registration Hero Box: Stage, Countdown, Deadline & Specs */}
+                  <div className={`home-compact-hero-box home-compact-hero-box--${urgencyLevel}`}>
+                    <div className="home-compact-hero-header">
+                      <span className="home-compact-hero-tag">REGISTRATION</span>
+                      <span className={`home-compact-countdown-pill pill-${urgencyLevel}`}>
+                        <ClockIcon size={11} />
+                        <span>{countdownText}</span>
+                      </span>
+                    </div>
 
-                  {/* Metrics Row */}
-                  <div className="home-compact-metrics-row">
-                    <span className="home-compact-metrics-regs">
-                      <FlameIcon size={12} color="#6B7280" />
-                      {registeredCount > 0 ? (
-                        <span><strong>{registeredCount.toLocaleString()}</strong> registrations</span>
-                      ) : (
-                        <span>Recently Listed</span>
-                      )}
-                    </span>
-                    <span className={`home-compact-countdown-pill pill-${urgencyLevel}`}>
-                      <ClockIcon size={11} />
-                      <span>{countdownText}</span>
-                    </span>
+                    <div className="home-compact-hero-deadline" title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}>
+                      <CalendarIcon size={13} />
+                      <span>Ends {deadlineFormatted || (b.mode || 'Online')}</span>
+                    </div>
+
+                    <div className="home-compact-hero-footer">
+                      <span className="home-compact-hero-spec" title={isSolo ? 'Solo' : teamText}>
+                        <UsersIcon size={12} />
+                        <span>{isSolo ? 'Solo' : teamText}</span>
+                      </span>
+                      <span className="home-compact-dot">·</span>
+                      <span className="home-compact-hero-regs">
+                        <FlameIcon size={12} color="#F97316" />
+                        {registeredCount > 0 ? (
+                          <span><strong>{registeredCount.toLocaleString()}</strong> registered</span>
+                        ) : (
+                          <span>Recently Listed</span>
+                        )}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Actions */}
