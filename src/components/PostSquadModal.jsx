@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { SKILLS, initialsOf } from '../data/initialData';
 import { sanitizeIndianPhone } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
+import InstitutionLogo from './InstitutionLogo';
 
 function formatDueText(comp) {
   if (!comp) return '';
@@ -466,24 +467,13 @@ export default function PostSquadModal({
                           transition: 'border-color 0.15s ease'
                         }}
                       >
-                        <span
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--line-lighter, #EFEEEA)',
-                            background: 'var(--surface-muted, #F2F1ED)',
-                            color: 'var(--ink-secondary, #55534D)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            flex: 'none'
-                          }}
-                        >
-                          {inits}
-                        </span>
+                        <InstitutionLogo
+                          name={c.host || c.orgName}
+                          title={c.title}
+                          logo={c.logo || c.orgLogo}
+                          size={32}
+                          borderRadius={8}
+                        />
                         <span style={{ minWidth: 0, lineHeight: 1.3 }}>
                           <span style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {c.title}

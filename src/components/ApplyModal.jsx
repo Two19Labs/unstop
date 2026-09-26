@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { SKILLS } from '../data/initialData';
 import { sanitizeIndianPhone } from '../context/AuthContext';
+import InstitutionLogo from './InstitutionLogo';
 
 export default function ApplyModal({
   isOpen,
@@ -36,6 +37,7 @@ export default function ApplyModal({
   if (!isOpen || !post) return null;
 
   const compTitle = post.competition_name || competition?.title || post.displayTitle || 'Competition';
+  const compHost = post.organizer || competition?.host || competition?.orgName || post?.comp?.host || '';
   const leadName = post.created_by_name || post.lead || post.displayLead || 'Squad Lead';
   const spotsLeft = post.spots_left !== undefined ? post.spots_left : (post.displaySpotsLeft || 1);
   const spotsText = spotsLeft <= 1 ? '1 spot left' : `${spotsLeft} spots left`;
@@ -155,11 +157,22 @@ export default function ApplyModal({
         <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {/* Target Competition Card */}
           <div style={{ background: 'var(--surface-sunken)', padding: '12px 14px', borderRadius: '9px', border: '1px solid var(--line)' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-secondary)', textTransform: 'uppercase' }}>
-              Applying for
-            </span>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', marginTop: '2px' }}>
-              {compTitle}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+              <InstitutionLogo
+                name={compHost}
+                title={compTitle}
+                logo={competition?.logo || competition?.orgLogo || post?.comp?.logo}
+                size={36}
+                borderRadius={8}
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink-secondary)', textTransform: 'uppercase' }}>
+                  Applying for
+                </span>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', marginTop: '1px' }}>
+                  {compTitle}
+                </div>
+              </div>
             </div>
             {post.skills_looking_for && post.skills_looking_for.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '7px' }}>

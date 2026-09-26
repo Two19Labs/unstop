@@ -1693,14 +1693,13 @@ export default function TeamFinderScreen({
 
                         {/* 2. Logo, Title & Host */}
                         <div className="tf-card-header-inner">
-                          <div className="tf-comp-logo-wrap">
-                            <InstitutionLogo
-                              organizer={post.comp.host}
-                              title={post.comp.title}
-                              logoUrl={post.comp.logo}
-                              size={40}
-                            />
-                          </div>
+                          <InstitutionLogo
+                            name={post.comp.host}
+                            title={post.comp.title}
+                            logo={post.comp.logo}
+                            size={40}
+                            borderRadius={8}
+                          />
                           <div className="tf-card-title-meta">
                             <h3 className="tf-card-title" title={post.comp.title}>{post.comp.title}</h3>
                             <div className="tf-card-host-name" title={post.comp.host}>{post.comp.host}</div>
@@ -2196,10 +2195,18 @@ export default function TeamFinderScreen({
             {/* Header */}
             <div className="tf-review-header">
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ minWidth: 0 }}>
-                  <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink, #1A1A19)' }}>
-                    {reviewTarget.comp.title}
-                  </h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                  <InstitutionLogo
+                    name={reviewTarget.comp.host}
+                    title={reviewTarget.comp.title}
+                    logo={reviewTarget.comp.logo}
+                    size={40}
+                    borderRadius={8}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink, #1A1A19)' }}>
+                      {reviewTarget.comp.title}
+                    </h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
                     {/* Overlapping member circles */}
                     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -2220,6 +2227,7 @@ export default function TeamFinderScreen({
                     </span>
                   </div>
                 </div>
+              </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
