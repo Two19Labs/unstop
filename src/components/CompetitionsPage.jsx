@@ -1042,7 +1042,7 @@ export default function CompetitionsPage({
               <p className="cc-subtitle">
                 {bookmarkedOnly
                   ? 'All your saved competitions in one place. Synced and updated live.'
-                  : "It's competitions season! Find opportunities relevant to CBS folks right here, synced with and pulled from Unstop, all filterable! :)"}
+                  : 'Discover top competitions, hackathons, and challenges right here, synced live from Unstop, all filterable!'}
               </p>
             </div>
           </div>
