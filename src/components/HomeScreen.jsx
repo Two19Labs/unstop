@@ -608,26 +608,6 @@ export default function HomeScreen({
 
   const containerRef = useRef(null);
 
-  // Ensure carousel rails always start at the beginning (scrollLeft = 0) upon opening and loading
-  useEffect(() => {
-    const resetScroll = () => {
-      if (containerRef.current) {
-        const rails = containerRef.current.querySelectorAll('.rail');
-        rails.forEach((rail) => {
-          rail.scrollLeft = 0;
-        });
-      }
-    };
-    resetScroll();
-    const t1 = setTimeout(resetScroll, 50);
-    const t2 = setTimeout(resetScroll, 250);
-    const rafId = requestAnimationFrame(resetScroll);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      cancelAnimationFrame(rafId);
-    };
-  }, [showRailLoading, effectiveSort, effectiveFilter, bookmarkTotal]);
 
   // Navigation helpers
   const handleNavigate = (targetScreen) => {
@@ -823,6 +803,27 @@ export default function HomeScreen({
     : hasFilter
     ? `${compTotal} competitions and ${squadTotal} squads match your Browse filter  -  ${filterChips.map(c => c.toLowerCase()).join(' · ')}.`
     : `${compTotal} competitions and ${squadTotal} squads open right now.`;
+
+  // Ensure carousel rails always start at the beginning (scrollLeft = 0) upon opening and loading
+  useEffect(() => {
+    const resetScroll = () => {
+      if (containerRef.current) {
+        const rails = containerRef.current.querySelectorAll('.rail');
+        rails.forEach((rail) => {
+          rail.scrollLeft = 0;
+        });
+      }
+    };
+    resetScroll();
+    const t1 = setTimeout(resetScroll, 50);
+    const t2 = setTimeout(resetScroll, 250);
+    const rafId = requestAnimationFrame(resetScroll);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      cancelAnimationFrame(rafId);
+    };
+  }, [showRailLoading, effectiveSort, effectiveFilter, bookmarkTotal, compTotal, squadTotal]);
 
   return (
     <div className="home-container" ref={containerRef}>
