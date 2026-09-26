@@ -359,11 +359,26 @@ export function AuthProvider({ children }) {
         fetchUserBookmarks(currentUser.id);
         fetchNotificationStates(currentUser.id);
         refreshSquadData(currentUser);
+        try {
+          const pendingId = sessionStorage.getItem('onestop_pending_bookmark_after_auth');
+          if (pendingId) {
+            sessionStorage.removeItem('onestop_pending_bookmark_after_auth');
+            toggleBookmark(pendingId);
+          }
+        } catch (e) {}
+      } else {
+        setBookmarks([]);
+        try {
+          localStorage.removeItem('onestop_bookmarks');
+        } catch (e) {}
       }
       setAuthLoading(false);
     }).catch((err) => {
       console.error('Session retrieval error:', err);
-      if (isMounted) setAuthLoading(false);
+      if (isMounted) {
+        setBookmarks([]);
+        setAuthLoading(false);
+      }
     });
 
     // Listen for auth state changes (login, logout, oauth callback)
@@ -381,12 +396,22 @@ export function AuthProvider({ children }) {
           await fetchUserBookmarks(currentUser.id);
           await fetchNotificationStates(currentUser.id);
           refreshSquadData(currentUser, true);
+          try {
+            const pendingId = sessionStorage.getItem('onestop_pending_bookmark_after_auth');
+            if (pendingId) {
+              sessionStorage.removeItem('onestop_pending_bookmark_after_auth');
+              toggleBookmark(pendingId);
+            }
+          } catch (e) {}
         } else {
           resetUser();
           setProfile(null);
           setBookmarks([]);
           setSquadApps([]);
           setNotificationStates({});
+          try {
+            localStorage.removeItem('onestop_bookmarks');
+          } catch (e) {}
         }
         setAuthLoading(false);
       }
@@ -480,8 +505,12 @@ export function AuthProvider({ children }) {
 
   // 6. Local Storage Sync Fallback
   useEffect(() => {
-    localStorage.setItem('onestop_bookmarks', JSON.stringify(bookmarks.filter(b => !isMockBookmark(b))));
-  }, [bookmarks]);
+    if (user || userRef.current) {
+      localStorage.setItem('onestop_bookmarks', JSON.stringify(bookmarks.filter(b => !isMockBookmark(b))));
+    } else {
+      localStorage.removeItem('onestop_bookmarks');
+    }
+  }, [bookmarks, user]);
 
   useEffect(() => {
     localStorage.setItem('onestop_posts', JSON.stringify(squadPosts.filter(p => !isMockPost(p))));
@@ -817,8 +846,24 @@ export function AuthProvider({ children }) {
     return merged;
   };
 
-  // Bookmark Toggle with Live Database Sync (String-Normalized IDs)
+  // Bookmark Toggle with Live Database Sync (Strict Authentication Required)
   const toggleBookmark = async (compId) => {
+    const activeUser = user || userRef.current;
+    if (!activeUser) {
+      try {
+        sessionStorage.setItem('onestop_pending_bookmark_after_auth', String(compId));
+      } catch (e) {}
+      openAuthModal({
+        title: 'Sign Up to Bookmark Competitions',
+        subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
+        initialTab: 'signup',
+        postLoginAction: () => {
+          toggleBookmark(compId);
+        },
+      });
+      return false;
+    }
+
     const sCompId = String(compId);
     const isCurrentlySaved = bookmarks.some(id => String(id) === sCompId);
     const nextBookmarks = isCurrentlySaved
@@ -834,26 +879,30 @@ export function AuthProvider({ children }) {
     localStorage.setItem('onestop_bookmarks', JSON.stringify(nextBookmarks));
 
     // Persist to Supabase if authenticated
-    if (supabase && user) {
+    if (supabase && activeUser) {
       try {
         if (isCurrentlySaved) {
           await supabase
             .from('bookmarks')
             .delete()
-            .eq('user_id', user.id)
+            .eq('user_id', activeUser.id)
             .eq('comp_id', sCompId);
         } else {
           await supabase
             .from('bookmarks')
-            .insert([{ user_id: user.id, comp_id: sCompId }]);
+            .insert([{ user_id: activeUser.id, comp_id: sCompId }]);
         }
       } catch (err) {
         console.warn('Could not sync bookmark to Supabase:', err.message);
       }
     }
+    return true;
   };
 
-  const isBookmarked = (compId) => bookmarks.some(id => String(id) === String(compId));
+  const isBookmarked = (compId) => {
+    if (!user && !userRef.current) return false;
+    return bookmarks.some(id => String(id) === String(compId));
+  };
 
   // Squad Post Creator (Strict Authentication Required)
   const createSquadPost = async (postData) => {

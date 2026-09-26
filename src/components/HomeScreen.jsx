@@ -14,6 +14,7 @@ import {
 } from './icons';
 import { useCompetitionRounds } from '../hooks/useCompetitionRounds';
 import BookmarkRoundTrackerCard from './BookmarkRoundTrackerCard';
+import { useAuth } from '../context/AuthContext';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
 
@@ -457,6 +458,7 @@ export default function HomeScreen({
   onOpenWhatsApp,
   headerAction = null,
 }) {
+  const { openAuthModal } = useAuth();
   const rawFirst = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/)[0]
     : (profile?.full_name?.trim() ? profile.full_name.trim().split(/\s+/)[0] : (user?.email ? user.email.split('@')[0] : 'there'));
@@ -975,11 +977,17 @@ export default function HomeScreen({
               }}
             >
               <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>
-                Nothing saved yet. Bookmark a competition and it shows up here.
+                {user
+                  ? 'Nothing saved yet. Bookmark a competition and it shows up here.'
+                  : 'Sign up to bookmark competitions and track deadlines across rounds.'}
               </span>
               <button
                 type="button"
-                onClick={() => handleNavigate('browse')}
+                onClick={() => user ? handleNavigate('browse') : openAuthModal && openAuthModal({
+                  title: 'Sign Up to Bookmark Competitions',
+                  subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
+                  initialTab: 'signup',
+                })}
                 style={{
                   border: 0,
                   background: 'transparent',
@@ -990,7 +998,7 @@ export default function HomeScreen({
                   padding: 0
                 }}
               >
-                Browse competitions →
+                {user ? 'Browse competitions →' : 'Sign up to bookmark →'}
               </button>
             </div>
           ) : (

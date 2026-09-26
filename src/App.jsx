@@ -252,19 +252,10 @@ function OneStopInner() {
     return () => clearTimeout(watchdog);
   }, []);
 
-  // Bookmarks State (String-normalized, zero mock IDs)
-  const [localBookmarks, setLocalBookmarks] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_bookmarks');
-      return saved ? JSON.parse(saved).filter(b => !isMockBookmark(b)).map(String) : [];
-    } catch {
-      return [];
-    }
-  });
-
+  // Bookmarks State (Strictly authenticated accounts only, zero mock IDs)
   const bookmarks = useMemo(() => {
-    return (user ? (authBookmarks || []) : localBookmarks).filter(b => !isMockBookmark(b)).map(String);
-  }, [user, authBookmarks, localBookmarks]);
+    return (user ? (authBookmarks || []) : []).filter(b => !isMockBookmark(b)).map(String);
+  }, [user, authBookmarks]);
 
   // Multi-round competition timelines & snapshot diffing for bookmarked opportunities
   const { roundsMap, refreshRounds } = useCompetitionRounds(bookmarks);
@@ -292,16 +283,28 @@ function OneStopInner() {
 
   const handleToggleBookmark = useCallback((compId) => {
     const sCompId = String(compId);
+    if (!user) {
+      flash('Please sign up to bookmark competitions.');
+      try {
+        sessionStorage.setItem('onestop_pending_bookmark_after_auth', sCompId);
+      } catch (e) {}
+      openAuthModal({
+        title: 'Sign Up to Bookmark Competitions',
+        subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
+        initialTab: 'signup',
+        postLoginAction: () => {
+          if (authToggleBookmark) {
+            authToggleBookmark(sCompId);
+          }
+        },
+      });
+      return;
+    }
+
     if (authToggleBookmark) {
       authToggleBookmark(sCompId);
     }
-    setLocalBookmarks(prev => {
-      const cleanPrev = prev.filter(b => !isMockBookmark(b)).map(String);
-      const next = cleanPrev.includes(sCompId) ? cleanPrev.filter(id => id !== sCompId) : [...cleanPrev, sCompId];
-      localStorage.setItem('onestop_bookmarks', JSON.stringify(next));
-      return next;
-    });
-  }, [authToggleBookmark]);
+  }, [user, authToggleBookmark, openAuthModal, flash]);
 
   // Squad Posts State (100% real Supabase squad posts)
   const [localPosts, setLocalPosts] = useState(() => {

@@ -200,13 +200,17 @@ export default function AuthModal() {
               ? 'Reset Password'
               : mode === 'signup'
               ? (authModalConfig?.title || 'Create Account')
-              : authModalConfig?.title || 'Sign In to OneStop'}
+              : (authModalConfig?.title
+                  ? authModalConfig.title.replace(/^Sign Up to\s+/i, 'Sign In to ')
+                  : 'Sign In to OneStop')}
           </h2>
 
           <p className="arena-auth-subtitle">
             {mode === 'forgot'
               ? 'Enter your email address to receive a secure recovery link.'
-              : authModalConfig?.subtitle || 'Access teammate matching, squad recruitment, and WhatsApp coordination.'}
+              : (mode === 'signin' && authModalConfig?.subtitle && /^Create your\s+/i.test(authModalConfig.subtitle))
+              ? authModalConfig.subtitle.replace(/^Create your\s+/i, 'Sign in to your ')
+              : (authModalConfig?.subtitle || 'Access teammate matching, squad recruitment, and WhatsApp coordination.')}
           </p>
         </div>
 

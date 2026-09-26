@@ -514,7 +514,7 @@ export default function CompetitionsPage({
   onSortChange,
   onFilterPrefsChange,
 }) {
-  const { user, profile, squadPosts = [] } = useAuth();
+  const { user, profile, squadPosts = [], openAuthModal } = useAuth();
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
   const bookmarksKey = `${LOCAL_STORAGE_KEY}${userKeySuffix}`;
 
@@ -618,24 +618,22 @@ export default function CompetitionsPage({
   });
 
   const bookmarkedIds = useMemo(() => {
+    if (!user) return [];
     if (propBookmarks !== undefined) {
       return (propBookmarks || []).map(String);
     }
     return internalBookmarkedIds;
-  }, [propBookmarks, internalBookmarkedIds]);
+  }, [user, propBookmarks, internalBookmarkedIds]);
 
-  // Sync bookmarks to localStorage whenever they change (if using internal state)
+  // Sync bookmarks to localStorage whenever they change (only if user is authenticated)
   useEffect(() => {
-    if (propBookmarks !== undefined) return;
+    if (propBookmarks !== undefined || !user) return;
     try {
       localStorage.setItem(bookmarksKey, JSON.stringify(internalBookmarkedIds));
-      if (!userKeySuffix) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(internalBookmarkedIds));
-      }
     } catch (err) {
       console.error('Error saving case comp bookmarks:', err);
     }
-  }, [internalBookmarkedIds, bookmarksKey, userKeySuffix, propBookmarks]);
+  }, [internalBookmarkedIds, bookmarksKey, propBookmarks, user]);
 
   // Hydrate from cloud metadata when user logs in
   useEffect(() => {
@@ -656,6 +654,27 @@ export default function CompetitionsPage({
     if (e?.stopPropagation) e.stopPropagation();
     if (e?.preventDefault) e.preventDefault();
     const sId = String(id);
+
+    if (!user) {
+      if (showToast) showToast('Please sign up to bookmark competitions.');
+      try {
+        sessionStorage.setItem('onestop_pending_bookmark_after_auth', sId);
+      } catch (err) {}
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign Up to Bookmark Competitions',
+          subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
+          initialTab: 'signup',
+          postLoginAction: () => {
+            if (propToggleBookmark) {
+              propToggleBookmark(sId);
+            }
+          }
+        });
+      }
+      return;
+    }
+
     if (propToggleBookmark) {
       propToggleBookmark(sId);
       return;
@@ -665,7 +684,7 @@ export default function CompetitionsPage({
       trackCaseCompsEvent(willAdd ? 'bookmark_added' : 'bookmark_removed', { comp_id: sId });
       return willAdd ? [...prev, sId] : prev.filter((item) => item !== sId);
     });
-  }, [propToggleBookmark]);
+  }, [user, propToggleBookmark, openAuthModal, showToast]);
 
   useEffect(() => {
     // Tick every 30 seconds for live countdown accuracy
@@ -1484,21 +1503,27 @@ export default function CompetitionsPage({
           </div>
           <h3 className="cc-empty-title">
             {bookmarkedOnly
-              ? (bookmarkedIds.length === 0 ? 'No bookmarked competitions yet' : 'No bookmarked competitions match')
+              ? (!user ? 'Sign Up to Bookmark Competitions' : (bookmarkedIds.length === 0 ? 'No bookmarked competitions yet' : 'No bookmarked competitions match'))
               : 'No competitions match your filter'}
           </h3>
           <p className="cc-empty-desc">
             {bookmarkedOnly
-              ? (bookmarkedIds.length === 0
-                  ? "You haven't bookmarked any competitions yet. Discover competitions in Browse and bookmark them to keep track of deadlines!"
-                  : 'No saved competitions match these specific filters. Clear some filters to see the rest of your bookmarks.')
+              ? (!user
+                  ? 'Create your account to bookmark competitions, track round deadlines, and sync across devices.'
+                  : (bookmarkedIds.length === 0
+                      ? "You haven't bookmarked any competitions yet. Discover competitions in Browse and bookmark them to keep track of deadlines!"
+                      : 'No saved competitions match these specific filters. Clear some filters to see the rest of your bookmarks.'))
               : 'Try searching a different keyword, selecting additional filters, or resetting criteria.'}
           </p>
           <button
             className="cc-empty-btn"
-            onClick={bookmarkedOnly && bookmarkedIds.length === 0 ? () => onNavigate && onNavigate('browse') : handleResetFilters}
+            onClick={bookmarkedOnly && !user ? () => openAuthModal && openAuthModal({
+              title: 'Sign Up to Bookmark Competitions',
+              subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
+              initialTab: 'signup',
+            }) : (bookmarkedOnly && bookmarkedIds.length === 0 ? () => onNavigate && onNavigate('browse') : handleResetFilters)}
           >
-            {bookmarkedOnly ? (bookmarkedIds.length === 0 ? 'Browse Competitions' : 'Clear All Filters') : 'Clear All Filters'}
+            {bookmarkedOnly ? (!user ? 'Sign Up to Bookmark' : (bookmarkedIds.length === 0 ? 'Browse Competitions' : 'Clear All Filters')) : 'Clear All Filters'}
           </button>
         </div>
       ) : bookmarkedOnly && savedViewMode === 'tracker' ? (
