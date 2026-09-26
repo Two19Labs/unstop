@@ -940,15 +940,15 @@ export default function HomeScreen({
 
       {/* ── 2. Bookmarks Rail: Compact Carousel of ALL Bookmarks ── */}
       <section className="home-section">
-        <div className="home-section-header">
+        <div className="home-section-header home-bookmarks-header">
           <div className="home-section-title-row">
             <h2 className="home-section-title">Bookmarks</h2>
             <span className="home-section-count-pill home-section-count-pill--muted">
               {showRailLoading ? '...' : bookmarkTotal}
             </span>
-          </div>
-          <div className="home-section-subline">
-            soonest deadlines first
+            <span className="home-bookmarks-subline">
+              soonest deadlines first
+            </span>
           </div>
         </div>
 
@@ -1067,26 +1067,26 @@ export default function HomeScreen({
 
                   {/* Prize Strip */}
                   <div className="home-compact-prize-strip">
-                    <div className="home-compact-prize-left">
+                    <span className="home-compact-prize-pill">
                       <TrophyIcon size={12} color="#059669" />
                       <span className="home-compact-prize-text" title={prizeText}>
                         {prizeText}
                       </span>
-                    </div>
-                    <span className={`home-compact-fee-badge ${isFree ? 'free' : 'paid'}`}>
+                    </span>
+                    <span className={`home-compact-fee-pill ${isFree ? 'free' : 'paid'}`}>
                       {feeText}
                     </span>
                   </div>
 
                   {/* Specs Row */}
                   <div className="home-compact-specs-row">
-                    <span className="home-compact-specs-item" title={teamText}>
-                      <UsersIcon size={12} />
-                      <span>{teamText}</span>
+                    <span className="home-compact-specs-item" title={isSolo ? 'Solo' : teamText}>
+                      <UsersIcon size={12} color="#4B5563" />
+                      <span>{isSolo ? 'Solo' : teamText}</span>
                     </span>
-                    <span className="home-compact-dot" />
+                    <span className="home-compact-dot">·</span>
                     <span className="home-compact-specs-item" title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}>
-                      <CalendarIcon size={12} />
+                      <CalendarIcon size={12} color="#4B5563" />
                       <span>Ends {deadlineFormatted || (b.mode || 'Online')}</span>
                     </span>
                   </div>
@@ -1094,20 +1094,20 @@ export default function HomeScreen({
                   {/* Metrics Row */}
                   <div className="home-compact-metrics-row">
                     <span className="home-compact-metrics-regs">
-                      <FlameIcon size={12} />
+                      <FlameIcon size={12} color="#6B7280" />
                       {registeredCount > 0 ? (
                         <span><strong>{registeredCount.toLocaleString()}</strong> registrations</span>
                       ) : (
                         <span>Recently Listed</span>
                       )}
                     </span>
-                    <span className={`home-compact-pill pill-${urgencyLevel}`}>
-                      <ClockIcon size={10} />
+                    <span className={`home-compact-countdown-pill pill-${urgencyLevel}`}>
+                      <ClockIcon size={11} />
                       <span>{countdownText}</span>
                     </span>
                   </div>
 
-                  {/* Actions Grid */}
+                  {/* Actions */}
                   <div className={`home-compact-actions ${isSolo ? 'home-compact-actions--solo' : ''}`}>
                     <a
                       href={b.unstopUrl || 'https://unstop.com'}
@@ -1117,7 +1117,7 @@ export default function HomeScreen({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <span>Apply</span>
-                      <ExternalLinkIcon size={11} color="#FFFFFF" />
+                      <ExternalLinkIcon size={13} color="#FFFFFF" />
                     </a>
                     {!isSolo && (
                       <button

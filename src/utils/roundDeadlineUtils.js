@@ -40,12 +40,52 @@ export function formatRoundDeadlineTime(dateStrOrMs) {
 }
 
 /**
+ * Formats a deadline date into the sleek "Due 26 Sep, 2:52 PM" format without the IST suffix.
+ */
+export function formatRoundDeadlineDue(dateStrOrMs) {
+  if (!dateStrOrMs) return 'Date TBA';
+  const d = new Date(dateStrOrMs);
+  if (isNaN(d.getTime())) return 'Date TBA';
+
+  const datePart = d.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    month: 'short',
+    day: 'numeric'
+  });
+
+  const minutes = d.getMinutes();
+  const timePart = d.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: minutes === 0 ? undefined : '2-digit',
+    hour12: true
+  });
+
+  return `Due ${datePart}, ${timePart}`;
+}
+
+/**
+ * Formats next round date cleanly, e.g. "Oct 4", "Oct 9", "Oct 14"
+ */
+export function formatRoundNextDate(dateStrOrMs) {
+  if (!dateStrOrMs) return '';
+  const d = new Date(dateStrOrMs);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+/**
  * Calculates live ticking countdown details down to exact hours, minutes, and seconds.
  */
 export function getRoundCountdown(targetDateMs, nowMs = Date.now()) {
   if (!targetDateMs) {
     return {
       text: 'Dates TBA',
+      timerText: 'Dates TBA',
       isExpired: false,
       isUrgent: false,
       isCritical: false,
@@ -62,6 +102,7 @@ export function getRoundCountdown(targetDateMs, nowMs = Date.now()) {
   if (isNaN(targetMs)) {
     return {
       text: 'Dates TBA',
+      timerText: 'Dates TBA',
       isExpired: false,
       isUrgent: false,
       isCritical: false,
@@ -78,6 +119,7 @@ export function getRoundCountdown(targetDateMs, nowMs = Date.now()) {
   if (diffMs <= 0) {
     return {
       text: 'Round Ended',
+      timerText: 'Round Ended',
       isExpired: true,
       isUrgent: false,
       isCritical: false,
@@ -101,17 +143,21 @@ export function getRoundCountdown(targetDateMs, nowMs = Date.now()) {
   const pad = (n) => String(n).padStart(2, '0');
 
   let text = '';
+  let timerText = '';
   let urgency = 'normal';
 
   if (days >= 2) {
     text = `${days} days left`;
+    timerText = `${days} days left`;
     urgency = 'normal';
   } else if (days === 1) {
     text = `1d ${hours}h left`;
+    timerText = `1 day left`;
     urgency = 'normal';
   } else {
     // Under 24 hours: Countdown in hours, minutes, and seconds!
     urgency = totalHours < 2 ? 'critical' : 'urgent';
+    timerText = `${pad(totalHours)}h ${pad(minutes)}m ${pad(seconds)}s`;
     if (totalHours >= 1) {
       text = `${pad(totalHours)}h ${pad(minutes)}m ${pad(seconds)}s left`;
     } else if (totalMinutes >= 1) {
@@ -123,6 +169,7 @@ export function getRoundCountdown(targetDateMs, nowMs = Date.now()) {
 
   return {
     text,
+    timerText,
     isExpired: false,
     isUrgent: urgency === 'urgent' || urgency === 'critical',
     isCritical: urgency === 'critical',

@@ -1,27 +1,29 @@
 // src/components/BookmarkRoundTrackerCard.jsx
-// Dedicated post-registration deadline tracker card for the bookmarks rail
-// Focuses strictly on round name, accurate deadline, and real-time live ticking countdown (hours, minutes, seconds)
+// Pixel-accurate round deadline tracker card for the bookmarks rail
+// Matches the reference design with status-themed pastel backgrounds, clean inner box, and vibrant Unstop blue button
 
 import React from 'react';
 import InstitutionLogo from './InstitutionLogo';
 import {
-  formatRoundDeadlineTime,
+  formatRoundDeadlineDue,
+  formatRoundNextDate,
   getRoundCountdown,
   getActiveOrNextRound,
   useLiveSecondTicker
 } from '../utils/roundDeadlineUtils';
 import './BookmarkRoundTrackerCard.css';
 
-const ExternalLinkIcon = ({ size = 12, color = 'currentColor' }) => (
+const ExternalLinkIcon = ({ size = 13, color = 'currentColor' }) => (
   <svg
     width={size}
     height={size}
     viewBox="0 0 24 24"
     fill="none"
     stroke={color}
-    strokeWidth={2}
+    strokeWidth={2.4}
     strokeLinecap="round"
     strokeLinejoin="round"
+    aria-hidden="true"
   >
     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
     <polyline points="15 3 21 3 21 9" />
@@ -50,12 +52,13 @@ export default function BookmarkRoundTrackerCard({
   const compTitle = competition.title || 'Competition';
   const hostName = competition.host || competition.orgName || 'Host Institution';
   const logo = competition.logo || competition.orgLogo;
+  const portalUrl = currentRound?.publicUrl || competition.unstopUrl || 'https://unstop.com';
 
-  // If no rounds data available or still synchronizing
+  // Fallback if no rounds data yet
   if (!currentRound) {
     return (
       <div
-        className="br-card"
+        className="br-card br-card--syncing"
         onClick={() => onOpenDetail && onOpenDetail(competition.id)}
       >
         <div className="br-top-row">
@@ -78,25 +81,27 @@ export default function BookmarkRoundTrackerCard({
 
         <h3 className="br-title" title={compTitle}>{compTitle}</h3>
 
-        <div className="br-hero-box">
+        <div className="br-hero-box br-hero-box--normal">
           <div className="br-hero-header">
-            <span className="br-stage-tag">Registration Closed</span>
-            <span className="br-live-tag tag-normal">Tracking</span>
+            <span className="br-stage-tag">ACTIVE ROUND</span>
+            <span className="br-badge br-badge--active">Tracking</span>
           </div>
-          <div style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', padding: '6px 0' }}>
-            Syncing round deadlines from Unstop...
+          <div className="br-round-title">Syncing round schedule...</div>
+          <div className="br-deadline-row">
+            <span className="br-deadline-date">Updating status</span>
+            <span className="br-countdown-val">⏱ ...</span>
           </div>
         </div>
 
         <a
-          href={competition.unstopUrl || 'https://unstop.com'}
+          href={portalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="br-portal-btn"
+          className="br-action-btn"
           onClick={(e) => e.stopPropagation()}
         >
-          <span>Open Unstop Portal</span>
-          <ExternalLinkIcon size={12} color="#FFFFFF" />
+          <span>Open Unstop</span>
+          <ExternalLinkIcon size={13} color="#FFFFFF" />
         </a>
       </div>
     );
@@ -104,41 +109,28 @@ export default function BookmarkRoundTrackerCard({
 
   // Calculate live countdown to the round deadline
   const countdown = getRoundCountdown(currentRound.endDate, nowMs);
-  const deadlineFormatted = formatRoundDeadlineTime(currentRound.endDate);
-
+  const deadlineFormatted = formatRoundDeadlineDue(currentRound.endDate);
   const roundName = currentRound.title || `Round ${currentRoundIndex}`;
-  const roundEmoji = currentRound.typeEmoji || '🎯';
 
-  let heroBoxClass = 'hero-normal';
-  let cardClass = '';
-  let liveTagClass = 'tag-normal';
-  let liveTagText = '⏳ ACTIVE';
-
-  if (isLive) {
-    heroBoxClass = 'hero-live';
-    cardClass = 'is-live';
-    liveTagClass = 'tag-live';
-    liveTagText = '🔴 LIVE NOW';
-  } else if (countdown.isCritical) {
-    heroBoxClass = 'hero-critical';
-    cardClass = 'is-critical';
-    liveTagClass = 'tag-critical';
-    liveTagText = '⚡ DUE SOON';
+  // Urgency status mapping:
+  // 1. Critical (under 2 hours or due very soon) -> Red theme
+  // 2. Urgent (under 24 hours / closing soon) -> Amber theme
+  // 3. Live or normal active -> Green theme
+  let statusTheme = 'normal';
+  if (countdown.isCritical) {
+    statusTheme = 'due-soon';
   } else if (countdown.isUrgent) {
-    heroBoxClass = 'hero-urgent';
-    cardClass = 'is-urgent';
-    liveTagClass = 'tag-urgent';
-    liveTagText = isStartingSoon ? '⏰ OPENS SOON' : '⚡ CLOSING SOON';
+    statusTheme = 'closing-soon';
+  } else if (isLive || countdown.days <= 4) {
+    statusTheme = 'live-now';
   }
-
-  const portalUrl = currentRound.publicUrl || competition.unstopUrl || 'https://unstop.com';
 
   return (
     <div
-      className={`br-card ${cardClass}`}
+      className={`br-card br-card--${statusTheme}`}
       onClick={() => onOpenDetail && onOpenDetail(competition.id)}
     >
-      {/* Top Bar: Logo, Host, and Bookmark Remove Button */}
+      {/* Top Bar: Logo, Host Name, and Compact Rounded Square Remove Button */}
       <div className="br-top-row">
         <div className="br-host-wrap">
           <InstitutionLogo logo={logo} name={hostName} size={30} borderRadius={7} fontSize={10.5} />
@@ -157,60 +149,71 @@ export default function BookmarkRoundTrackerCard({
         </button>
       </div>
 
-      {/* Competition Title */}
+      {/* Competition Title (Clamped to 2 lines) */}
       <h3 className="br-title" title={compTitle}>{compTitle}</h3>
 
-      {/* Hero Round Deadline Box (NO descriptions, 100% focus on round name and accurate ticking deadline) */}
-      <div className={`br-hero-box ${heroBoxClass}`}>
+      {/* Hero Inner Box with Clean Layout: Header -> Round Name -> Deadline & Countdown */}
+      <div className={`br-hero-box br-hero-box--${statusTheme}`}>
         <div className="br-hero-header">
           <span className="br-stage-tag">
-            {totalRounds > 1 ? `Round ${currentRoundIndex} of ${totalRounds}` : 'Active Round'}
+            {totalRounds > 1 ? `ROUND ${currentRoundIndex} OF ${totalRounds}` : 'ACTIVE ROUND'}
           </span>
-          <span className={`br-live-tag ${liveTagClass}`}>
-            {liveTagText}
-          </span>
+          {statusTheme === 'due-soon' && (
+            <span className="br-badge br-badge--due-soon">Due soon</span>
+          )}
+          {statusTheme === 'closing-soon' && (
+            <span className="br-badge br-badge--closing-soon">Closing soon</span>
+          )}
+          {statusTheme === 'live-now' && (
+            <span className="br-badge br-badge--live-now">
+              <span className="br-live-dot" />
+              Live now
+            </span>
+          )}
+          {statusTheme === 'normal' && (
+            <span className="br-badge br-badge--active">Active</span>
+          )}
         </div>
 
-        {/* Round Name ONLY */}
-        <div className="br-round-name-row">
-          <span className="br-round-emoji">{roundEmoji}</span>
-          <span className="br-round-name" title={roundName}>{roundName}</span>
+        {/* Clean Bold Round Title without distracting emojis */}
+        <div className="br-round-title" title={roundName}>
+          {roundName}
         </div>
 
-        {/* Accurate Formatted Deadline */}
+        {/* Deadline Date on Left, Active Ticking Countdown on Right */}
         <div className="br-deadline-row">
-          <span className="br-deadline-label">Deadline</span>
-          <span className="br-deadline-time">{deadlineFormatted}</span>
-        </div>
-
-        {/* Real-time Ticking Countdown in Hours, Minutes, and Seconds */}
-        <div className="br-countdown-banner">
-          <span style={{ fontSize: '13px' }}>⏱️</span>
-          <span>{countdown.text}</span>
+          <span className="br-deadline-date">{deadlineFormatted}</span>
+          <span className="br-countdown-val">
+            <span className="br-clock-icon">⏱</span>
+            <span>{countdown.timerText || countdown.text}</span>
+          </span>
         </div>
       </div>
 
-      {/* Subsequent Round Strip (Minimal, single-line teaser without descriptions) */}
-      {subsequentRound && (
-        <div className="br-subsequent-strip" title={`Next: ${subsequentRound.title}`}>
-          <span>Next: </span>
-          <strong>{subsequentRound.title}</strong>
+      {/* Subsequent Round Strip (Single line text teaser) */}
+      {subsequentRound ? (
+        <div className="br-next-row" title={`Next: ${subsequentRound.title}`}>
+          <span className="br-next-arrow">→</span>
+          <span className="br-next-label">Next: </span>
+          <span className="br-next-name">{subsequentRound.title}</span>
           {subsequentRound.endDate && (
-            <span> ({new Date(subsequentRound.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })})</span>
+            <span className="br-next-date"> · {formatRoundNextDate(subsequentRound.endDate)}</span>
           )}
         </div>
+      ) : (
+        <div className="br-next-row br-next-row--empty" aria-hidden="true" />
       )}
 
-      {/* Action Button */}
+      {/* Action Button: Full-width vibrant Unstop royal blue button */}
       <a
         href={portalUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="br-portal-btn"
+        className="br-action-btn"
         onClick={(e) => e.stopPropagation()}
       >
-        <span>Open Unstop Portal</span>
-        <ExternalLinkIcon size={12} color="#FFFFFF" />
+        <span>Open Unstop</span>
+        <ExternalLinkIcon size={13} color="#FFFFFF" />
       </a>
     </div>
   );
