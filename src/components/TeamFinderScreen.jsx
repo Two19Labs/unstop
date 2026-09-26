@@ -7,7 +7,6 @@ import { normalizeYear } from '../data/colleges';
 import PostSquadModal from './PostSquadModal';
 import ApplyModal from './ApplyModal';
 import SectionLoadingWidget from './SectionLoadingWidget';
-import InstitutionLogo from './InstitutionLogo';
 import CompetitionChatModal from './CompetitionChatModal';
 import { SQUAD_PUNS } from './FunLoadingScreen';
 import './TeamFinderScreen.css';
@@ -1691,15 +1690,8 @@ export default function TeamFinderScreen({
                           </span>
                         </div>
 
-                        {/* 2. Logo, Title & Host */}
+                        {/* 2. Title & Host */}
                         <div className="tf-card-header-inner">
-                          <InstitutionLogo
-                            name={post.comp.host}
-                            title={post.comp.title}
-                            logo={post.comp.logo}
-                            size={40}
-                            borderRadius={8}
-                          />
                           <div className="tf-card-title-meta">
                             <h3 className="tf-card-title" title={post.comp.title}>{post.comp.title}</h3>
                             <div className="tf-card-host-name" title={post.comp.host}>{post.comp.host}</div>
@@ -1966,21 +1958,13 @@ export default function TeamFinderScreen({
 
             <div className="tf-sheet-body">
               {/* Competition header */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '44px minmax(0, 1fr)', gap: '12px', alignItems: 'start' }}>
-                  <InstitutionLogo
-                    organizer={detailTarget.comp.host}
-                    title={detailTarget.comp.title}
-                    logoUrl={detailTarget.comp.logo}
-                    size={44}
-                  />
-                  <div style={{ minWidth: 0 }}>
-                    <h2 style={{ margin: 0, fontSize: '19px', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.015em', textWrap: 'pretty', color: 'var(--ink, #1A1A19)' }}>
-                      {detailTarget.comp.title}
-                    </h2>
-                    <div style={{ marginTop: '3px', fontSize: '13px', color: 'var(--ink-secondary, #55534D)' }}>
-                      {detailTarget.comp.host}
-                    </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <h2 style={{ margin: 0, fontSize: '19px', fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.015em', textWrap: 'pretty', color: 'var(--ink, #1A1A19)' }}>
+                    {detailTarget.comp.title}
+                  </h2>
+                  <div style={{ marginTop: '3px', fontSize: '13px', color: 'var(--ink-secondary, #55534D)' }}>
+                    {detailTarget.comp.host}
                   </div>
                 </div>
 
@@ -2195,18 +2179,13 @@ export default function TeamFinderScreen({
             {/* Header */}
             <div className="tf-review-header">
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-                  <InstitutionLogo
-                    name={reviewTarget.comp.host}
-                    title={reviewTarget.comp.title}
-                    logo={reviewTarget.comp.logo}
-                    size={40}
-                    borderRadius={8}
-                  />
-                  <div style={{ minWidth: 0 }}>
-                    <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink, #1A1A19)' }}>
-                      {reviewTarget.comp.title}
-                    </h2>
+                <div style={{ minWidth: 0 }}>
+                  <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink, #1A1A19)' }}>
+                    {reviewTarget.comp.title}
+                  </h2>
+                  <div style={{ fontSize: '12.5px', color: 'var(--ink-secondary, #55534D)', marginTop: '2px' }}>
+                    {reviewTarget.comp.host}
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
                     {/* Overlapping member circles */}
                     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -2227,7 +2206,6 @@ export default function TeamFinderScreen({
                     </span>
                   </div>
                 </div>
-              </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <button
