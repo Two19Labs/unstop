@@ -31,6 +31,54 @@
 @media (max-width: 768px) {
   .profile-screen-container {
     padding-bottom: calc(var(--mobile-bottom-nav-height, 60px) + 24px) !important;
+    gap: 14px;
+  }
+
+  .profile-header {
+    display: none;
+  }
+
+  .profile-main-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .profile-left-rail {
+    display: contents;
+  }
+
+  .profile-preview-card {
+    order: 1;
+    border-radius: 12px;
+  }
+
+  /* Hide SQUAD LEAD VIEW / Live Preview banner on mobile per spec */
+  .profile-preview-strip {
+    display: none !important;
+  }
+
+  .profile-form-column {
+    order: 2;
+    gap: 14px;
+  }
+
+  .profile-section-card {
+    border-radius: 12px;
+    padding: 16px 14px;
+    gap: 14px;
+  }
+
+  .profile-account-card {
+    order: 3;
+    border-radius: 12px;
+  }
+
+  /* 16px inputs prevent iOS Safari zoom */
+  .profile-input,
+  .profile-select,
+  .profile-screen-container .t19-college-input {
+    font-size: 16px !important;
   }
 }
 

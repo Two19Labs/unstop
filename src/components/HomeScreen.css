@@ -703,39 +703,282 @@
   transition: opacity 140ms ease;
 }
 
+.home-section-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home-section-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.home-section-count-pill {
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.home-section-count-pill--muted {
+  background: var(--surface-muted, #F2F1ED);
+  color: var(--ink-secondary, #55534D);
+}
+
+.home-section-count-pill--primary {
+  background: #0F3FFE;
+  color: #FFFFFF;
+}
+
+.home-see-all-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0F3FFE;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.home-section-subline {
+  font-size: 12.5px;
+  color: var(--ink-muted, #75736C);
+  white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-subline-chip {
+  background: rgba(15, 63, 254, 0.07);
+  color: #0F3FFE;
+  border: 1px solid rgba(15, 63, 254, 0.20);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex: none;
+}
+
+.home-subline-edit-btn {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #0F3FFE;
+  padding: 2px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.home-kpi-label-mobile {
+  display: none;
+}
+
+.home-kpi-label-desktop {
+  display: inline;
+}
+
+.home-kpi-dot {
+  display: none;
+}
+
+.home-header-college {
+  color: var(--ink-secondary, #55534D);
+  font-weight: 500;
+}
+
+.home-header-dot {
+  color: var(--ink-muted, #75736C);
+}
+
+.home-header-batch {
+  color: var(--ink-muted, #75736C);
+}
+
 @media (max-width: 768px) {
-  .home-greeting-block,
+  .home-container {
+    gap: 22px;
+  }
+  .home-header {
+    padding: 0 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+  }
+  .home-header-identity {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 3px !important;
+  }
+  .home-header-greeting {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    line-height: 1.2 !important;
+  }
+  .home-header-meta {
+    display: grid !important;
+    grid-template-columns: 13px minmax(0, 1fr) !important;
+    column-gap: 6px !important;
+    row-gap: 1px !important;
+    align-items: start !important;
+    font-size: 12.5px !important;
+    line-height: 1.35 !important;
+    color: #75736C !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    margin-top: 1px;
+  }
+  .home-header-meta-icon {
+    margin-top: 2px !important;
+    color: #0F3FFE !important;
+  }
+  .home-header-college {
+    color: #55534D !important;
+    font-weight: 500 !important;
+    text-wrap: pretty !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+  }
+  .home-header-dot {
+    display: none !important;
+  }
+  .home-header-batch {
+    grid-column: 2 !important;
+    color: #75736C !important;
+    font-size: 12.5px !important;
+  }
+  .home-header-kpis {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: baseline !important;
+    gap: 4px 16px !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+  .home-kpi-item {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 5px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  .home-kpi-number {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+  }
+  .home-kpi-label {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #75736C !important;
+    line-height: 1.2 !important;
+  }
+  .home-kpi-label-mobile {
+    display: inline !important;
+  }
+  .home-kpi-label-desktop {
+    display: none !important;
+  }
+  .home-kpi-dot {
+    display: inline !important;
+    color: #C9C7C1 !important;
+  }
   .home-section-header {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding: 0 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
   }
-  .home-campus-name {
-    max-width: 180px;
+  .home-section-title-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
   }
-  .home-greeting-title {
-    font-size: clamp(20px, 5.5vw, 24px);
+  .home-see-all-btn {
+    margin-left: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    height: 44px !important;
+    margin-top: -12px !important;
+    margin-bottom: -12px !important;
+    padding: 0 2px 0 8px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #0F3FFE !important;
+    white-space: nowrap !important;
   }
-  .home-pulse-container {
-    gap: 10px;
+  .home-comps-subline-scroll {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    margin: 0 -14px !important;
+    padding: 0 14px !important;
+  }
+  .home-more-card {
+    display: none !important;
   }
   .rail {
-    padding-left: 16px;
-    padding-right: 16px;
-    scroll-padding: 0 16px;
-    gap: 12px;
+    padding: 4px 14px 14px !important;
+    scroll-padding: 0 14px !important;
+    gap: 12px !important;
+  }
+  .rail > .home-rail-card:not(.home-rail-card--compact) {
+    flex: 0 0 318px !important;
+    width: 318px !important;
+    border-radius: 12px !important;
+  }
+  .home-rail-card--compact {
+    flex: 0 0 268px !important;
+    width: 268px !important;
+    padding: 13px 14px 14px !important;
+    gap: 9px !important;
+    border-radius: 12px !important;
+  }
+  .home-compact-actions a,
+  .home-compact-actions button,
+  .home-rail-card a,
+  .home-rail-card button {
+    min-height: 44px;
+  }
+  .home-compact-btn-apply {
+    background: #0F3FFE !important;
+    border: 1px solid #0F3FFE !important;
+    color: #FFFFFF !important;
+    height: 44px !important;
   }
 }
 
 @media (max-width: 480px) {
-  .home-greeting-block,
+  .home-header,
   .home-section-header {
-    padding-left: 14px;
-    padding-right: 14px;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
   }
   .rail {
-    padding-left: 14px;
-    padding-right: 14px;
-    scroll-padding: 0 14px;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    scroll-padding: 0 14px !important;
   }
 }
+
 

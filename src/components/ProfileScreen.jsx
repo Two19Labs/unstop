@@ -235,6 +235,14 @@ function ProfileScreenContent({
     const isPost = level === 'PG';
     const computedYear = `${level} ${yearNum} Year`;
 
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      if (flashToast) {
+        flashToast('Please enter a valid 10-digit WhatsApp number.');
+      }
+      return;
+    }
+
     const updatedData = {
       name: name.trim() || 'Student',
       college: college.trim() || 'College',
@@ -457,7 +465,9 @@ function ProfileScreenContent({
             </div>
 
             <div className="profile-field-group profile-phone-group">
-              <label className="profile-field-label" htmlFor="profile-phone-input">WhatsApp Number</label>
+              <label className="profile-field-label" htmlFor="profile-phone-input">
+                WhatsApp Number <span style={{ color: 'var(--primary)', fontWeight: 600 }}>*</span>
+              </label>
               <input
                 id="profile-phone-input"
                 type="tel"
@@ -465,9 +475,10 @@ function ProfileScreenContent({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 98••• ••210"
+                required
               />
               <span className="profile-field-help">
-                Shared only after a squad lead accepts your application for the instant 1-click WhatsApp squad handshake.
+                Compulsory for profile &amp; squad matching. Kept private; shared only once you are accepted into a squad or choose WhatsApp fast-track.
               </span>
             </div>
           </section>

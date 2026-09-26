@@ -1014,19 +1014,19 @@ export default function TeamFinderScreen({
               <div className="tf-tabs-segmented">
                 <button
                   type="button"
-                  onClick={() => setTab('mine')}
-                  className={`tf-tab-btn ${tab === 'mine' ? 'active' : ''}`}
-                >
-                  My listings
-                  <span className="tf-tab-pill">{myTotalPool.length}</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => setTab('other')}
                   className={`tf-tab-btn ${tab === 'other' ? 'active' : ''}`}
                 >
-                  Other listings
+                  <span>Other listings</span>
                   <span className="tf-tab-pill">{otherPool.length}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('mine')}
+                  className={`tf-tab-btn ${tab === 'mine' ? 'active' : ''}`}
+                >
+                  <span>My listings</span>
+                  <span className="tf-tab-pill">{myTotalPool.length}</span>
                 </button>
               </div>
 
@@ -1039,7 +1039,7 @@ export default function TeamFinderScreen({
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search competitions, leads, colleges or skills"
+                  placeholder="Search competitions, leads or skills"
                   className="tf-search-input"
                 />
               </label>
@@ -1262,12 +1262,19 @@ export default function TeamFinderScreen({
                           </div>
 
                           <div className="tf-skills-wrap">
-                            {post.want.length > 0 ? (
-                              post.want.map((w, idx) => (
-                                <span key={idx} className="tf-skill-pill-needed">
-                                  {w}
-                                </span>
-                              ))
+                            {post.want && post.want.length > 0 ? (
+                              <>
+                                {post.want.slice(0, 2).map((w, idx) => (
+                                  <span key={idx} className="tf-skill-pill-needed">
+                                    {w}
+                                  </span>
+                                ))}
+                                {post.want.length > 2 && (
+                                  <span className="tf-skill-pill-more">
+                                    +{post.want.length - 2}
+                                  </span>
+                                )}
+                              </>
                             ) : (
                               <span className="tf-skill-pill-welcome">
                                 All skills welcome
@@ -1293,7 +1300,7 @@ export default function TeamFinderScreen({
                               <span className="tf-badge tf-badge-requested">Requested</span>
                             ) : post.state === 'accepted' ? (
                               <span className="tf-badge tf-badge-accepted">You're in</span>
-                            ) : post.state === 'full' ? (
+                            ) : post.state === 'full' || post.openN === 0 ? (
                               <span className="tf-badge tf-badge-full">Full</span>
                             ) : post.state === 'closed' ? (
                               <span className="tf-badge tf-badge-closed">Closed</span>
@@ -1341,31 +1348,9 @@ export default function TeamFinderScreen({
                             </div>
                           ) : (
                             <div className="tf-actions-row">
-                              {(post.state === 'open' || post.state === 'requested') && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleOpenWhatsAppPost(e, post)}
-                                  className="tf-wa-btn"
-                                >
-                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366">
-                                    <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path>
-                                    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path>
-                                  </svg>
-                                  WhatsApp
-                                </button>
-                              )}
-
-                              {post.state === 'open' && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleRequestJoin(e, post)}
-                                  className="tf-join-btn"
-                                >
-                                  Request to join
-                                </button>
-                              )}
-
-                              {post.state === 'requested' && (
+                              {post.state === 'full' || post.openN === 0 ? (
+                                <span className="tf-full-block">Squad full</span>
+                              ) : post.state === 'requested' ? (
                                 <button
                                   type="button"
                                   onClick={(e) => handleWithdraw(e, post)}
@@ -1377,9 +1362,7 @@ export default function TeamFinderScreen({
                                   </svg>
                                   Requested · Withdraw
                                 </button>
-                              )}
-
-                              {post.state === 'accepted' && (
+                              ) : post.state === 'accepted' ? (
                                 <button
                                   type="button"
                                   onClick={(e) => handleOpenWhatsAppPost(e, post)}
@@ -1387,10 +1370,31 @@ export default function TeamFinderScreen({
                                 >
                                   Message {post.lead.split(' ')[0]} on WhatsApp
                                 </button>
-                              )}
-
-                              {post.state === 'full' && (
-                                <span className="tf-full-block">Squad full</span>
+                              ) : (
+                                <>
+                                  {(post.comm_method === 'whatsapp' || post.commMethod === 'whatsapp' || (!post.comm_method && !post.commMethod && (post.phone || post.phone_number || post.leadPhone))) && (
+                                    <button
+                                      type="button"
+                                      aria-label="Message on WhatsApp"
+                                      onClick={(e) => handleOpenWhatsAppPost(e, post)}
+                                      className="tf-wa-btn tf-wa-icon-only-btn"
+                                      title="Message lead on WhatsApp"
+                                    >
+                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366">
+                                        <path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path>
+                                        <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path>
+                                      </svg>
+                                      <span className="tf-wa-btn-text">WhatsApp</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleRequestJoin(e, post)}
+                                    className="tf-join-btn"
+                                  >
+                                    Request to join
+                                  </button>
+                                </>
                               )}
                             </div>
                           )}
@@ -1406,6 +1410,26 @@ export default function TeamFinderScreen({
 
           </main>
         </div>
+
+        {/* Floating Post a squad button (Mobile) */}
+        <button
+          type="button"
+          className="tf-floating-post-btn"
+          onClick={() => {
+            if (onOpenPostSquad) onOpenPostSquad(null);
+            else {
+              setEditingPostData(null);
+              setPostModalOpen(true);
+            }
+          }}
+          aria-label="Post a squad"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14"></path>
+            <path d="M12 5v14"></path>
+          </svg>
+          Post a squad
+        </button>
 
       </div>
 

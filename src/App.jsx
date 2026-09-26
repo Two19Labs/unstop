@@ -744,6 +744,7 @@ function OneStopInner() {
       created_by_name: creatorName,
       leadPhone: draft.phone_number || profile.phone || '',
       phone_number: draft.phone_number || profile.phone || '',
+      comm_method: draft.comm_method || draft.commMethod || 'whatsapp',
       college: draft.college || profile.college || '',
       year: draft.year || profile.batch || 'UG 2nd Year',
       mine: true,
@@ -770,6 +771,7 @@ function OneStopInner() {
           spots_left: draft.spots,
           total_members: draft.total_members || Math.max(2, draft.spots + 1),
           phone_number: draft.phone_number || profile.phone || '',
+          comm_method: draft.comm_method || draft.commMethod || 'whatsapp',
           college: draft.college || profile.college || '',
           year: draft.year || profile.batch || 'UG 2nd Year'
         });
@@ -1026,38 +1028,27 @@ function OneStopInner() {
 
   return (
     <div className={isStandaloneMode ? "onestop-app onestop-app-browse-mode" : "onestop-app"}>
-      {/* Mobile Topbar */}
-      {!isStandaloneMode && (
-        <div className="mobile-topbar">
-          <button
-            className="mobile-hamburger-btn"
-            onClick={() => setMobileSidebarOpen(true)}
-            aria-label="Open menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-          <OneStopLogo height={22} style={{ cursor: 'pointer' }} onClick={() => handleNavigate('home')} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ThemeToggle variant="compact" />
-            <NotificationCenter
-              applications={applications}
-              competitions={competitions}
-              bookmarks={bookmarks}
-              posts={posts}
-              profile={profile}
-              roundsMap={roundsMap}
-              onOpenWhatsApp={handleOpenWhatsApp}
-              onOpenDetail={(id) => setDetailCompId(id)}
-              onNavigate={handleNavigate}
-              onToggleBookmark={handleToggleBookmark}
-            />
-          </div>
+      {/* Universal Mobile Topbar (identical on every screen per v3 spec) */}
+      <div className="mobile-topbar">
+        <OneStopLogo height={24} style={{ cursor: 'pointer' }} onClick={() => handleNavigate('home')} />
+        <div className="mobile-topbar-actions">
+          <ThemeToggle variant="compact" />
+          <NotificationCenter
+            applications={applications}
+            competitions={competitions}
+            bookmarks={bookmarks}
+            posts={posts}
+            profile={profile}
+            roundsMap={roundsMap}
+            onOpenWhatsApp={handleOpenWhatsApp}
+            onOpenDetail={(id) => setDetailCompId(id)}
+            onNavigate={handleNavigate}
+            onToggleBookmark={handleToggleBookmark}
+          />
         </div>
-      )}
+      </div>
 
-      {/* Sidebar */}
+      {/* Sidebar (Desktop only) */}
       {!isStandaloneMode && (
         <Sidebar
           screen={screen}
@@ -1067,7 +1058,7 @@ function OneStopInner() {
           pendingInboxCount={pendingInboxCount}
           profile={profile}
           user={user}
-          mobileOpen={mobileSidebarOpen}
+          mobileOpen={false}
           onCloseMobile={() => setMobileSidebarOpen(false)}
         />
       )}
@@ -1215,6 +1206,8 @@ function OneStopInner() {
                 applications={applications}
                 posts={posts}
                 competitions={visibleCompetitions}
+                user={user}
+                profile={profile}
                 onAccept={handleAcceptApp}
                 onDecline={handleDeclineApp}
                 onRemove={handleRemoveApp}

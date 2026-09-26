@@ -120,6 +120,11 @@ export default function AuthModal() {
           }
         }, 500);
       } else if (mode === 'signup') {
+        const cleanPhone = (phone || '').replace(/\D/g, '');
+        if (cleanPhone.length < 10) {
+          throw new Error('Please enter a valid 10-digit WhatsApp number to create your account.');
+        }
+
         const res = await signUpWithPassword({
           email,
           password,
@@ -297,13 +302,14 @@ export default function AuthModal() {
                 </div>
 
                 <div className="arena-auth-field">
-                  <label htmlFor="auth-phone">WhatsApp Number</label>
+                  <label htmlFor="auth-phone">WhatsApp Number *</label>
                   <input
                     id="auth-phone"
                     type="tel"
                     placeholder="10-digit mobile"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    required
                   />
                 </div>
               </div>

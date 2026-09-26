@@ -1,12 +1,15 @@
 // src/components/RequestsScreen.jsx
 import React, { useState } from 'react';
 import { isMockApp, isMockPost } from '../data/initialData';
+import CompetitionChatModal from './CompetitionChatModal';
 import './RequestsScreen.css';
 
 export default function RequestsScreen({
   applications = [],
   posts = [],
   competitions = [],
+  user = null,
+  profile = null,
   onAccept,
   onDecline,
   onRemove,
@@ -14,6 +17,7 @@ export default function RequestsScreen({
   onOpenWhatsApp
 }) {
   const [reqTab, setReqTab] = useState('in'); // 'in' | 'out'
+  const [activeChatApp, setActiveChatApp] = useState(null);
 
   const cleanApps = applications.filter(a => !isMockApp(a));
   const cleanPosts = posts.filter(p => !isMockPost(p));
@@ -57,12 +61,22 @@ export default function RequestsScreen({
     }
   };
 
+  const activePost = activeChatApp ? postMap.get(activeChatApp.postId || activeChatApp.post_id) : null;
+  const activeComp = activeChatApp
+    ? (competitions.find(c =>
+        String(c.id) === String(activeChatApp.compId) ||
+        c.title === activeChatApp.meta ||
+        (activePost?.competition_name && c.title === activePost.competition_name) ||
+        (activePost?.compId && String(c.id) === String(activePost.compId))
+      ) || null)
+    : null;
+
   return (
     <div className="requests-screen-container">
-      {/* Header */}
-      <div>
+      {/* Header (desktop only, hidden on mobile) */}
+      <div className="requests-desktop-header">
         <h1 className="requests-header-title">
-          Requests
+          Inbox
         </h1>
         <p className="requests-header-sub">
           Applications to your squads, and the ones you have sent out.
@@ -149,10 +163,15 @@ export default function RequestsScreen({
                 {app.dir === 'in' && app.status === 'pending' && (
                   <>
                     <button
-                      onClick={() => onAccept(app.id)}
-                      className="requests-btn-primary"
+                      onClick={() => setActiveChatApp(app)}
+                      className="requests-btn-chat"
+                      title="Turn-based chat vetting"
+                      aria-label="Turn-based chat vetting"
                     >
-                      Accept
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      <span className="requests-btn-chat-label">Chat</span>
                     </button>
                     <button
                       onClick={() => onDecline(app.id)}
@@ -160,26 +179,47 @@ export default function RequestsScreen({
                     >
                       Decline
                     </button>
+                    <button
+                      onClick={() => onAccept(app.id)}
+                      className="requests-btn-primary"
+                    >
+                      Accept
+                    </button>
                   </>
                 )}
 
                 {app.status === 'accepted' && (
                   <>
                     <button
-                      onClick={() => {
-                        if (app.dir === 'out') {
-                          onOpenWhatsApp({
-                            phone: post?.phone_number || post?.leadPhone,
-                            lead: post?.created_by_name || post?.lead
-                          });
-                        } else {
-                          onOpenWhatsApp(app);
-                        }
-                      }}
-                      className="requests-btn-whatsapp"
+                      onClick={() => setActiveChatApp(app)}
+                      className="requests-btn-chat"
                     >
-                      Open WhatsApp
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      <span className="requests-btn-chat-label">Chat</span>
                     </button>
+                    {(post?.phone_number || post?.leadPhone || app.phone || app.applicant_phone) && (
+                      <button
+                        onClick={() => {
+                          if (app.dir === 'out') {
+                            onOpenWhatsApp({
+                              phone: post?.phone_number || post?.leadPhone,
+                              lead: post?.created_by_name || post?.lead,
+                              displayTitle: compTitle
+                            });
+                          } else {
+                            onOpenWhatsApp({
+                              ...app,
+                              displayTitle: compTitle
+                            });
+                          }
+                        }}
+                        className="requests-btn-whatsapp"
+                      >
+                        WhatsApp
+                      </button>
+                    )}
                     {app.dir === 'in' && onRemove && (
                       <button
                         onClick={() => {
@@ -196,13 +236,26 @@ export default function RequestsScreen({
                 )}
 
                 {app.dir === 'out' && app.status === 'pending' && (
-                  <button
-                    onClick={() => onWithdraw(app.id)}
-                    className="requests-btn-secondary"
-                  >
-                    Withdraw
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setActiveChatApp(app)}
+                      className="requests-btn-chat"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                      <span className="requests-btn-chat-label">Chat</span>
+                    </button>
+                    <button
+                      onClick={() => onWithdraw(app.id)}
+                      className="requests-btn-secondary"
+                    >
+                      Withdraw
+                    </button>
+                  </>
                 )}
+
+                {/* If declined/rejected, no action buttons rendered per spec */}
               </div>
             </div>
           );
@@ -220,6 +273,21 @@ export default function RequestsScreen({
           </div>
         )}
       </div>
+
+      {/* Competition-Scoped Chat Modal */}
+      {activeChatApp && (
+        <CompetitionChatModal
+          isOpen={Boolean(activeChatApp)}
+          onClose={() => setActiveChatApp(null)}
+          application={activeChatApp}
+          post={activePost}
+          competition={activeComp}
+          currentUser={user}
+          profile={profile}
+          onAcceptApp={onAccept}
+          onDeclineApp={onDecline}
+        />
+      )}
     </div>
   );
 }

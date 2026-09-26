@@ -64,7 +64,7 @@
 
   /* Layout dimensions */
   --sidebar-width: 236px;
-  --mobile-topbar-height: 52px;
+  --mobile-topbar-height: 60px;
   --mobile-bottom-nav-height: calc(56px + var(--sab));
   --max-content-width: 1560px;
 }
@@ -162,6 +162,16 @@ input:focus, textarea:focus, select:focus {
 
 textarea {
   resize: vertical;
+}
+
+/* Mobile canvas warm cream background per v3 spec */
+@media (max-width: 768px) {
+  :root:not([data-theme='dark']) {
+    --canvas: #F3EFE6;
+  }
+  [data-theme='light'] {
+    --canvas: #F3EFE6;
+  }
 }
 
 /* Prevent iOS auto-zoom on inputs while keeping clean sizing */

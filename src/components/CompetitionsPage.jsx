@@ -1275,7 +1275,7 @@ export default function CompetitionsPage({
               <input
                 type="text"
                 className="cc-search-input"
-                placeholder={bookmarkedOnly ? "Search your bookmarked competitions..." : "Search competitions, IIM, IIT, XLRI, ISB, prizes..."}
+                placeholder={bookmarkedOnly ? "Search your bookmarked competitions..." : "Search competitions, colleges, prizes"}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -1296,16 +1296,17 @@ export default function CompetitionsPage({
                 type="button"
                 className={`cc-mobile-filter-trigger ${activeFilterCount > 0 ? 'active' : ''}`}
                 onClick={() => setIsMobileFiltersOpen(true)}
+                aria-label="Filters"
               >
-                <FilterIcon size={15} />
-                <span>Filters</span>
+                <FilterIcon size={17} />
+                <span className="cc-mobile-filter-text">Filters</span>
                 {activeFilterCount > 0 && (
                   <span className="cc-filter-badge-count">{activeFilterCount}</span>
                 )}
               </button>
 
-              {/* Sort Selector */}
-              <div className="cc-sort-box">
+              {/* Desktop Sort Selector */}
+              <div className="cc-sort-box cc-sort-box-desktop">
                 <ArrowUpDownIcon size={13} className="cc-sort-icon" />
                 <label htmlFor="cc-sort-select" className="cc-sort-label">Sort:</label>
                 <div className="cc-sort-select-wrapper">
@@ -1315,12 +1316,12 @@ export default function CompetitionsPage({
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
                   >
-                    <option value="closing-soonest">Closing Soonest</option>
-                    <option value="closing-latest">Closing Latest</option>
+                    <option value="closing-soonest">Closing soonest</option>
+                    <option value="closing-latest">Closing latest</option>
                     <option value="title-asc">Title: A → Z</option>
                     <option value="title-desc">Title: Z → A</option>
-                    <option value="prize-highest">Highest Prize Pool</option>
-                    <option value="popular">Most Applied (Popular)</option>
+                    <option value="prize-highest">Highest prize pool</option>
+                    <option value="popular">Most registered</option>
                   </select>
                   <ChevronDownIcon size={11} className="cc-sort-chevron" />
                 </div>
@@ -1328,15 +1329,38 @@ export default function CompetitionsPage({
             </div>
           </div>
 
-          {/* Results Status Bar: Inline Count & Active Filters (Single compact row) */}
+          {/* Results Status Bar: Inline Count & Active Filters */}
           {!loading && !fetchError && (
             <div className="cc-results-status-bar">
-              <div className="cc-inline-count">
-                <span className="cc-pulse-dot" title="Live Unstop sync active"></span>
-                <span>
-                  Showing <strong>{filteredCompetitions.length}</strong>{' '}
-                  {filteredCompetitions.length === 1 ? 'opportunity' : 'opportunities'}
-                </span>
+              <div className="cc-count-sort-row">
+                <div className="cc-inline-count">
+                  <span className="cc-pulse-dot" title="Live Unstop sync active"></span>
+                  <span>
+                    <strong>{filteredCompetitions.length}</strong>{' '}
+                    {filteredCompetitions.length === 1 ? 'competition' : 'competitions'}
+                  </span>
+                </div>
+
+                {/* Mobile Sort Selector */}
+                <div className="cc-sort-box cc-sort-box-mobile">
+                  <ArrowUpDownIcon size={13} className="cc-sort-icon" />
+                  <div className="cc-sort-select-wrapper">
+                    <select
+                      className="cc-sort-select"
+                      value={sortBy}
+                      aria-label="Sort competitions"
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="closing-soonest">Closing soonest</option>
+                      <option value="closing-latest">Closing latest</option>
+                      <option value="title-asc">Title: A → Z</option>
+                      <option value="title-desc">Title: Z → A</option>
+                      <option value="prize-highest">Highest prize pool</option>
+                      <option value="popular">Most registered</option>
+                    </select>
+                    <ChevronDownIcon size={11} className="cc-sort-chevron" />
+                  </div>
+                </div>
               </div>
 
               {bookmarkedOnly && filteredCompetitions.length > 0 && (
@@ -1389,7 +1413,7 @@ export default function CompetitionsPage({
                   <div className="cc-active-pills-list">
                     {searchQuery.trim() && (
                       <span className="cc-active-pill pill-search">
-                        Search: "{searchQuery.trim()}"
+                        "{searchQuery.trim()}"
                         <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search query">✕</button>
                       </span>
                     )}
@@ -1413,21 +1437,19 @@ export default function CompetitionsPage({
                     )}
                     {feeFilter !== 'all' && (
                       <span className="cc-active-pill pill-fee">
-                        {feeFilter === 'free' ? 'Free Entry' : 'Paid Entry'}
+                        {feeFilter === 'free' ? 'Free entry' : 'Paid entry'}
                         <button type="button" onClick={() => setFeeFilter('all')} aria-label="Remove fee filter">✕</button>
                       </span>
                     )}
+                    <button
+                      type="button"
+                      className="cc-clear-all-pill-btn"
+                      onClick={handleResetFilters}
+                      title="Clear all active filters"
+                    >
+                      Clear all
+                    </button>
                   </div>
-
-                  <button
-                    type="button"
-                    className="cc-clear-all-pill-btn"
-                    onClick={handleResetFilters}
-                    title="Clear all active filters"
-                  >
-                    <RotateCcwIcon size={11} />
-                    <span>Reset</span>
-                  </button>
                 </div>
               )}
             </div>

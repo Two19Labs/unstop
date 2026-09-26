@@ -835,7 +835,7 @@ export default function HomeScreen({
               height="13"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="#0F3FFE"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -844,8 +844,12 @@ export default function HomeScreen({
               <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
               <path d="M6 12v5c3 3 9 3 12 0v-5" />
             </svg>
-            <span className="home-header-meta-text">
-              {hasUserCollege ? `${collegeName} · ${batchStatus}` : (user ? 'Choose your college' : 'Sign up to choose your college')}
+            <span className="home-header-college">
+              {hasUserCollege ? collegeName : (user ? 'Choose your college' : 'Sign up to choose your college')}
+            </span>
+            <span className="home-header-dot">·</span>
+            <span className="home-header-batch">
+              {hasUserCollege ? batchStatus : ''}
             </span>
           </div>
         </div>
@@ -865,8 +869,13 @@ export default function HomeScreen({
             >
               {showRailLoading ? '–' : newForYouCount}
             </span>
-            <span className="home-kpi-label">New for you today</span>
+            <span className="home-kpi-label">
+              <span className="home-kpi-label-mobile">new today</span>
+              <span className="home-kpi-label-desktop">New for you today</span>
+            </span>
           </button>
+
+          <span className="home-kpi-dot">·</span>
 
           {/* KPI 2: Squads need your skills */}
           <button
@@ -881,8 +890,13 @@ export default function HomeScreen({
             >
               {showRailLoading ? '–' : squadsNeedSkillsCount}
             </span>
-            <span className="home-kpi-label">Squads need your skills</span>
+            <span className="home-kpi-label">
+              <span className="home-kpi-label-mobile">squads for you</span>
+              <span className="home-kpi-label-desktop">Squads need your skills</span>
+            </span>
           </button>
+
+          <span className="home-kpi-dot">·</span>
 
           {/* KPI 3: Requests to review */}
           <button
@@ -896,12 +910,15 @@ export default function HomeScreen({
               style={{
                 color: showRailLoading
                   ? 'var(--ink-muted)'
-                  : (requestsToReviewCount > 0 ? 'var(--primary)' : 'var(--ink-muted)')
+                  : (requestsToReviewCount > 0 ? '#0F3FFE' : 'var(--ink)')
               }}
             >
               {showRailLoading ? '–' : requestsToReviewCount}
             </span>
-            <span className="home-kpi-label">Requests to review</span>
+            <span className="home-kpi-label">
+              <span className="home-kpi-label-mobile">requests</span>
+              <span className="home-kpi-label-desktop">Requests to review</span>
+            </span>
           </button>
         </div>
 
@@ -916,25 +933,15 @@ export default function HomeScreen({
       {/* ── 2. Bookmarks Rail: Compact Carousel of ALL Bookmarks ── */}
       <section className="home-section">
         <div className="home-section-header">
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
-            Bookmarks
-          </h2>
-          <span
-            style={{
-              background: 'var(--surface-muted)',
-              color: 'var(--ink-secondary)',
-              borderRadius: '20px',
-              padding: '2px 9px',
-              fontSize: '11px',
-              fontWeight: 700,
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {showRailLoading ? '...' : bookmarkTotal}
-          </span>
-          <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
+          <div className="home-section-title-row">
+            <h2 className="home-section-title">Bookmarks</h2>
+            <span className="home-section-count-pill home-section-count-pill--muted">
+              {showRailLoading ? '...' : bookmarkTotal}
+            </span>
+          </div>
+          <div className="home-section-subline">
             soonest deadlines first
-          </span>
+          </div>
         </div>
 
         <div className="rail">
@@ -1129,44 +1136,32 @@ export default function HomeScreen({
       {/* ── 3. Top Competitions Rail ── */}
       <section className="home-section">
         <div className="home-section-header">
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
-            Top competitions
-          </h2>
-          <span
-            style={{
-              background: 'var(--primary)',
-              color: '#FFFFFF',
-              borderRadius: '20px',
-              padding: '2px 9px',
-              fontSize: '11px',
-              fontWeight: 700,
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {showRailLoading ? 'Loading...' : `${compTotal} match`}
-          </span>
-
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
-              Sort: <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>{SORT_LABELS[effectiveSort] || 'Closing soonest first'}</strong>
+          <div className="home-section-title-row">
+            <h2 className="home-section-title">
+              Top competitions
+            </h2>
+            <span className="home-section-count-pill home-section-count-pill--primary">
+              {showRailLoading ? '...' : compTotal}
             </span>
+            <button
+              type="button"
+              onClick={() => handleNavigate('browse')}
+              className="home-see-all-btn"
+            >
+              <span>See all</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </button>
+          </div>
+
+          <div className="home-section-subline home-comps-subline-scroll">
+            <span style={{ flex: 'none' }}>closing soonest</span>
             {filterChips.length > 0 && (
               <>
-                <span style={{ color: 'var(--line)' }}>·</span>
-                <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>Filters:</span>
+                <span style={{ flex: 'none', color: '#C9C7C1' }}>·</span>
                 {filterChips.map((chip, idx) => (
                   <span
                     key={idx}
-                    style={{
-                      background: 'rgba(15, 63, 254, 0.08)',
-                      color: 'var(--primary)',
-                      border: '1px solid rgba(15, 63, 254, 0.20)',
-                      borderRadius: '12px',
-                      padding: '1px 8px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap'
-                    }}
+                    className="home-subline-chip"
                   >
                     {chip}
                   </span>
@@ -1175,33 +1170,13 @@ export default function HomeScreen({
                   type="button"
                   title="Edit filters in Browse"
                   onClick={() => handleNavigate('browse')}
-                  className="home-filter-edit-btn"
+                  className="home-subline-edit-btn"
                 >
-                  Edit filter
+                  Edit
                 </button>
               </>
             )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => handleNavigate('browse')}
-            className="home-more-btn"
-            style={{
-              marginLeft: 'auto',
-              border: '1px solid var(--line)',
-              borderRadius: '9px',
-              background: 'var(--surface)',
-              color: 'var(--ink)',
-              padding: '8px 13px',
-              fontSize: '13px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              cursor: 'pointer'
-            }}
-          >
-            More →
-          </button>
         </div>
 
         <div className="rail">
@@ -1583,43 +1558,25 @@ export default function HomeScreen({
       {/* 5. Top Squads Rail */}
       <section className="home-section">
         <div className="home-section-header">
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink)' }}>
-            Top squads
-          </h2>
-          <span
-            style={{
-              background: 'var(--primary)',
-              color: '#FFFFFF',
-              borderRadius: '20px',
-              padding: '2px 9px',
-              fontSize: '11px',
-              fontWeight: 700,
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {showRailLoading ? 'Loading...' : `${squadTotal} match`}
-          </span>
-          <span style={{ fontSize: '12px', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
-            Recruiting now
-          </span>
-          <button
-            onClick={() => handleNavigate('teams')}
-            className="home-btn-hover"
-            style={{
-              marginLeft: 'auto',
-              border: '1px solid var(--line)',
-              borderRadius: '9px',
-              background: 'var(--surface)',
-              color: 'var(--ink)',
-              padding: '8px 13px',
-              fontSize: '13px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-              cursor: 'pointer'
-            }}
-          >
-            More →
-          </button>
+          <div className="home-section-title-row">
+            <h2 className="home-section-title">
+              Top squads
+            </h2>
+            <span className="home-section-count-pill home-section-count-pill--primary">
+              {showRailLoading ? '...' : squadTotal}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleNavigate('teams')}
+              className="home-see-all-btn"
+            >
+              <span>See all</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+            </button>
+          </div>
+          <div className="home-section-subline">
+            recruiting for competitions you follow
+          </div>
         </div>
 
         <div className="rail">

@@ -49,6 +49,9 @@ export default function PostSquadModal({
   // Note to applicants
   const [note, setNote] = useState('');
 
+  // Communication Method Choice ('whatsapp' | 'chat')
+  const [commMethod, setCommMethod] = useState('whatsapp');
+
   // WhatsApp phone
   const [phone, setPhone] = useState('');
 
@@ -86,6 +89,7 @@ export default function PostSquadModal({
       setWant(looking);
       setHave(brings);
       setNote(editingPost.description || editingPost.desc || '');
+      setCommMethod(editingPost.comm_method || editingPost.commMethod || 'whatsapp');
       setPhone(sanitizeIndianPhone(editingPost.phone_number || editingPost.phone || editingPost.leadPhone || profile?.phone || ''));
     } else {
       if (initialCompId) {
@@ -106,6 +110,7 @@ export default function PostSquadModal({
       setWant([]);
       setHave([]);
       setNote('');
+      setCommMethod('whatsapp');
       setPhone(sanitizeIndianPhone(profile?.phone || ''));
     }
   }, [isOpen, editingPost, initialCompId, competitions, profile]);
@@ -207,10 +212,14 @@ export default function PostSquadModal({
       finalCompId = editingPost?.compId || `custom_${Date.now()}`;
     }
 
-    const cleanPhone = sanitizeIndianPhone(phone);
-    if (!cleanPhone || cleanPhone.length !== 10) {
-      setFormError('Please enter a valid 10-digit WhatsApp number.');
-      return;
+    let cleanPhone = sanitizeIndianPhone(phone);
+    if (commMethod === 'whatsapp') {
+      if (!cleanPhone || cleanPhone.length !== 10) {
+        setFormError('Please enter a valid 10-digit WhatsApp number for WhatsApp Fast-Track.');
+        return;
+      }
+    } else {
+      cleanPhone = cleanPhone || '';
     }
 
     const creatorName = profile?.name || 'Aarav Mehta';
@@ -226,8 +235,10 @@ export default function PostSquadModal({
       compLogo,
       logo: compLogo,
       competition_link: compLink,
-      phone_number: cleanPhone,
-      leadPhone: cleanPhone,
+      comm_method: commMethod,
+      commMethod: commMethod,
+      phone_number: commMethod === 'whatsapp' ? cleanPhone : '',
+      leadPhone: commMethod === 'whatsapp' ? cleanPhone : '',
       spots: open,
       spots_left: open,
       total_members: total,
@@ -237,8 +248,8 @@ export default function PostSquadModal({
       skills_looking_for: want.length > 0 ? want : ['All skills welcome'],
       have,
       skills_have: have,
-      desc: note.trim() || `Squad for ${compTitle}. Message me on WhatsApp if you want to team up!`,
-      description: note.trim() || `Squad for ${compTitle}. Message me on WhatsApp if you want to team up!`,
+      desc: note.trim() || `Squad for ${compTitle}. ${commMethod === 'whatsapp' ? 'Message me on WhatsApp if you want to team up!' : 'Apply via OneStop to team up!'}`,
+      description: note.trim() || `Squad for ${compTitle}. ${commMethod === 'whatsapp' ? 'Message me on WhatsApp if you want to team up!' : 'Apply via OneStop to team up!'}`,
       college: creatorCollege,
       year: creatorYear,
       lead: creatorName,
@@ -754,55 +765,113 @@ export default function PostSquadModal({
             />
           </div>
 
-          {/* 5. WhatsApp number */}
+          {/* 5. Communication Preference & WhatsApp number */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
-              WhatsApp number
+              Preferred communication channel
             </span>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                border: '1px solid var(--line, #E7E6E2)',
-                borderRadius: '9px',
-                overflow: 'hidden',
-                background: 'var(--surface, #FFFFFF)'
-              }}
-            >
-              <span
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setCommMethod('whatsapp')}
                 style={{
                   padding: '10px 12px',
-                  background: 'var(--surface-sunken, #F9F9F7)',
-                  borderRight: '1px solid var(--line, #E7E6E2)',
-                  fontSize: '14px',
-                  color: 'var(--ink-secondary, #55534D)',
-                  fontWeight: 600
+                  borderRadius: '10px',
+                  border: commMethod === 'whatsapp' ? '2px solid #25D366' : '1px solid var(--line, #E7E6E2)',
+                  background: commMethod === 'whatsapp' ? 'rgba(37, 211, 102, 0.08)' : 'var(--surface, #FFFFFF)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  textAlign: 'left',
+                  cursor: 'pointer'
                 }}
               >
-                +91
-              </span>
-              <input
-                type="tel"
-                maxLength={10}
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                placeholder="10-digit number"
+                <div style={{ width: '24px', height: '24px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>Public WhatsApp</div>
+                  <div style={{ fontSize: '11px', color: 'var(--ink-muted, #75736C)' }}>Fast direct contact</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCommMethod('chat')}
                 style={{
-                  flex: 1,
-                  minWidth: 0,
-                  border: 0,
                   padding: '10px 12px',
-                  fontSize: '14px',
-                  background: 'transparent',
-                  color: 'var(--ink, #1A1A19)',
-                  outline: 'none',
-                  fontFamily: 'inherit'
+                  borderRadius: '10px',
+                  border: commMethod === 'chat' ? '2px solid #0F3FFE' : '1px solid var(--line, #E7E6E2)',
+                  background: commMethod === 'chat' ? 'rgba(15, 63, 254, 0.08)' : 'var(--surface, #FFFFFF)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  textAlign: 'left',
+                  cursor: 'pointer'
                 }}
-              />
+              >
+                <div style={{ width: '24px', height: '24px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F3FFE" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>OneStop Chat</div>
+                  <div style={{ fontSize: '11px', color: 'var(--ink-muted, #75736C)' }}>Keep phone private</div>
+                </div>
+              </button>
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
-              Only shared with people you accept.
-            </span>
+
+            {commMethod === 'whatsapp' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    border: '1px solid var(--line, #E7E6E2)',
+                    borderRadius: '9px',
+                    overflow: 'hidden',
+                    background: 'var(--surface, #FFFFFF)'
+                  }}
+                >
+                  <span
+                    style={{
+                      padding: '10px 12px',
+                      background: 'var(--surface-sunken, #F9F9F7)',
+                      borderRight: '1px solid var(--line, #E7E6E2)',
+                      fontSize: '14px',
+                      color: 'var(--ink-secondary, #55534D)',
+                      fontWeight: 600
+                    }}
+                  >
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    placeholder="10-digit WhatsApp number"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      border: 0,
+                      padding: '10px 12px',
+                      fontSize: '14px',
+                      background: 'transparent',
+                      color: 'var(--ink, #1A1A19)',
+                      outline: 'none',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+                <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
+                  A WhatsApp button will appear on your squad listing for prospective teammates to message you directly.
+                </span>
+              </div>
+            ) : (
+              <div style={{ padding: '8px 12px', background: 'rgba(15, 63, 254, 0.06)', borderRadius: '8px', border: '1px solid rgba(15, 63, 254, 0.18)', fontSize: '12px', color: 'var(--primary, #0F3FFE)', lineHeight: 1.4, marginTop: '4px' }}>
+                🔒 Your phone number is hidden from the listing. Interested peers will apply with a pitch note, and you can chat with them inside OneStop.
+              </div>
+            )}
           </div>
 
           {/* 6. Posting as banner */}

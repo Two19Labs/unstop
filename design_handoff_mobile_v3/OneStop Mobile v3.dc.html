@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #E9E8E4; color: #1A1A19; font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: #0F3FFE; text-decoration: none; }
+a:hover { color: #1A1A19; }
+button { font-family: inherit; border: none; background: none; cursor: pointer; }
+.rail::-webkit-scrollbar { height: 8px; }
+.rail::-webkit-scrollbar-track { background: #EFEEEA; border-radius: 20px; }
+.rail::-webkit-scrollbar-thumb { background: #E7E6E2; border-radius: 20px; }
+.phone-scroll::-webkit-scrollbar { width: 0; }
+</style>
+</helmet>
+<section style="padding: 48px; display: flex; flex-direction: column; gap: 20px;">
+  <div style="display: flex; flex-direction: column; gap: 6px; max-width: 620px;">
+    <h1 style="font-size: 22px; font-weight: 700; letter-spacing: -0.02em;">OneStop mobile v3 — polish pass</h1>
+    <p style="font-size: 13.5px; line-height: 1.5; color: #55534D; text-wrap: pretty;">Logo, theme and notifications sit in the same top bar on every screen. The ☰ menu is gone since the bottom nav already covers it. Browse and Squads drop their title blocks and go straight to search.</p>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+    <div id="3a" style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="align-self: flex-start; background: #1A1A19; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">3a · Home</span>
+
+      <div data-screen-label="Mobile Home - current" style="width: 390px; height: 844px; border-radius: 36px; border: 8px solid #1A1A19; overflow: hidden; background: #F3EFE6; box-shadow: 0 20px 50px rgba(26,26,25,0.18); position: relative;">
+        <div class="phone-scroll" style="scrollbar-width: none; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; background: #F3EFE6;">
+
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; padding: 0 12px 0 16px; background: #FFFFFF; border-bottom: 1px solid #E7E6E2; position: sticky; top: 0; z-index: 40; flex: none;">
+            <span style="display: inline-flex; align-items: center; height: 24px;"><img src="assets/onestop-logo.png" alt="OneStop" style="display: block; height: 100%; width: auto; object-fit: contain;"></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button title="Switch to Night mode" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button>
+              <button title="Notifications" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position: absolute; top: -5px; right: -5px; background: #E11D48; color: #FFFFFF; font-size: 10px; font-weight: 700; height: 18px; min-width: 18px; padding: 0 5px; border-radius: 999px; display: flex; align-items: center; justify-content: center; line-height: 1; border: 2px solid #FFFFFF;">3</span></button>
+            </div>
+          </div>
+
+          <main style="min-width: 0; padding: 14px 0 76px; display: flex; flex-direction: column; flex: 1 0 auto;">
+            <div style="display: flex; flex-direction: column; gap: 26px; width: 100%;">
+
+              <div style="padding: 0 14px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                  <h1 style="margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; color: #1A1A19; white-space: nowrap;">Good evening, Riya</h1>
+                  <div style="display: grid; grid-template-columns: 13px minmax(0, 1fr); column-gap: 6px; row-gap: 1px; align-items: start; font-size: 12.5px; line-height: 1.35; color: #75736C; cursor: pointer; margin-top: 1px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F3FFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top: 2px;"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg><span style="color: #55534D; font-weight: 500; text-wrap: pretty;">Shaheed Sukhdev College of Business Studies</span><span style="grid-column: 2;">UG 2nd Year</span></div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px;">
+                  <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="3">
+                    <button title="{{ k.hint }}" style="display: inline-flex; align-items: baseline; gap: 5px; padding: 0; text-align: left; background: transparent; white-space: nowrap;">
+                      <span style="font-size: 14px; font-weight: 700; line-height: 1.2; color: {{ k.numColor }};">{{ k.n }}</span>
+                      <span style="font-size: 12.5px; font-weight: 500; color: #75736C; line-height: 1.2;">{{ k.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <section style="display: flex; flex-direction: column; gap: 13px;">
+                <div style="padding: 0 14px; display: flex; flex-direction: column; gap: 4px;">
+                  <div style="display: flex; align-items: center; gap: 8px;"><h2 style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: #1A1A19;">Bookmarks</h2><span style="background: #F2F1ED; color: #55534D; border-radius: 20px; padding: 2px 9px; font-size: 12px; font-weight: 700;">5</span></div>
+                  <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #75736C; white-space: nowrap; min-width: 0;">soonest deadlines first</div>
+                </div>
+                <div class="rail" style="display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 14px 14px; scroll-padding: 0 14px; align-items: stretch;">
+                  <sc-for list="{{ bookmarks }}" as="c" hint-placeholder-count="2">
+                    <div style="background: {{ c.cardBg }}; border: 1px solid {{ c.cardBorder }}; box-shadow: {{ c.cardShadow }}; border-radius: 12px; display: flex; flex-direction: column; scroll-snap-align: start; flex: 0 0 268px; width: 268px; padding: 13px 14px 14px; gap: 9px; cursor: pointer;">
+                      <div style="display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 9px;">
+                        <div style="width: 30px; height: 30px; border-radius: 7px; border: 1px solid #EFEEEA; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">{{ c.initials }}</div>
+                        <span style="font-size: 12px; font-weight: 500; color: #55534D; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.host }}</span>
+                        <button title="Remove bookmark" style="border: 1px solid #E7E6E2; border-radius: 7px; background: #F2F1ED; color: #1A1A19; width: 24px; height: 24px; font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center; padding: 0;">×</button>
+                      </div>
+                      <h3 style="margin: 0; font-size: 14.5px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; color: #1A1A19; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 38px; text-wrap: pretty;">{{ c.title }}</h3>
+                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.22); border-radius: 8px; padding: 6px 9px;">
+                        <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                          <span style="font-size: 12px; font-weight: 700; color: #047857; line-height: 1.3; text-wrap: pretty;">{{ c.prize }}</span>
+                        </div>
+                        <span style="font-size: 12px; font-weight: 700; padding: 1px 6px; border-radius: 5px; flex-shrink: 0; background: {{ c.feeBg }}; color: {{ c.feeColor }}; border: {{ c.feeBorder }}; white-space: nowrap;">{{ c.feeText }}</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 7px; font-size: 12px; color: #55534D; font-weight: 600; white-space: nowrap; min-width: 0;">
+                        <span style="display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>{{ c.team }}</span>
+                        <span style="width: 3px; height: 3px; border-radius: 50%; background: #C9C7C1; flex-shrink: 0;"></span>
+                        <span style="display: flex; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>Ends {{ c.ends }}</span>
+                      </div>
+                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: #75736C;"><svg width="12" height="12" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg><span><strong style="color: #1A1A19;">{{ c.regs }}</strong> registrations</span></span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px; border: {{ c.pillBorder }}; border-radius: 20px; background: {{ c.pillBg }}; color: {{ c.pillColor }}; padding: 2px 8px; font-size: 12px; font-weight: 700; white-space: nowrap;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>{{ c.countdown }}</span></span>
+                      </div>
+                      <div style="display: grid; grid-template-columns: {{ c.actionCols }}; gap: 7px; margin-top: auto; padding-top: 2px;">
+                        <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" style="border: 1px solid #0F3FFE; border-radius: 8px; background: #0F3FFE; color: #FFFFFF; height: 44px; padding: 0 8px; font-size: 13px; font-weight: 600; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 5px;"><span>Apply</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" x2="21" y1="14" y2="3"></line></svg></a>
+                        <sc-if value="{{ c.showSquad }}" hint-placeholder-val="{{ true }}">
+                          <button style="border: 1px solid #E7E6E2; border-radius: 8px; background: #FFFFFF; color: #1A1A19; height: 44px; padding: 0 8px; font-size: 13px; font-weight: 600; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1A1A19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Squad up</span></button>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section style="display: flex; flex-direction: column; gap: 13px;">
+                <div style="padding: 0 14px; display: flex; flex-direction: column; gap: 6px;">
+                  <div style="display: flex; align-items: center; gap: 8px;"><h2 style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: #1A1A19;">Top competitions</h2><span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 2px 9px; font-size: 12px; font-weight: 700;">24</span><button style="margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; margin-top: -12px; margin-bottom: -12px; padding: 0 2px 0 8px; font-size: 13.5px; font-weight: 600; color: #0F3FFE; white-space: nowrap;">See all<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button></div>
+                  <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px; font-size: 12.5px; color: #75736C; white-space: nowrap;"><span style="flex: none;">closing soonest</span><span style="flex: none; color: #C9C7C1;">·</span><span style="background: rgba(15,63,254,0.07); color: #0F3FFE; border: 1px solid rgba(15,63,254,0.20); border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; flex: none;">Case Comps</span><span style="background: rgba(15,63,254,0.07); color: #0F3FFE; border: 1px solid rgba(15,63,254,0.20); border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; flex: none;">DU Circuit</span><span style="background: rgba(15,63,254,0.07); color: #0F3FFE; border: 1px solid rgba(15,63,254,0.20); border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; flex: none;">Free entry</span><button style="flex: none; font-size: 12.5px; font-weight: 600; color: #0F3FFE; padding: 4px 4px;">Edit</button></div>
+                </div>
+                <div class="rail" style="display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 14px 14px; scroll-padding: 0 14px; align-items: stretch;">
+                  <sc-for list="{{ comps }}" as="c" hint-placeholder-count="2">
+                    <div style="background: {{ c.cardBg }}; border: 1px solid {{ c.cardBorder }}; box-shadow: {{ c.cardShadow }}; border-radius: 12px; display: flex; flex-direction: column; scroll-snap-align: start; flex: 0 0 318px; width: 318px; padding: 16px 17px 17px; gap: 12px; cursor: pointer;">
+                      <div style="display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: start; gap: 11px;">
+                        <div style="width: 40px; height: 40px; border-radius: 9px; border: 1px solid #EFEEEA; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">{{ c.initials }}</div>
+                        <span style="font-size: 13px; font-weight: 500; color: #55534D; line-height: 1.35; padding-top: 2px; text-wrap: pretty;">{{ c.host }}</span>
+                      </div>
+                      <h3 style="margin: 0; font-size: 16px; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; color: #1A1A19; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 42px; text-wrap: pretty;">{{ c.title }}</h3>
+                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.22); border-radius: 10px; padding: 8px 12px;">
+                        <div style="display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1;">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                          <span style="font-size: 12px; font-weight: 700; color: #047857; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.prize }}</span>
+                        </div>
+                        <span style="font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.2px; flex-shrink: 0; background: {{ c.feeBg }}; color: {{ c.feeColor }}; border: {{ c.feeBorder }};">{{ c.feeText }}</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #55534D; font-weight: 600; min-height: 20px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 5px; white-space: nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>{{ c.team }}</span></div>
+                        <span style="width: 3px; height: 3px; border-radius: 50%; background: #E7E6E2; flex-shrink: 0;"></span>
+                        <div style="display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg><span>Ends {{ c.ends }}</span></div>
+                      </div>
+                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 22px;">
+                        <div style="display: flex; align-items: center; gap: 5px; font-size: 12px; color: #75736C;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg><span><strong style="color: #1A1A19;">{{ c.regs }}</strong> registrations</span></div>
+                        <span style="display: inline-flex; align-items: center; gap: 5px; border: {{ c.pillBorder }}; border-radius: 20px; background: {{ c.pillBg }}; color: {{ c.pillColor }}; padding: 3px 9px; font-size: 12px; font-weight: 700; white-space: nowrap;"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{ c.pillColor }}; display: inline-block;"></span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>{{ c.countdown }}</span></span>
+                      </div>
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 4px;">
+                        <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" style="border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; height: 44px; padding: 0 10px; text-align: center; font-size: 13px; font-weight: 600; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 5px;"><span>Apply</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" x2="21" y1="14" y2="3"></line></svg></a>
+                        <button style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; color: #1A1A19; height: 44px; padding: 0 10px; font-size: 13px; font-weight: 600; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1A19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Squad up</span></button>
+                      </div>
+                    </div>
+                  </sc-for>
+                  </div>
+              </section>
+
+              <section style="display: flex; flex-direction: column; gap: 13px;">
+                <div style="padding: 0 14px; display: flex; flex-direction: column; gap: 4px;">
+                  <div style="display: flex; align-items: center; gap: 8px;"><h2 style="margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: #1A1A19;">Top squads</h2><span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 2px 9px; font-size: 12px; font-weight: 700;">6</span><button style="margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; margin-top: -12px; margin-bottom: -12px; padding: 0 2px 0 8px; font-size: 13.5px; font-weight: 600; color: #0F3FFE; white-space: nowrap;">See all<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg></button></div>
+                  <div style="display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: #75736C; white-space: nowrap; min-width: 0;">recruiting for competitions you follow</div>
+                </div>
+                <div class="rail" style="display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 14px 14px; scroll-padding: 0 14px; align-items: stretch;">
+                  <sc-for list="{{ squads }}" as="s" hint-placeholder-count="2">
+                    <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; display: flex; flex-direction: column; scroll-snap-align: start; flex: 0 0 318px; width: 318px; padding: 16px 17px 17px; gap: 12px;">
+                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span style="background: {{ s.spotsBg }}; color: #0F3FFE; border: {{ s.spotsBorder }}; border-radius: 20px; padding: 2px 9px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;">{{ s.spotsText }}</span>
+                        <span style="font-size: 12px; color: #75736C; white-space: nowrap;">{{ s.posted }}</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 38px; height: 38px; border-radius: 50%; background: #0F3FFE; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex: none;">{{ s.initial }}</span>
+                        <div style="min-width: 0; flex: 1;">
+                          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span style="font-size: 14px; font-weight: 700; color: #1A1A19;">{{ s.lead }}</span>
+                            <span style="width: 6px; height: 6px; border-radius: 50%; background: #16A34A; display: inline-block;"></span>
+                          </div>
+                          <div style="font-size: 12px; color: #75736C; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ s.college }} · {{ s.year }}</div>
+                        </div>
+                      </div>
+                      <div style="border-top: 1px solid #E7E6E2; padding-top: 10px;">
+                        <span style="font-size: 12px; font-weight: 600; color: #75736C; text-transform: uppercase;">Competing in</span>
+                        <h3 style="margin: 3px 0 0; font-size: 15px; font-weight: 700; color: #1A1A19; line-height: 1.35; text-wrap: pretty;">{{ s.comp }}</h3>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                          <div style="width: 20px; height: 20px; border-radius: 5px; border: 1px solid #EFEEEA; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; flex: none; font-size: 9px; font-weight: 700;">{{ s.hostInitials }}</div>
+                          <span style="font-size: 12px; color: #55534D; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ s.host }}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span style="font-size: 12px; font-weight: 600; color: #75736C;">Teammates needed with:</span>
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                          <sc-for list="{{ s.skills }}" as="sk" hint-placeholder-count="2">
+                            <span style="background: rgba(15,63,254,0.08); color: #0F3FFE; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 600; white-space: nowrap;">{{ sk }}</span>
+                          </sc-for>
+                        </div>
+                      </div>
+                      <div style="margin-top: auto; padding-top: 10px; border-top: 1px solid #E7E6E2;">
+                        <button style="width: 100%; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; height: 44px; padding: 0 14px; font-size: 13px; font-weight: 600;">Request to join</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+            </div>
+
+            <footer style="margin-top: auto; padding: 32px 14px 20px; width: 100%; display: flex; align-items: center; justify-content: center;">
+              <p style="margin: 0; font-size: 12.5px; line-height: 1.6; color: #55534D; text-align: center; letter-spacing: -0.01em;"><span>Made with </span><span style="color: #DC2626; margin: 0 1px;">♥</span><span> by </span><a href="https://www.linkedin.com/in/aditya-singhani-69294a27a/" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Aditya Singhani</a><span> &amp; </span><a href="https://www.linkedin.com/in/manthan-kabra/" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Manthan Kabra</a><span style="color: #75736C; padding: 0 3px;"> · </span><span>From the House of </span><a href="https://two19labs.in" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Two19 Labs</a></p>
+            </footer>
+          </main>
+
+          <nav aria-label="Mobile Navigation" style="position: sticky; bottom: 0; flex: none; height: 56px; display: flex; align-items: stretch; justify-content: space-around; background: #FFFFFF; border-top: 1px solid #E7E6E2; z-index: 45; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);">
+            <button aria-label="Home" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: #0F3FFE;">
+              <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+              <span style="font-size: 10.5px; font-weight: 700; line-height: 1.1; letter-spacing: -0.01em;">Home</span>
+            </button>
+            <button aria-label="Browse Competitions" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: #75736C;">
+              <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>
+              <span style="font-size: 10.5px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em;">Browse</span>
+            </button>
+            <button aria-label="Team Finder" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: #75736C;">
+              <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+              <span style="font-size: 10.5px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em;">Squads</span>
+            </button>
+            <button aria-label="Inbox" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: #75736C;">
+              <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="position: absolute; top: -4px; right: -8px; background: #DC2626; color: #FFFFFF; font-size: 9px; font-weight: 700; height: 15px; min-width: 15px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; line-height: 1;">2</span></div>
+              <span style="font-size: 10.5px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em;">Inbox</span>
+            </button>
+            <button aria-label="Your Profile" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: #75736C;">
+              <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: #F2F1ED; color: #55534D; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 1.5px solid transparent;">RS</span></div>
+              <span style="font-size: 10.5px; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em;">Profile</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div id="3b" style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="align-self: flex-start; background: #1A1A19; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">3b · Browse</span>
+      <div data-screen-label="Mobile Browse - current" style="width: 390px; height: 844px; border-radius: 36px; border: 8px solid #1A1A19; overflow: hidden; background: #F3EFE6; box-shadow: 0 20px 50px rgba(26,26,25,0.18); position: relative;">
+        <div class="phone-scroll" style="scrollbar-width: none; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; background: #F3EFE6;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; padding: 0 12px 0 16px; background: #FFFFFF; border-bottom: 1px solid #E7E6E2; position: sticky; top: 0; z-index: 40; flex: none;">
+            <span style="display: inline-flex; align-items: center; height: 24px;"><img src="assets/onestop-logo.png" alt="OneStop" style="display: block; height: 100%; width: auto; object-fit: contain;"></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button title="Switch to Night mode" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button>
+              <button title="Notifications" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position: absolute; top: -5px; right: -5px; background: #E11D48; color: #FFFFFF; font-size: 10px; font-weight: 700; height: 18px; min-width: 18px; padding: 0 5px; border-radius: 999px; display: flex; align-items: center; justify-content: center; line-height: 1; border: 2px solid #FFFFFF;">3</span></button>
+            </div>
+          </div>
+          <div style="flex: 1 0 auto; display: flex; flex-direction: column; padding: 12px 14px 0;">
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 0 0 24px; width: 100%; flex: 1;">
+
+              
+
+              <div style="display: flex; flex-direction: column; width: 100%;">
+                <main style="display: flex; flex-direction: column; gap: 12px; min-width: 0; width: 100%;">
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; gap: 8px;"><label style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; height: 44px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 0 12px; color: #75736C;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><input placeholder="Search competitions, colleges, prizes" style="flex: 1; min-width: 0; border: none; background: transparent; font-size: 16px; color: #1A1A19; outline: none; font-family: inherit;"></label><button aria-label="Filters" style="position: relative; flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: rgba(15,63,254,0.07); border: 1px solid #0F3FFE; border-radius: 10px; color: #0F3FFE;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span style="position: absolute; top: -6px; right: -6px; background: #0F3FFE; color: #FFFFFF; font-size: 10px; font-weight: 700; height: 18px; min-width: 18px; padding: 0 5px; border-radius: 999px; display: flex; align-items: center; justify-content: center; border: 2px solid #F3EFE6;">3</span></button></div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                      <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #55534D; white-space: nowrap;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span><span><strong style="color: #1A1A19;">24</strong> competitions</span></span>
+                      <button style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 4px 0 8px; font-size: 13px; font-weight: 600; color: #1A1A19; white-space: nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path></svg>Closing soonest<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px;"><span style="flex: none; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 11px; border-radius: 999px; background: rgba(15,63,254,0.07); border: 1px solid rgba(15,63,254,0.20); color: #0F3FFE; font-size: 12.5px; font-weight: 600; white-space: nowrap;">DU Circuit<span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; opacity: 0.7;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></span><span style="flex: none; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 11px; border-radius: 999px; background: rgba(15,63,254,0.07); border: 1px solid rgba(15,63,254,0.20); color: #0F3FFE; font-size: 12.5px; font-weight: 600; white-space: nowrap;">Case Comps<span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; opacity: 0.7;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></span><span style="flex: none; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 11px; border-radius: 999px; background: rgba(15,63,254,0.07); border: 1px solid rgba(15,63,254,0.20); color: #0F3FFE; font-size: 12.5px; font-weight: 600; white-space: nowrap;">Free entry<span style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; opacity: 0.7;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></span><button style="flex: none; height: 30px; padding: 0 8px; font-size: 12.5px; font-weight: 600; color: #55534D; white-space: nowrap;">Clear all</button></div>
+                  </div>
+                  <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px;">
+                    <sc-for list="{{ browse }}" as="c" hint-placeholder-count="3">
+                      <article style="background: #FFFFFF; border: 1px solid {{ c.border }}; box-shadow: {{ c.shadow }}; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; position: relative; cursor: pointer;">
+                        <div style="padding: 14px 13px; display: flex; flex-direction: column; gap: 10px; flex: 1;">
+                          <div style="display: flex; align-items: center; justify-content: space-between; min-height: 48px; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
+                              <div style="width: 36px; height: 44px; min-width: 36px; border-radius: 8px; border: 1px solid #EFEEEA; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;">{{ c.initials }}</div>
+                              <div style="display: flex; flex-direction: column; min-width: 0; flex: 1; justify-content: center; height: 2.65em;"><span style="font-size: 12.8px; font-weight: 650; color: #55534D; line-height: 1.32; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ c.host }}</span></div>
+                            </div>
+                            <button style="width: 34px; height: 34px; border-radius: 8px; background: {{ c.bmBg }}; border: 1px solid {{ c.bmBorder }}; color: {{ c.bmColor }}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="{{ c.bmFill }}" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></button>
+                          </div>
+                          <h2 style="margin: 2px 0 0 0; font-size: 14.72px; font-weight: 800; color: #1A1A19; line-height: 1.3; letter-spacing: -0.2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 40px;">{{ c.title }}</h2>
+                          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(16,185,129,0.09); border: 1px solid rgba(16,185,129,0.24);">
+                            <div style="display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg><span style="font-size: 12.8px; font-weight: 800; color: #047857; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.prize }}</span></div>
+                            <span style="font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 5px; letter-spacing: 0.2px; flex-shrink: 0; white-space: nowrap; background: {{ c.tagBg }}; color: {{ c.tagColor }}; border: {{ c.tagBorder }};">{{ c.tagText }}</span>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 6px; row-gap: 4px; font-size: 12px; color: #55534D; font-weight: 600; min-height: 20px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 5px; white-space: nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>{{ c.team }}</span></div>
+                            <div style="width: 3px; height: 3px; border-radius: 50%; background: #E7E6E2; flex-shrink: 0;"></div>
+                            <div style="display: flex; align-items: center; gap: 5px; white-space: nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.75;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg><span>Ends {{ c.ends }}</span></div>
+                          </div>
+                          <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; row-gap: 4px; font-size: 12px; color: #55534D; min-height: 22px; flex-wrap: wrap;">
+                            <span style="display: inline-flex; align-items: center; gap: 5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg><strong style="color: #1A1A19; font-weight: 700;">{{ c.regs }}</strong> registrations</span>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; border-radius: 999px; font-size: 12px; font-weight: 700; flex-shrink: 0; font-variant-numeric: tabular-nums; letter-spacing: 0.1px; white-space: nowrap; background: {{ c.chipBg }}; color: {{ c.chipColor }}; border: 1px solid {{ c.chipBorder }};"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{ c.chipDot }};"></span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.85;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>{{ c.countdown }}</span></span>
+                          </div>
+                          <div style="display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 2px;">
+                            <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" style="flex: 1.25; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 700; border-radius: 8px; white-space: nowrap; padding: 0 6px; background: #0F3FFE; color: #FFFFFF; border: 1px solid #0F3FFE;"><span>Apply on Unstop</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+                            <sc-if value="{{ c.showTeam }}" hint-placeholder-val="{{ true }}">
+                              <button style="flex: 1; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 700; border-radius: 8px; white-space: nowrap; padding: 0 6px; background: rgba(15,63,254,0.08); color: #0F3FFE; border: 1px solid rgba(113,34,44,0.22);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Find Teammates</span></button>
+                            </sc-if>
+                            <button style="width: 34px; height: 34px; border-radius: 8px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #55534D; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                          </div>
+                        </div>
+                      </article>
+                    </sc-for>
+                  </div>
+                </main>
+              </div>
+            </div>
+          </div>
+          <footer style="padding: 32px 28px 20px; width: 100%; display: flex; align-items: center; justify-content: center; margin-bottom: 76px;">
+            <p style="margin: 0; font-size: 12.5px; line-height: 1.6; color: #55534D; text-align: center; letter-spacing: -0.01em;"><span>Made with </span><span style="color: #DC2626; margin: 0 1px;">♥</span><span> by </span><a href="https://www.linkedin.com/in/aditya-singhani-69294a27a/" style="color: #0F3FFE; text-decoration: underline; text-underline-offset: 3px; font-weight: 500;">Aditya Singhani</a><span> &amp; </span><a href="https://www.linkedin.com/in/manthan-kabra/" style="color: #0F3FFE; text-decoration: underline; text-underline-offset: 3px; font-weight: 500;">Manthan Kabra</a><span style="color: #75736C; padding: 0 3px;"> · </span><span>From the House of </span><a href="https://two19labs.in" style="color: #0F3FFE; text-decoration: underline; text-underline-offset: 3px; font-weight: 500;">Two19 Labs</a></p>
+          </footer>
+          <nav style="position: sticky; bottom: 0; flex: none; height: 56px; display: flex; align-items: stretch; justify-content: space-around; background: #FFFFFF; border-top: 1px solid #E7E6E2; z-index: 45; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);">
+            <button aria-label="Home" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navBrowse.home.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="{{ navBrowse.home.fill }}" stroke="currentColor" stroke-width="{{ navBrowse.home.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div><span style="font-size: 12px; font-weight: {{ navBrowse.home.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Home</span></button>
+            <button aria-label="Browse" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navBrowse.browse.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navBrowse.browse.sw }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="{{ navBrowse.browse.fill }}"></polygon></svg></div><span style="font-size: 12px; font-weight: {{ navBrowse.browse.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Browse</span></button>
+            <button aria-label="Squads" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navBrowse.teams.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navBrowse.teams.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div><span style="font-size: 12px; font-weight: {{ navBrowse.teams.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Squads</span></button>
+            <button aria-label="Inbox" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navBrowse.requests.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navBrowse.requests.sw }}" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="position: absolute; top: -4px; right: -8px; background: #DC2626; color: #FFFFFF; font-size: 9px; font-weight: 700; height: 15px; min-width: 15px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; line-height: 1;">2</span></div><span style="font-size: 12px; font-weight: {{ navBrowse.requests.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Inbox</span></button>
+            <button aria-label="Profile" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navBrowse.profile.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{ navBrowse.profile.avBg }}; color: {{ navBrowse.profile.avColor }}; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 1.5px solid {{ navBrowse.profile.avBorder }};">RS</span></div><span style="font-size: 12px; font-weight: {{ navBrowse.profile.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Profile</span></button>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div id="3c" style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="align-self: flex-start; background: #1A1A19; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">3c · Squads</span>
+      <div data-screen-label="Mobile Squads - current" style="width: 390px; height: 844px; border-radius: 36px; border: 8px solid #1A1A19; overflow: hidden; background: #F3EFE6; box-shadow: 0 20px 50px rgba(26,26,25,0.18); position: relative;">
+        <div class="phone-scroll" style="scrollbar-width: none; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; background: #F3EFE6;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; padding: 0 12px 0 16px; background: #FFFFFF; border-bottom: 1px solid #E7E6E2; position: sticky; top: 0; z-index: 40; flex: none;">
+            <span style="display: inline-flex; align-items: center; height: 24px;"><img src="assets/onestop-logo.png" alt="OneStop" style="display: block; height: 100%; width: auto; object-fit: contain;"></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button title="Switch to Night mode" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button>
+              <button title="Notifications" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position: absolute; top: -5px; right: -5px; background: #E11D48; color: #FFFFFF; font-size: 10px; font-weight: 700; height: 18px; min-width: 18px; padding: 0 5px; border-radius: 999px; display: flex; align-items: center; justify-content: center; line-height: 1; border: 2px solid #FFFFFF;">3</span></button>
+            </div>
+          </div>
+          <div style="flex: 1 0 auto; background: #F3EFE6; padding: 12px 14px 96px;">
+            <div style="display: flex; flex-direction: column;">
+              
+
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <main style="min-width: 0; width: 100%; display: flex; flex-direction: column; gap: 14px;">
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; gap: 3px; padding: 3px; height: 44px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px;"><button style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; border-radius: 7px; background: #F2F1ED; color: #1A1A19; font-size: 13.5px; font-weight: 600; white-space: nowrap;">Other listings<span style="background: #0F3FFE; color: #FFFFFF; border-radius: 20px; padding: 0 7px; font-size: 11px; font-weight: 700; line-height: 1.6;">6</span></button><button style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; border-radius: 7px; background: transparent; color: #55534D; font-size: 13.5px; font-weight: 500; white-space: nowrap;">My listings<span style="background: #E7E6E2; color: #55534D; border-radius: 20px; padding: 0 7px; font-size: 11px; font-weight: 700; line-height: 1.6;">4</span></button></div>
+                    <div style="display: flex; gap: 8px;"><label style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px; height: 44px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; padding: 0 12px; color: #75736C;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none;"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><input placeholder="Search competitions, leads or skills" style="flex: 1; min-width: 0; border: none; background: transparent; font-size: 16px; color: #1A1A19; outline: none; font-family: inherit;"></label><button aria-label="Filters" style="position: relative; flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 10px; color: #1A1A19;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg></button></div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                      <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #55534D; white-space: nowrap;"><span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span><span><strong style="color: #1A1A19;">6</strong> squads recruiting</span></span>
+                      <button style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 4px 0 8px; font-size: 13px; font-weight: 600; color: #1A1A19; white-space: nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 16-4 4-4-4"></path><path d="M17 20V4"></path><path d="m3 8 4-4 4 4"></path><path d="M7 4v16"></path></svg>Newest<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                    </div>
+                  </div>
+                  <section style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px;">
+                      <sc-for list="{{ tfCards }}" as="p" hint-placeholder-count="3">
+                        <article style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px 17px 17px; display: flex; flex-direction: column; gap: 10px; cursor: pointer;">
+                          <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; font-weight: 600; color: #55534D; white-space: nowrap;"><span style="width: 6px; height: 6px; border-radius: 2px; flex: none; background: {{ p.catColor }};"></span><span style="flex: none;">{{ p.cat }}</span><span style="flex: none; color: #C9C7C1;">·</span><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">{{ p.circuit }}</span></div>
+                            <span style="flex: none; display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; white-space: nowrap; color: {{ p.dueColor }};"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>{{ p.dueText }}</span>
+                          </div>
+                          <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <h3 style="font-size: 16px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; color: #1A1A19; text-wrap: pretty; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ p.title }}</h3>
+                            <span style="font-size: 12.5px; color: #75736C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ p.host }}</span>
+                          </div>
+                          <div style="display: flex; flex-direction: column; gap: 7px; background: #F3EFE6; border-radius: 10px; padding: 8px 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                              <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 3px;"><sc-for list="{{ p.dots }}" as="d" hint-placeholder-count="4"><span style="width: 9px; height: 9px; border-radius: 50%; background: {{ d.bg }}; border: {{ d.border }};"></span></sc-for></div>
+                                <span style="font-size: 13px; font-weight: 700; color: {{ p.spotsColor }};">{{ p.spotsText }}</span>
+                              </div>
+                              <sc-if value="{{ p.fit }}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 4px; flex: none; white-space: nowrap; font-size: 12px; font-weight: 600; color: #15803D;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>{{ p.fitLabel }}</span></sc-if>
+                            </div>
+                            <div style="display: flex; flex-wrap: nowrap; gap: 5px; overflow: hidden;">
+                              <sc-for list="{{ p.wantShown }}" as="w" hint-placeholder-count="2"><span style="background: #FFFFFF; color: #0F3FFE; border: 1px solid rgba(15,63,254,0.20); border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 500; white-space: nowrap;">{{ w }}</span></sc-for>
+                              <sc-if value="{{ p.noWant }}" hint-placeholder-val="{{ false }}"><span style="background: #FFFFFF; color: #55534D; border: 1px solid #E7E6E2; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 500; white-space: nowrap;">All skills welcome</span></sc-if>
+                              <sc-if value="{{ p.hasMore }}" hint-placeholder-val="{{ false }}"><span style="flex: none; background: #FFFFFF; color: #55534D; border: 1px solid #E7E6E2; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 600; white-space: nowrap;">{{ p.moreText }}</span></sc-if>
+                            </div>
+                          </div>
+                          <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid #F0EFEB;">
+                            <div style="display: flex; align-items: center; gap: 9px;">
+                              <span style="width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex: none; background: #0F3FFE; color: #FFFFFF;">{{ p.initials }}</span>
+                              <div style="min-width: 0; flex: 1; font-size: 12.5px; line-height: 1.3; color: #75736C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span style="font-weight: 600; color: #1A1A19;">{{ p.lead }}</span> · {{ p.college }}, {{ p.year }}</div>
+                              <sc-if value="{{ p.open }}" hint-placeholder-val="{{ true }}"><span style="flex: none; font-size: 12px; color: #75736C; white-space: nowrap;">{{ p.posted }}</span></sc-if>
+                            </div>
+                                                        <div style="display: flex; align-items: center; gap: 8px;">
+                              <sc-if value="{{ p.open }}" hint-placeholder-val="{{ true }}">
+                                <button aria-label="Message on WhatsApp" style="flex: none; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg></button>
+                                <button style="flex: 1; height: 42px; border: 1px solid #0F3FFE; border-radius: 9px; background: #0F3FFE; color: #FFFFFF; font-size: 13.5px; font-weight: 600; white-space: nowrap;">Request to join</button>
+                              </sc-if>
+                              <sc-if value="{{ p.full }}" hint-placeholder-val="{{ false }}"><span style="flex: 1; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: #F2F1ED; color: #75736C; font-size: 13.5px; font-weight: 600;">Squad full</span></sc-if>
+                            </div>
+                          </div>
+                        </article>
+                      </sc-for>
+                    </div>
+                  </section>
+                </main>
+              </div>
+            </div>
+          </div>
+          <nav style="position: sticky; bottom: 0; flex: none; height: 56px; display: flex; align-items: stretch; justify-content: space-around; background: #FFFFFF; border-top: 1px solid #E7E6E2; z-index: 45; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);"><button aria-label="Home" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navTeams.home.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="{{ navTeams.home.fill }}" stroke="currentColor" stroke-width="{{ navTeams.home.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div><span style="font-size: 10.5px; font-weight: {{ navTeams.home.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Home</span></button>
+            <button aria-label="Browse" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navTeams.browse.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navTeams.browse.sw }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="{{ navTeams.browse.fill }}"></polygon></svg></div><span style="font-size: 10.5px; font-weight: {{ navTeams.browse.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Browse</span></button>
+            <button aria-label="Squads" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navTeams.teams.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navTeams.teams.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div><span style="font-size: 10.5px; font-weight: {{ navTeams.teams.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Squads</span></button>
+            <button aria-label="Inbox" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navTeams.requests.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navTeams.requests.sw }}" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="position: absolute; top: -4px; right: -8px; background: #DC2626; color: #FFFFFF; font-size: 9px; font-weight: 700; height: 15px; min-width: 15px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; line-height: 1;">2</span></div><span style="font-size: 10.5px; font-weight: {{ navTeams.requests.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Inbox</span></button>
+            <button aria-label="Profile" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navTeams.profile.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{ navTeams.profile.avBg }}; color: {{ navTeams.profile.avColor }}; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 1.5px solid {{ navTeams.profile.avBorder }};">RS</span></div><span style="font-size: 10.5px; font-weight: {{ navTeams.profile.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Profile</span></button></nav>
+        </div>
+        <button style="position: absolute; right: 14px; bottom: 72px; z-index: 44; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 18px 0 16px; border-radius: 999px; background: #0F3FFE; color: #FFFFFF; font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(15,63,254,0.32), 0 2px 4px rgba(26,26,25,0.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Post a squad</button>
+      </div>
+    </div>
+
+    <div id="3d" style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="align-self: flex-start; background: #1A1A19; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">3d · Inbox</span>
+      <div data-screen-label="Mobile Inbox" style="width: 390px; height: 844px; border-radius: 36px; border: 8px solid #1A1A19; overflow: hidden; background: #F3EFE6; box-shadow: 0 20px 50px rgba(26,26,25,0.18); position: relative;">
+        <div class="phone-scroll" style="scrollbar-width: none; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; background: #F3EFE6;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; padding: 0 12px 0 16px; background: #FFFFFF; border-bottom: 1px solid #E7E6E2; position: sticky; top: 0; z-index: 40; flex: none;">
+            <span style="display: inline-flex; align-items: center; height: 24px;"><img src="assets/onestop-logo.png" alt="OneStop" style="display: block; height: 100%; width: auto; object-fit: contain;"></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button title="Switch to Night mode" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button>
+              <button title="Notifications" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position: absolute; top: -5px; right: -5px; background: #E11D48; color: #FFFFFF; font-size: 10px; font-weight: 700; height: 18px; min-width: 18px; padding: 0 5px; border-radius: 999px; display: flex; align-items: center; justify-content: center; line-height: 1; border: 2px solid #FFFFFF;">3</span></button>
+            </div>
+          </div>
+          <main style="min-width: 0; padding: 14px 12px 76px; display: flex; flex-direction: column; flex: 1 0 auto;">
+            <div style="flex: 1 0 auto; width: 100%; display: flex; flex-direction: column;">
+
+              <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button style="border: 1px solid #0F3FFE; border-radius: 20px; background: #0F3FFE; color: #FFFFFF; padding: 8px 16px; white-space: nowrap; font-size: 13px; font-weight: 500;">To my squads (3)</button>
+                  <button style="border: 1px solid #E7E6E2; border-radius: 20px; background: #FFFFFF; color: #1A1A19; padding: 8px 16px; white-space: nowrap; font-size: 13px; font-weight: 500;">Sent by me (2)</button>
+                </div>
+                <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                  <sc-for list="{{ reqRows }}" as="r" hint-placeholder-count="3">
+                    <div style="display: flex; flex-direction: column; gap: 14px; padding: 14px 14px 16px; border-bottom: {{ r.rowBorder }};">
+                      <div style="min-width: 0; display: flex; flex-direction: column;">
+                        <div style="display: flex; align-items: center; gap: 9px; flex-wrap: wrap;">
+                          <span style="font-size: 14px; font-weight: 600; color: #1A1A19;">{{ r.who }}</span>
+                          <span style="border-radius: 20px; padding: 2px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; background: {{ r.bg }}; color: {{ r.color }}; border: 1px solid {{ r.border }};">{{ r.label }}</span>
+                        </div>
+                        <p style="margin: 5px 0 0; font-size: 13px; color: #75736C;">{{ r.sub }}</p>
+                        <p style="margin: 9px 0 0; font-size: 13px; color: #1A1A19; line-height: 1.5; border-left: 2px solid #E7E6E2; padding-left: 11px;">{{ r.pitch }}</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px;">
+                          <sc-for list="{{ r.skills }}" as="s" hint-placeholder-count="2"><span style="background: #F2F1ED; border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 500; color: #55534D; white-space: nowrap;">{{ s }}</span></sc-for>
+                        </div>
+                      </div>
+                      <div style="width: 100%; display: flex; align-items: center; gap: 8px; padding-top: 6px; border-top: 1px solid #EFEEEA;">
+                        <sc-if value="{{ r.pending }}" hint-placeholder-val="{{ true }}">
+                          <sc-if value="{{ r.wa }}" hint-placeholder-val="{{ true }}"><button aria-label="Chat on WhatsApp" title="Chat on WhatsApp" style="flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 13.5px; white-space: nowrap; border: 1px solid #E7E6E2; background: #FFFFFF;"><svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg></button></sc-if>
+                          <sc-if value="{{ r.noWa }}" hint-placeholder-val="{{ false }}"><button aria-label="Chat on OneStop" title="Chat on OneStop" style="flex: none; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 13.5px; white-space: nowrap; border: 1px solid #E7E6E2; background: #FFFFFF;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F3FFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg></button></sc-if>
+                          <button style="flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 13.5px; white-space: nowrap; border: 1px solid #E7E6E2; background: #FFFFFF; color: #55534D; font-weight: 500;">Decline</button>
+                          <button style="flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 13.5px; white-space: nowrap; border: 1px solid #0F3FFE; background: #0F3FFE; color: #FFFFFF; font-weight: 600;">Accept</button>
+                        </sc-if>
+                        <sc-if value="{{ r.accepted }}" hint-placeholder-val="{{ false }}">
+                          <sc-if value="{{ r.wa }}" hint-placeholder-val="{{ false }}"><button style="flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 13.5px; white-space: nowrap; border: 1px solid #16A34A; background: #16A34A; color: #FFFFFF; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg>Chat on WhatsApp</button></sc-if>
+                          <sc-if value="{{ r.noWa }}" hint-placeholder-val="{{ true }}"><button style="flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 13.5px; white-space: nowrap; border: 1px solid #0F3FFE; background: #0F3FFE; color: #FFFFFF; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>Chat</button></sc-if>
+                          <button style="flex: none; padding: 0 14px; height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px; font-size: 13.5px; white-space: nowrap; border: 1px solid rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: #DC2626; font-weight: 500;">Remove</button>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <footer style="margin-top: auto; padding: 32px 14px 20px; width: 100%; display: flex; align-items: center; justify-content: center;">
+              <p style="margin: 0; font-size: 12.5px; line-height: 1.6; color: #55534D; text-align: center; letter-spacing: -0.01em;"><span>Made with </span><span style="color: #DC2626; margin: 0 1px;">♥</span><span> by </span><a href="https://www.linkedin.com/in/aditya-singhani-69294a27a/" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Aditya Singhani</a><span> &amp; </span><a href="https://www.linkedin.com/in/manthan-kabra/" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Manthan Kabra</a><span style="color: #75736C; padding: 0 3px;"> · </span><span>From the House of </span><a href="https://two19labs.in" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Two19 Labs</a></p>
+            </footer>
+          </main>
+          <nav style="position: sticky; bottom: 0; flex: none; height: 56px; display: flex; align-items: stretch; justify-content: space-around; background: #FFFFFF; border-top: 1px solid #E7E6E2; z-index: 45; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);"><button aria-label="Home" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navRequests.home.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="{{ navRequests.home.fill }}" stroke="currentColor" stroke-width="{{ navRequests.home.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div><span style="font-size: 10.5px; font-weight: {{ navRequests.home.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Home</span></button>
+            <button aria-label="Browse" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navRequests.browse.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navRequests.browse.sw }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="{{ navRequests.browse.fill }}"></polygon></svg></div><span style="font-size: 10.5px; font-weight: {{ navRequests.browse.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Browse</span></button>
+            <button aria-label="Squads" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navRequests.teams.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navRequests.teams.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div><span style="font-size: 10.5px; font-weight: {{ navRequests.teams.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Squads</span></button>
+            <button aria-label="Inbox" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navRequests.requests.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navRequests.requests.sw }}" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="position: absolute; top: -4px; right: -8px; background: #DC2626; color: #FFFFFF; font-size: 9px; font-weight: 700; height: 15px; min-width: 15px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; line-height: 1;">2</span></div><span style="font-size: 10.5px; font-weight: {{ navRequests.requests.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Inbox</span></button>
+            <button aria-label="Profile" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navRequests.profile.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{ navRequests.profile.avBg }}; color: {{ navRequests.profile.avColor }}; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 1.5px solid {{ navRequests.profile.avBorder }};">RS</span></div><span style="font-size: 10.5px; font-weight: {{ navRequests.profile.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Profile</span></button></nav>
+        </div>
+      </div>
+    </div>
+    <div id="3e" style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="align-self: flex-start; background: #1A1A19; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">3e · Profile</span>
+      <div data-screen-label="Mobile Profile - current" style="width: 390px; height: 844px; border-radius: 36px; border: 8px solid #1A1A19; overflow: hidden; background: #F3EFE6; box-shadow: 0 20px 50px rgba(26,26,25,0.18); position: relative;">
+        <div class="phone-scroll" style="scrollbar-width: none; height: 100%; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; background: #F3EFE6;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; padding: 0 12px 0 16px; background: #FFFFFF; border-bottom: 1px solid #E7E6E2; position: sticky; top: 0; z-index: 40; flex: none;">
+            <span style="display: inline-flex; align-items: center; height: 24px;"><img src="assets/onestop-logo.png" alt="OneStop" style="display: block; height: 100%; width: auto; object-fit: contain;"></span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button title="Switch to Night mode" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button>
+              <button title="Notifications" style="position: relative; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #FFFFFF; border: 1px solid #E7E6E2; color: #1A1A19; border-radius: 10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg><span style="position: absolute; top: -5px; right: -5px; background: #E11D48; color: #FFFFFF; font-size: 10px; font-weight: 700; height: 18px; min-width: 18px; padding: 0 5px; border-radius: 999px; display: flex; align-items: center; justify-content: center; line-height: 1; border: 2px solid #FFFFFF;">3</span></button>
+            </div>
+          </div>
+          <main style="min-width: 0; padding: 14px 12px 76px; display: flex; flex-direction: column; flex: 1 0 auto;">
+            <div style="flex: 1 0 auto; width: 100%; display: flex; flex-direction: column;">
+
+              <div style="display: flex; flex-direction: column; gap: 22px; width: 100%; padding-bottom: 80px;">
+                
+                <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; width: 100%;">
+                  <aside style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px;">
+                    <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; box-shadow: 0 2px 8px rgba(26,26,25,0.05); overflow: hidden;">
+                      
+                      <div style="padding: 18px; display: flex; flex-direction: column; gap: 18px;">
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 12px;">
+                          <div style="width: 64px; height: 64px; border-radius: 50%; background: #0F3FFE; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; flex-shrink: 0;">RS</div>
+                          <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0; width: 100%;">
+                            <div style="font-size: 19px; font-weight: 700; color: #1A1A19; letter-spacing: -0.02em; line-height: 1.2;">Riya Sharma</div>
+                            <div style="font-size: 13px; color: #55534D; line-height: 1.35;">Shaheed Sukhdev College of Business Studies</div>
+                          </div>
+                          <span style="display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; line-height: 1.4; background: #F2F1ED; color: #1A1A19; border: 1px solid #E7E6E2;">UG 2nd Year · Undergraduate</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #75736C;">Highlighted Skills (3)</div>
+                          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <span style="background: #F2F1ED; color: #1A1A19; border: 1px solid #E7E6E2; border-radius: 12px; padding: 3px 9px; font-size: 12px; font-weight: 500; line-height: 1.35;">Deck design</span>
+                            <span style="background: #F2F1ED; color: #1A1A19; border: 1px solid #E7E6E2; border-radius: 12px; padding: 3px 9px; font-size: 12px; font-weight: 500; line-height: 1.35;">Market research</span>
+                            <span style="background: #F2F1ED; color: #1A1A19; border: 1px solid #E7E6E2; border-radius: 12px; padding: 3px 9px; font-size: 12px; font-weight: 500; line-height: 1.35;">Copywriting</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+                  <form style="display: flex; flex-direction: column; gap: 18px; width: 100%; min-width: 0;">
+                    <section style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(26,26,25,0.04);">
+                      <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+                        <h2 style="font-size: 15px; font-weight: 700; color: #1A1A19; letter-spacing: -0.01em;">Personal &amp; Campus Information</h2>
+                        <p style="font-size: 12.5px; color: #75736C;">shown on your squad applications</p>
+                      </div>
+                      <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; width: 100%;">
+                        <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                          <label style="font-size: 12px; font-weight: 600; color: #55534D; letter-spacing: 0.01em;">Full Name</label>
+                          <input type="text" value="Riya Sharma" style="border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 13px; font-size: 16px; color: #1A1A19; width: 100%; font-family: inherit;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                          <label style="font-size: 12px; font-weight: 600; color: #55534D; letter-spacing: 0.01em;">College / University</label>
+                          <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                            <span style="position: absolute; left: 12px; color: #7E7C77; display: flex;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
+                            <input type="text" value="Shaheed Sukhdev College of Business Studies" style="width: 100%; padding: 10px 36px; font-family: inherit; font-size: 16px; font-weight: 500; color: #1A1A19; background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 9px; outline: none;">
+                            <span style="position: absolute; right: 12px; color: #75736C; display: flex;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 2px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #55534D; letter-spacing: 0.01em;">WhatsApp Number</label>
+                        <input type="tel" value="98110 42278" style="max-width: 340px; border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 13px; font-size: 16px; color: #1A1A19; width: 100%; font-family: inherit;">
+                        <span style="font-size: 12px; color: #75736C; line-height: 1.35;">optional. shared only once you're accepted into a squad. skip it and you'll chat on OneStop instead.</span>
+                      </div>
+                    </section>
+                    <section style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(26,26,25,0.04);">
+                      <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+                        <h2 style="font-size: 15px; font-weight: 700; color: #1A1A19; letter-spacing: -0.01em;">Academic Standing</h2>
+                        <p style="font-size: 12.5px; color: #75736C;">sets which competitions you're eligible for</p>
+                      </div>
+                      <div style="display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; width: 100%;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;"><label style="font-size: 12px; font-weight: 600; color: #55534D;">UG or PG</label><div style="position: relative; display: flex; align-items: center;"><div style="width: 100%; border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 36px 10px 13px; font-size: 16px; color: #1A1A19;">UG · Undergraduate</div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px;"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;"><label style="font-size: 12px; font-weight: 600; color: #55534D;">Year</label><div style="position: relative; display: flex; align-items: center;"><div style="width: 100%; border: 1px solid #E7E6E2; border-radius: 9px; background: #FFFFFF; padding: 10px 36px 10px 13px; font-size: 16px; color: #1A1A19;">2nd Year</div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 12px;"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div>
+                      </div>
+                      <div style="display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #55534D; line-height: 1.45;"><span>You'll see undergrad-eligible competitions only. MBA/PG listings are hidden.</span></div>
+                    </section>
+                    <section style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 2px rgba(26,26,25,0.04);">
+                      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+                          <h2 style="font-size: 15px; font-weight: 700; color: #1A1A19; letter-spacing: -0.01em;">Skills &amp; Capabilities</h2>
+                          <p style="font-size: 12.5px; color: #75736C;">squad leads recruit by these</p>
+                        </div>
+                        <span style="font-size: 12px; font-weight: 600; color: #75736C; padding-top: 2px; flex-shrink: 0;">3 selected</span>
+                      </div>
+                      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <sc-for list="{{ profSkills }}" as="s" hint-placeholder-count="10">
+                          <button type="button" style="display: inline-flex; align-items: center; gap: 6px; border: 1px solid {{ s.border }}; border-radius: 20px; background: {{ s.bg }}; color: {{ s.color }}; padding: 7px 14px; white-space: nowrap; font-size: 13px; font-weight: {{ s.weight }}; font-family: inherit;"><sc-if value="{{ s.on }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F3FFE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if><span>{{ s.label }}</span></button>
+                        </sc-for>
+                      </div>
+                    </section>
+                  </form>
+                    <div style="background: #FFFFFF; border: 1px solid #E7E6E2; border-radius: 12px; overflow: hidden;">
+                      <div style="padding: 14px 18px; border-bottom: 1px solid #F0EFEB; display: flex; flex-direction: column; gap: 3px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #1A1A19;">Account</span>
+                        <span style="font-size: 12px; color: #75736C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Signed in as riya.sharma@gmail.com</span>
+                      </div>
+                      <div style="display: flex; flex-direction: column; padding: 6px;">
+                        <button style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #1A1A19; text-align: left; width: 100%;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg><span>Change password</span></button>
+                        <button style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #1A1A19; text-align: left; width: 100%;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#75736C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg><span>Sign out</span></button>
+                        <div style="height: 1px; background: #F0EFEB; margin: 6px 6px;"></div>
+                        <button style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #DC2626; text-align: left; width: 100%;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>Delete account</span></button>
+                      </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+            <footer style="margin-top: auto; padding: 32px 14px 20px; width: 100%; display: flex; align-items: center; justify-content: center;">
+              <p style="margin: 0; font-size: 12.5px; line-height: 1.6; color: #55534D; text-align: center; letter-spacing: -0.01em;"><span>Made with </span><span style="color: #DC2626; margin: 0 1px;">♥</span><span> by </span><a href="https://www.linkedin.com/in/aditya-singhani-69294a27a/" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Aditya Singhani</a><span> &amp; </span><a href="https://www.linkedin.com/in/manthan-kabra/" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Manthan Kabra</a><span style="color: #75736C; padding: 0 3px;"> · </span><span>From the House of </span><a href="https://two19labs.in" target="_blank" rel="noopener noreferrer" style="color: #0F3FFE; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; font-weight: 500;">Two19 Labs</a></p>
+            </footer>
+          </main>
+          <nav style="position: sticky; bottom: 0; flex: none; height: 56px; display: flex; align-items: stretch; justify-content: space-around; background: #FFFFFF; border-top: 1px solid #E7E6E2; z-index: 45; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);"><button aria-label="Home" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navProfile.home.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="{{ navProfile.home.fill }}" stroke="currentColor" stroke-width="{{ navProfile.home.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div><span style="font-size: 10.5px; font-weight: {{ navProfile.home.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Home</span></button>
+            <button aria-label="Browse" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navProfile.browse.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navProfile.browse.sw }}" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="{{ navProfile.browse.fill }}"></polygon></svg></div><span style="font-size: 10.5px; font-weight: {{ navProfile.browse.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Browse</span></button>
+            <button aria-label="Squads" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navProfile.teams.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navProfile.teams.sw }}" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div><span style="font-size: 10.5px; font-weight: {{ navProfile.teams.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Squads</span></button>
+            <button aria-label="Inbox" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navProfile.requests.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ navProfile.requests.sw }}" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg><span style="position: absolute; top: -4px; right: -8px; background: #DC2626; color: #FFFFFF; font-size: 9px; font-weight: 700; height: 15px; min-width: 15px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; border: 1.5px solid #FFFFFF; line-height: 1;">2</span></div><span style="font-size: 10.5px; font-weight: {{ navProfile.requests.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Inbox</span></button>
+            <button aria-label="Profile" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; color: {{ navProfile.profile.color }};"><div style="position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;"><span style="width: 22px; height: 22px; border-radius: 50%; background: {{ navProfile.profile.avBg }}; color: {{ navProfile.profile.avColor }}; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 1.5px solid {{ navProfile.profile.avBorder }};">RS</span></div><span style="font-size: 10.5px; font-weight: {{ navProfile.profile.weight }}; line-height: 1.1; letter-spacing: -0.01em;">Profile</span></button></nav>
+        </div>
+      </div>
+    </div>
+
+    <div id="3f" style="display: flex; flex-direction: column; gap: 10px;">
+      <span style="align-self: flex-start; background: #1A1A19; color: #FFFFFF; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 6px;">3f · Competition detail</span>
+      <div data-screen-label="Mobile Detail drawer - current" style="width: 390px; height: 844px; border-radius: 36px; border: 8px solid #1A1A19; overflow: hidden; background: #F3EFE6; box-shadow: 0 20px 50px rgba(26,26,25,0.18); position: relative;">
+        <div style="position: absolute; inset: 0; background: rgba(26,26,25,0.35); display: flex; justify-content: flex-end; z-index: 50;">
+          <div class="phone-scroll" style="scrollbar-width: none; width: 100%; height: 100%; overflow-y: auto; background: #FFFFFF; border-left: 1px solid #E7E6E2; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 20px 15px; border-bottom: 1px solid #E7E6E2;">
+              <span style="font-size: 13px; font-weight: 600; color: #55534D;">Case · DU Circuit</span>
+              <button style="border: 1px solid #E7E6E2; border-radius: 8px; background: #F9F9F7; color: #55534D; width: 40px; height: 40px; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center;">×</button>
+            </div>
+            <div style="padding: 20px; display: flex; gap: 14px; align-items: flex-start;">
+              <div style="width: 46px; height: 46px; min-width: 46px; border-radius: 10px; border: 1px solid #EFEEEA; background: #F2F1ED; color: #55534D; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;">SS</div>
+              <div style="min-width: 0;">
+                <h2 style="font-size: 20px; font-weight: 700; line-height: 1.25; letter-spacing: -0.02em; text-wrap: pretty; color: #1A1A19;">Arthashastra: The Strategy Case Competition</h2>
+                <p style="margin: 5px 0 0; font-size: 13px; color: #55534D;">Shaheed Sukhdev College of Business Studies</p>
+                <p style="margin: 10px 0 0; font-size: 14px; line-height: 1.55; color: #55534D;">Arthashastra: The Strategy Case Competition</p>
+              </div>
+            </div>
+            <div style="border-top: 1px solid #E7E6E2;">
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Host</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">Shaheed Sukhdev College of Business Studies</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Circuit</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">DU Circuit</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Eligibility</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">Undergraduate &amp; All Collegiate</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Team size</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">2-3</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Format</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">Online</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Prize</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">Prize Pool ₹75,000</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Entry</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">Free</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Deadline</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">25 Sep, 11:59 PM</span></div>
+                <div style="display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 14px; padding: 12px 20px; border-bottom: 1px solid #F0EFEB;"><span style="font-size: 13px; color: #75736C;">Closes in</span><span style="font-size: 13px; font-weight: 500; color: #1A1A19;">4 hours left</span></div>
+            </div>
+            <div style="padding: 20px 20px 20px; margin-top: auto; display: flex; flex-direction: column; gap: 9px;">
+              <a href="https://unstop.com" target="_blank" rel="noopener noreferrer" style="height: 48px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #0F3FFE; border-radius: 10px; background: #0F3FFE; color: #FFFFFF; font-size: 15px; font-weight: 600;">Apply on Unstop<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>
+                <div style="display: flex; gap: 8px;">
+                  <button style="flex: 1; height: 44px; border: 1px solid #0F3FFE; border-radius: 10px; background: #FFFFFF; color: #0F3FFE; font-size: 14px; font-weight: 600;">Post a squad</button>
+                  <button style="flex: 1; height: 44px; border: 1px solid #E7E6E2; border-radius: 10px; background: #FFFFFF; color: #1A1A19; font-size: 14px; font-weight: 500;">Bookmark</button>
+                </div>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #75736C; line-height: 1.5;">1 squad is already looking for teammates on this.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  initials(host) {
+    const skip = { '&': 1, and: 1, company: 1, college: 1, of: 1, institute: 1, university: 1 };
+    const w = host.split(/[\s.]+/).filter(x => x && !skip[x.toLowerCase()]);
+    if (!w.length) return '··';
+    if (w.length === 1) return w[0].slice(0, 2).toUpperCase();
+    return w.slice(0, 2).map(x => x[0]).join('').toUpperCase();
+  }
+  card(c) {
+    const u = {
+      red: { cardBorder: 'rgba(239,68,68,0.45)', cardBg: 'linear-gradient(180deg, rgba(254,242,242,0.65) 0%, #FFFFFF 42%)', cardShadow: '0 2px 8px rgba(239,68,68,0.08)', pillBorder: '1px solid rgba(239,68,68,0.40)', pillBg: 'rgba(239,68,68,0.12)', pillColor: '#DC2626' },
+      yellow: { cardBorder: 'rgba(245,158,11,0.45)', cardBg: 'linear-gradient(180deg, rgba(254,252,232,0.70) 0%, #FFFFFF 42%)', cardShadow: '0 2px 8px rgba(245,158,11,0.08)', pillBorder: '1px solid rgba(245,158,11,0.40)', pillBg: 'rgba(245,158,11,0.14)', pillColor: '#B45309' },
+      blue: { cardBorder: '#E7E6E2', cardBg: '#FFFFFF', cardShadow: 'none', pillBorder: '1px solid rgba(15,63,254,0.35)', pillBg: 'rgba(15,63,254,0.08)', pillColor: '#0F3FFE' }
+    }[c.urgency];
+    const fee = c.free
+      ? { feeText: 'Free Entry', feeBg: '#FFFFFF', feeColor: '#10B981', feeBorder: '1px solid rgba(16,185,129,0.32)' }
+      : { feeText: `${c.fee} Entry`, feeBg: '#F2F1ED', feeColor: '#55534D', feeBorder: '1px solid #E7E6E2' };
+    const solo = c.team === 'Solo';
+    return { ...c, ...u, ...fee, initials: this.initials(c.host), regs: c.regs.toLocaleString(), showSquad: !solo, actionCols: solo ? '1fr' : '1fr 1fr' };
+  }
+  renderVals() {
+    const bookmarks = [
+      { host: 'Shri Ram College of Commerce', title: 'Tata Crucible Campus Quiz 2026', prize: 'Prize Pool ₹2,50,000', free: true, team: 'Solo', ends: '26 Sep, 11:59 PM', regs: 4218, countdown: '19 hours left', urgency: 'yellow' },
+      { host: "L'Oréal India", title: "L'Oréal Brandstorm 2026: Beauty Tech Challenge", prize: 'Paris finale + PPIs', free: true, team: '2-3', ends: '29 Sep, 6:00 PM', regs: 12640, countdown: '4 days left', urgency: 'blue' },
+      { host: 'Hansraj College', title: 'Consilium: National Case Study Challenge', prize: 'Prize Pool ₹60,000', free: false, fee: '₹199', team: '2-4', ends: '3 Oct, 11:59 PM', regs: 986, countdown: '8 days left', urgency: 'blue' },
+      { host: 'Sri Venkateswara College', title: 'Econquest: Policy Paper Challenge', prize: 'Prize Pool ₹25,000', free: true, team: '1-2', ends: '6 Oct, 11:59 PM', regs: 312, countdown: '11 days left', urgency: 'blue' },
+      { host: 'Hindustan Unilever', title: 'HUL L.I.M.E. Season 16', prize: 'Prize Pool ₹6,00,000 + PPIs', free: true, team: '2-3', ends: '12 Oct, 11:59 PM', regs: 18450, countdown: '17 days left', urgency: 'blue' }
+    ].map(c => this.card(c));
+    const comps = [
+      { host: 'Shaheed Sukhdev College of Business Studies', title: 'Arthashastra: The Strategy Case Competition', prize: 'Prize Pool ₹75,000', free: true, team: '2-3', ends: '25 Sep, 11:59 PM', regs: 1342, countdown: '4 hours left', urgency: 'red' },
+      { host: 'Lady Shri Ram College for Women', title: 'Market Minds: Consulting Case Challenge', prize: 'Prize Pool ₹40,000', free: true, team: '2-4', ends: '27 Sep, 5:00 PM', regs: 708, countdown: '1 day left', urgency: 'blue' },
+      { host: 'Ramjas College', title: 'Vyapaar 3.0 — Business Plan & Case Showdown', prize: 'Prize Pool ₹30,000 + Internships', free: true, team: '3-4', ends: '1 Oct, 11:59 PM', regs: 455, countdown: '6 days left', urgency: 'blue' }
+    ].map(c => this.card(c));
+    const squads = [
+      { spots: 1, posted: '2h ago', lead: 'Arjun Mehta', college: 'SSCBS', year: 'UG 3rd Year', comp: 'Arthashastra: The Strategy Case Competition', host: 'Shaheed Sukhdev College of Business Studies', skills: ['Financial modelling', 'Excel'] },
+      { spots: 2, posted: 'Yesterday', lead: 'Kavya Iyer', college: 'Lady Shri Ram College', year: 'UG 2nd Year', comp: 'Market Minds: Consulting Case Challenge', host: 'Lady Shri Ram College for Women', skills: ['Market research', 'Slide design', 'Public speaking'] },
+      { spots: 2, posted: '3 days ago', lead: 'Rohan Gupta', college: 'Hansraj College', year: 'UG 2nd Year', comp: 'Consilium: National Case Study Challenge', host: 'Hansraj College', skills: ['Strategy', 'PowerPoint'] }
+    ].map(s => ({
+      ...s,
+      initial: s.lead[0],
+      hostInitials: this.initials(s.host),
+      spotsText: s.spots === 1 ? '1 spot left' : `${s.spots} spots left`,
+      spotsBg: s.spots <= 1 ? 'rgba(15,63,254,0.08)' : 'rgba(15,63,254,0.07)',
+      spotsBorder: s.spots <= 1 ? '1px solid rgba(15,63,254,0.35)' : '1px solid rgba(15,63,254,0.20)'
+    }));
+    const kpis = [
+      { n: '4', label: 'new today', hint: 'Competitions matching your Browse filter, listed in the last 24 hours', numColor: '#1A1A19', divider: 'none' },
+      { n: '3', label: 'squads for you', hint: 'Open squads looking for skills on your profile', numColor: '#1A1A19', divider: '1px solid #E7E6E2' },
+      { n: '2', label: 'requests', hint: 'Incoming join requests on your squads', numColor: '#0F3FFE', divider: '1px solid #E7E6E2' }
+    ];
+    const mkNav = (active) => { const o = {}; ['home','browse','teams','requests','profile'].forEach(k => { const a = k === active; o[k] = { color: a ? '#0F3FFE' : '#75736C', weight: a ? 700 : 500, sw: a ? 2.2 : 1.75, fill: a && (k === 'home' || k === 'browse') ? 'currentColor' : 'none', avBg: a ? 'rgba(15,63,254,0.08)' : '#F2F1ED', avColor: a ? '#0F3FFE' : '#55534D', avBorder: a ? '#0F3FFE' : 'transparent' }; }); return o; };
+    const cd = {
+      red: { chipBg: 'rgba(239,68,68,0.12)', chipColor: '#dc2626', chipBorder: 'rgba(239,68,68,0.32)', chipDot: '#ef4444' },
+      yellow: { chipBg: 'rgba(245,158,11,0.12)', chipColor: '#b45309', chipBorder: 'rgba(245,158,11,0.32)', chipDot: '#f59e0b' },
+      green: { chipBg: 'rgba(16,185,129,0.1)', chipColor: '#047857', chipBorder: 'rgba(16,185,129,0.3)', chipDot: '#10b981' }
+    };
+    const browse = [
+      { host: 'Shaheed Sukhdev College of Business Studies', title: 'Arthashastra: The Strategy Case Competition', prize: 'Prize Pool ₹75,000', free: true, team: '2-3 Members', ends: '25 Sept, 11:59 pm', regs: 1342, countdown: '4h 12m left', u: 'red' },
+      { host: 'Shri Ram College of Commerce', title: 'Tata Crucible Campus Quiz 2026', prize: 'Prize Pool ₹2,50,000', free: true, team: 'Solo', ends: '26 Sept, 11:59 pm', regs: 4218, countdown: '1d 3h left', u: 'red', bm: true, solo: true },
+      { host: 'Lady Shri Ram College for Women', title: 'Market Minds: Consulting Case Challenge', prize: 'Prize Pool ₹40,000', free: true, team: '2-4 Members', ends: '27 Sept, 05:00 pm', regs: 708, countdown: '2d 8h left', u: 'yellow' },
+      { host: 'Ramjas College', title: 'Vyapaar 3.0 — Business Plan & Case Showdown', prize: 'Prize Pool ₹30,000 + Internships', free: true, team: '3-4 Members', ends: '1 Oct, 11:59 pm', regs: 455, countdown: '6d 8h left', u: 'yellow' },
+      { host: 'Hansraj College', title: 'Consilium: National Case Study Challenge', prize: 'Prize Pool ₹60,000', free: false, team: '2-4 Members', ends: '3 Oct, 11:59 pm', regs: 986, countdown: '8d left', u: 'green', bm: true }
+    ].map(c => ({ ...c, ...cd[c.u], initials: this.initials(c.host), regs: c.regs.toLocaleString(), showTeam: !c.solo,
+      tagText: c.free ? 'Free Entry' : 'Paid', tagBg: c.free ? '#FFFFFF' : '#F3EFE6', tagColor: c.free ? '#059669' : '#55534D', tagBorder: c.free ? '1px solid rgba(16,185,129,0.32)' : '1px solid #E7E6E2',
+      border: c.bm ? 'rgba(245,158,11,0.45)' : '#E7E6E2', shadow: c.bm ? '0 4px 18px -4px rgba(245,158,11,0.15)' : 'none',
+      bmBg: c.bm ? 'rgba(245,158,11,0.14)' : '#FFFFFF', bmBorder: c.bm ? 'rgba(245,158,11,0.4)' : '#E7E6E2', bmColor: c.bm ? '#d97706' : '#55534D', bmFill: c.bm ? 'currentColor' : 'none' }));
+    const CATC = { 'Case Comps': '#0F3FFE', 'Hackathons': '#7C3AED', 'Quizzes': '#DB2777', 'Simulations': '#0891B2' };
+    const tfCards = [
+      { cat: 'Case Comps', circuit: 'DU Circuit', dueText: '5h left to register', dueColor: '#DC2626', title: 'Kurukshetra 2026 — National Case Challenge', host: 'Hindu College, University of Delhi', desc: 'We made the semis last year and want to go further. Looking for one person who can dig up market data fast and one who can make a deck look sharp. We meet on Meet most evenings after 8.', total: 4, filled: 2, want: ['Market research', 'Deck design'], fitLabel: 'You fit', lead: 'Ananya Rao', initials: 'AR', college: 'Lady Shri Ram College', year: '3rd year', posted: '4h ago' },
+      { cat: 'Case Comps', circuit: 'DU Circuit', dueText: '6d left to register', dueColor: '#15803D', title: 'Revive the Failed — Business Case Competition', host: 'Lady Shri Ram College for Women', desc: 'First case comp for me. All skills and backgrounds welcome, just be ready to put in a few evenings.', total: 3, filled: 1, want: [], lead: 'Riddhi Sharma', initials: 'RS', college: 'Lady Shri Ram College', year: 'BMS, 1st year', posted: '6h ago' },
+      { cat: 'Quizzes', circuit: 'Corporate & Global', dueText: '4d left to register', dueColor: '#15803D', title: 'Tata Crucible Campus Quiz', host: 'Tata Group', desc: 'Quiz pair. Full for now.', total: 2, filled: 2, want: ['Public speaking'], lead: 'Meher Gill', initials: 'MG', college: 'Hindu College', year: '1st year', posted: '2 days ago', isFull: true },
+      { cat: 'Case Comps', circuit: 'Corporate & Global', dueText: '17d left to register', dueColor: '#15803D', title: 'Bain Business Bowl', host: 'Bain & Company', desc: 'First Bain Bowl for all of us. Serious about prep: two mock cases a week before the deadline.', total: 4, filled: 1, want: ['Finance modelling', 'Valuation', 'Public speaking'], lead: 'Devansh Iyer', initials: 'DI', college: 'Hansraj College', year: '2nd year', posted: '2 days ago' }
+    ].map(p => { const openN = p.total - p.filled; return { ...p, catColor: CATC[p.cat], fit: !!p.fitLabel, hasDesc: !!p.desc, ...(() => { let used = 0, n = 0; for (const w of p.want) { const cost = w.length * 6.6 + 22; if (used + cost > 250 && n > 0) break; used += cost; n++; } const more = p.want.length - n; return { wantShown: p.want.slice(0, n), hasMore: more > 0, moreText: '+' + more }; })(), noWant: p.want.length === 0, full: !!p.isFull, open: !p.isFull,
+      spotsText: openN > 0 ? `${openN} of ${p.total} open` : `${p.total} of ${p.total} filled`, spotsColor: openN > 0 ? '#1A1A19' : '#75736C',
+      dots: Array.from({ length: p.total }, (_, i) => i < p.filled ? { bg: '#0F3FFE', border: '0' } : { bg: '#FFFFFF', border: '1.5px solid #CFCDC7' }) }; });
+    const look = { pending: { label: 'Pending', bg: '#F9F9F7', color: '#75736C', border: '#E7E6E2' }, accepted: { label: 'Accepted', bg: 'rgba(22,163,74,0.15)', color: '#16A34A', border: 'rgba(22,163,74,0.35)' } };
+    const reqRaw = [
+      { who: 'Priya Menon', sub: 'SSCBS · applied to Prayaas Case Challenge', status: 'pending', wa: true, pitch: 'Built three LBO models for my finance society this year. Happy to own the numbers end to end.', skills: ['Finance modelling', 'Valuation', 'Market research'] },
+      { who: 'Aditya Rao', sub: 'Hansraj College · applied to Prayaas Case Challenge', status: 'pending', wa: false, pitch: 'Finalist at two case comps last semester. Strong on the pitch, can help with research.', skills: ['Public speaking', 'Market research'] },
+      { who: 'Neha Bansal', sub: 'SRCC · applied to Prayaas Case Challenge', status: 'accepted', wa: false, pitch: 'Classmate from B.Com (H). I can do valuation and help with slides.', skills: ['Valuation', 'Deck design'] }
+    ];
+    const reqRows = reqRaw.map((r, i) => ({ ...r, ...look[r.status], pending: r.status === 'pending', wa: !!r.wa, noWa: !r.wa, accepted: r.status === 'accepted', rowBorder: i === reqRaw.length - 1 ? 'none' : '1px solid #E7E6E2' }));
+    const mine = ['Deck design', 'Market research', 'Copywriting'];
+    const profSkills = ['Finance modelling', 'Deck design', 'Market research', 'Frontend', 'Backend', 'ML / Data', 'Copywriting', 'Public speaking', 'Valuation', 'Design'].map(l => { const on = mine.includes(l); return { label: l, on, border: on ? '#0F3FFE' : '#E7E6E2', bg: on ? 'rgba(15,63,254,0.07)' : '#FFFFFF', color: on ? '#0F3FFE' : '#1A1A19', weight: on ? 600 : 500 }; });
+    return { reqRows, profSkills, tfCards, kpis, bookmarks, comps, squads, browse, navBrowse: mkNav('browse'), navTeams: mkNav('teams'), navRequests: mkNav('requests'), navProfile: mkNav('profile') };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,8 +1,10 @@
 // src/components/DetailDrawer.jsx
 import React, { useEffect } from 'react';
-import { initialsOf, formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
+import { formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
 import InstitutionLogo from './InstitutionLogo';
+import { BookmarkIcon } from './icons';
 import { trackEvent } from '../lib/posthog';
+import './DetailDrawer.css';
 
 export default function DetailDrawer({
   item,
@@ -22,7 +24,6 @@ export default function DetailDrawer({
 
   if (!item) return null;
 
-  const initials = initialsOf(item.host || item.orgName || 'Host');
   const disciplineCircuit = `${item.discipline || 'Competition'} · ${item.circuit || 'All Circuits'}`;
 
   const eligibilityDisplay = item.isPGOnly
@@ -49,73 +50,28 @@ export default function DetailDrawer({
     : 'No squads posted for this yet  -  post one and applicants come to you.';
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'var(--scrim)',
-        display: 'flex',
-        justifyContent: 'flex-end',
-        zIndex: 50
-      }}
-    >
+    <div className="detail-drawer-overlay" onClick={onClose}>
       <div
+        className="detail-drawer-panel"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: 'min(460px, 100%)',
-          height: '100%',
-          overflowY: 'auto',
-          background: 'var(--surface)',
-          borderLeft: '1px solid var(--line)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Competition details"
       >
         {/* Header Bar */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '12px',
-            padding: 'max(15px, var(--sat, 15px)) 20px 15px',
-            borderBottom: '1px solid var(--line)'
-          }}
-        >
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink-secondary)' }}>{disciplineCircuit}</span>
+        <div className="detail-drawer-header">
+          <span className="detail-drawer-discipline">{disciplineCircuit}</span>
           <button
             onClick={onClose}
-            style={{
-              border: '1px solid var(--line)',
-              borderRadius: '8px',
-              background: 'var(--surface-sunken)',
-              color: 'var(--ink-secondary)',
-              width: '30px',
-              height: '30px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              lineHeight: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 120ms ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--surface-muted)';
-              e.currentTarget.style.color = 'var(--ink)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--surface-sunken)';
-              e.currentTarget.style.color = 'var(--ink-secondary)';
-            }}
+            className="detail-drawer-close-btn"
+            aria-label="Close drawer"
           >
             ×
           </button>
         </div>
 
         {/* Body Overview */}
-        <div style={{ padding: '20px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+        <div className="detail-drawer-hero">
           <InstitutionLogo
             logo={item.logo || item.orgLogo || item.bannerUrl}
             name={item.host || item.orgName}
@@ -124,93 +80,37 @@ export default function DetailDrawer({
             fontSize={14}
           />
 
-          <div style={{ minWidth: 0 }}>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: '20px',
-                fontWeight: 700,
-                lineHeight: 1.25,
-                letterSpacing: '-0.02em',
-                textWrap: 'pretty',
-                color: 'var(--ink)'
-              }}
-            >
+          <div className="detail-drawer-hero-info">
+            <h2 className="detail-drawer-title">
               {item.title}
             </h2>
-            <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--ink-secondary)' }}>
+            <p className="detail-drawer-host">
               {item.host || item.orgName}
             </p>
-            <p style={{ margin: '10px 0 0', fontSize: '14px', lineHeight: 1.55, color: 'var(--ink-secondary)' }}>
+            <p className="detail-drawer-desc">
               {item.desc || 'No additional description provided for this listing.'}
             </p>
           </div>
         </div>
 
         {/* Fact Table */}
-        <div style={{ borderTop: '1px solid var(--line)' }}>
+        <div className="detail-drawer-facts">
           {facts.map((f, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '108px minmax(0, 1fr)',
-                gap: '14px',
-                padding: '12px 20px',
-                borderBottom: '1px solid var(--line-light)'
-              }}
-            >
-              <span style={{ fontSize: '13px', color: 'var(--ink-muted)' }}>{f.k}</span>
-              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{f.v}</span>
+            <div key={i} className="detail-drawer-fact-row">
+              <span className="detail-drawer-fact-key">{f.k}</span>
+              <span className="detail-drawer-fact-val">{f.v}</span>
             </div>
           ))}
         </div>
 
         {/* Footer Actions */}
-        <div style={{ padding: '20px 20px calc(20px + var(--sab, 0px))', marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '9px' }}>
-          <button
-
-            onClick={() => onOpenPostSquad(item)}
-            style={{
-              border: '1px solid var(--primary)',
-              borderRadius: '9px',
-              background: 'var(--primary)',
-              color: '#FFFFFF',
-              padding: '13px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 600,
-              transition: 'background 120ms ease'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--primary-hover)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--primary)')}
-          >
-            Post a squad for this
-          </button>
-
-          <button
-            onClick={() => onToggleBookmark(item.id)}
-            style={{
-              border: '1px solid var(--line)',
-              borderRadius: '9px',
-              background: 'var(--surface)',
-              color: 'var(--ink)',
-              padding: '13px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 500,
-              transition: 'background 120ms ease'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
-          >
-            {isBookmarked ? 'Remove bookmark' : 'Bookmark'}
-          </button>
-
+        <div className="detail-drawer-footer">
+          {/* Full-width 48px Apply on Unstop Primary Action */}
           <a
             href={item.unstopUrl || 'https://unstop.com'}
             target="_blank"
             rel="noopener noreferrer"
+            className="detail-drawer-apply-btn"
             onClick={() => {
               trackEvent('competition_unstop_outbound_clicked', {
                 competition_id: item.id,
@@ -218,24 +118,34 @@ export default function DetailDrawer({
                 unstop_url: item.unstopUrl || 'https://unstop.com',
               });
             }}
-            style={{
-              border: '1px solid var(--line)',
-              borderRadius: '9px',
-              background: 'var(--surface)',
-              color: 'var(--ink)',
-              padding: '13px',
-              textAlign: 'center',
-              fontSize: '14px',
-              fontWeight: 500,
-              transition: 'background 120ms ease'
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-muted)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
           >
-            Open on Unstop
+            <span>Apply on Unstop</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
           </a>
 
-          <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--ink-muted)', lineHeight: 1.5 }}>
+          {/* Dual 44px Row: Post a squad + Bookmark */}
+          <div className="detail-drawer-dual-row">
+            <button
+              onClick={() => onOpenPostSquad(item)}
+              className="detail-drawer-post-btn"
+            >
+              Post a squad
+            </button>
+
+            <button
+              onClick={() => onToggleBookmark(item.id)}
+              className={`detail-drawer-bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
+            >
+              <BookmarkIcon size={16} filled={isBookmarked} color={isBookmarked ? '#0F3FFE' : 'currentColor'} />
+              <span>{isBookmarked ? 'Saved' : 'Bookmark'}</span>
+            </button>
+          </div>
+
+          <p className="detail-drawer-squad-note">
             {squadNote}
           </p>
         </div>

@@ -72,12 +72,12 @@ export default function MobileBottomNav({
         <span className="mobile-nav-label">Squads</span>
       </button>
 
-      {/* 4. Requests */}
+      {/* 4. Inbox */}
       <button
         type="button"
         className={`mobile-nav-item ${isRequests ? 'active' : ''}`}
         onClick={() => onNavigate('requests')}
-        aria-label="Requests and applications"
+        aria-label="Inbox"
       >
         <div className="mobile-nav-icon-wrap">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isRequests ? 2.2 : 1.75} strokeLinecap="round" strokeLinejoin="round">
@@ -88,7 +88,7 @@ export default function MobileBottomNav({
             <span className="mobile-nav-badge">{pendingInboxCount}</span>
           )}
         </div>
-        <span className="mobile-nav-label">Requests</span>
+        <span className="mobile-nav-label">Inbox</span>
       </button>
 
       {/* 5. Profile */}
