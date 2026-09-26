@@ -114,424 +114,6 @@ const WhatsAppIcon = ({ size = 15 }) => (
   </svg>
 );
 
-// High-fidelity fallback squad data matching designer screenshot
-const SAMPLE_COMPS = [
-  {
-    id: 'c1',
-    title: 'Envision 2026 — National Case Challenge',
-    host: 'Shaheed Sukhdev College of Business Studies',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/2/29/Shaheed_Sukhdev_College_of_Business_Studies_logo.png',
-    days: 5 / 24,
-    team: '2–4 members',
-    cat: 'Case Comps',
-    circuit: 'DU Circuit',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c9',
-    title: 'Revive the Failed — Business Case Competition',
-    host: 'Lady Shri Ram College for Women',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/3/30/Lady_Shri_Ram_College_logo.png',
-    days: 6,
-    team: '2–3 members',
-    cat: 'Case Comps',
-    circuit: 'DU Circuit',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c5',
-    title: 'Business & Economics Quiz 2026',
-    host: 'Shri Ram College of Commerce',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/8/87/Shri_Ram_College_of_Commerce_logo.png',
-    days: 17,
-    team: '2 members',
-    cat: 'Quizzes',
-    circuit: 'DU Circuit',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c6',
-    title: 'Bain Business Bowl 2026',
-    host: 'Bain & Company',
-    logo: 'https://logo.clearbit.com/bain.com',
-    days: 11,
-    team: '3–4 members',
-    cat: 'Case Comps',
-    circuit: 'Corporate & Global',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c7',
-    title: 'Market Mayhem — Quant Trading Simulation',
-    host: 'IIM Ahmedabad',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/IIM_Ahmedabad_Logo.svg/512px-IIM_Ahmedabad_Logo.svg.png',
-    days: 23,
-    team: '2–3 members',
-    cat: 'Simulations',
-    circuit: 'IIMs, IITs & Premier',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c3',
-    title: "L'Oréal Brandstorm 2026",
-    host: "L'Oréal",
-    logo: 'https://logo.clearbit.com/loreal.com',
-    days: 14,
-    team: '3 members',
-    cat: 'Case Comps',
-    circuit: 'Corporate & Global',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c4',
-    title: 'Flipkart GRiD 7.0 — Tech Challenge',
-    host: 'Flipkart',
-    logo: 'https://logo.clearbit.com/flipkart.com',
-    days: 19,
-    team: '2–3 members',
-    cat: 'Hackathons',
-    circuit: 'Corporate & Global',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c10',
-    title: 'Tata Crucible Campus Quiz 2026',
-    host: 'Tata Group',
-    logo: 'https://logo.clearbit.com/tata.com',
-    days: 8,
-    team: '2 members',
-    cat: 'Quizzes',
-    circuit: 'Corporate & Global',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c11',
-    title: 'Smart India Hackathon 2026 — Campus Round',
-    host: 'Ministry of Education',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Smart_India_Hackathon_Logo.png/250px-Smart_India_Hackathon_Logo.png',
-    days: 21,
-    team: '6 members',
-    cat: 'Hackathons',
-    circuit: 'Others',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c12',
-    title: 'McKinsey Next Generation Women Leaders',
-    host: 'McKinsey & Company',
-    logo: 'https://logo.clearbit.com/mckinsey.com',
-    days: 12,
-    team: '3 members',
-    cat: 'Case Comps',
-    circuit: 'Corporate & Global',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c8',
-    title: 'Consult-a-thon 2026',
-    host: 'Kirori Mal College',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/92/Kirori_Mal_College_logo.png/220px-Kirori_Mal_College_logo.png',
-    days: 15,
-    team: '3–4 members',
-    cat: 'Case Comps',
-    circuit: 'DU Circuit',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c2',
-    title: 'Prayaas Case Challenge 2026',
-    host: 'Shri Ram College of Commerce',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/8/87/Shri_Ram_College_of_Commerce_logo.png',
-    days: 2,
-    team: '3–4 members',
-    cat: 'Case Comps',
-    circuit: 'DU Circuit',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c13',
-    title: 'Premchand Memorial Parliamentary Debate 2026',
-    host: 'Hindu College',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/2/22/Hindu_College%2C_Delhi_logo.png/220px-Hindu_College%2C_Delhi_logo.png',
-    days: 9,
-    team: '3 members',
-    cat: 'Debates',
-    circuit: 'DU Circuit',
-    url: 'https://unstop.com'
-  },
-  {
-    id: 'c14',
-    title: 'Gargi Policy & Empirical Research Challenge 2026',
-    host: 'Gargi College',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/07/Gargi_College_logo.png/220px-Gargi_College_logo.png',
-    days: 13,
-    team: '2–3 members',
-    cat: 'Writing & Research',
-    circuit: 'DU Circuit',
-    url: 'https://unstop.com'
-  }
-];
-
-const SAMPLE_POSTS = [
-  {
-    id: 'demo_p1',
-    compId: 'c1',
-    lead: 'Ananya Rao',
-    college: 'LSR',
-    year: '3rd year',
-    posted: '4h ago',
-    total: 4,
-    members: [{ name: 'Riya Kapoor', college: 'LSR', year: '3rd year' }],
-    state: 'open',
-    want: ['Market research', 'Deck design'],
-    have: ['Finance modelling', 'Public speaking'],
-    desc: 'We made the semis last year and want to go further. Looking for one person who can dig up market data fast and one who can make a deck look sharp. We meet on Meet most evenings after 8.',
-    comm_method: 'whatsapp',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p8',
-    compId: 'c9',
-    lead: 'Riddhi Sharma',
-    college: 'LSR',
-    year: 'BMS, 1st year',
-    posted: '6h ago',
-    total: 3,
-    members: [],
-    state: 'open',
-    want: [],
-    have: ['Market research'],
-    desc: 'First case comp for me. All skills and backgrounds welcome, just be ready to put in a few evenings.',
-    comm_method: 'chat',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p4',
-    compId: 'c5',
-    lead: 'Meher Gill',
-    college: 'SSCBS',
-    year: '1st year',
-    posted: '2 days ago',
-    total: 2,
-    members: [{ name: 'Arjun Nair', college: 'SSCBS', year: '1st year' }],
-    state: 'full',
-    want: ['Public speaking'],
-    have: ['Copywriting'],
-    desc: 'Quiz pair. Full for now.',
-    comm_method: 'none',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p5',
-    compId: 'c6',
-    lead: 'Devansh Iyer',
-    college: 'SRCC',
-    year: '2nd year',
-    posted: '2 days ago',
-    total: 4,
-    members: [],
-    state: 'open',
-    want: ['Finance modelling', 'Valuation', 'Public speaking'],
-    have: ['Market research'],
-    desc: 'First Bain Bowl for all of us. Serious about prep: two mock cases a week before the deadline.',
-    comm_method: 'chat',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p6',
-    compId: 'c7',
-    lead: 'Sara Thomas',
-    college: 'IIM Ahmedabad',
-    year: 'PGP, 1st year',
-    posted: '3 days ago',
-    total: 3,
-    members: [{ name: 'Kunal Jain', college: 'IIT Delhi', year: '3rd year' }],
-    state: 'open',
-    want: ['Finance modelling', 'ML / Data'],
-    have: ['Valuation'],
-    desc: 'Trading sim with a quant bent. Comfort with Excel or Python matters more than finance theory.',
-    comm_method: 'whatsapp',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p7',
-    compId: 'c1',
-    lead: 'Rohan Das',
-    college: 'SRCC',
-    year: '2nd year',
-    posted: '4 days ago',
-    total: 3,
-    members: [],
-    state: 'open',
-    want: ['Deck design', 'Copywriting'],
-    have: ['Finance modelling'],
-    desc: 'Second SRCC team for Envision. Need a storyteller and a slide person.',
-    comm_method: 'chat',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p3',
-    compId: 'c3',
-    lead: 'Tanya Sen',
-    college: "St. Stephen's College",
-    year: '3rd year',
-    posted: '1 day ago',
-    total: 3,
-    members: [{ name: 'Kavya Pillai', college: "St. Stephen's College", year: '3rd year' }],
-    state: 'open',
-    want: ['Deck design', 'Market research'],
-    have: ['Public speaking', 'Copywriting'],
-    desc: 'Pitching a circular packaging concept for salon haircare. Looking for a slide designer who can create clean renders.',
-    comm_method: 'whatsapp',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p9',
-    compId: 'c4',
-    lead: 'Siddharth Mehta',
-    college: 'IIT Delhi',
-    year: '3rd year',
-    posted: '2 days ago',
-    total: 3,
-    members: [],
-    state: 'open',
-    want: ['ML / Data', 'Frontend'],
-    have: ['Backend'],
-    desc: 'Autonomous supply chain track. Developing an edge compute model for warehouse robotics. Need 1 ML engineer and 1 React dev.',
-    comm_method: 'chat',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p10',
-    compId: 'c10',
-    lead: 'Kabir Varma',
-    college: 'Hansraj College',
-    year: '2nd year',
-    posted: '3 days ago',
-    total: 2,
-    members: [],
-    state: 'open',
-    want: ['Public speaking'],
-    have: ['Copywriting'],
-    desc: 'Aiming for regional finals. Looking for a quiz partner strong on business history, corporate trivia, and brand campaigns.',
-    comm_method: 'whatsapp',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p11',
-    compId: 'c11',
-    lead: 'Aarav Gupta',
-    college: 'NSUT',
-    year: '2nd year',
-    posted: '4 days ago',
-    total: 6,
-    members: [
-      { name: 'Sameer Khan', college: 'NSUT', year: '2nd year' },
-      { name: 'Pooja Verma', college: 'NSUT', year: '3rd year' },
-      { name: 'Nikhil Roy', college: 'NSUT', year: '2nd year' }
-    ],
-    state: 'open',
-    want: ['Frontend', 'Backend'],
-    have: ['Design'],
-    desc: 'Smart logistics problem statement for Indian Railways. Need a clean UI dev and someone comfortable with GIS/mapping APIs.',
-    comm_method: 'whatsapp',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p12',
-    compId: 'c12',
-    lead: 'Priyanshi Singhal',
-    college: 'Miranda House',
-    year: '3rd year',
-    posted: '5 days ago',
-    total: 3,
-    members: [{ name: 'Aarushi Jain', college: 'Miranda House', year: '3rd year' }],
-    state: 'open',
-    want: ['Finance modelling', 'Valuation'],
-    have: ['Market research', 'Deck design'],
-    desc: 'Consulting prep squad. Running 2 market-entry cases a week with strict timing. Need someone confident in financial valuation.',
-    comm_method: 'chat',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p13',
-    compId: 'c13',
-    lead: 'Devansh Bhardwaj',
-    college: 'Hindu College',
-    year: '2nd year',
-    posted: '12h ago',
-    total: 3,
-    members: [{ name: 'Sanjana Roy', college: 'Hindu College', year: '2nd year' }],
-    state: 'open',
-    want: ['Public speaking'],
-    have: ['Copywriting'],
-    desc: 'Asian Parliamentary format (3v3). Need a 3rd speaker / whip. We practice motions on Discord 3 evenings a week.',
-    comm_method: 'whatsapp',
-    phone: '9811042278'
-  },
-  {
-    id: 'demo_p14',
-    compId: 'c14',
-    lead: 'Meera Nambiar',
-    college: 'Gargi College',
-    year: '3rd year',
-    posted: '1 day ago',
-    total: 3,
-    members: [],
-    state: 'open',
-    want: ['Market research', 'Valuation'],
-    have: ['Copywriting'],
-    desc: 'Writing a policy brief on urban mobility electrification. Need someone strong on statistical data analysis and secondary literature.',
-    comm_method: 'chat',
-    phone: '9811042278'
-  }
-];
-
-const SAMPLE_OWN = [
-  {
-    id: 'demo_o1',
-    compId: 'c2',
-    posted: '2 days ago',
-    total: 4,
-    closed: false,
-    want: ['Finance modelling', 'Valuation'],
-    have: ['Deck design', 'Public speaking'],
-    desc: 'Two-person SRCC team so far. Need someone who can own the financials and one more analyst.',
-    phone: '9811042278',
-    apps: [
-      { id: 'demo_a1', name: 'Priya Menon', college: 'SSCBS', year: '2nd year', status: 'pending', skills: ['Finance modelling', 'Valuation', 'Market research'], pitch: 'Built three LBO models for my finance society this year. Happy to own the numbers end to end.', phone: '9876543210' },
-      { id: 'demo_a2', name: 'Aditya Rao', college: 'Hansraj College', year: '3rd year', status: 'pending', skills: ['Public speaking', 'Market research'], pitch: 'Finalist at two case comps last semester. Strong on the pitch, can help with research.', phone: '9876543211' },
-      { id: 'demo_a3', name: 'Neha Bansal', college: 'SRCC', year: '2nd year', status: 'accepted', skills: ['Valuation', 'Deck design'], pitch: 'Classmate from B.Com (H). I can do valuation and help with slides.', phone: '9876543212' }
-    ]
-  },
-  {
-    id: 'demo_o2',
-    compId: 'c8',
-    posted: '5 days ago',
-    total: 3,
-    closed: false,
-    want: ['Market research'],
-    have: ['Deck design'],
-    desc: 'Looking for a researcher who enjoys digging into industry reports.',
-    phone: '9811042278',
-    apps: [
-      { id: 'demo_a4', name: 'Kabir Joshi', college: 'Hindu College', year: '2nd year', status: 'pending', skills: ['Market research', 'Copywriting'], pitch: 'Consistently write industry briefs for our commerce cell. Can take on secondary research.', phone: '9876543213' }
-    ]
-  },
-  {
-    id: 'demo_o3',
-    compId: 'c3',
-    posted: '1 day ago',
-    total: 3,
-    closed: false,
-    want: ['Deck design'],
-    have: ['Market research', 'Public speaking'],
-    desc: 'Forming an SRCC team for Brandstorm. Looking for a deck wizard.',
-    phone: '9811042278',
-    apps: []
-  }
-];
-
 export default function TeamFinderScreen({
   posts = [],
   competitions = [],
@@ -622,13 +204,7 @@ export default function TeamFinderScreen({
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [applyTargetPost, setApplyTargetPost] = useState(null);
 
-  // Local state mutations for demo / live reactivity
-  const [localPostsState, setLocalPostsState] = useState(() => {
-    return SAMPLE_POSTS.map(p => ({ ...p }));
-  });
-  const [localOwnState, setLocalOwnState] = useState(() => {
-    return SAMPLE_OWN.map(o => ({ ...o, apps: o.apps.map(a => ({ ...a })) }));
-  });
+
 
   const profileSkills = useMemo(() => (profile?.skills?.length ? profile.skills : ['Market research', 'Deck design', 'Copywriting']), [profile]);
   const userCollege = (profile?.college || user?.user_metadata?.college || 'SRCC').trim();
@@ -684,18 +260,6 @@ export default function TeamFinderScreen({
       };
     }
 
-    const sample = SAMPLE_COMPS.find(c => c.id === compId);
-    if (sample) {
-      const dueInfo = formatDue(sample.days);
-      return {
-        ...sample,
-        dueText: dueInfo.text,
-        dueColor: dueInfo.color,
-        dueBg: dueInfo.bg,
-        dueBorder: dueInfo.border,
-        days: dueInfo.days
-      };
-    }
 
     const dueInfo = formatDue(7);
     return {
@@ -714,12 +278,11 @@ export default function TeamFinderScreen({
     };
   };
 
-  // Build unified normalized posts
+  // Build unified normalized posts from real Supabase data
   const realCleanPosts = useMemo(() => (Array.isArray(posts) ? posts.filter(p => !isMockPost(p)) : []), [posts]);
 
   const allPosts = useMemo(() => {
-    // If realCleanPosts exist, map real posts
-    const mappedReal = realCleanPosts.map((p, i) => {
+    return realCleanPosts.map((p, i) => {
       const comp = getCompMeta(p.compId, p.competition_name || p.title, p.organizer || p.host);
       const isMine = Boolean(
         p.mine ||
@@ -733,7 +296,7 @@ export default function TeamFinderScreen({
       const total = Number(p.total_members || p.size || 4);
 
       // Connected applications
-      const postApps = applications.filter(a => String(a.postId || a.post_id) === String(p.id));
+      const postApps = applications.filter(a => String(a.postId || a.post_id) === String(p.id) && !isMockApp(a));
       const acceptedApps = postApps.filter(a => a.status === 'accepted');
       const pendingApps = postApps.filter(a => a.status === 'pending');
       const declinedApps = postApps.filter(a => a.status === 'declined' || a.status === 'rejected');
@@ -743,6 +306,7 @@ export default function TeamFinderScreen({
 
       const myApp = applications.find(a =>
         String(a.postId || a.post_id) === String(p.id) &&
+        !isMockApp(a) &&
         (a.dir === 'out' || (user && a.applicant_id === user.id) || (user && a.applicant_email === user.email))
       );
 
@@ -794,75 +358,7 @@ export default function TeamFinderScreen({
         idx: i
       };
     });
-
-    const others = localPostsState.map((p, i) => {
-      const comp = getCompMeta(p.compId);
-      const filled = 1 + (p.members?.length || 0);
-      const openN = Math.max(0, p.total - filled);
-      const match = p.want.filter(w => profileSkills.includes(w)).length;
-      return {
-        id: p.id,
-        comp,
-        lead: p.lead,
-        college: p.college,
-        year: p.year,
-        posted: p.posted,
-        total: p.total,
-        filled,
-        openN,
-        want: p.want,
-        have: p.have,
-        desc: p.desc,
-        phone: p.phone,
-        comm_method: p.comm_method || 'chat',
-        state: p.state,
-        isOwn: false,
-        apps: [],
-        members: p.members || [],
-        match,
-        idx: i
-      };
-    });
-
-    const mine = localOwnState.map((o, i) => {
-      const comp = getCompMeta(o.compId);
-      const acc = o.apps.filter(a => a.status === 'accepted');
-      const filled = 1 + acc.length;
-      const openN = Math.max(0, o.total - filled);
-      return {
-        id: o.id,
-        comp,
-        lead: 'You',
-        college: userCollege,
-        year: userYear,
-        posted: o.posted,
-        total: o.total,
-        filled,
-        openN,
-        want: o.want,
-        have: o.have,
-        desc: o.desc,
-        phone: o.phone,
-        state: o.closed ? 'closed' : 'own',
-        isOwn: true,
-        apps: o.apps,
-        members: acc.map(a => ({ name: a.name, college: a.college, year: a.year })),
-        match: 0,
-        closed: o.closed,
-        idx: -100 + i
-      };
-    });
-
-    if (mappedReal.length === 0) {
-      return [...others, ...mine];
-    }
-
-    const realPostIds = new Set(mappedReal.map(p => String(p.id)));
-    const remainingOthers = others.filter(p => !realPostIds.has(String(p.id)));
-    const remainingMine = mine.filter(p => !realPostIds.has(String(p.id)));
-
-    return [...mappedReal, ...remainingOthers, ...remainingMine];
-  }, [realCleanPosts, competitions, applications, user, userName, userCollege, userYear, profileSkills, localPostsState, localOwnState]);
+  }, [realCleanPosts, competitions, applications, user, userName, userCollege, userYear, profileSkills]);
 
   // Pools
   const otherPool = useMemo(() => allPosts.filter(p => !p.isOwn && (p.state === 'open' || p.state === 'full')), [allPosts]);
@@ -977,12 +473,16 @@ export default function TeamFinderScreen({
     if (onOpenWhatsApp) {
       onOpenWhatsApp(post.rawPost || post);
     } else {
-      const phone = post.phone || '9811042278';
-      const leadName = post.lead.split(' ')[0];
-      const msg = `Hey ${leadName}! Reaching out regarding your squad for "${post.comp.title}". Wanted to connect!`;
+      const phone = post.phone;
+      if (!phone) {
+        if (showToast) showToast('No WhatsApp number provided for this squad.');
+        return;
+      }
+      const leadName = (post.lead || 'Leader').split(' ')[0];
+      const msg = `Hey ${leadName}! Reaching out regarding your squad for "${post.comp?.title || 'the competition'}". Wanted to connect!`;
       const url = formatWhatsAppUrl(phone, msg);
       if (url && url !== '#') window.open(url, '_blank', 'noopener,noreferrer');
-      else alert('No WhatsApp number provided.');
+      else if (showToast) showToast('Invalid WhatsApp number provided.');
     }
   };
 
@@ -991,20 +491,16 @@ export default function TeamFinderScreen({
     if (onOpenApply) {
       onOpenApply(post.rawPost || post);
     } else {
-      // Local optimistic update
-      setLocalPostsState(prev => prev.map(p => p.id === post.id ? { ...p, state: 'requested' } : p));
-      if (showToast) showToast(`Request sent to ${post.lead.split(' ')[0]}`);
+      setApplyTargetPost(post.rawPost || post);
+      setApplyModalOpen(true);
     }
   };
 
   const handleWithdraw = (e, post) => {
     e.stopPropagation();
-    if (onWithdrawApp && post.rawPost) {
-      const myApp = applications.find(a => String(a.postId || a.post_id) === String(post.id));
-      if (myApp) onWithdrawApp(myApp.id);
-    } else {
-      setLocalPostsState(prev => prev.map(p => p.id === post.id ? { ...p, state: 'open' } : p));
-      if (showToast) showToast('Request withdrawn');
+    const myApp = applications.find(a => String(a.postId || a.post_id) === String(post.id) && !isMockApp(a));
+    if (onWithdrawApp && myApp) {
+      onWithdrawApp(myApp.id);
     }
   };
 
@@ -1012,8 +508,6 @@ export default function TeamFinderScreen({
     e.stopPropagation();
     if (onTogglePostOpen) {
       onTogglePostOpen(post.id, post.state !== 'closed');
-    } else {
-      setLocalOwnState(prev => prev.map(o => o.id === post.id ? { ...o, closed: !o.closed } : o));
     }
   };
 
@@ -1022,7 +516,7 @@ export default function TeamFinderScreen({
     if (onOpenEditSquad) {
       onOpenEditSquad(post.rawPost || post);
     } else {
-      setEditingPostData(post);
+      setEditingPostData(post.rawPost || post);
       setPostModalOpen(true);
     }
   };
@@ -1037,8 +531,6 @@ export default function TeamFinderScreen({
     if (onDeleteSquadPost) {
       onDeleteSquadPost(post.id);
     }
-    setLocalOwnState(prev => prev.filter(o => String(o.id) !== String(post.id)));
-    setLocalPostsState(prev => prev.filter(p => String(p.id) !== String(post.id)));
     if (reviewPostId === post.id) setReviewPostId(null);
     if (detailPostId === post.id) setDetailPostId(null);
     if (showToast) showToast('Squad listing deleted');
@@ -1060,53 +552,25 @@ export default function TeamFinderScreen({
   const handleAcceptApplicant = (appId) => {
     if (onAcceptApp) {
       onAcceptApp(appId);
-    } else {
-      setLocalOwnState(prev => prev.map(o => {
-        if (o.id !== reviewPostId) return o;
-        return {
-          ...o,
-          apps: o.apps.map(a => a.id === appId ? { ...a, status: 'accepted' } : a)
-        };
-      }));
     }
   };
 
   const handleDeclineApplicant = (appId) => {
     if (onDeclineApp) {
       onDeclineApp(appId);
-    } else {
-      setLocalOwnState(prev => prev.map(o => {
-        if (o.id !== reviewPostId) return o;
-        return {
-          ...o,
-          apps: o.apps.map(a => a.id === appId ? { ...a, status: 'declined' } : a)
-        };
-      }));
     }
   };
 
   const handleRemoveApplicant = (appId) => {
     if (onRemoveApp) {
       onRemoveApp(appId);
-    } else {
-      setLocalOwnState(prev => prev.map(o => {
-        if (o.id !== reviewPostId) return o;
-        return {
-          ...o,
-          apps: o.apps.map(a => a.id === appId ? { ...a, status: 'pending' } : a)
-        };
-      }));
     }
   };
 
   const handleUndoDecline = (appId) => {
-    setLocalOwnState(prev => prev.map(o => {
-      if (o.id !== reviewPostId) return o;
-      return {
-        ...o,
-        apps: o.apps.map(a => a.id === appId ? { ...a, status: 'pending' } : a)
-      };
-    }));
+    if (onAcceptApp) {
+      onAcceptApp(appId);
+    }
   };
 
   const handlePostSuccess = () => {
@@ -2371,7 +1835,12 @@ export default function TeamFinderScreen({
                                 onClick={() => {
                                   const leadFirst = userName.split(' ')[0];
                                   const msg = `Hey ${app.name.split(' ')[0]}! Welcoming you to our squad for "${reviewTarget.comp.title}". Connecting!`;
-                                  const url = formatWhatsAppUrl(app.phone || '9876543210', msg);
+                                  if (!app.phone) {
+                                    if (showToast) showToast('No WhatsApp number provided by this applicant.');
+                                    else alert('No WhatsApp number provided by this applicant.');
+                                    return;
+                                  }
+                                  const url = formatWhatsAppUrl(app.phone, msg);
                                   if (url && url !== '#') window.open(url, '_blank', 'noopener,noreferrer');
                                   else alert('No WhatsApp number available for this applicant.');
                                 }}
@@ -2431,31 +1900,12 @@ export default function TeamFinderScreen({
           setPostModalOpen(false);
           setEditingPostData(null);
         }}
-        competitions={competitions.length > 0 ? competitions : SAMPLE_COMPS}
+        competitions={competitions}
         editingPost={editingPostData}
         profile={profile}
         onSubmitPost={(draft) => {
           if (onSubmitPost) {
             onSubmitPost(draft);
-          } else {
-            // Local fallback
-            if (draft.isEdit && draft.postId) {
-              setLocalOwnState(prev => prev.map(o => o.id === draft.postId ? { ...o, compId: draft.compId, total: draft.total_members, want: draft.skills_looking_for, have: draft.skills_have, desc: draft.desc } : o));
-            } else {
-              const newOwn = {
-                id: 'own_' + Date.now(),
-                compId: draft.compId,
-                posted: 'just now',
-                total: draft.total_members,
-                closed: false,
-                want: draft.skills_looking_for || [],
-                have: draft.skills_have || [],
-                desc: draft.desc,
-                phone: draft.phone_number,
-                apps: []
-              };
-              setLocalOwnState(prev => [newOwn, ...prev]);
-            }
           }
           handlePostSuccess();
         }}
@@ -2478,10 +1928,11 @@ export default function TeamFinderScreen({
         competition={applyTargetPost?.comp || (applyTargetPost ? competitions.find(c => String(c.id) === String(applyTargetPost.compId)) : null)}
         profile={profile}
         onSubmitApply={(targetPost, pitch, highlightedSkills, applicantPhone) => {
-          setLocalPostsState(prev => prev.map(p => p.id === targetPost.id ? { ...p, state: 'requested' } : p));
+          if (onOpenApply) {
+            onOpenApply(targetPost.rawPost || targetPost);
+          }
           setApplyModalOpen(false);
           setApplyTargetPost(null);
-          if (showToast) showToast(`Request sent to ${targetPost.lead.split(' ')[0]}`);
         }}
       />
 
