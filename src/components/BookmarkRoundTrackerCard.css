@@ -310,3 +310,23 @@
   background: #FFFFFF;
   color: #111827;
 }
+
+@media (max-width: 768px) {
+  .br-card {
+    flex: 0 0 268px !important;
+    width: 268px !important;
+    border-radius: 12px !important;
+    padding: 12px 13px 14px !important;
+    gap: 9px !important;
+  }
+
+  .br-title {
+    font-size: 13.5px !important;
+    min-height: 36px !important;
+  }
+
+  .br-portal-btn {
+    min-height: 44px !important;
+    border-radius: 9px !important;
+  }
+}

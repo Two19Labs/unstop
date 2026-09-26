@@ -121,10 +121,12 @@
 
   .onestop-main {
     padding: 12px 14px 36px;
+    min-height: auto !important;
   }
 
   .onestop-main.onestop-main-home {
     padding: 14px 0 36px;
+    min-height: auto !important;
   }
 
   .browse-grid-container {

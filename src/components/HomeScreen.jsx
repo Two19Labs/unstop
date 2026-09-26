@@ -457,9 +457,10 @@ export default function HomeScreen({
   onOpenWhatsApp,
   headerAction = null,
 }) {
-  const firstName = typeof profile?.name === 'string' && profile.name.trim()
+  const rawFirst = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/)[0]
     : (profile?.full_name?.trim() ? profile.full_name.trim().split(/\s+/)[0] : (user?.email ? user.email.split('@')[0] : 'there'));
+  const firstName = rawFirst ? (rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()) : 'there';
 
   const isPostgraduate =
     (profile?.education_level || '').toLowerCase() === 'postgraduate' ||

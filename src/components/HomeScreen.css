@@ -823,6 +823,7 @@
     width: 100% !important;
     min-width: 0 !important;
     gap: 3px !important;
+    flex: none !important;
   }
   .home-header-greeting {
     font-size: 22px !important;
@@ -906,6 +907,7 @@
     padding: 0 14px !important;
     display: flex !important;
     flex-direction: column !important;
+    align-items: flex-start !important;
     gap: 4px !important;
   }
   .home-section-title-row {
@@ -913,6 +915,10 @@
     align-items: center !important;
     gap: 8px !important;
     width: 100% !important;
+  }
+  .home-section-subline {
+    text-align: left !important;
+    align-self: flex-start !important;
   }
   .home-see-all-btn {
     margin-left: auto !important;
