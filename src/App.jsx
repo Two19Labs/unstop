@@ -18,6 +18,9 @@ import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
+import AdminConsolePage from './components/AdminConsolePage';
+import { isAdminEmail } from './lib/admin';
+import { sendPresencePing } from './lib/presenceService';
 import { useCompetitionRounds } from './hooks/useCompetitionRounds';
 
 import {
@@ -51,7 +54,7 @@ const DEFAULT_FILTERS = {
   sort: 'deadline'
 };
 
-const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile'];
+const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile', 'admin'];
 
 function getInitialScreen() {
   try {
@@ -203,6 +206,11 @@ function OneStopInner() {
   useEffect(() => {
     trackScreenView(screen);
   }, [screen]);
+
+  // Live Online Presence heartbeat sync across devices
+  useEffect(() => {
+    sendPresencePing(user, authProfile, screen);
+  }, [user, authProfile, screen]);
 
   // Toast System (Declared early so all callbacks can access flash safely)
   const [toastMessage, setToastMessage] = useState(null);
@@ -1067,7 +1075,12 @@ function OneStopInner() {
       )}
 
       {/* Main Screen Content */}
-      {isBrowseMode ? (
+      {screen === 'admin' ? (
+        <AdminConsolePage
+          onBack={() => handleNavigate('home')}
+          user={user}
+        />
+      ) : isBrowseMode ? (
         <CompetitionsPage
           key={screen}
           onBack={() => handleNavigate('home')}
@@ -1229,6 +1242,7 @@ function OneStopInner() {
                 onChangePassword={changePassword}
                 onDeleteAccount={deleteAccount}
                 flashToast={flash}
+                onNavigate={handleNavigate}
               />
             )}
           </div>

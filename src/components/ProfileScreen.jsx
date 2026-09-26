@@ -21,6 +21,7 @@ import {
   dispatchBrowserNotification
 } from '../lib/browserPushService';
 import { getProfileCooldown } from '../context/AuthContext';
+import { isAdminEmail } from '../lib/admin';
 import ProfileAuthGate from './ProfileAuthGate';
 import './ProfileScreen.css';
 
@@ -55,7 +56,8 @@ function ProfileScreenContent({
   onSignOut,
   onChangePassword,
   onDeleteAccount,
-  flashToast
+  flashToast,
+  onNavigate
 }) {
   // 1. Initial snapshot resolution
   const initialAcademic = useMemo(() => parseAcademicStanding(profile), [profile]);
@@ -361,6 +363,61 @@ function ProfileScreenContent({
               )}
             </div>
           </div>
+
+          {/* Admin Portal Card (Strictly for aditya.25015@sscbs.du.ac.in, located above profile settings) */}
+          {user && isAdminEmail(user.email) && (
+            <div
+              className="profile-account-card"
+              style={{
+                borderColor: 'rgba(220, 38, 38, 0.35)',
+                background: 'linear-gradient(180deg, rgba(220, 38, 38, 0.04), var(--surface))',
+                marginBottom: '16px'
+              }}
+            >
+              <div className="profile-account-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '15px' }}>🛡️</span>
+                  <span className="profile-account-title" style={{ color: '#DC2626', fontWeight: 800 }}>
+                    System Admin
+                  </span>
+                </div>
+                <span
+                  style={{
+                    background: '#DC2626',
+                    color: '#FFFFFF',
+                    borderRadius: '4px',
+                    padding: '2px 7px',
+                    fontSize: '9px',
+                    fontWeight: 800,
+                    letterSpacing: '0.5px',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  CONSOLE
+                </span>
+              </div>
+              <div style={{ padding: '0 16px 14px', fontSize: '0.82rem', color: 'var(--ink-secondary)', lineHeight: 1.45 }}>
+                Real-time user demographics, live student presence roster, and platform directory.
+              </div>
+              <div className="profile-account-actions" style={{ paddingTop: 0 }}>
+                <button
+                  type="button"
+                  className="profile-account-action-btn"
+                  onClick={() => onNavigate && onNavigate('admin')}
+                  style={{
+                    background: 'var(--primary)',
+                    color: '#FFFFFF',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    borderRadius: '8px',
+                    padding: '9px 14px'
+                  }}
+                >
+                  <span>Open Admin Console →</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Card B: Account Card */}
           <div className="profile-account-card">

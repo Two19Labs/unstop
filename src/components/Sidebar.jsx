@@ -2,6 +2,7 @@
 import React from 'react';
 import OneStopLogo from './OneStopLogo';
 import ThemeToggle from './ThemeToggle';
+import { isAdminEmail } from '../lib/admin';
 
 export default function Sidebar({
   screen,
@@ -177,6 +178,79 @@ export default function Sidebar({
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {/* Quick Theme Toggle in Sidebar */}
           <ThemeToggle variant="sidebar" />
+
+          {/* Admin Console (Strictly for aditya.25015@sscbs.du.ac.in, located above profile settings) */}
+          {user && isAdminEmail(user.email) && (
+            <button
+              onClick={() => handleNav('admin')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                width: '100%',
+                textAlign: 'left',
+                border: screen === 'admin' ? '1px solid rgba(220, 38, 38, 0.4)' : '1px solid var(--line)',
+                borderRadius: '9px',
+                background: screen === 'admin' ? 'rgba(220, 38, 38, 0.08)' : 'var(--surface-sunken)',
+                padding: '8px 10px',
+                cursor: 'pointer',
+                transition: 'all 120ms ease'
+              }}
+              onMouseEnter={(e) => {
+                if (screen !== 'admin') e.currentTarget.style.background = 'var(--surface-muted)';
+              }}
+              onMouseLeave={(e) => {
+                if (screen !== 'admin') e.currentTarget.style.background = 'var(--surface-sunken)';
+              }}
+              aria-label="Admin console"
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <span
+                  style={{
+                    width: '26px',
+                    height: '26px',
+                    borderRadius: '6px',
+                    background: 'rgba(220, 38, 38, 0.12)',
+                    color: '#DC2626',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: 'none',
+                    fontSize: '12px'
+                  }}
+                >
+                  🛡️
+                </span>
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: screen === 'admin' ? '#DC2626' : 'var(--ink)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Admin console
+                </span>
+              </span>
+              <span
+                style={{
+                  background: '#DC2626',
+                  color: '#FFFFFF',
+                  borderRadius: '4px',
+                  padding: '1px 5px',
+                  fontSize: '9px',
+                  fontWeight: 800,
+                  letterSpacing: '0.4px',
+                  textTransform: 'uppercase'
+                }}
+              >
+                ADMIN
+              </span>
+            </button>
+          )}
 
           {/* User Profile Tile */}
           <button
