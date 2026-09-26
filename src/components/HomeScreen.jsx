@@ -619,9 +619,15 @@ export default function HomeScreen({
       }
     };
     resetScroll();
+    const t1 = setTimeout(resetScroll, 50);
+    const t2 = setTimeout(resetScroll, 250);
     const rafId = requestAnimationFrame(resetScroll);
-    return () => cancelAnimationFrame(rafId);
-  }, [showRailLoading, effectiveSort, effectiveFilter]);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      cancelAnimationFrame(rafId);
+    };
+  }, [showRailLoading, effectiveSort, effectiveFilter, bookmarkTotal]);
 
   // Navigation helpers
   const handleNavigate = (targetScreen) => {

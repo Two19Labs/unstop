@@ -521,11 +521,14 @@
   display: flex;
   gap: 14px;
   overflow-x: auto;
-  scroll-snap-type: x proximity;
   padding: 4px 30px 14px;
   scroll-padding: 0 30px;
   align-items: stretch;
   -webkit-overflow-scrolling: touch;
+}
+
+.rail > * {
+  scroll-snap-align: start;
 }
 
 .rail::-webkit-scrollbar {
