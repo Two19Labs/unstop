@@ -95,12 +95,12 @@ try {
 
   // Purge mock user profile
   const rawProfile = localStorage.getItem('onestop_user_profile');
-  if (rawProfile && (rawProfile.includes('Arjun') || rawProfile.includes('98111 00210'))) {
+  if (rawProfile && (rawProfile.includes('Arjun') || rawProfile.includes('98111 00210') || rawProfile.includes('demo_'))) {
     localStorage.removeItem('onestop_user_profile');
   }
 
   // Record active clean version stamp
-  localStorage.setItem('onestop_strict_clean_v1', 'true');
+  localStorage.setItem('onestop_strict_clean_v2', 'true');
 } catch (e) {
   console.warn('Storage sanitization warning:', e);
 }

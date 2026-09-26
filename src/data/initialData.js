@@ -95,28 +95,53 @@ export function matchListing(item, f = {}) {
 export function isMockPost(p) {
   if (!p) return true;
   const id = String(p.id || '');
-  // Strictly filter legacy template dummy IDs from designer mockup
-  if (/^p[1-9]\d*$/.test(id) || ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(id)) return true;
+  if (
+    id.startsWith('demo_') ||
+    id.startsWith('mock_') ||
+    id.startsWith('sandbox_') ||
+    /^p[1-9]\d*$/.test(id) ||
+    ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'].includes(id)
+  ) {
+    return true;
+  }
   return false;
 }
 
 export function isMockApp(a) {
   if (!a) return true;
   const id = String(a.id || '');
-  // Strictly filter legacy template dummy app IDs
-  if (/^ap[1-9]\d*$/.test(id) || ['ap1', 'ap2', 'ap3', 'ap4', 'ap5'].includes(id)) return true;
+  if (
+    id.startsWith('demo_') ||
+    id.startsWith('mock_') ||
+    id.startsWith('sandbox_') ||
+    /^ap[1-9]\d*$/.test(id) ||
+    ['ap1', 'ap2', 'ap3', 'ap4', 'ap5'].includes(id)
+  ) {
+    return true;
+  }
   return false;
 }
 
 export function isMockAlert(a) {
   if (!a) return true;
   const id = String(a.id || '');
-  return /^a[1-9]$/.test(id);
+  if (id.startsWith('demo_') || id.startsWith('mock_') || id.startsWith('sandbox_') || /^a[1-9]$/.test(id)) return true;
+  return false;
 }
 
 export function isMockBookmark(b) {
   if (typeof b === 'number' && b <= 50) return true;
-  if (typeof b === 'string' && /^\d+$/.test(b) && Number(b) <= 50) return true;
+  if (typeof b === 'string') {
+    if (/^\d+$/.test(b) && Number(b) <= 50) return true;
+    if (
+      b.startsWith('demo_') ||
+      b.startsWith('mock_') ||
+      b.startsWith('sandbox_') ||
+      /^c[1-9]\d*$/.test(b)
+    ) {
+      return true;
+    }
+  }
   return false;
 }
 
