@@ -85,7 +85,7 @@ function buildPresencePayload() {
     device: getDeviceType(),
     lastPing: Date.now(),
     isRegistered: isAuth,
-    skills: globalCurrentProfile?.skills || []
+    skills: []
   };
 }
 
@@ -100,11 +100,11 @@ function updateLocalSessions(payload) {
       map[payload.sessionId] = payload;
     }
 
-    // Retain sessions active in the last 60 seconds
+    // Retain sessions active in the last 120 seconds
     const cleanMap = {};
     Object.keys(map).forEach((k) => {
       const item = map[k];
-      if (item && Math.abs(now - (item.lastPing || 0)) < 60000) {
+      if (item && Math.abs(now - (item.lastPing || 0)) < 120000) {
         cleanMap[k] = item;
       }
     });
@@ -117,13 +117,15 @@ function updateLocalSessions(payload) {
 }
 
 function computeConsolidatedPresence() {
+  if (presenceSubscribers.size === 0) return;
+
   const now = Date.now();
   const merged = {};
 
   // 1. Local storage active sessions
   const localMap = updateLocalSessions(null);
   Object.values(localMap).forEach((p) => {
-    if (p && p.sessionId && Math.abs(now - (p.lastPing || 0)) < 60000) {
+    if (p && p.sessionId && Math.abs(now - (p.lastPing || 0)) < 120000) {
       merged[p.sessionId] = p;
     }
   });
@@ -178,10 +180,19 @@ function notifySubscribers() {
   });
 }
 
-export function sendPresencePing(user = globalCurrentUser, profile = globalCurrentProfile, screen = globalCurrentScreen) {
+let lastPresencePingAt = 0;
+
+export function sendPresencePing(user = globalCurrentUser, profile = globalCurrentProfile, screen = globalCurrentScreen, force = false) {
   if (user) globalCurrentUser = user;
   if (profile) globalCurrentProfile = profile;
   if (screen) globalCurrentScreen = screen;
+
+  const now = Date.now();
+  // Throttle pings to at most once every 30s unless forced
+  if (!force && now - lastPresencePingAt < 30000) {
+    return;
+  }
+  lastPresencePingAt = now;
 
   const payload = buildPresencePayload();
   updateLocalSessions(payload);
@@ -200,7 +211,9 @@ export function sendPresencePing(user = globalCurrentUser, profile = globalCurre
     activeChannel.track(payload).catch(() => {});
   } catch (e) {}
 
-  computeConsolidatedPresence();
+  if (presenceSubscribers.size > 0) {
+    computeConsolidatedPresence();
+  }
 }
 
 export function initGlobalPresence(user, profile, screen) {
@@ -228,7 +241,9 @@ export function initGlobalPresence(user, profile, screen) {
     });
 
     const handleSync = () => {
-      computeConsolidatedPresence();
+      if (presenceSubscribers.size > 0) {
+        computeConsolidatedPresence();
+      }
     };
 
     activeChannel
@@ -240,15 +255,19 @@ export function initGlobalPresence(user, profile, screen) {
       if (status === 'SUBSCRIBED') {
         const payload = buildPresencePayload();
         activeChannel.track(payload).catch(() => {});
-        computeConsolidatedPresence();
+        if (presenceSubscribers.size > 0) {
+          computeConsolidatedPresence();
+        }
       }
     });
 
     if (!heartbeatTimer) {
-      // Periodic ping every 30s for live freshness
+      // Egress optimization: 90s heartbeat (reduced from 30s) and pauses when tab is hidden
       heartbeatTimer = setInterval(() => {
-        sendPresencePing();
-      }, 30000);
+        if (typeof document === 'undefined' || !document.hidden) {
+          sendPresencePing(null, null, null, true);
+        }
+      }, 90000);
     }
 
     if (typeof document !== 'undefined' && !isVisibilityListenerAttached) {

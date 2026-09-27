@@ -269,12 +269,12 @@ export function AuthProvider({ children }) {
       try {
         lastSquadDataFetchRef.current = Date.now();
 
-        // Fetch squad posts with column projection and row limit
+        // Fetch squad posts with column projection and row limit (optimized to 40 rows for low egress)
         const { data: posts, error: postErr } = await supabase
           .from('squad_posts')
           .select(SQUAD_POSTS_SELECT)
           .order('created_at', { ascending: false })
-          .limit(60);
+          .limit(40);
 
         if (!postErr && Array.isArray(posts)) {
           const cleanPosts = posts.filter(p => !isMockPost(p));
@@ -291,7 +291,7 @@ export function AuthProvider({ children }) {
             .from('squad_applications')
             .select(SQUAD_APPS_SELECT)
             .order('created_at', { ascending: false })
-            .limit(50);
+            .limit(30);
 
           if (!appErr && Array.isArray(apps)) {
             const cleanApps = apps
@@ -437,42 +437,94 @@ export function AuthProvider({ children }) {
       }, 350);
     };
 
-    // Realtime Postgres changes subscription across devices
-    const channel = supabase
-      .channel('public:app_realtime_sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, () => {
-        scheduleDebouncedSync();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, () => {
-        scheduleDebouncedSync();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookmarks' }, () => {
-        if (userRef.current?.id) fetchUserBookmarks(userRef.current.id);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_notification_states' }, () => {
-        if (userRef.current?.id) fetchNotificationStates(userRef.current.id);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        if (userRef.current?.id) fetchUserProfile(userRef.current.id);
-      })
-      .subscribe();
+    const activeUserId = userRef.current?.id || user?.id;
+    let isRealtimeConnected = false;
 
-    // Visibility-gated polling fallback: 3-minute interval (180,000ms), paused when document is hidden
+    // Realtime Postgres changes subscription across devices with user-scoped filters to prevent cross-user egress amplification
+    let realtimeBuilder = supabase.channel(`public:app_realtime_sync_${activeUserId || 'guest'}`);
+
+    // All clients listen to squad_posts changes
+    realtimeBuilder = realtimeBuilder.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'squad_posts' },
+      () => {
+        scheduleDebouncedSync();
+      }
+    );
+
+    // If authenticated, scope user-specific table changes strictly to current user's ID
+    if (activeUserId) {
+      realtimeBuilder = realtimeBuilder
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'squad_applications' },
+          () => {
+            scheduleDebouncedSync();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'bookmarks',
+            filter: `user_id=eq.${activeUserId}`
+          },
+          () => {
+            fetchUserBookmarks(activeUserId);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_notification_states',
+            filter: `user_id=eq.${activeUserId}`
+          },
+          () => {
+            fetchNotificationStates(activeUserId);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${activeUserId}`
+          },
+          () => {
+            fetchUserProfile(activeUserId);
+          }
+        );
+    }
+
+    const channel = realtimeBuilder.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        isRealtimeConnected = true;
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        isRealtimeConnected = false;
+      }
+    });
+
+    // Visibility-gated polling fallback: 10-minute interval (600,000ms), only active if Realtime is disconnected
     const pollInterval = setInterval(() => {
+      if (isRealtimeConnected) return; // Skip polling when WebSocket is healthy
       if (typeof document !== 'undefined' && document.hidden) return;
       refreshSquadData();
       if (userRef.current?.id) {
         fetchUserBookmarks(userRef.current.id);
         fetchNotificationStates(userRef.current.id);
       }
-    }, 180000);
+    }, 600000);
 
-    // Tab focus / visibility revalidation: only refresh when returning after > 60s
+    // Tab focus / visibility revalidation: only refresh when returning after > 5 minutes (300,000ms) or if disconnected
     let lastVisibilitySync = Date.now();
     const handleVisibilityOrFocus = () => {
       if (typeof document !== 'undefined' && !document.hidden) {
         const now = Date.now();
-        if (now - lastVisibilitySync > 60000) {
+        if (!isRealtimeConnected || (now - lastVisibilitySync > 300000)) {
           lastVisibilitySync = now;
           refreshSquadData();
           if (userRef.current?.id) {
@@ -501,7 +553,7 @@ export function AuthProvider({ children }) {
       }
       supabase.removeChannel(channel);
     };
-  }, [refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchUserProfile]);
+  }, [user, refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchUserProfile]);
 
   // 6. Local Storage Sync Fallback
   useEffect(() => {

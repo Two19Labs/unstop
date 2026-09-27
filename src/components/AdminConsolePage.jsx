@@ -116,24 +116,27 @@ function AdminConsoleContent({ onBack, user }) {
     fetchData();
   }, [fetchData]);
 
-  // Realtime PostgreSQL changes listener on profiles and squad posts
+  // Realtime PostgreSQL changes listener on profiles and squad posts (debounced to 1500ms to prevent query bursts)
   useEffect(() => {
     if (!hasValidCredentials || !supabase) return;
 
+    let debounceTimer = null;
+    const scheduleFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchData();
+      }, 1500);
+    };
+
     const channel = supabase
       .channel('onestop-admin-realtime-feed')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, () => {
-        fetchData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, () => {
-        fetchData();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, scheduleFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_posts' }, scheduleFetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'squad_applications' }, scheduleFetch)
       .subscribe();
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       supabase.removeChannel(channel);
     };
   }, [fetchData]);
