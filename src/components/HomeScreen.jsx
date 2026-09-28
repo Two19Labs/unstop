@@ -184,7 +184,32 @@ export function matchCompetition(comp, f = {}) {
   if (fee === 'free' && !isFree) return false;
   if (fee === 'paid' && isFree) return false;
 
-  // 5. Query filter (if any)
+  // 5. Platform filter
+  const selectedPlatforms = Array.isArray(f.selectedPlatforms) ? f.selectedPlatforms : [];
+  if (selectedPlatforms.length > 0 && selectedPlatforms.length < 4) {
+    const compPlatform = (comp.sourcePlatform || 'unstop').toLowerCase();
+    const matchesPlatform = selectedPlatforms.some(p => {
+      const lower = p.toLowerCase();
+      if (lower === 'campus_direct' || lower === 'institutional') {
+        return compPlatform === 'campus_direct' || compPlatform === 'institutional';
+      }
+      return compPlatform === lower;
+    });
+    if (!matchesPlatform) return false;
+  }
+
+  // 6. Sub-track filter
+  const selectedSubTracks = Array.isArray(f.selectedSubTracks) ? f.selectedSubTracks : [];
+  if (selectedSubTracks.length > 0) {
+    const compSubTracks = (Array.isArray(comp.subTracks) ? comp.subTracks : []).map(s => String(s).toLowerCase());
+    const matchesSubTrack = selectedSubTracks.some(st => {
+      const lower = st.toLowerCase();
+      return compSubTracks.some(cst => cst.includes(lower) || lower.includes(cst));
+    });
+    if (!matchesSubTrack) return false;
+  }
+
+  // 7. Query filter (if any)
   const q = f.searchQuery || f.q;
   if (typeof q === 'string' && q.trim()) {
     const hay = `${comp.title || ''} ${comp.host || ''} ${comp.orgName || ''} ${comp.discipline || ''} ${comp.circuit || ''}`.toLowerCase();
@@ -663,6 +688,57 @@ export default function HomeScreen({
       });
     }
 
+    // Sub-tracks
+    const subTracks = Array.isArray(effectiveFilter.selectedSubTracks)
+      ? effectiveFilter.selectedSubTracks
+      : [];
+    if (subTracks.length > 0) {
+      const subTrackNameMap = {
+        finance: 'Finance',
+        strategy: 'Strategy',
+        marketing: 'Marketing',
+        bplan: 'B-Plan',
+        product: 'Product',
+        operations: 'Operations',
+        hack_ai: 'AI & ML',
+        hack_web3: 'Web3',
+        hack_dev: 'Full-Stack',
+        hack_data: 'Data Science',
+        hack_cyber: 'Cybersecurity',
+        quiz_business: 'Business Quiz',
+        quiz_tech: 'Tech Quiz',
+        quiz_finance: 'Finance Quiz',
+        quiz_general: 'General Quiz',
+        sim_stock: 'Stock Simulation',
+        sim_auction: 'Auction',
+        sim_crisis: 'Crisis Room',
+        debate_pd: 'Parliamentary Debate',
+        debate_mun: 'Model UN',
+        debate_conventional: 'Debate',
+        writing_paper: 'Research Paper',
+        writing_article: 'Article & Essay',
+        writing_case: 'Policy & Case'
+      };
+      subTracks.forEach(st => {
+        chips.push(subTrackNameMap[st] || st);
+      });
+    }
+
+    // Platforms
+    const platforms = Array.isArray(effectiveFilter.selectedPlatforms)
+      ? effectiveFilter.selectedPlatforms
+      : [];
+    if (platforms.length > 0 && platforms.length < 4) {
+      const platformLabels = {
+        unstop: 'Unstop',
+        inside_campus: 'InsideKampus',
+        devpost: 'Devpost',
+        campus_direct: 'Campus Direct',
+        institutional: 'Campus Direct'
+      };
+      platforms.forEach(p => chips.push(platformLabels[p] || p));
+    }
+
     // Team Format
     const team = effectiveFilter.teamFilter || effectiveFilter.team;
     if (team === 'solo') {
@@ -687,6 +763,21 @@ export default function HomeScreen({
 
     return chips;
   }, [effectiveFilter]);
+
+  const HUMAN_SORT_LABELS = {
+    'closing-soonest': 'Closing soonest',
+    'deadline': 'Closing soonest',
+    'popular': 'Most registered',
+    'most-registered': 'Most registered',
+    'prize-highest': 'Highest prize',
+    'highest-prize': 'Highest prize',
+    'new': 'Recently added',
+    'recent': 'Recently added',
+    'closing-latest': 'Closing latest',
+    'title-asc': 'A → Z',
+    'title-desc': 'Z → A'
+  };
+  const activeSortLabel = HUMAN_SORT_LABELS[effectiveSort] || 'Closing soonest';
 
   const hasFilter = filterChips.length > 0;
 
@@ -1173,53 +1264,37 @@ export default function HomeScreen({
           </div>
 
           <div className="home-section-subline home-comps-subline-scroll">
-            <div className="home-sort-pills-bar">
-              <button
-                type="button"
-                className={`home-sort-pill ${effectiveSort === 'closing-soonest' ? 'active' : ''}`}
-                onClick={() => onUpdateSort && onUpdateSort('closing-soonest')}
-                title="Sort by closing deadline"
-              >
-                Closing soonest
-              </button>
-              <button
-                type="button"
-                className={`home-sort-pill ${effectiveSort === 'popular' ? 'active' : ''}`}
-                onClick={() => onUpdateSort && onUpdateSort('popular')}
-                title="Sort by registrations"
-              >
-                Most registered
-              </button>
-              <button
-                type="button"
-                className={`home-sort-pill ${effectiveSort === 'prize-highest' ? 'active' : ''}`}
-                onClick={() => onUpdateSort && onUpdateSort('prize-highest')}
-                title="Sort by prize pool"
-              >
-                Highest prize
-              </button>
-            </div>
-            {filterChips.length > 0 && (
-              <>
-                <span style={{ flex: 'none', color: '#C9C7C1' }}>·</span>
-                {filterChips.map((chip, idx) => (
+            <div className="home-applied-prefs-row" title="Active filters & sorting from Browse">
+              <span className="home-applied-pref-badge home-applied-sort-badge" title={`Sorted by: ${activeSortLabel} (from Browse)`}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none', marginRight: '4px' }}>
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+                {activeSortLabel}
+              </span>
+              {filterChips.length > 0 ? (
+                filterChips.map((chip, idx) => (
                   <span
                     key={idx}
-                    className="home-subline-chip"
+                    className="home-applied-pref-badge home-applied-filter-badge"
                   >
                     {chip}
                   </span>
-                ))}
-                <button
-                  type="button"
-                  title="Edit filters in Browse"
-                  onClick={() => handleNavigate('browse')}
-                  className="home-subline-edit-btn"
-                >
-                  Edit
-                </button>
-              </>
-            )}
+                ))
+              ) : (
+                <span className="home-applied-pref-badge home-applied-filter-badge">
+                  All tracks
+                </span>
+              )}
+              <button
+                type="button"
+                title="Change filters and sorting in Browse"
+                onClick={() => handleNavigate('browse')}
+                className="home-subline-edit-btn"
+              >
+                Edit in Browse
+              </button>
+            </div>
           </div>
         </div>
 
