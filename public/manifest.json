@@ -1,0 +1,23 @@
+{
+  "name": "OneStop by Two19 Labs",
+  "short_name": "OneStop",
+  "description": "Real-time undergraduate competition discovery, deadline radar and peer squad finder.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0F19",
+  "theme_color": "#0F3FFE",
+  "icons": [
+    {
+      "src": "/onestop-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-onestop.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

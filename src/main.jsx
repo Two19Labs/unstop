@@ -6,7 +6,13 @@ import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { isMockPost, isMockApp, isMockAlert, isMockBookmark } from './data/initialData';
 import { initPostHog, posthog } from './lib/posthog';
 import { PostHogProvider } from 'posthog-js/react';
+import { registerServiceWorker } from './lib/browserPushService';
 import './index.css';
+
+// Register Service Worker on boot for mobile notifications & PWA offline cache
+if (typeof window !== 'undefined') {
+  registerServiceWorker();
+}
 
 // Unconditional Strict Purge of any sandbox/demo/mock data from localStorage
 try {

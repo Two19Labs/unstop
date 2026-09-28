@@ -18,7 +18,10 @@ import {
   isPushEnabled,
   setPushEnabled,
   requestPushPermission,
-  dispatchBrowserNotification
+  dispatchBrowserNotification,
+  isIOS,
+  isStandalone,
+  isMobileDevice
 } from '../lib/browserPushService';
 import { getProfileCooldown } from '../context/AuthContext';
 import { isAdminEmail } from '../lib/admin';
@@ -642,7 +645,7 @@ function ProfileScreenContent({
             <div className="profile-notif-setting-box">
               <div className="profile-notif-setting-info">
                 <div className="profile-notif-setting-title-row">
-                  <span className="profile-notif-setting-title">Desktop Browser Notifications</span>
+                  <span className="profile-notif-setting-title">Phone &amp; Browser Notifications</span>
                   {pushPermission === 'granted' && (
                     <span className={`profile-notif-status-badge ${pushEnabled ? 'active' : 'disabled'}`}>
                       {pushEnabled ? 'Active' : 'Muted'}
@@ -650,8 +653,13 @@ function ProfileScreenContent({
                   )}
                 </div>
                 <p className="profile-notif-setting-desc">
-                  Receive native OS alerts 1 hour before registration deadlines, 30 minutes before round cutoffs, and instantly when deadlines get extended.
+                  Receive native OS alerts on your phone and computer 1 hour before registration deadlines, 30 minutes before round cutoffs, and instantly when deadlines get extended.
                 </p>
+                {isIOS() && !isStandalone() && (
+                  <div style={{ marginTop: '8px', fontSize: '11.5px', color: 'var(--ink)', background: 'rgba(245, 158, 11, 0.08)', padding: '7px 10px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                    📲 <strong>For iPhone alerts:</strong> Tap <strong>Share</strong> ⎋ then <strong>"Add to Home Screen"</strong> to receive iOS push notifications.
+                  </div>
+                )}
               </div>
 
               <div className="profile-notif-setting-control">
@@ -669,7 +677,7 @@ function ProfileScreenContent({
                       onClick={handleTogglePush}
                       role="switch"
                       aria-checked={pushEnabled}
-                      aria-label="Toggle desktop notifications"
+                      aria-label="Toggle notifications"
                     >
                       <span className="profile-notif-toggle-knob" />
                     </button>
@@ -678,7 +686,7 @@ function ProfileScreenContent({
                         type="button"
                         className="profile-notif-test-btn"
                         onClick={handleSendTestPush}
-                        title="Send a sample desktop notification"
+                        title="Send a sample notification"
                       >
                         Send Test Alert
                       </button>
@@ -690,7 +698,7 @@ function ProfileScreenContent({
                     className="profile-notif-enable-btn"
                     onClick={handleRequestPush}
                   >
-                    Enable Desktop Alerts
+                    Enable Device Alerts
                   </button>
                 )}
               </div>

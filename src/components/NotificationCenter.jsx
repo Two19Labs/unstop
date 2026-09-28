@@ -26,7 +26,10 @@ import {
   isPushSupported,
   getPushPermission,
   isPushEnabled,
-  requestPushPermission
+  requestPushPermission,
+  isIOS,
+  isStandalone,
+  isMobileDevice
 } from '../lib/browserPushService';
 import './NotificationCenter.css';
 
@@ -294,12 +297,12 @@ export default function NotificationCenter({
             </div>
           </div>
 
-          {/* Browser Desktop Push Prompt */}
+          {/* Browser & Phone Push Notification Prompt */}
           {pushSupported && pushPermission === 'default' && (
             <div className="onestop-notif-push-banner">
               <div className="onestop-notif-push-banner-left">
                 <span>🔔</span>
-                <span>Get 1h & 30m deadline push alerts</span>
+                <span>Get 1h &amp; 30m deadline phone alerts</span>
               </div>
               <button
                 type="button"
@@ -315,8 +318,15 @@ export default function NotificationCenter({
             <div className="onestop-notif-push-banner" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
               <div className="onestop-notif-push-active-tag">
                 <CheckIcon size={12} />
-                <span>Desktop alerts active for bookmarked deadlines</span>
+                <span>Phone &amp; desktop alerts active for bookmarked deadlines</span>
               </div>
+            </div>
+          )}
+
+          {/* iOS Safari Home Screen Tip */}
+          {isIOS() && !isStandalone() && (
+            <div className="onestop-notif-ios-banner">
+              <span>📲 <strong>For iPhone alerts:</strong> Tap <strong>Share</strong> ⎋ then <strong>"Add to Home Screen"</strong></span>
             </div>
           )}
 
