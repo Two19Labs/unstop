@@ -1796,11 +1796,6 @@ export default function CompetitionsPage({
                         <span className="cc-host-name" title={comp.orgName || 'Academic Host'}>
                           {comp.orgName || 'Academic Host'}
                         </span>
-                        {comp.sourcePlatform && comp.sourcePlatform !== 'unstop' && (
-                          <span className={`cc-source-pill cc-source-${comp.sourcePlatform}`}>
-                            {comp.sourceLabel || (comp.sourcePlatform === 'institutional' || comp.sourcePlatform === 'campus_direct' ? 'Campus Direct' : comp.sourcePlatform)}
-                          </span>
-                        )}
                       </div>
                     </div>
 
