@@ -865,7 +865,7 @@ export default function CompetitionsPage({
     const unstop = competitions.filter((c) => (c.sourcePlatform || 'unstop') === 'unstop').length;
     const inside_campus = competitions.filter((c) => c.sourcePlatform === 'inside_campus').length;
     const devpost = competitions.filter((c) => c.sourcePlatform === 'devpost').length;
-    const institutional = competitions.filter((c) => c.sourcePlatform === 'institutional').length;
+    const institutional = competitions.filter((c) => c.sourcePlatform === 'institutional' || c.sourcePlatform === 'campus_direct').length;
 
     return {
       total,
@@ -1094,7 +1094,13 @@ export default function CompetitionsPage({
       // Sourcing Platform filter (multi-select)
       if (selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length) {
         const compPlatform = comp.sourcePlatform || 'unstop';
-        if (!selectedPlatforms.includes(compPlatform)) return false;
+        const matchesPlatform = selectedPlatforms.some((p) => {
+          if (p === 'institutional' || p === 'campus_direct') {
+            return compPlatform === 'institutional' || compPlatform === 'campus_direct';
+          }
+          return p === compPlatform;
+        });
+        if (!matchesPlatform) return false;
       }
 
       // Team filter
@@ -1792,7 +1798,7 @@ export default function CompetitionsPage({
                         </span>
                         {comp.sourcePlatform && comp.sourcePlatform !== 'unstop' && (
                           <span className={`cc-source-pill cc-source-${comp.sourcePlatform}`}>
-                            {comp.sourceLabel || (comp.sourcePlatform === 'institutional' ? 'Campus Direct' : comp.sourcePlatform)}
+                            {comp.sourceLabel || (comp.sourcePlatform === 'institutional' || comp.sourcePlatform === 'campus_direct' ? 'Campus Direct' : comp.sourcePlatform)}
                           </span>
                         )}
                       </div>

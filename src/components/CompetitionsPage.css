@@ -3101,7 +3101,8 @@
   width: fit-content;
 }
 
-.cc-source-pill.cc-source-institutional {
+.cc-source-pill.cc-source-institutional,
+.cc-source-pill.cc-source-campus_direct {
   background: #ecfdf5;
   color: #047857;
   border: 1px solid #a7f3d0;
@@ -3119,7 +3120,8 @@
   border: 1px solid #ddd6fe;
 }
 
-[data-theme='dark'] .cc-source-pill.cc-source-institutional {
+[data-theme='dark'] .cc-source-pill.cc-source-institutional,
+[data-theme='dark'] .cc-source-pill.cc-source-campus_direct {
   background: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border-color: rgba(16, 185, 129, 0.35);
@@ -3138,12 +3140,14 @@
 }
 
 /* ── Platform-specific Apply Button Accents ── */
-.cc-btn-apply-institutional {
+.cc-btn-apply-institutional,
+.cc-btn-apply-campus_direct {
   background: #047857 !important;
   border-color: #047857 !important;
 }
 
-.cc-btn-apply-institutional:hover {
+.cc-btn-apply-institutional:hover,
+.cc-btn-apply-campus_direct:hover {
   background: #065f46 !important;
 }
 
