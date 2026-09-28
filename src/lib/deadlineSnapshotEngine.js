@@ -79,15 +79,54 @@ export function evaluateExtensions({
   const compMap = new Map();
   competitions.forEach(c => compMap.set(String(c.id), c));
 
+  // Reconstruct missing bookmarked competitions from roundsMap cache
+  if (roundsMap && typeof roundsMap === 'object') {
+    Object.entries(roundsMap).forEach(([sId, r]) => {
+      if (r && !compMap.has(String(sId))) {
+        compMap.set(String(sId), {
+          id: r.id || sId,
+          title: r.title || 'Competition',
+          host: r.host || r.orgName || 'Host Institution',
+          orgName: r.orgName || r.host || 'Host Institution',
+          logo: r.logo || r.orgLogo || null,
+          orgLogo: r.orgLogo || r.logo || null,
+          unstopUrl: r.unstopUrl || `https://unstop.com/competitions/${sId}`,
+          deadline: r.deadline || null,
+          rounds: r.rounds || []
+        });
+      }
+    });
+  }
+
   const bookmarkSet = new Set(bookmarks.map(String));
 
   bookmarkSet.forEach(compId => {
-    const comp = compMap.get(compId);
+    let comp = compMap.get(compId);
+    const existingSnapshot = snapshots[compId];
+    if (!comp && existingSnapshot) {
+      comp = {
+        id: compId,
+        title: existingSnapshot.title || 'Competition',
+        host: existingSnapshot.host || 'Host Institution',
+        unstopUrl: `https://unstop.com/competitions/${compId}`,
+        deadline: existingSnapshot.regDeadline || null
+      };
+    }
     if (!comp) return;
+
+    const compName = (comp.title && comp.title !== 'Competition')
+      ? comp.title
+      : (existingSnapshot?.title && existingSnapshot.title !== 'Competition')
+        ? existingSnapshot.title
+        : (comp.title || 'Competition');
+
+    const compHost = comp.host || comp.orgName || existingSnapshot?.host || '';
+    const hostSuffix = compHost ? ` (${compHost})` : '';
 
     if (!snapshots[compId]) {
       snapshots[compId] = {
-        title: comp.title,
+        title: compName,
+        host: compHost,
         regDeadline: comp.deadline || null,
         rounds: {},
         activeExtensions: [],
@@ -98,7 +137,8 @@ export function evaluateExtensions({
     }
 
     const compSnapshot = snapshots[compId];
-    compSnapshot.title = comp.title;
+    compSnapshot.title = compName;
+    if (compHost) compSnapshot.host = compHost;
     compSnapshot.lastChecked = now;
     if (!Array.isArray(compSnapshot.activeExtensions)) {
       compSnapshot.activeExtensions = [];
@@ -117,8 +157,7 @@ export function evaluateExtensions({
           const newStr = formatRoundDeadlineTime(incomingRegMs);
           const extraStr = formatDurationDiff(diffMs);
 
-          const compName = comp.title || 'Competition';
-          const compactCompTitle = compName.length > 36 ? `${compName.slice(0, 34).trim()}…` : compName;
+          const compactCompTitle = compName.length > 38 ? `${compName.slice(0, 36).trim()}…` : compName;
 
           const extItem = {
             id: notifId,
@@ -126,12 +165,14 @@ export function evaluateExtensions({
             category: 'deadlines',
             urgency: 'extension',
             title: `🎉 Registration Extended · ${compactCompTitle}`,
-            subtitle: `Cutoff extended from ${oldStr} to ${newStr} (${extraStr} extra!).`,
+            subtitle: `${compName}${hostSuffix} registration extended by ${extraStr} (from ${oldStr} to ${newStr})! Take advantage of the new cutoff.`,
             timestamp: now,
             badgeText: `Extended ${extraStr}`,
             data: {
               compId: comp.id,
               competition: comp,
+              competitionTitle: compName,
+              host: compHost,
               oldDeadline: compSnapshot.regDeadline,
               newDeadline: comp.deadline,
               diffMs
@@ -182,8 +223,8 @@ export function evaluateExtensions({
               const newStr = formatRoundDeadlineTime(incomingEndMs);
               const extraStr = formatDurationDiff(diffMs);
 
-              const compName = comp.title || 'Competition';
-              const compactCompTitle = compName.length > 34 ? `${compName.slice(0, 32).trim()}…` : compName;
+              const compactCompTitle = compName.length > 38 ? `${compName.slice(0, 36).trim()}…` : compName;
+              const roundTitle = round.title || `Round ${round.order || ''}`;
 
               const roundExtItem = {
                 id: notifId,
@@ -191,14 +232,17 @@ export function evaluateExtensions({
                 category: 'deadlines',
                 urgency: 'extension',
                 title: `⏳ Round Extended · ${compactCompTitle}`,
-                subtitle: `${round.title} · Cutoff extended from ${oldStr} to ${newStr} (${extraStr} extra!).`,
+                subtitle: `${roundTitle} for ${compName}${hostSuffix} extended by ${extraStr} (new cutoff: ${newStr})! Keep polishing your submission.`,
                 timestamp: now,
                 badgeText: extraStr ? `Extended ${extraStr}` : 'Round Extended',
                 data: {
                   compId: comp.id,
                   competition: comp,
+                  competitionTitle: compName,
+                  host: compHost,
                   roundId: round.id,
                   round,
+                  roundTitle,
                   publicUrl: round.publicUrl || comp.unstopUrl,
                   oldDeadline: storedRound.endDate,
                   newDeadline: round.endDate,
@@ -239,24 +283,52 @@ export function evaluateExtensions({
     if (compSnapshot && Array.isArray(compSnapshot.activeExtensions)) {
       compSnapshot.activeExtensions.forEach(ext => {
         if (!dismissedSet.has(ext.id)) {
-          // Normalize legacy cached extensions to compact competition format
-          if (ext.type === 'round_extended' && comp) {
-            const cName = comp.title || compSnapshot.title || 'Competition';
-            const compactC = cName.length > 34 ? `${cName.slice(0, 32).trim()}…` : cName;
-            if (!ext.title.includes('·')) {
+          // Normalize legacy cached extensions to compact competition format with accurate titles
+          const cName = (comp?.title && comp.title !== 'Competition')
+            ? comp.title
+            : (compSnapshot.title && compSnapshot.title !== 'Competition')
+              ? compSnapshot.title
+              : (ext.data?.competitionTitle || comp?.title || 'Competition');
+
+          const cHost = comp?.host || comp?.orgName || compSnapshot?.host || ext.data?.host || '';
+          const hostSfx = cHost ? ` (${cHost})` : '';
+          const compactC = cName.length > 38 ? `${cName.slice(0, 36).trim()}…` : cName;
+
+          if (ext.type === 'round_extended') {
+            if (!ext.title.includes('·') || ext.title.endsWith('· Competition')) {
               ext.title = `⏳ Round Extended · ${compactC}`;
               hasChanges = true;
             }
-            const rTitle = ext.data?.round?.title || 'Round';
-            if (ext.subtitle && !ext.subtitle.startsWith(rTitle) && !ext.subtitle.includes(cName)) {
-              ext.subtitle = `${rTitle} · ${ext.subtitle.replace(/^Organizers extended cutoff/i, 'Cutoff extended')}`;
+            const rTitle = ext.data?.round?.title || ext.data?.roundTitle || 'Round';
+            if (!ext.subtitle || ext.subtitle.includes('· Competition') || !ext.subtitle.includes(cName)) {
+              const extraTime = ext.badgeText ? ` (${ext.badgeText})` : '';
+              ext.subtitle = `${rTitle} for ${cName}${hostSfx} extended${extraTime}! Keep working on your submission.`;
               hasChanges = true;
             }
-            if (ext.data && !ext.data.competition) {
-              ext.data.competition = comp;
+            if (ext.data) {
+              ext.data.competition = comp || ext.data.competition;
+              ext.data.competitionTitle = cName;
+              ext.data.host = cHost;
+              hasChanges = true;
+            }
+          } else if (ext.type === 'deadline_extended') {
+            if (!ext.title.includes('·') || ext.title.endsWith('· Competition')) {
+              ext.title = `🎉 Registration Extended · ${compactC}`;
+              hasChanges = true;
+            }
+            if (!ext.subtitle || ext.subtitle.includes('· Competition') || !ext.subtitle.includes(cName)) {
+              const extraTime = ext.badgeText ? ` (${ext.badgeText})` : '';
+              ext.subtitle = `${cName}${hostSfx} registration extended${extraTime}!`;
+              hasChanges = true;
+            }
+            if (ext.data) {
+              ext.data.competition = comp || ext.data.competition;
+              ext.data.competitionTitle = cName;
+              ext.data.host = cHost;
               hasChanges = true;
             }
           }
+
           // Check if newDeadline hasn't expired by more than 24 hours
           const deadlineStr = ext.data?.newDeadline;
           if (deadlineStr) {

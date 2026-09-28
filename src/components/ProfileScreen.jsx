@@ -119,12 +119,12 @@ function ProfileScreenContent({
 
   const handleSendTestPush = () => {
     const dispatched = dispatchBrowserNotification({
-      title: '🔔 OneStop Notification Radar',
-      body: 'Desktop alerts are active! You will be notified 1h before registration cutoffs and 30m before round deadlines.',
+      title: '🚨 Final 15m · Flipkart GRiD 6.0 (Sample)',
+      body: 'Round 1: Case Release cutoff is at Today, 11:59 PM IST (Flipkart). Emergency submission window closing—submit on Unstop before server lock.',
       tag: 'test_push_' + Date.now()
     });
     if (dispatched && flashToast) {
-      flashToast('Test notification sent!');
+      flashToast('Sample reminder sent!');
     }
   };
 

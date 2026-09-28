@@ -493,6 +493,20 @@
   color: #B45309;
 }
 
+.onestop-notif-host-tag {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  background: var(--surface-muted);
+  color: var(--ink-secondary);
+  border: 1px solid var(--line);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Action Buttons */
 .onestop-notif-actions {
   display: flex;

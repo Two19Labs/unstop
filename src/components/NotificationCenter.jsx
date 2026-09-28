@@ -420,6 +420,11 @@ export default function NotificationCenter({
                               {notif.badgeText}
                             </span>
                           )}
+                          {notif.data?.host && (
+                            <span className="onestop-notif-host-tag" title={notif.data.host}>
+                              {notif.data.host}
+                            </span>
+                          )}
                         </div>
 
                         {/* Actions */}

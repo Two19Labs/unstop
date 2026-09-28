@@ -98,6 +98,30 @@ export function generateNotifications({
   const compMap = new Map();
   competitions.forEach(c => compMap.set(String(c.id), c));
 
+  // Reconstruct missing bookmarked competitions from roundsMap cache
+  if (roundsMap && typeof roundsMap === 'object') {
+    Object.entries(roundsMap).forEach(([sId, r]) => {
+      if (r && !compMap.has(String(sId))) {
+        compMap.set(String(sId), {
+          id: r.id || sId,
+          title: r.title || 'Competition',
+          host: r.host || r.orgName || 'Host Institution',
+          orgName: r.orgName || r.host || 'Host Institution',
+          logo: r.logo || r.orgLogo || null,
+          orgLogo: r.orgLogo || r.logo || null,
+          unstopUrl: r.unstopUrl || `https://unstop.com/competitions/${sId}`,
+          deadline: r.deadline || null,
+          fee: r.fee || 'Free',
+          isFree: r.isFree ?? true,
+          days: r.daysRemaining ?? null,
+          team: r.teamSizeDisplay || 'Solo / Team',
+          teamSizeDisplay: r.teamSizeDisplay || 'Solo / Team',
+          rounds: r.rounds || []
+        });
+      }
+    });
+  }
+
   const postMap = new Map();
   posts.forEach(p => postMap.set(String(p.id), p));
 
@@ -133,7 +157,10 @@ export function generateNotifications({
     const rawId = String(app.id || '');
     const postId = String(app.postId || app.post_id || '');
     const targetPost = postMap.get(postId);
-    const compTitle = app.meta || app.competition_name || targetPost?.competition_name || targetPost?.title || 'Competition Squad';
+    const compObj = compMap.get(String(app.competition_id || targetPost?.competition_id || targetPost?.competitionId || ''));
+    const compTitle = app.meta || app.competition_name || targetPost?.competition_name || targetPost?.title || compObj?.title || 'Competition Squad';
+    const compHost = compObj?.host || compObj?.orgName || targetPost?.host || '';
+    const hostSuffix = compHost ? ` (${compHost})` : '';
 
     // A. Incoming Applicant for user's squad
     if (app.dir === 'in' && app.status === 'pending') {
@@ -149,17 +176,25 @@ export function generateNotifications({
           type: 'squad_incoming',
           category: 'squads',
           urgency: 'info',
-          title: `New Applicant: ${applicantName}`,
-          subtitle: `Applied to join your squad for "${compTitle}"${skillsSnippet ? ` with skills in ${skillsSnippet}` : ''}.`,
+          title: `New Applicant: ${applicantName} · ${compTitle}`,
+          subtitle: `Applied to join your squad for "${compTitle}"${hostSuffix}${skillsSnippet ? ` with skills in ${skillsSnippet}` : ''}. Review their application.`,
           timestamp: app.created_at ? new Date(app.created_at).getTime() : (now - 1000 * 60 * 30),
           data: {
             appId: app.id,
             postId,
-            application: app
+            application: app,
+            competitionTitle: compTitle,
+            host: compHost
           },
           actions: [
             { label: 'Review Application', actionType: 'requests', isPrimary: true }
           ]
+        });
+
+        dispatchBrowserNotification({
+          title: `New Applicant: ${applicantName} · ${compTitle}`,
+          body: `Applied to join your squad for "${compTitle}"${hostSuffix}. Review on OneStop.`,
+          tag: `push_squad_in_${rawId}`
         });
       }
     }
@@ -174,18 +209,26 @@ export function generateNotifications({
           type: 'squad_accepted',
           category: 'squads',
           urgency: 'success',
-          title: `🎉 Squad Request Accepted!`,
-          subtitle: `You've joined ${leadName}'s squad for "${compTitle}". Connect now to plan your submission.`,
+          title: `🎉 Squad Request Accepted: ${compTitle}`,
+          subtitle: `You've joined ${leadName}'s squad for "${compTitle}"${hostSuffix}. Connect on WhatsApp to plan your submission.`,
           timestamp: app.updated_at ? new Date(app.updated_at).getTime() : now,
           data: {
             appId: app.id,
             postId,
             application: app,
-            post: targetPost
+            post: targetPost,
+            competitionTitle: compTitle,
+            host: compHost
           },
           actions: [
             { label: 'Chat on WhatsApp', actionType: 'whatsapp', isPrimary: true }
           ]
+        });
+
+        dispatchBrowserNotification({
+          title: `🎉 Squad Request Accepted: ${compTitle}`,
+          body: `You've joined ${leadName}'s squad for "${compTitle}"${hostSuffix}. Click to chat on WhatsApp!`,
+          tag: `push_squad_acc_${rawId}`
         });
       }
     }
@@ -200,10 +243,12 @@ export function generateNotifications({
           category: 'squads',
           urgency: 'neutral',
           title: `Squad Application Update`,
-          subtitle: `Your application for "${compTitle}" wasn't selected this time. Browse other open squads!`,
+          subtitle: `Your application for "${compTitle}"${hostSuffix} wasn't selected this time. Browse other open squads!`,
           timestamp: app.updated_at ? new Date(app.updated_at).getTime() : now,
           data: {
-            appId: app.id
+            appId: app.id,
+            competitionTitle: compTitle,
+            host: compHost
           },
           actions: [
             { label: 'Find Other Squads', actionType: 'teams', isPrimary: false }
@@ -219,14 +264,28 @@ export function generateNotifications({
   bookmarks.forEach(compId => {
     const sId = String(compId);
     const comp = compMap.get(sId);
-    if (!comp) return;
+    const roundsData = roundsMap[sId];
+    if (!comp && !roundsData) return;
+
+    const compName = (comp?.title && comp.title !== 'Competition')
+      ? comp.title
+      : (roundsData?.title && roundsData.title !== 'Competition')
+        ? roundsData.title
+        : (comp?.title || roundsData?.title || 'Competition');
+
+    const compHost = comp?.host || comp?.orgName || roundsData?.host || roundsData?.orgName || '';
+    const hostSuffix = compHost ? ` (${compHost})` : '';
+    const targetUrl = comp?.unstopUrl || roundsData?.unstopUrl || `https://unstop.com/competitions/${sId}`;
 
     let deadlineMs = null;
-    if (comp.deadline) {
-      const t = new Date(comp.deadline).getTime();
+    const deadlineSource = comp?.deadline || roundsData?.deadline;
+    if (deadlineSource) {
+      const t = new Date(deadlineSource).getTime();
       if (!isNaN(t)) deadlineMs = t;
-    } else if (comp.days !== undefined && comp.days !== null) {
+    } else if (comp?.days !== undefined && comp?.days !== null) {
       deadlineMs = now + Number(comp.days) * 24 * 60 * 60 * 1000;
+    } else if (roundsData?.daysRemaining !== undefined && roundsData?.daysRemaining !== null) {
+      deadlineMs = now + Number(roundsData.daysRemaining) * 24 * 60 * 60 * 1000;
     }
 
     if (!deadlineMs) return;
@@ -240,38 +299,47 @@ export function generateNotifications({
     const totalMinutes = Math.ceil(diffMs / 60000);
     const totalHours = Math.ceil(diffMs / (1000 * 60 * 60));
     const daysLeft = Math.ceil(totalHours / 24);
-    const countdownStr = formatDeadlineCountdown(comp.deadline, comp.remain, comp.days);
+    const countdownStr = formatDeadlineCountdown(deadlineSource, comp?.remain, comp?.days ?? roundsData?.daysRemaining);
+    const cutoffTime = formatRoundDeadlineTime(deadlineMs);
+    const compactComp = compName.length > 40 ? `${compName.slice(0, 38).trim()}…` : compName;
 
     let urgency = 'info';
-    let title = `📌 Bookmarked: ${comp.title}`;
-    let subtitle = `Deadline: ${countdownStr} (${comp.host || comp.orgName || 'Host'}). Keep this on your radar.`;
+    let title = `📌 Bookmarked: ${compactComp}`;
+    let subtitle = `Registration deadline: ${cutoffTime} (${countdownStr})${hostSuffix}. Keep this opportunity on your radar.`;
+    let pushTitle = '';
+    let pushBody = '';
     let badgeText = `${daysLeft}d left`;
     let isUrgentPush = false;
 
     if (diffMs <= 60 * 60 * 1000) {
       // Final 1 Hour Critical Alert!
       urgency = 'critical';
-      title = `🚨 Final 60 Minutes: ${comp.title}`;
-      subtitle = `Only ${totalMinutes}m remaining before registration closes! Confirm your team registration immediately.`;
+      title = `🚨 Final 60m Registration: ${compactComp}`;
+      subtitle = `Registration for ${compName}${hostSuffix} closes at ${cutoffTime} (${totalMinutes}m remaining)! Confirm your team registration immediately.`;
+      pushTitle = `🚨 Registration Closing: ${compactComp}`;
+      pushBody = `Registration for ${compName}${hostSuffix} closes at ${cutoffTime} (${totalMinutes}m left)! Confirm team on Unstop now.`;
       badgeText = `${totalMinutes}m left`;
       isUrgentPush = true;
     } else if (diffMs <= 6 * 60 * 60 * 1000) {
       // 6 Hours Warning
       urgency = 'critical';
-      title = `⚠️ Closing in ${totalHours}h: ${comp.title}`;
-      subtitle = `Registration cutoff is today (${formatRoundDeadlineTime(deadlineMs)}). Complete requirements now.`;
+      title = `⚠️ Registration Closes in ${totalHours}h: ${compactComp}`;
+      subtitle = `Registration cutoff for ${compName}${hostSuffix} is today at ${cutoffTime}. Complete requirements and register now.`;
+      pushTitle = `⚠️ Registration Closes in ${totalHours}h: ${compactComp}`;
+      pushBody = `Registration for ${compName}${hostSuffix} closes today at ${cutoffTime}! Finalize your team and register on Unstop.`;
       badgeText = `${totalHours}h left`;
+      isUrgentPush = true;
     } else if (diffMs <= 24 * 60 * 60 * 1000) {
       // 24 Hours Warning
       urgency = 'warning';
-      title = `⏳ Closing Tomorrow: ${comp.title}`;
-      subtitle = `${countdownStr} left to register (${comp.host || comp.orgName || 'Host'}). Finalize your teammates today.`;
+      title = `⏳ Registration Closes Tomorrow: ${compactComp}`;
+      subtitle = `Registration for ${compName}${hostSuffix} closes tomorrow at ${cutoffTime} (${countdownStr} left). Finalize your teammates today.`;
       badgeText = countdownStr;
     } else if (diffMs <= 72 * 60 * 60 * 1000) {
       // 2-3 Days Warning
       urgency = 'info';
-      title = `📅 Closing in ${daysLeft} days: ${comp.title}`;
-      subtitle = `You saved this opportunity. Check if you need more teammates before the deadline.`;
+      title = `📅 Closes in ${daysLeft} days: ${compactComp}`;
+      subtitle = `Registration for ${compName}${hostSuffix} closes on ${cutoffTime}. Check if you need more teammates before the deadline.`;
       badgeText = `${daysLeft} days left`;
     }
 
@@ -285,21 +353,26 @@ export function generateNotifications({
       timestamp: deadlineMs,
       badgeText,
       data: {
-        compId: comp.id,
-        competition: comp
+        compId: sId,
+        competition: comp || roundsData,
+        competitionTitle: compName,
+        host: compHost,
+        deadlineTime: cutoffTime,
+        url: targetUrl
       },
       actions: [
-        { label: 'Register on Unstop ↗', actionType: 'portal', url: comp.unstopUrl, isPrimary: urgency === 'critical' },
+        { label: 'Register on Unstop ↗', actionType: 'portal', url: targetUrl, isPrimary: urgency === 'critical' },
         { label: 'View Details', actionType: 'detail', isPrimary: urgency !== 'critical' }
       ]
     });
 
     if (isUrgentPush) {
+      const regPushTag = diffMs <= 60 * 60 * 1000 ? `push_reg_1h_${sId}` : `push_reg_6h_${sId}`;
       dispatchBrowserNotification({
-        title,
-        body: subtitle,
-        tag: `push_reg_1h_${sId}`,
-        url: comp.unstopUrl
+        title: pushTitle || title,
+        body: pushBody || subtitle,
+        tag: regPushTag,
+        url: targetUrl
       });
     }
   });
@@ -313,35 +386,67 @@ export function generateNotifications({
     const roundsData = roundsMap[sId];
     if (!roundsData || !Array.isArray(roundsData.rounds)) return;
 
-    const compName = comp?.title || 'Competition';
-    const compactComp = compName.length > 32 ? `${compName.slice(0, 30).trim()}…` : compName;
+    // Resolve accurate competition name and host institution
+    const rawCompName = (comp?.title && comp.title !== 'Competition')
+      ? comp.title
+      : (roundsData?.title && roundsData.title !== 'Competition')
+        ? roundsData.title
+        : (comp?.title || roundsData?.title || 'Competition');
+
+    const compHost = comp?.host || comp?.orgName || roundsData?.host || roundsData?.orgName || '';
+    const hostSuffix = compHost ? ` (${compHost})` : '';
+    const compactComp = rawCompName.length > 40 ? `${rawCompName.slice(0, 38).trim()}…` : rawCompName;
 
     roundsData.rounds.forEach(round => {
       // Exclude Stage 0 (Registration already handled above)
       if (round.type === 'registration' || round.order === 0) return;
       const roundId = String(round.id);
+      const roundTitle = round.title || `Round ${round.order || round.stageNumber || ''}`;
 
       const startMs = round.startDate ? new Date(round.startDate).getTime() : 0;
       const endMs = round.endDate ? new Date(round.endDate).getTime() : 0;
+      const cutoffTime = formatRoundDeadlineTime(endMs);
+      const startTime = formatRoundDeadlineTime(startMs);
+      const targetPortalUrl = round.publicUrl || comp?.unstopUrl || roundsData?.unstopUrl || `https://unstop.com/competitions/${sId}`;
 
       // A. Round Starting Soon Alert (Within next 30 minutes)
       if (startMs > now && (startMs - now) <= 30 * 60 * 1000) {
         const notifId = `rnd_start_${sId}_${roundId}`;
         if (!dismissedSet.has(notifId)) {
           const minsToStart = Math.ceil((startMs - now) / 60000);
+          const startTitle = `⏳ Starts in ${minsToStart}m · ${compactComp}`;
+          const startSubtitle = `${roundTitle} begins today at ${startTime}${hostSuffix}. Review guidelines and get ready!`;
+
           notifs.push({
             id: notifId,
             type: 'round_starting',
             category: 'deadlines',
             urgency: 'warning',
-            title: `⏳ Starts in ${minsToStart}m · ${compactComp}`,
-            subtitle: `${round.title} begins at ${formatRoundDeadlineTime(startMs)}. Get ready!`,
+            title: startTitle,
+            subtitle: startSubtitle,
             timestamp: startMs,
             badgeText: `In ${minsToStart}m`,
-            data: { compId: sId, competition: comp, roundId, round, url: round.publicUrl || comp?.unstopUrl },
+            data: {
+              compId: sId,
+              competition: comp || roundsData,
+              competitionTitle: rawCompName,
+              host: compHost,
+              roundId,
+              round,
+              roundTitle,
+              deadlineTime: startTime,
+              url: targetPortalUrl
+            },
             actions: [
-              { label: 'Open Round Info', actionType: 'portal', url: round.publicUrl || comp?.unstopUrl, isPrimary: true }
+              { label: 'Open Round Info', actionType: 'portal', url: targetPortalUrl, isPrimary: true }
             ]
+          });
+
+          dispatchBrowserNotification({
+            title: startTitle,
+            body: startSubtitle,
+            tag: `push_rnd_start_${roundId}`,
+            url: targetPortalUrl
           });
         }
       }
@@ -353,27 +458,40 @@ export function generateNotifications({
       if (isLiveNow && !isCriticalEndingSoon) {
         const notifId = `rnd_live_${sId}_${roundId}`;
         if (!dismissedSet.has(notifId)) {
+          const liveTitle = `🚀 Round is Live · ${compactComp}`;
+          const liveSubtitle = `${roundTitle} portal is now open${hostSuffix}! Closes at ${cutoffTime}. Enter the portal to get started.`;
+
           notifs.push({
             id: notifId,
             type: 'round_live',
             category: 'deadlines',
             urgency: 'live',
-            title: `🚀 Round is Live · ${compactComp}`,
-            subtitle: `${round.title} portal is open! Closes at ${formatRoundDeadlineTime(endMs)}.`,
+            title: liveTitle,
+            subtitle: liveSubtitle,
             timestamp: startMs || now,
             badgeText: 'Live Now',
-            data: { compId: sId, competition: comp, roundId, round, url: round.publicUrl || comp?.unstopUrl },
+            data: {
+              compId: sId,
+              competition: comp || roundsData,
+              competitionTitle: rawCompName,
+              host: compHost,
+              roundId,
+              round,
+              roundTitle,
+              deadlineTime: cutoffTime,
+              url: targetPortalUrl
+            },
             actions: [
-              { label: 'Enter Round Portal ↗', actionType: 'portal', url: round.publicUrl || comp?.unstopUrl, isPrimary: true }
+              { label: 'Enter Round Portal ↗', actionType: 'portal', url: targetPortalUrl, isPrimary: true }
             ]
           });
 
           // Dispatch native desktop notification for live round
           dispatchBrowserNotification({
-            title: `🚀 Round is Live · ${compactComp}`,
-            body: `${round.title} portal is open! Closes at ${formatRoundDeadlineTime(endMs)}.`,
+            title: liveTitle,
+            body: `${roundTitle} portal is now open${hostSuffix}! Closes at ${cutoffTime}. Click to enter portal.`,
             tag: `push_rnd_live_${roundId}`,
-            url: round.publicUrl || comp?.unstopUrl
+            url: targetPortalUrl
           });
         }
       }
@@ -388,15 +506,19 @@ export function generateNotifications({
         let urgency = 'info';
         let title = '';
         let subtitle = '';
+        let pushTitle = '';
+        let pushBody = '';
         let badgeText = '';
         let pushTag = null;
 
         if (endDiffMs <= 15 * 60 * 1000) {
-          // Emergency 15 mins
+          // Emergency 15 mins (Cutoff Alert)
           shouldEmit = true;
           urgency = 'critical';
           title = `🚨 Final 15m · ${compactComp}`;
-          subtitle = `${round.title} emergency window closing! Submit before server lock.`;
+          subtitle = `${roundTitle} deadline is today at ${cutoffTime}${hostSuffix}. Emergency window closing—submit your solution on Unstop before server lock!`;
+          pushTitle = `🚨 Final 15m · ${compactComp}`;
+          pushBody = `${roundTitle} closes at ${cutoffTime}${hostSuffix}! Emergency submission window closing—submit now before server lock.`;
           badgeText = `${totalMinutes}m left`;
           pushTag = `push_rnd_15m_${roundId}`;
         } else if (endDiffMs <= 30 * 60 * 1000) {
@@ -404,7 +526,9 @@ export function generateNotifications({
           shouldEmit = true;
           urgency = 'critical';
           title = `⚠️ 30m Cutoff · ${compactComp}`;
-          subtitle = `${round.title} cutoff in under 30 minutes! Submit now to avoid server lock.`;
+          subtitle = `${roundTitle} cutoff is in under 30m (at ${cutoffTime})${hostSuffix}. Submit your files now on Unstop to avoid server rush.`;
+          pushTitle = `⚠️ 30m Cutoff · ${compactComp}`;
+          pushBody = `${roundTitle} cutoff is at ${cutoffTime}${hostSuffix} (${totalMinutes}m left). Submit now on Unstop to avoid last-minute server lock.`;
           badgeText = `${totalMinutes}m left`;
           pushTag = `push_rnd_30m_${roundId}`;
         } else if (endDiffMs <= 60 * 60 * 1000) {
@@ -412,7 +536,9 @@ export function generateNotifications({
           shouldEmit = true;
           urgency = 'critical';
           title = `⏳ 1h Remaining · ${compactComp}`;
-          subtitle = `Final 60 minutes for ${round.title}. Verify all submission files.`;
+          subtitle = `Final 60 minutes for ${roundTitle}${hostSuffix}. Closes today at ${cutoffTime}. Verify your submission files and submit.`;
+          pushTitle = `⏳ 1h Remaining · ${compactComp}`;
+          pushBody = `Final 60m for ${roundTitle}${hostSuffix}. Cutoff at ${cutoffTime}. Verify your files and submit on Unstop.`;
           badgeText = '1h left';
           pushTag = `push_rnd_1h_${roundId}`;
         } else if (!isLiveNow && endDiffMs <= 6 * 60 * 60 * 1000) {
@@ -420,14 +546,14 @@ export function generateNotifications({
           shouldEmit = true;
           urgency = 'warning';
           title = `⚠️ 6 Hours Left · ${compactComp}`;
-          subtitle = `${round.title} closes today at ${formatRoundDeadlineTime(endMs)}.`;
+          subtitle = `${roundTitle} closes today at ${cutoffTime}${hostSuffix}. Finalize your deck or assessment.`;
           badgeText = `${totalHours}h left`;
         } else if (!isLiveNow && endDiffMs <= 24 * 60 * 60 * 1000) {
           // 24 Hours Left (only when not live)
           shouldEmit = true;
           urgency = 'info';
           title = `📅 Closes Tomorrow · ${compactComp}`;
-          subtitle = `${round.title} submission deadline is tomorrow at ${formatRoundDeadlineTime(endMs)}.`;
+          subtitle = `${roundTitle} submission for ${rawCompName}${hostSuffix} is due tomorrow at ${cutoffTime}. Coordinate with your teammates to finalize.`;
           badgeText = 'Tomorrow';
         }
 
@@ -443,18 +569,28 @@ export function generateNotifications({
               subtitle,
               timestamp: endMs,
               badgeText,
-              data: { compId: sId, competition: comp, roundId, round, url: round.publicUrl || comp?.unstopUrl },
+              data: {
+                compId: sId,
+                competition: comp || roundsData,
+                competitionTitle: rawCompName,
+                host: compHost,
+                roundId,
+                round,
+                roundTitle,
+                deadlineTime: cutoffTime,
+                url: targetPortalUrl
+              },
               actions: [
-                { label: 'Enter Submission Portal ↗', actionType: 'portal', url: round.publicUrl || comp?.unstopUrl, isPrimary: true }
+                { label: 'Enter Submission Portal ↗', actionType: 'portal', url: targetPortalUrl, isPrimary: true }
               ]
             });
 
             if (pushTag && (urgency === 'critical')) {
               dispatchBrowserNotification({
-                title,
-                body: subtitle,
+                title: pushTitle || title,
+                body: pushBody || subtitle,
                 tag: pushTag,
-                url: round.publicUrl || comp?.unstopUrl
+                url: targetPortalUrl
               });
             }
           }
