@@ -15,6 +15,77 @@ export async function fetchRoundsForSingleCompetition(compId) {
     return cached.data;
   }
 
+  // Handle Institutional / Campus Direct Competitions (from Supabase)
+  if (String(compId).startsWith('inst_')) {
+    try {
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://ncnkzlugelkhafjtupbf.supabase.co';
+      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbmt6bHVnZWxraGFmanR1cGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTcxNDYsImV4cCI6MjEwNDk3MzE0Nn0.DERn_Nf62VX0ScFXF9Jyokm9cLJZsdr_RcttHsoi8lU';
+      const sRes = await fetch(`${supabaseUrl}/rest/v1/institutional_competitions?id=eq.${encodeURIComponent(compId)}&select=*`, {
+        headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (sRes.ok) {
+        const rows = await sRes.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const item = rows[0];
+          const now = Date.now();
+          const deadlineTime = item.deadline ? new Date(item.deadline).getTime() : 0;
+          const regIsClosed = deadlineTime > 0 && deadlineTime < now;
+          const rounds = [
+            {
+              order: 0,
+              stageNumber: 0,
+              id: `reg_${item.id}`,
+              title: 'Registration',
+              type: 'registration',
+              typeLabel: 'Registration Window',
+              typeEmoji: '📝',
+              startDate: item.start_date || null,
+              endDate: item.deadline || null,
+              status: regIsClosed ? 'completed' : 'live',
+              duration: null,
+              totalQuestions: null,
+              displayText: regIsClosed ? 'Closed' : 'Open',
+              publicUrl: item.apply_url || item.website_url || '#'
+            },
+            {
+              order: 1,
+              stageNumber: 1,
+              id: `rnd_sub_${item.id}`,
+              title: item.category === 'case' ? 'Case Submission / PPT' : (item.category === 'hackathon' ? 'Prototype Build' : (item.mode === 'Offline' ? 'Campus Finale' : 'Final Evaluation')),
+              type: item.category === 'case' ? 'submission' : (item.category === 'hackathon' ? 'hackathon' : (item.mode === 'Offline' ? 'offline' : 'round')),
+              typeLabel: item.category === 'case' ? 'Case Submission' : (item.category === 'hackathon' ? 'Hackathon Build' : (item.mode === 'Offline' ? 'In-Person Finale' : 'Evaluation Round')),
+              typeEmoji: item.category_emoji || '🎯',
+              startDate: item.deadline || null,
+              endDate: item.deadline ? new Date(new Date(item.deadline).getTime() + 7 * 86400000).toISOString() : null,
+              status: regIsClosed ? 'live' : 'upcoming',
+              duration: null,
+              totalQuestions: null,
+              displayText: item.location || 'Online',
+              publicUrl: item.apply_url || item.website_url || '#'
+            }
+          ];
+          const result = {
+            id: item.id,
+            title: item.title,
+            host: item.host_institution || item.organizer || 'Campus Direct',
+            orgName: item.host_institution || item.organizer || 'Campus Direct',
+            logo: item.logo_url || null,
+            orgLogo: item.logo_url || null,
+            deadline: item.deadline,
+            sourcePlatform: item.source_platform || 'campus_direct',
+            unstopUrl: item.apply_url || item.website_url || '#',
+            rounds
+          };
+          roundsCache.set(String(compId), { timestamp: Date.now(), data: result });
+          return result;
+        }
+      }
+    } catch (e) {
+      console.warn(`[api/rounds] Supabase institutional lookup failed for ${compId}:`, e.message);
+    }
+  }
+
   const res = await fetch(`https://unstop.com/api/public/competition/${compId}`, {
     headers: HEADERS,
     signal: AbortSignal.timeout(6000)

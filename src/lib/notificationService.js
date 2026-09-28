@@ -273,9 +273,14 @@ export function generateNotifications({
         ? roundsData.title
         : (comp?.title || roundsData?.title || 'Competition');
 
-    const compHost = comp?.host || comp?.orgName || roundsData?.host || roundsData?.orgName || '';
-    const hostSuffix = compHost ? ` (${compHost})` : '';
-    const targetUrl = comp?.unstopUrl || roundsData?.unstopUrl || `https://unstop.com/competitions/${sId}`;
+    const platformName = comp?.sourceLabel || (
+      comp?.sourcePlatform === 'campus_direct' || comp?.sourcePlatform === 'institutional'
+        ? `${(comp?.host || comp?.orgName || 'Campus').split('(')[0].trim()} Portal`
+        : (comp?.sourcePlatform === 'devpost'
+          ? 'Devpost'
+          : (comp?.sourcePlatform === 'inside_campus' ? 'InsideKampus' : 'Unstop'))
+    );
+    const targetUrl = comp?.apply_url || comp?.applyUrl || comp?.unstopUrl || comp?.sourceUrl || comp?.website_url || roundsData?.unstopUrl || (sId.startsWith('inst_') ? (comp?.website_url || '#') : `https://unstop.com/competitions/${sId}`);
 
     let deadlineMs = null;
     const deadlineSource = comp?.deadline || roundsData?.deadline;
@@ -317,7 +322,7 @@ export function generateNotifications({
       title = `🚨 Final 60m Registration: ${compactComp}`;
       subtitle = `Registration for ${compName}${hostSuffix} closes at ${cutoffTime} (${totalMinutes}m remaining)! Confirm your team registration immediately.`;
       pushTitle = `🚨 Registration Closing: ${compactComp}`;
-      pushBody = `Registration for ${compName}${hostSuffix} closes at ${cutoffTime} (${totalMinutes}m left)! Confirm team on Unstop now.`;
+      pushBody = `Registration for ${compName}${hostSuffix} closes at ${cutoffTime} (${totalMinutes}m left)! Confirm team on ${platformName} now.`;
       badgeText = `${totalMinutes}m left`;
       isUrgentPush = true;
     } else if (diffMs <= 6 * 60 * 60 * 1000) {
@@ -326,7 +331,7 @@ export function generateNotifications({
       title = `⚠️ Registration Closes in ${totalHours}h: ${compactComp}`;
       subtitle = `Registration cutoff for ${compName}${hostSuffix} is today at ${cutoffTime}. Complete requirements and register now.`;
       pushTitle = `⚠️ Registration Closes in ${totalHours}h: ${compactComp}`;
-      pushBody = `Registration for ${compName}${hostSuffix} closes today at ${cutoffTime}! Finalize your team and register on Unstop.`;
+      pushBody = `Registration for ${compName}${hostSuffix} closes today at ${cutoffTime}! Finalize your team and register on ${platformName}.`;
       badgeText = `${totalHours}h left`;
       isUrgentPush = true;
     } else if (diffMs <= 24 * 60 * 60 * 1000) {
@@ -361,7 +366,7 @@ export function generateNotifications({
         url: targetUrl
       },
       actions: [
-        { label: 'Register on Unstop ↗', actionType: 'portal', url: targetUrl, isPrimary: urgency === 'critical' },
+        { label: `Register on ${platformName} ↗`, actionType: 'portal', url: targetUrl, isPrimary: urgency === 'critical' },
         { label: 'View Details', actionType: 'detail', isPrimary: urgency !== 'critical' }
       ]
     });
@@ -397,6 +402,14 @@ export function generateNotifications({
     const hostSuffix = compHost ? ` (${compHost})` : '';
     const compactComp = rawCompName.length > 40 ? `${rawCompName.slice(0, 38).trim()}…` : rawCompName;
 
+    const roundPlatformName = comp?.sourceLabel || (
+      comp?.sourcePlatform === 'campus_direct' || comp?.sourcePlatform === 'institutional'
+        ? `${(comp?.host || comp?.orgName || 'Campus').split('(')[0].trim()} Portal`
+        : (comp?.sourcePlatform === 'devpost'
+          ? 'Devpost'
+          : (comp?.sourcePlatform === 'inside_campus' ? 'InsideKampus' : 'Unstop'))
+    );
+
     roundsData.rounds.forEach(round => {
       // Exclude Stage 0 (Registration already handled above)
       if (round.type === 'registration' || round.order === 0) return;
@@ -407,7 +420,7 @@ export function generateNotifications({
       const endMs = round.endDate ? new Date(round.endDate).getTime() : 0;
       const cutoffTime = formatRoundDeadlineTime(endMs);
       const startTime = formatRoundDeadlineTime(startMs);
-      const targetPortalUrl = round.publicUrl || comp?.unstopUrl || roundsData?.unstopUrl || `https://unstop.com/competitions/${sId}`;
+      const targetPortalUrl = round.publicUrl || comp?.apply_url || comp?.applyUrl || comp?.unstopUrl || comp?.sourceUrl || roundsData?.unstopUrl || (sId.startsWith('inst_') ? (comp?.website_url || '#') : `https://unstop.com/competitions/${sId}`);
 
       // A. Round Starting Soon Alert (Within next 30 minutes)
       if (startMs > now && (startMs - now) <= 30 * 60 * 1000) {
@@ -516,7 +529,7 @@ export function generateNotifications({
           shouldEmit = true;
           urgency = 'critical';
           title = `🚨 Final 15m · ${compactComp}`;
-          subtitle = `${roundTitle} deadline is today at ${cutoffTime}${hostSuffix}. Emergency window closing—submit your solution on Unstop before server lock!`;
+          subtitle = `${roundTitle} deadline is today at ${cutoffTime}${hostSuffix}. Emergency window closing—submit your solution on ${roundPlatformName} before server lock!`;
           pushTitle = `🚨 Final 15m · ${compactComp}`;
           pushBody = `${roundTitle} closes at ${cutoffTime}${hostSuffix}! Emergency submission window closing—submit now before server lock.`;
           badgeText = `${totalMinutes}m left`;
@@ -526,9 +539,9 @@ export function generateNotifications({
           shouldEmit = true;
           urgency = 'critical';
           title = `⚠️ 30m Cutoff · ${compactComp}`;
-          subtitle = `${roundTitle} cutoff is in under 30m (at ${cutoffTime})${hostSuffix}. Submit your files now on Unstop to avoid server rush.`;
+          subtitle = `${roundTitle} cutoff is in under 30m (at ${cutoffTime})${hostSuffix}. Submit your files now on ${roundPlatformName} to avoid server rush.`;
           pushTitle = `⚠️ 30m Cutoff · ${compactComp}`;
-          pushBody = `${roundTitle} cutoff is at ${cutoffTime}${hostSuffix} (${totalMinutes}m left). Submit now on Unstop to avoid last-minute server lock.`;
+          pushBody = `${roundTitle} cutoff is at ${cutoffTime}${hostSuffix} (${totalMinutes}m left). Submit now on ${roundPlatformName} to avoid last-minute server lock.`;
           badgeText = `${totalMinutes}m left`;
           pushTag = `push_rnd_30m_${roundId}`;
         } else if (endDiffMs <= 60 * 60 * 1000) {
@@ -538,7 +551,7 @@ export function generateNotifications({
           title = `⏳ 1h Remaining · ${compactComp}`;
           subtitle = `Final 60 minutes for ${roundTitle}${hostSuffix}. Closes today at ${cutoffTime}. Verify your submission files and submit.`;
           pushTitle = `⏳ 1h Remaining · ${compactComp}`;
-          pushBody = `Final 60m for ${roundTitle}${hostSuffix}. Cutoff at ${cutoffTime}. Verify your files and submit on Unstop.`;
+          pushBody = `Final 60m for ${roundTitle}${hostSuffix}. Cutoff at ${cutoffTime}. Verify your files and submit on ${roundPlatformName}.`;
           badgeText = '1h left';
           pushTag = `push_rnd_1h_${roundId}`;
         } else if (!isLiveNow && endDiffMs <= 6 * 60 * 60 * 1000) {

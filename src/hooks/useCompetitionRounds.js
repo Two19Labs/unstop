@@ -2,6 +2,7 @@
 // Client hook to fetch, cache, and provide multi-round competition timelines
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const STORAGE_CACHE_KEY = 'onestop_comp_rounds_cache_v2';
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute client cache
@@ -77,13 +78,89 @@ export function useCompetitionRounds(competitionIds = []) {
     setError(null);
 
     try {
-      const res = await fetch(`/api/rounds?ids=${missing.join(',')}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      let combinedData = {};
 
-      if (json.success && json.data) {
+      // 1. Try serverless /api/rounds first (fast and cached at Edge)
+      try {
+        const res = await fetch(`/api/rounds?ids=${missing.join(',')}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            combinedData = { ...json.data };
+          }
+        }
+      } catch (apiErr) {
+        // Fallback continues below
+      }
+
+      // 2. Direct Supabase fallback for any institutional competitions (inst_*) not returned by /api/rounds
+      const instMissing = missing.filter(id => id.startsWith('inst_') && (!combinedData[id] || !combinedData[id].rounds?.length));
+      if (instMissing.length > 0 && supabase) {
+        try {
+          const { data: rows } = await supabase
+            .from('institutional_competitions')
+            .select('*')
+            .in('id', instMissing);
+
+          if (Array.isArray(rows)) {
+            const now = Date.now();
+            rows.forEach(item => {
+              const deadlineTime = item.deadline ? new Date(item.deadline).getTime() : 0;
+              const regIsClosed = deadlineTime > 0 && deadlineTime < now;
+              const rounds = [
+                {
+                  order: 0,
+                  stageNumber: 0,
+                  id: `reg_${item.id}`,
+                  title: 'Registration',
+                  type: 'registration',
+                  typeLabel: 'Registration Window',
+                  typeEmoji: '📝',
+                  startDate: item.start_date || null,
+                  endDate: item.deadline || null,
+                  status: regIsClosed ? 'completed' : 'live',
+                  duration: null,
+                  totalQuestions: null,
+                  displayText: regIsClosed ? 'Closed' : 'Open',
+                  publicUrl: item.apply_url || item.website_url || '#'
+                },
+                {
+                  order: 1,
+                  stageNumber: 1,
+                  id: `rnd_sub_${item.id}`,
+                  title: item.category === 'case' ? 'Case Submission / PPT' : (item.category === 'hackathon' ? 'Prototype Build' : 'Evaluation Round'),
+                  type: item.category === 'case' ? 'submission' : (item.category === 'hackathon' ? 'hackathon' : 'round'),
+                  typeLabel: item.category === 'case' ? 'Case Submission' : (item.category === 'hackathon' ? 'Hackathon Build' : 'Evaluation Round'),
+                  typeEmoji: item.category_emoji || '🎯',
+                  startDate: item.deadline || null,
+                  endDate: item.deadline ? new Date(new Date(item.deadline).getTime() + 7 * 86400000).toISOString() : null,
+                  status: regIsClosed ? 'live' : 'upcoming',
+                  displayText: item.location || 'Online',
+                  publicUrl: item.apply_url || item.website_url || '#'
+                }
+              ];
+              combinedData[item.id] = {
+                id: item.id,
+                title: item.title,
+                host: item.host_institution || item.organizer || 'Campus Direct',
+                orgName: item.host_institution || item.organizer || 'Campus Direct',
+                logo: item.logo_url || null,
+                orgLogo: item.logo_url || null,
+                deadline: item.deadline,
+                sourcePlatform: item.source_platform || 'campus_direct',
+                unstopUrl: item.apply_url || item.website_url || '#',
+                rounds
+              };
+            });
+          }
+        } catch (supaErr) {
+          console.warn('[useCompetitionRounds] Supabase fallback error:', supaErr.message);
+        }
+      }
+
+      if (Object.keys(combinedData).length > 0) {
         setRoundsMap(prev => {
-          const next = { ...prev, ...json.data };
+          const next = { ...prev, ...combinedData };
           writeStorageCache(next);
           return next;
         });

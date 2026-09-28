@@ -90,7 +90,7 @@ export function evaluateExtensions({
           orgName: r.orgName || r.host || 'Host Institution',
           logo: r.logo || r.orgLogo || null,
           orgLogo: r.orgLogo || r.logo || null,
-          unstopUrl: r.unstopUrl || `https://unstop.com/competitions/${sId}`,
+          unstopUrl: r.unstopUrl || r.apply_url || (sId.startsWith('inst_') ? (r.website_url || '#') : `https://unstop.com/competitions/${sId}`),
           deadline: r.deadline || null,
           rounds: r.rounds || []
         });
@@ -108,7 +108,7 @@ export function evaluateExtensions({
         id: compId,
         title: existingSnapshot.title || 'Competition',
         host: existingSnapshot.host || 'Host Institution',
-        unstopUrl: `https://unstop.com/competitions/${compId}`,
+        unstopUrl: existingSnapshot.url || (compId.startsWith('inst_') ? '#' : `https://unstop.com/competitions/${compId}`),
         deadline: existingSnapshot.regDeadline || null
       };
     }
