@@ -130,9 +130,9 @@ const TARGET_SOURCES = [
   }
 ];
 
-// Helper: Strip HTML tags to reduce token count for Gemini
+// Helper: Strip HTML tags and focus on competition-relevant text for fast AI parsing
 function cleanHtml(html) {
-  return html
+  const text = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
     .replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, '')
@@ -141,8 +141,20 @@ function cleanHtml(html) {
     .replace(/&amp;/gi, '&')
     .replace(/&quot;/gi, '"')
     .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 16000); // 16k chars fits comfortably into free quota and runs fast
+    .trim();
+
+  if (text.length <= 6000) return text;
+
+  // Intelligently select paragraphs/sentences containing collegiate event keywords
+  const KEYWORDS = /(competition|challenge|hackathon|summit|fest|conclave|round|case|prize|deadline|register|quiz|trophy|cash|ppi|prizes|team)/i;
+  const segments = text.split(/(?<=[.!?\n])\s+/);
+  const relevant = segments.filter(s => KEYWORDS.test(s));
+
+  if (relevant.length >= 4) {
+    return relevant.join(' ').slice(0, 6000);
+  }
+
+  return text.slice(0, 6000);
 }
 
 // Fetch web page text safely
@@ -166,7 +178,25 @@ async function fetchPageContent(url) {
   }
 }
 
-// Extract competitions using Google AI Studio Gemini API (Free Tier: gemini-2.0-flash / gemini-1.5-flash)
+function extractJsonArray(rawText) {
+  if (!rawText) return [];
+  try {
+    const cleaned = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+    const start = cleaned.indexOf('[');
+    const end = cleaned.lastIndexOf(']');
+    if (start !== -1 && end !== -1 && end > start) {
+      const jsonStr = cleaned.slice(start, end + 1);
+      const parsed = JSON.parse(jsonStr);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    const direct = JSON.parse(cleaned);
+    return Array.isArray(direct) ? direct : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// Extract competitions using Google AI Studio Gemini / Gemma API
 async function extractCompetitionsWithGemini(pageText, sourceMeta) {
   if (!GEMINI_API_KEY) {
     return [];
@@ -183,24 +213,26 @@ Analyze the following text extracted from the institutional website of "${source
 Extract any active, upcoming, or recently announced competitions, case challenges, hackathons, quizzes, trading simulations, or debate summits.
 If the text describes a multi-event summit (like Eureka, Red Brick Summit, Vista, Mood Indigo), extract individual flagship competitions where possible.
 
-Return a JSON array of objects. Each object MUST strictly follow this structure:
-{
-  "title": "Clear and specific competition title",
-  "category": "case" | "hackathon" | "quiz" | "simulation" | "writing" | "debate",
-  "category_label": "Case Competition" | "Hackathon" | "Quiz" | "Simulation" | "Writing & Research" | "Debates & MUNs",
-  "category_emoji": "💼" | "💻" | "🧠" | "📈" | "✍️" | "🗣️",
-  "sub_tracks": ["Finance", "Strategy & Consulting", "Marketing", "B-Plan", "Product", "Operations", "AI & ML", "Web & Mobile", "General"],
-  "deadline": "ISO 8601 string (e.g. 2026-10-15T23:59:59Z). If no exact date is mentioned, estimate 14 days from now",
-  "prizes": "Exact prize pool mentioned (e.g. ₹50,000 Cash Pool, or Certificates & Trophies)",
-  "fee": "Free" or fee amount string,
-  "mode": "Online" | "Offline" | "Hybrid",
-  "location": "Online or campus name/city",
-  "min_team": 1,
-  "max_team": 4,
-  "apply_url": "Direct registration URL or ${sourceMeta.url}",
-  "registered_count": 0,
-  "description": "2 concise sentences explaining what participants are tasked with solving."
-}
+Return a valid JSON array of objects. Return JSON only, with no commentary. Each object MUST strictly follow this structure:
+[
+  {
+    "title": "Clear and specific competition title",
+    "category": "case" | "hackathon" | "quiz" | "simulation" | "writing" | "debate",
+    "category_label": "Case Competition" | "Hackathon" | "Quiz" | "Simulation" | "Writing & Research" | "Debates & MUNs",
+    "category_emoji": "💼" | "💻" | "🧠" | "📈" | "✍️" | "🗣️",
+    "sub_tracks": ["Finance", "Strategy & Consulting", "Marketing", "B-Plan", "Product", "Operations", "AI & ML", "Web & Mobile", "General"],
+    "deadline": "ISO 8601 string (e.g. 2026-10-15T23:59:59Z). If no exact date is mentioned, estimate 14 days from now",
+    "prizes": "Exact prize pool mentioned (e.g. ₹50,000 Cash Pool, or Certificates & Trophies)",
+    "fee": "Free" or fee amount string,
+    "mode": "Online" | "Offline" | "Hybrid",
+    "location": "Online or campus name/city",
+    "min_team": 1,
+    "max_team": 4,
+    "apply_url": "Direct registration URL or ${sourceMeta.url}",
+    "registered_count": 0,
+    "description": "2 concise sentences explaining what participants are tasked with solving."
+  }
+]
 
 If no active competitions are found in the text, return an empty array: []
 
@@ -210,41 +242,52 @@ ${pageText}
 """
 `;
 
-  const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+  const modelsToTry = [
+    'gemini-flash-lite-latest',
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash-lite',
+    'gemini-3.7-flash',
+    'gemma-4-26b-a4b-it'
+  ];
 
   for (const model of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+      const isGemma = model.startsWith('gemma');
+      const body = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: isGemma ? { temperature: 0.1 } : { response_mime_type: 'application/json', temperature: 0.1 }
+      };
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 16000);
+
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            response_mime_type: 'application/json',
-            temperature: 0.1
-          }
-        })
+        body: JSON.stringify(body),
+        signal: controller.signal
       });
+      clearTimeout(timeout);
 
       if (!res.ok) {
         const errText = await res.text();
-        if (res.status === 404 || res.status === 400) {
-          // Model not supported or deprecated on this key, try next model
-          continue;
-        }
-        console.warn(`   ⚠️ Gemini API (${model}) warning [${res.status}]: ${errText.slice(0, 120)}`);
+        console.log(`   🤖 ${model} responded with ${res.status}:`, errText.slice(0, 80));
         continue;
       }
 
       const data = await res.json();
       const rawOutput = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawOutput) return [];
+      if (!rawOutput) {
+        console.log(`   🤖 ${model} produced no text candidates.`);
+        continue;
+      }
 
-      const parsed = JSON.parse(rawOutput);
+      console.log(`   🤖 ${model} responded successfully (${rawOutput.length} chars).`);
+      const parsed = extractJsonArray(rawOutput);
       return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
-      // Try fallback model
+      console.log(`   🤖 ${model} error:`, err.message);
       continue;
     }
   }
@@ -288,7 +331,7 @@ async function saveToSupabase(competitions, sourceMeta) {
       deadline: c.deadline || new Date(Date.now() + 14 * 86400000).toISOString(),
       registered_count: Number(c.registered_count) || 0,
       views_count: 0,
-      description: c.description || c.title,
+      raw_scraped_text: c.description || c.title,
       is_undergrad_eligible: true,
       is_pg_only: false,
       is_du: sourceMeta.circuit === 'du',

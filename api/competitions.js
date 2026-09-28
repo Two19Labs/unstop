@@ -470,7 +470,7 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
       sourceUrl: r.apply_url || r.website_url || '#',
       registeredCount: r.registered_count || 0,
       viewsCount: r.views_count || 0,
-      description: r.description || r.title,
+      description: r.raw_scraped_text || r.description || r.title,
       minTeam: r.min_team || 1,
       maxTeam: r.max_team || 4,
       teamSizeDisplay: (r.min_team || 1) === (r.max_team || 4) ? `${r.min_team || 1} Members` : `${r.min_team || 1} - ${r.max_team || 4} Members`,

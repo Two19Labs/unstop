@@ -321,12 +321,15 @@ CREATE INDEX IF NOT EXISTS idx_inst_comps_deadline ON public.institutional_compe
 
 ALTER TABLE public.institutional_competitions ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE public.institutional_competitions ADD COLUMN IF NOT EXISTS raw_scraped_text TEXT;
+
 DO $$ BEGIN
   DROP POLICY IF EXISTS "Institutional competitions are viewable by everyone" ON public.institutional_competitions;
   DROP POLICY IF EXISTS "Service role and admins can insert or update" ON public.institutional_competitions;
+  DROP POLICY IF EXISTS "Allow scanner upsert on institutional_competitions" ON public.institutional_competitions;
 
   CREATE POLICY "Institutional competitions are viewable by everyone" ON public.institutional_competitions FOR SELECT USING (true);
-  CREATE POLICY "Service role and admins can insert or update" ON public.institutional_competitions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  CREATE POLICY "Allow scanner upsert on institutional_competitions" ON public.institutional_competitions FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 END $$;
 
 
