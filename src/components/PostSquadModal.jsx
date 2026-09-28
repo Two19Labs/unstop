@@ -189,10 +189,11 @@ export default function PostSquadModal({
     let finalCompId = null;
     let compLogo = editingPost?.compLogo || editingPost?.logo || null;
 
+    let compDeadline = null;
     if (!custom) {
       const match = competitions.find(c => String(c.id) === String(selectedCompId));
       if (!match) {
-        setFormError('Please select a competition from the Unstop list or switch to "Not on Unstop?".');
+        setFormError('Please select a competition from the list or switch to "Not on Unstop?".');
         return;
       }
       compTitle = match.title;
@@ -200,6 +201,7 @@ export default function PostSquadModal({
       compLink = match.unstopUrl || '';
       finalCompId = match.id;
       compLogo = match.logo || match.orgLogo || null;
+      compDeadline = match.deadline || null;
     } else {
       if (!customTitle.trim()) {
         setFormError('Please enter the competition name.');
@@ -224,6 +226,10 @@ export default function PostSquadModal({
       cleanPhone = cleanPhone || '';
     }
 
+    const expiryTimestamp = custom
+      ? new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString()
+      : (compDeadline ? new Date(compDeadline).toISOString() : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString());
+
     const creatorName = profile?.name || 'Aarav Mehta';
     const creatorCollege = profile?.college || 'SRCC';
     const creatorYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
@@ -232,6 +238,9 @@ export default function PostSquadModal({
       isEdit: Boolean(editingPost),
       postId: editingPost?.id,
       compId: finalCompId,
+      competition_id: custom ? null : String(finalCompId),
+      is_custom: Boolean(custom),
+      expires_at: expiryTimestamp,
       competition_name: compTitle,
       organizer: compHost,
       compLogo,

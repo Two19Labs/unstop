@@ -1,0 +1,28 @@
+name: Institutional AI Opportunity Scanner
+
+on:
+  schedule:
+    # Run every day at 02:00 UTC (07:30 AM IST)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  scan-and-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Institutional AI Scanner
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ncnkzlugelkhafjtupbf.supabase.co' }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY || secrets.SUPABASE_ANON_KEY }}
+        run: |
+          node scripts/scrape_institutional.js

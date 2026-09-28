@@ -204,6 +204,25 @@ export default function CompetitionChatModal({
             content: clean,
           },
         ]);
+
+        const recipientId = isLead ? (application.applicant_id || application.userId) : (post.user_id || post.userId);
+        if (recipientId && recipientId !== currentUser.id) {
+          try {
+            await supabase.from('user_notifications').insert([
+              {
+                user_id: recipientId,
+                type: 'new_message',
+                title: `New message from ${senderName}`,
+                message: clean.length > 60 ? `${clean.slice(0, 60)}…` : clean,
+                link: `/teams?chat=${post?.id || application?.post_id}`,
+                read: false,
+                created_at: new Date().toISOString()
+              }
+            ]);
+          } catch (notifErr) {
+            // Silently ignore if table not ready
+          }
+        }
       } catch (err) {
         console.warn('Could not save squad message to Supabase:', err.message);
       }
@@ -261,8 +280,8 @@ export default function CompetitionChatModal({
           </div>
 
           <div className="comp-chat-header-actions">
-            {/* WhatsApp direct link if phone number is available */}
-            {otherPersonPhone && (
+            {/* WhatsApp direct link ONLY if squad lead explicitly configured WhatsApp as comm_method */}
+            {otherPersonPhone && (post?.comm_method === 'whatsapp' || post?.commMethod === 'whatsapp') && (
               <a
                 href={formatWhatsAppUrl(otherPersonPhone, `Hi ${otherPersonName}, connecting regarding ${compTitle} squad on OneStop!`)}
                 target="_blank"

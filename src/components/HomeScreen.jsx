@@ -1173,7 +1173,32 @@ export default function HomeScreen({
           </div>
 
           <div className="home-section-subline home-comps-subline-scroll">
-            <span style={{ flex: 'none' }}>closing soonest</span>
+            <div className="home-sort-pills-bar">
+              <button
+                type="button"
+                className={`home-sort-pill ${effectiveSort === 'closing-soonest' ? 'active' : ''}`}
+                onClick={() => onUpdateSort && onUpdateSort('closing-soonest')}
+                title="Sort by closing deadline"
+              >
+                Closing soonest
+              </button>
+              <button
+                type="button"
+                className={`home-sort-pill ${effectiveSort === 'popular' ? 'active' : ''}`}
+                onClick={() => onUpdateSort && onUpdateSort('popular')}
+                title="Sort by registrations"
+              >
+                Most registered
+              </button>
+              <button
+                type="button"
+                className={`home-sort-pill ${effectiveSort === 'prize-highest' ? 'active' : ''}`}
+                onClick={() => onUpdateSort && onUpdateSort('prize-highest')}
+                title="Sort by prize pool"
+              >
+                Highest prize
+              </button>
+            </div>
             {filterChips.length > 0 && (
               <>
                 <span style={{ flex: 'none', color: '#C9C7C1' }}>·</span>

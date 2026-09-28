@@ -268,9 +268,353 @@ function classifyOpportunity(item) {
   return { category: 'general', categoryLabel: 'General Comp', categoryEmoji: '🎯' };
 }
 
+export function extractSubTracks(item, mainCategory) {
+  const subTracks = new Set();
+  const title = (item.title || '').toLowerCase();
+  const workFunctions = Array.isArray(item.workfunction) 
+    ? item.workfunction.map(w => (w?.name || '').toLowerCase())
+    : [];
+  const filterNames = Array.isArray(item.filters)
+    ? item.filters.map(f => (f?.name || '').toLowerCase())
+    : [];
+  const textHaystack = `${title} ${workFunctions.join(' ')} ${filterNames.join(' ')}`;
+
+  // 1. Case Comps Sub-Tracks
+  if (mainCategory === 'case' || textHaystack.includes('case') || textHaystack.includes('consulting') || textHaystack.includes('strategy')) {
+    if (/\b(finance|financial|valuation|equity|m&a|merger|acquisition|fintech|banking|investment banking|capital market|corporate finance|deal room)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('finance') || w.includes('banking') || w.includes('investment'))) {
+      subTracks.add('finance');
+    }
+    if (/\b(strategy|consulting|consultant|market entry|gtm|go-to-market|growth|corporate strategy|strategic|business analysis)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('strategy') || w.includes('consulting') || w.includes('business analysis'))) {
+      subTracks.add('strategy');
+    }
+    if (/\b(marketing|brand|branding|brandstorm|advertising|fmcg|consumer|pr|ad\b|media|campaign)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('marketing') || w.includes('market research') || w.includes('brand'))) {
+      subTracks.add('marketing');
+    }
+    if (/\b(b-plan|bplan|business plan|pitch deck|pitch|pitching|shark tank|startup|entrepreneur|venture|seed|incubator|ideathon)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('entrepreneur') || w.includes('business plan'))) {
+      subTracks.add('bplan');
+    }
+    if (/\b(product|product management|apm|pm\b|ui\/ux|teardown|feature spec|prd)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('product management'))) {
+      subTracks.add('product');
+    }
+    if (/\b(operations|supply chain|scm|logistics|procurement|process improvement|six sigma|warehouse|distribution)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('operations') || w.includes('supply chain') || w.includes('process improvement'))) {
+      subTracks.add('operations');
+    }
+    if (subTracks.size === 0) {
+      subTracks.add('strategy');
+    }
+  }
+
+  // 2. Hackathons Sub-Tracks
+  if (mainCategory === 'hackathon' || textHaystack.includes('hack') || textHaystack.includes('coding') || textHaystack.includes('developer')) {
+    if (/\b(ai|ml|machine learning|artificial intelligence|data science|datathon|deep learning|computer vision|nlp|llm|genai|kaggle)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('artificial intelligence') || w.includes('machine learning') || w.includes('applied ai') || w.includes('data science'))) {
+      subTracks.add('hack_ai');
+    }
+    if (/\b(web\b|app\b|fullstack|full stack|frontend|backend|mobile app|android|ios|dev\b|software development|cloud|devops)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('software development') || w.includes('frontend') || w.includes('backend') || w.includes('full stack'))) {
+      subTracks.add('hack_dev');
+    }
+    if (/\b(blockchain|web3|crypto|smart contract|solidity|ethereum|dapp|defi|nft)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('blockchain') || w.includes('web3'))) {
+      subTracks.add('hack_web3');
+    }
+    if (/\b(open innovation|ideathon|design thinking|prototype|social innovation|smart city)\b/i.test(textHaystack)) {
+      subTracks.add('hack_ideathon');
+    }
+    if (/\b(competitive programming|algorithms|data structures|algorithmic|speed coding|icpc|codeforces|codechef)\b/i.test(textHaystack) ||
+        filterNames.some(f => f.includes('coding challenge') || f.includes('programming'))) {
+      subTracks.add('hack_cp');
+    }
+    if (/\b(cybersecurity|cyber|ctf|capture the flag|ethical hacking|security|infosec)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('cyber') || w.includes('security'))) {
+      subTracks.add('hack_cyber');
+    }
+    if (subTracks.size === 0) {
+      subTracks.add('hack_dev');
+    }
+  }
+
+  // 3. Quizzes Sub-Tracks
+  if (mainCategory === 'quiz' || textHaystack.includes('quiz') || textHaystack.includes('trivia')) {
+    if (/\b(business|brand|brands|corporate|tata crucible|menti|ad\b|company)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('strategy') || w.includes('marketing') || w.includes('business'))) {
+      subTracks.add('quiz_biz');
+    }
+    if (/\b(tech|technology|science|engineering|sci-biz-tech|computing|it\b)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('technology') || w.includes('science'))) {
+      subTracks.add('quiz_tech');
+    }
+    if (/\b(finance|stock|market|money|banking|economy|economic)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('investment') || w.includes('finance'))) {
+      subTracks.add('quiz_finance');
+    }
+    if (/\b(general|trivia|pop culture|sports|movies|entertainment|gk|world|inquizitive|treasure hunt)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('treasure hunt'))) {
+      subTracks.add('quiz_general');
+    }
+    if (subTracks.size === 0) {
+      subTracks.add('quiz_general');
+    }
+  }
+
+  // 4. Simulations Sub-Tracks
+  if (mainCategory === 'simulation' || textHaystack.includes('simulation') || textHaystack.includes('auction')) {
+    if (/\b(stock|trading|market|portfolio|forex|equity|aarohan|bidding stock|shares)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('investment') || w.includes('trading'))) {
+      subTracks.add('sim_stock');
+    }
+    if (/\b(auction|ipl|cricket auction|football auction|player auction|bid|bidding)\b/i.test(textHaystack)) {
+      subTracks.add('sim_auction');
+    }
+    if (/\b(crisis|deal room|escape room|hr room|boardroom|negotiation)\b/i.test(textHaystack) ||
+        workFunctions.some(w => w.includes('crisis') || w.includes('human resources') || w.includes('psychology'))) {
+      subTracks.add('sim_crisis');
+    }
+    if (subTracks.size === 0) {
+      subTracks.add('sim_stock');
+    }
+  }
+
+  // 5. Debates Sub-Tracks
+  if (mainCategory === 'debate' || textHaystack.includes('debate') || textHaystack.includes('mun')) {
+    if (/\b(parliamentary|asian pd|british parliamentary|pd\b|bp\b|cross examination)\b/i.test(textHaystack)) {
+      subTracks.add('debate_pd');
+    }
+    if (/\b(mun|model united nations|youth parliament|lok sabha|unhrc|unsc|united nations)\b/i.test(textHaystack)) {
+      subTracks.add('debate_mun');
+    }
+    if (/\b(conventional|turncoat|extempore|oratory|public speaking|speech|clash)\b/i.test(textHaystack)) {
+      subTracks.add('debate_conventional');
+    }
+    if (subTracks.size === 0) {
+      subTracks.add('debate_conventional');
+    }
+  }
+
+  // 6. Writing Sub-Tracks
+  if (mainCategory === 'writing' || textHaystack.includes('writing') || textHaystack.includes('essay') || textHaystack.includes('paper')) {
+    if (/\b(research paper|paper presentation|call for papers|academic|ieee|journal)\b/i.test(textHaystack)) {
+      subTracks.add('writing_paper');
+    }
+    if (/\b(article|essay|blog|editorial|op-ed|content writing)\b/i.test(textHaystack)) {
+      subTracks.add('writing_article');
+    }
+    if (/\b(case writing|policy|white paper|case study writing)\b/i.test(textHaystack)) {
+      subTracks.add('writing_case');
+    }
+    if (subTracks.size === 0) {
+      subTracks.add('writing_article');
+    }
+  }
+
+  return Array.from(subTracks);
+}
+
+const MULTIPLATFORM_OPPORTUNITIES = [
+  {
+    id: 'isb_neovate_2026',
+    title: 'ISB Neovate 2026: National B-Plan & Innovation Challenge',
+    host: 'Indian School of Business (ISB)',
+    orgName: 'Indian School of Business (ISB)',
+    circuit: 'IIM / IIT',
+    discipline: 'Case',
+    category: 'case',
+    categoryLabel: 'Case Comp',
+    categoryEmoji: '📊',
+    subTracks: ['bplan', 'strategy', 'finance'],
+    days: 14,
+    daysRemainingNum: 14,
+    fee: 'Free',
+    isFree: true,
+    orgLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/Indian_School_of_Business_logo.svg/330px-Indian_School_of_Business_logo.svg.png',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/Indian_School_of_Business_logo.svg/330px-Indian_School_of_Business_logo.svg.png',
+    unstopUrl: 'https://www.isb.edu/en/research-thought-leadership/centres-institutes/dlabs/neovate.html',
+    deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    remainDaysText: '14 days left',
+    urgency: 'normal',
+    minTeam: 2,
+    maxTeam: 4,
+    teamSizeDisplay: '2 - 4 Members',
+    prizes: '₹5,00,000 Prize Pool',
+    isFlagship: true,
+    isDU: false,
+    isIIMorIIT: true,
+    isBschool: true,
+    isPremier: true,
+    isCorporate: false,
+    isCorporateOrGlobal: false,
+    isFirstYearFriendly: true,
+    registeredCount: 340,
+    viewsCount: 2800,
+    isUndergradEligible: true,
+    isPGOnly: false,
+    isMBAorPG: true,
+    targetLevel: 'all',
+    sourcePlatform: 'institutional',
+    sourceLabel: 'ISB Direct',
+  },
+  {
+    id: 'insidekampus_tas_invictas_2026',
+    title: 'TAS Invictas: Tata Group Flagship Strategy & Leadership Challenge',
+    host: 'Tata Administrative Services (TAS)',
+    orgName: 'Tata Group',
+    circuit: 'Corporate',
+    discipline: 'Case',
+    category: 'case',
+    categoryLabel: 'Case Comp',
+    categoryEmoji: '📊',
+    subTracks: ['strategy', 'operations', 'marketing'],
+    days: 8,
+    daysRemainingNum: 8,
+    fee: 'Free',
+    isFree: true,
+    orgLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Tata_logo.svg/300px-Tata_logo.svg.png',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Tata_logo.svg/300px-Tata_logo.svg.png',
+    unstopUrl: 'https://insideiim.com/tas-invictas-leadership-challenge',
+    deadline: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+    remainDaysText: '8 days left',
+    urgency: 'normal',
+    minTeam: 2,
+    maxTeam: 3,
+    teamSizeDisplay: '2 - 3 Members',
+    prizes: '₹10,00,000 + PPI / PPO',
+    isFlagship: true,
+    isDU: false,
+    isIIMorIIT: true,
+    isBschool: true,
+    isPremier: true,
+    isCorporate: true,
+    isCorporateOrGlobal: true,
+    isFirstYearFriendly: false,
+    registeredCount: 4200,
+    viewsCount: 18500,
+    isUndergradEligible: true,
+    isPGOnly: false,
+    isMBAorPG: true,
+    targetLevel: 'all',
+    sourcePlatform: 'inside_campus',
+    sourceLabel: 'InsideKampus',
+  },
+  {
+    id: 'devpost_global_ai_hack_2026',
+    title: 'Global Generative AI Hackathon: Autonomous Agents & Apps',
+    host: 'Devpost & Cloud Partners',
+    orgName: 'Devpost',
+    circuit: 'Corporate',
+    discipline: 'Hackathon',
+    category: 'hackathon',
+    categoryLabel: 'Hackathon',
+    categoryEmoji: '💻',
+    subTracks: ['hack_ai', 'hack_dev'],
+    days: 12,
+    daysRemainingNum: 12,
+    fee: 'Free',
+    isFree: true,
+    orgLogo: 'https://devpost.com/assets/shared/devpost-logo-646bdf6ac6663230947a652f8d404926.svg',
+    logo: 'https://devpost.com/assets/shared/devpost-logo-646bdf6ac6663230947a652f8d404926.svg',
+    unstopUrl: 'https://devpost.com/hackathons',
+    deadline: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString(),
+    remainDaysText: '12 days left',
+    urgency: 'normal',
+    minTeam: 1,
+    maxTeam: 4,
+    teamSizeDisplay: 'Solo - 4 Members',
+    prizes: '₹12,50,000 ($15,000) Prize Pool',
+    isFlagship: true,
+    isDU: false,
+    isIIMorIIT: false,
+    isBschool: false,
+    isPremier: false,
+    isCorporate: true,
+    isCorporateOrGlobal: true,
+    isFirstYearFriendly: true,
+    registeredCount: 1850,
+    viewsCount: 9200,
+    isUndergradEligible: true,
+    isPGOnly: false,
+    isMBAorPG: false,
+    targetLevel: 'all',
+    sourcePlatform: 'devpost',
+    sourceLabel: 'Devpost',
+  }
+];
+
 let cachedCompetitions = null;
 let cacheTimestamp = 0;
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute in-memory cache
+
+async function fetchInstitutionalCompetitionsFromSupabase() {
+  try {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://ncnkzlugelkhafjtupbf.supabase.co';
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbmt6bHVnZWxraGFmanR1cGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTcxNDYsImV4cCI6MjEwNDk3MzE0Nn0.DERn_Nf62VX0ScFXF9Jyokm9cLJZsdr_RcttHsoi8lU';
+    
+    if (typeof fetch !== 'function') return [];
+    
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3500);
+    const res = await fetch(`${supabaseUrl}/rest/v1/institutional_competitions?is_active=eq.true&select=*`, {
+      headers: {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return [];
+    const rows = await res.json();
+    if (!Array.isArray(rows)) return [];
+    
+    return rows.map(r => ({
+      id: r.id || `inst_${r.slug || Math.random().toString(36).substring(7)}`,
+      title: r.title,
+      orgName: r.host_institution || r.organizer || 'Host Institution',
+      host: r.host_institution || r.organizer || 'Host Institution',
+      bannerUrl: r.banner_url || null,
+      logo: r.logo_url || null,
+      orgLogo: r.logo_url || null,
+      deadline: r.deadline,
+      startDate: r.start_date || null,
+      daysRemainingNum: r.deadline ? Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
+      remainDaysText: r.deadline ? `${Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24)))} days left` : '7 days left',
+      mode: r.mode || 'Online',
+      location: r.location || 'Online',
+      fee: r.fee || 'Free',
+      isFree: !r.fee || /free/i.test(r.fee),
+      prizes: r.prizes || 'Certificates & Cash Prize',
+      category: r.category || 'case',
+      categoryLabel: r.category_label || 'Case Competition',
+      categoryEmoji: r.category_emoji || '💼',
+      subTracks: Array.isArray(r.sub_tracks) ? r.sub_tracks : (r.sub_tracks ? [r.sub_tracks] : ['General']),
+      sourcePlatform: r.source_platform || 'campus_direct',
+      sourceLabel: r.source_label || (r.host_institution ? `${r.host_institution} Direct` : 'Campus Direct'),
+      unstopUrl: r.apply_url || r.website_url || '#',
+      sourceUrl: r.apply_url || r.website_url || '#',
+      registeredCount: r.registered_count || 120,
+      viewsCount: r.views_count || 450,
+      description: r.description || r.title,
+      minTeam: r.min_team || 1,
+      maxTeam: r.max_team || 4,
+      teamSizeDisplay: (r.min_team || 1) === (r.max_team || 4) ? `${r.min_team || 1} Members` : `${r.min_team || 1} - ${r.max_team || 4} Members`,
+      isUndergradEligible: r.is_undergrad_eligible !== false,
+      isPGOnly: Boolean(r.is_pg_only),
+      isMBAorPG: Boolean(r.is_mba_or_pg),
+      targetLevel: r.is_pg_only ? 'pg' : (r.is_undergrad_eligible !== false ? 'ug' : 'all'),
+      isDU: Boolean(r.is_du),
+      isIIMorIIT: Boolean(r.is_iim_or_iit),
+      isPremier: Boolean(r.is_premier),
+      isCorporate: false,
+      isFlagship: Boolean(r.is_flagship)
+    }));
+  } catch (err) {
+    return [];
+  }
+}
 
 export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
   if (!forceRefresh && cachedCompetitions && (Date.now() - cacheTimestamp < CACHE_TTL_MS)) {
@@ -546,8 +890,24 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
       isPGOnly,
       isMBAorPG,
       targetLevel: isPGOnly ? 'pg' : (undergradOk ? 'ug' : 'all'),
+      subTracks: extractSubTracks(item, category),
+      sourcePlatform: 'unstop',
+      sourceLabel: 'Unstop',
     };
   });
+
+  // Append curated multi-platform opportunities
+  formatted.push(...MULTIPLATFORM_OPPORTUNITIES);
+
+  // Append live institutional competitions stored in Supabase (if available)
+  try {
+    const institutional = await fetchInstitutionalCompetitionsFromSupabase();
+    if (Array.isArray(institutional) && institutional.length > 0) {
+      formatted.push(...institutional);
+    }
+  } catch (e) {
+    // Non-blocking fallback
+  }
 
   // Sort: Exact closing deadline timestamp first, then by registrations
   formatted.sort((a, b) => {

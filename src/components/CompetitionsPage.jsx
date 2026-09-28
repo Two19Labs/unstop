@@ -20,6 +20,8 @@ function loadSavedFilterPrefs(userEmail) {
       return {
         selectedCircuits: Array.isArray(parsed.selectedCircuits) ? parsed.selectedCircuits : [],
         selectedTracks: Array.isArray(parsed.selectedTracks) ? parsed.selectedTracks : [],
+        selectedSubTracks: Array.isArray(parsed.selectedSubTracks) ? parsed.selectedSubTracks : [],
+        selectedPlatforms: Array.isArray(parsed.selectedPlatforms) ? parsed.selectedPlatforms : [],
         teamFilter: typeof parsed.teamFilter === 'string' ? parsed.teamFilter : 'all',
         feeFilter: typeof parsed.feeFilter === 'string' ? parsed.feeFilter : 'all',
         sortBy: typeof parsed.sortBy === 'string' ? parsed.sortBy : 'closing-soonest',
@@ -186,6 +188,52 @@ const TRACK_OPTIONS = [
   { id: 'simulation', label: 'Simulations', countKey: 'simulations' },
   { id: 'debate', label: 'Debates', countKey: 'debates' },
 ];
+
+const PLATFORM_OPTIONS = [
+  { id: 'unstop', label: 'Unstop', countKey: 'unstop' },
+  { id: 'inside_campus', label: 'InsideKampus / InsideIIM', countKey: 'inside_campus' },
+  { id: 'devpost', label: 'Devpost', countKey: 'devpost' },
+  { id: 'institutional', label: 'Campus Direct', countKey: 'institutional' },
+];
+
+const SUBTRACK_MAP = {
+  case: [
+    { id: 'finance', label: 'Finance & Valuation' },
+    { id: 'strategy', label: 'Strategy & Consulting' },
+    { id: 'marketing', label: 'Marketing & Brand' },
+    { id: 'bplan', label: 'B-Plan & Pitch' },
+    { id: 'product', label: 'Product & Tech' },
+    { id: 'operations', label: 'Operations & SCM' },
+  ],
+  hackathon: [
+    { id: 'hack_ai', label: 'AI & Machine Learning' },
+    { id: 'hack_web3', label: 'Web3 & Blockchain' },
+    { id: 'hack_dev', label: 'Full-Stack & Mobile' },
+    { id: 'hack_data', label: 'Data Science & Analytics' },
+    { id: 'hack_cyber', label: 'Cybersecurity & Cloud' },
+  ],
+  quiz: [
+    { id: 'quiz_business', label: 'Business & Economy' },
+    { id: 'quiz_tech', label: 'Tech & Science' },
+    { id: 'quiz_finance', label: 'Finance & Markets' },
+    { id: 'quiz_general', label: 'General & Trivia' },
+  ],
+  simulation: [
+    { id: 'sim_stock', label: 'Stock & Trading' },
+    { id: 'sim_auction', label: 'Auction & Bidding' },
+    { id: 'sim_crisis', label: 'Crisis & Deal Room' },
+  ],
+  debate: [
+    { id: 'debate_pd', label: 'Parliamentary Debate' },
+    { id: 'debate_mun', label: 'Model UN & Youth Parl' },
+    { id: 'debate_conventional', label: 'Conventional Debate' },
+  ],
+  writing: [
+    { id: 'writing_paper', label: 'Research Paper Presentation' },
+    { id: 'writing_article', label: 'Article & Essay' },
+    { id: 'writing_case', label: 'Case Writing & Policy' },
+  ],
+};
 import './CompetitionsPage.css';
 
 const DU_KEYWORDS = [
@@ -529,6 +577,8 @@ export default function CompetitionsPage({
   const bookmarkedOnly = Boolean(propBookmarkedOnly);
   const [savedViewMode, setSavedViewMode] = useState('tracker'); // 'tracker' | 'grid'
   const [selectedTracks, setSelectedTracks] = useState(() => initialPrefs?.selectedTracks || []); // [] = All tracks; otherwise: 'case' | 'hackathon' | 'writing' | 'quiz' | 'simulation' | 'debate'
+  const [selectedSubTracks, setSelectedSubTracks] = useState(() => initialPrefs?.selectedSubTracks || []);
+  const [selectedPlatforms, setSelectedPlatforms] = useState(() => initialPrefs?.selectedPlatforms || []);
   const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
   const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
   const [sortBy, setSortBy] = useState(() => externalSortBy || initialPrefs?.sortBy || 'closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
@@ -546,6 +596,8 @@ export default function CompetitionsPage({
       const prefs = {
         selectedCircuits,
         selectedTracks,
+        selectedSubTracks,
+        selectedPlatforms,
         teamFilter,
         feeFilter,
         sortBy,
@@ -564,7 +616,7 @@ export default function CompetitionsPage({
     } catch (err) {
       console.error('Error saving filter preferences:', err);
     }
-  }, [selectedCircuits, selectedTracks, teamFilter, feeFilter, sortBy, user?.email, onSortChange, onFilterPrefsChange]);
+  }, [selectedCircuits, selectedTracks, selectedSubTracks, selectedPlatforms, teamFilter, feeFilter, sortBy, user?.email, onSortChange, onFilterPrefsChange]);
 
   // Sync saved filter preferences when user signs in
   useEffect(() => {
@@ -573,6 +625,8 @@ export default function CompetitionsPage({
     if (userPrefs) {
       if (Array.isArray(userPrefs.selectedCircuits)) setSelectedCircuits(userPrefs.selectedCircuits);
       if (Array.isArray(userPrefs.selectedTracks)) setSelectedTracks(userPrefs.selectedTracks);
+      if (Array.isArray(userPrefs.selectedSubTracks)) setSelectedSubTracks(userPrefs.selectedSubTracks);
+      if (Array.isArray(userPrefs.selectedPlatforms)) setSelectedPlatforms(userPrefs.selectedPlatforms);
       if (userPrefs.teamFilter) setTeamFilter(userPrefs.teamFilter);
       if (userPrefs.feeFilter) setFeeFilter(userPrefs.feeFilter);
       if (userPrefs.sortBy) setSortBy(userPrefs.sortBy);
@@ -584,6 +638,7 @@ export default function CompetitionsPage({
   const [openSections, setOpenSections] = useState({
     circuits: true,
     tracks: true,
+    platforms: true,
     format: true,
     fee: true,
   });
@@ -747,7 +802,7 @@ export default function CompetitionsPage({
       comp.prizes ? `Prizes: ${comp.prizes}` : null,
       comp.teamSizeDisplay ? `Format: ${comp.teamSizeDisplay}` : null,
       comp.remainDaysText ? `Deadline: ${comp.remainDaysText}` : null,
-      `Apply on Unstop: ${comp.unstopUrl}`,
+      `Apply on ${comp.sourceLabel || 'Unstop'}: ${comp.unstopUrl}`,
     ].filter(Boolean).join('\n');
 
     if (navigator.clipboard) {
@@ -805,6 +860,13 @@ export default function CompetitionsPage({
     const quizzes = competitions.filter((c) => c.category === 'quiz').length;
     const simulations = competitions.filter((c) => c.category === 'simulation').length;
     const debates = competitions.filter((c) => c.category === 'debate').length;
+
+    // Platform metrics
+    const unstop = competitions.filter((c) => (c.sourcePlatform || 'unstop') === 'unstop').length;
+    const inside_campus = competitions.filter((c) => c.sourcePlatform === 'inside_campus').length;
+    const devpost = competitions.filter((c) => c.sourcePlatform === 'devpost').length;
+    const institutional = competitions.filter((c) => c.sourcePlatform === 'institutional').length;
+
     return {
       total,
       du,
@@ -819,6 +881,10 @@ export default function CompetitionsPage({
       quizzes,
       simulations,
       debates,
+      unstop,
+      inside_campus,
+      devpost,
+      institutional,
     };
   }, [competitions, bookmarkedIds]);
 
@@ -871,10 +937,14 @@ export default function CompetitionsPage({
   const toggleTrack = (trackKey) => {
     if (trackKey === 'all') {
       setSelectedTracks([]);
+      setSelectedSubTracks([]);
       return;
     }
     setSelectedTracks((prev) => {
       if (prev.includes(trackKey)) {
+        // Also remove any active subtracks belonging to this category
+        const subIds = (SUBTRACK_MAP[trackKey] || []).map((s) => s.id);
+        setSelectedSubTracks((subPrev) => subPrev.filter((id) => !subIds.includes(id)));
         return prev.filter((k) => k !== trackKey);
       }
       return [...prev, trackKey];
@@ -885,8 +955,40 @@ export default function CompetitionsPage({
   const handleToggleAllTracks = () => {
     if (isAllTracksSelected) {
       setSelectedTracks([]);
+      setSelectedSubTracks([]);
     } else {
       setSelectedTracks(TRACK_OPTIONS.map((t) => t.id));
+    }
+  };
+
+  const toggleSubTrack = (subTrackId) => {
+    setSelectedSubTracks((prev) => {
+      if (prev.includes(subTrackId)) {
+        return prev.filter((id) => id !== subTrackId);
+      }
+      return [...prev, subTrackId];
+    });
+  };
+
+  const togglePlatform = (platformKey) => {
+    if (platformKey === 'all') {
+      setSelectedPlatforms([]);
+      return;
+    }
+    setSelectedPlatforms((prev) => {
+      if (prev.includes(platformKey)) {
+        return prev.filter((k) => k !== platformKey);
+      }
+      return [...prev, platformKey];
+    });
+  };
+
+  const isAllPlatformsSelected = selectedPlatforms.length === PLATFORM_OPTIONS.length;
+  const handleToggleAllPlatforms = () => {
+    if (isAllPlatformsSelected) {
+      setSelectedPlatforms([]);
+    } else {
+      setSelectedPlatforms(PLATFORM_OPTIONS.map((p) => p.id));
     }
   };
 
@@ -900,9 +1002,24 @@ export default function CompetitionsPage({
     return found ? found.label : id;
   };
 
+  const getPlatformLabel = (id) => {
+    const found = PLATFORM_OPTIONS.find((p) => p.id === id);
+    return found ? found.label : id;
+  };
+
+  const getSubTrackLabel = (id) => {
+    for (const cat of Object.keys(SUBTRACK_MAP)) {
+      const match = SUBTRACK_MAP[cat].find((st) => st.id === id);
+      if (match) return match.label;
+    }
+    return id;
+  };
+
   const activeFilterCount =
     (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length ? selectedCircuits.length : 0) +
     (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length ? selectedTracks.length : 0) +
+    (selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length ? selectedPlatforms.length : 0) +
+    selectedSubTracks.length +
     (teamFilter !== 'all' ? 1 : 0) +
     (feeFilter !== 'all' ? 1 : 0);
 
@@ -910,6 +1027,8 @@ export default function CompetitionsPage({
     searchQuery.trim() !== '' ||
     (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length) ||
     (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length) ||
+    (selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length) ||
+    selectedSubTracks.length > 0 ||
     teamFilter !== 'all' ||
     feeFilter !== 'all' ||
     sortBy !== 'closing-soonest';
@@ -918,6 +1037,8 @@ export default function CompetitionsPage({
     setSearchQuery('');
     setSelectedCircuits([]);
     setSelectedTracks([]);
+    setSelectedSubTracks([]);
+    setSelectedPlatforms([]);
     setTeamFilter('all');
     setFeeFilter('all');
     setSortBy('closing-soonest');
@@ -940,7 +1061,8 @@ export default function CompetitionsPage({
         const matchesOrg = comp.orgName?.toLowerCase().includes(q);
         const matchesPrize = comp.prizes?.toLowerCase().includes(q);
         const matchesCat = comp.categoryLabel?.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesOrg && !matchesPrize && !matchesCat) return false;
+        const matchesSource = comp.sourceLabel?.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesOrg && !matchesPrize && !matchesCat && !matchesSource) return false;
       }
 
       // Circuit filter (multi-select)
@@ -960,6 +1082,19 @@ export default function CompetitionsPage({
       // Discipline track filter (multi-select)
       if (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length) {
         if (!selectedTracks.includes(comp.category)) return false;
+      }
+
+      // Granular Sub-Track filter (multi-select)
+      if (selectedSubTracks.length > 0) {
+        const compSubTracks = comp.subTracks || [];
+        const matchesSubTrack = selectedSubTracks.some((st) => compSubTracks.includes(st));
+        if (!matchesSubTrack) return false;
+      }
+
+      // Sourcing Platform filter (multi-select)
+      if (selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length) {
+        const compPlatform = comp.sourcePlatform || 'unstop';
+        if (!selectedPlatforms.includes(compPlatform)) return false;
       }
 
       // Team filter
@@ -1018,7 +1153,7 @@ export default function CompetitionsPage({
     });
 
     return result;
-  }, [competitions, searchQuery, selectedCircuits, bookmarkedOnly, selectedTracks, teamFilter, feeFilter, sortBy, bookmarkedIds]);
+  }, [competitions, searchQuery, selectedCircuits, bookmarkedOnly, selectedTracks, selectedSubTracks, selectedPlatforms, teamFilter, feeFilter, sortBy, bookmarkedIds]);
 
   return (
     <div className="case-comps-standalone-page">
@@ -1034,15 +1169,15 @@ export default function CompetitionsPage({
             <div className="cc-header-info">
               <div className="cc-title-row">
                 <h1 className="cc-title">{bookmarkedOnly ? 'Bookmarked' : 'Competitions'}</h1>
-                <div className="cc-unstop-pill-badge" title="Live synced from Unstop. Undergrad eligibility only.">
+                <div className="cc-unstop-pill-badge" title="Live synced from Unstop, InsideKampus, Devpost & Campus Direct.">
                   <span className="cc-unstop-pulse-dot" />
-                  <span className="cc-unstop-pill-text">UNSTOP ONLY</span>
+                  <span className="cc-unstop-pill-text">MULTI-SOURCE LIVE</span>
                 </div>
               </div>
               <p className="cc-subtitle">
                 {bookmarkedOnly
                   ? 'All your saved competitions in one place. Synced and updated live.'
-                  : 'Discover top competitions, hackathons, and challenges right here, synced live from Unstop, all filterable!'}
+                  : 'Discover top competitions, hackathons, and challenges right here, synced live across Unstop, InsideKampus, Devpost & Campus Direct.'}
               </p>
             </div>
           </div>
@@ -1053,11 +1188,11 @@ export default function CompetitionsPage({
           )}
         </header>
 
-        {/* ── Very Visible Notice: Unstop Exclusivity & Undergrad Filter ── */}
+        {/* ── Multi-Platform Notice Banner ── */}
         <div className="cc-unstop-notice-banner">
-          <span className="cc-unstop-notice-tag">UNSTOP ONLY</span>
+          <span className="cc-unstop-notice-tag">MULTI-PLATFORM</span>
           <span className="cc-unstop-notice-text">
-            <strong>Notice:</strong> Curated for <strong>Undergraduate eligibility</strong>, synced directly from <strong>Unstop</strong>. External opportunities are not shown.
+            <strong>Direct Sourcing:</strong> Sourced live from <strong>Unstop</strong>, <strong>InsideKampus</strong>, <strong>Devpost</strong>, and verified <strong>Campus Direct</strong> portals.
           </span>
         </div>
 
@@ -1195,20 +1330,99 @@ export default function CompetitionsPage({
                   <div className="cc-checkbox-list">
                     {TRACK_OPTIONS.map((opt) => {
                       const isChecked = selectedTracks.includes(opt.id);
+                      const subTracksForCategory = SUBTRACK_MAP[opt.id] || [];
+                      return (
+                        <div key={opt.id} className="cc-filter-track-block">
+                          <label className="cc-filter-checkbox-row">
+                            <input
+                              type="checkbox"
+                              className="cc-filter-checkbox-input"
+                              checked={isChecked}
+                              onChange={() => toggleTrack(opt.id)}
+                            />
+                            <span className="cc-custom-checkbox">
+                              {isChecked && <CheckIcon size={10} />}
+                            </span>
+                            <span className="cc-checkbox-label-text">
+                              {opt.label}
+                            </span>
+                            <span className="cc-filter-num">({metrics[opt.countKey] || 0})</span>
+                          </label>
+
+                          {/* Contextual dynamic sub-pills expanding directly under active category */}
+                          {isChecked && subTracksForCategory.length > 0 && (
+                            <div className="cc-subtrack-pills-tray">
+                              {subTracksForCategory.map((sub) => {
+                                const isSubActive = selectedSubTracks.includes(sub.id);
+                                return (
+                                  <button
+                                    key={sub.id}
+                                    type="button"
+                                    className={`cc-subtrack-pill ${isSubActive ? 'active' : ''}`}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      toggleSubTrack(sub.id);
+                                    }}
+                                  >
+                                    <span>{sub.label}</span>
+                                    {isSubActive && <span className="cc-subtrack-check">✓</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Section 3: Sourcing Platforms */}
+            <div className="cc-filter-subgroup">
+              <div className="cc-subgroup-header-row">
+                <button
+                  type="button"
+                  className={`cc-accordion-header ${openSections.platforms ? 'open' : ''}`}
+                  onClick={() => toggleSection('platforms')}
+                  aria-expanded={openSections.platforms}
+                >
+                  <div className="cc-accordion-header-left">
+                    <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+                    <span className="cc-accordion-title">Platforms</span>
+                  </div>
+                  {selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length && (
+                    <span className="cc-active-count-badge">{selectedPlatforms.length}</span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="cc-mini-select-all"
+                  onClick={handleToggleAllPlatforms}
+                  title={isAllPlatformsSelected ? "Deselect all platforms" : "Select all platforms"}
+                >
+                  {isAllPlatformsSelected ? "Clear" : "All"}
+                </button>
+              </div>
+
+              {openSections.platforms && (
+                <div className="cc-accordion-content">
+                  <div className="cc-checkbox-list">
+                    {PLATFORM_OPTIONS.map((opt) => {
+                      const isChecked = selectedPlatforms.includes(opt.id);
                       return (
                         <label key={opt.id} className="cc-filter-checkbox-row">
                           <input
                             type="checkbox"
                             className="cc-filter-checkbox-input"
                             checked={isChecked}
-                            onChange={() => toggleTrack(opt.id)}
+                            onChange={() => togglePlatform(opt.id)}
                           />
                           <span className="cc-custom-checkbox">
                             {isChecked && <CheckIcon size={10} />}
                           </span>
-                          <span className="cc-checkbox-label-text">
-                            {opt.label}
-                          </span>
+                          <span className="cc-checkbox-label-text">{opt.label}</span>
                           <span className="cc-filter-num">({metrics[opt.countKey] || 0})</span>
                         </label>
                       );
@@ -1448,6 +1662,18 @@ export default function CompetitionsPage({
                         <button type="button" onClick={() => toggleTrack(trackKey)} aria-label={`Remove ${getTrackLabel(trackKey)} filter`}>✕</button>
                       </span>
                     ))}
+                    {selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length && selectedPlatforms.map((platformKey) => (
+                      <span key={platformKey} className="cc-active-pill pill-platform">
+                        {getPlatformLabel(platformKey)}
+                        <button type="button" onClick={() => togglePlatform(platformKey)} aria-label={`Remove ${getPlatformLabel(platformKey)} filter`}>✕</button>
+                      </span>
+                    ))}
+                    {selectedSubTracks.length > 0 && selectedSubTracks.map((subTrackId) => (
+                      <span key={subTrackId} className="cc-active-pill pill-subtrack">
+                        {getSubTrackLabel(subTrackId)}
+                        <button type="button" onClick={() => toggleSubTrack(subTrackId)} aria-label={`Remove ${getSubTrackLabel(subTrackId)} filter`}>✕</button>
+                      </span>
+                    ))}
                     {teamFilter !== 'all' && (
                       <span className="cc-active-pill pill-format">
                         {teamFilter === 'solo' ? 'Solo' : 'Teams (2+)'}
@@ -1564,6 +1790,11 @@ export default function CompetitionsPage({
                         <span className="cc-host-name" title={comp.orgName || 'Academic Host'}>
                           {comp.orgName || 'Academic Host'}
                         </span>
+                        {comp.sourcePlatform && comp.sourcePlatform !== 'unstop' && (
+                          <span className={`cc-source-pill cc-source-${comp.sourcePlatform}`}>
+                            {comp.sourceLabel || (comp.sourcePlatform === 'institutional' ? 'Campus Direct' : comp.sourcePlatform)}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -1638,10 +1869,10 @@ export default function CompetitionsPage({
                       href={comp.unstopUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="cc-action-btn cc-btn-apply"
+                      className={`cc-action-btn cc-btn-apply cc-btn-apply-${comp.sourcePlatform || 'unstop'}`}
                       onClick={() => trackCaseCompsEvent('apply_clicked', { comp_id: comp.id, title: comp.title, url: comp.unstopUrl })}
                     >
-                      <span>Apply on Unstop</span>
+                      <span>Apply on {comp.sourceLabel || 'Unstop'}</span>
                       <ExternalLinkIcon size={12} />
                     </a>
 

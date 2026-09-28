@@ -975,6 +975,9 @@ export function AuthProvider({ children }) {
       created_by_email: creatorEmail,
       created_by_name: creatorName,
       competition_name: postData.competition_name,
+      competition_id: postData.competition_id || postData.compId || null,
+      is_custom: Boolean(postData.is_custom),
+      expires_at: postData.expires_at || null,
       organizer: postData.organizer || '',
       competition_link: postData.competition_link || '',
       phone_number: postData.phone_number || '',
@@ -1036,6 +1039,9 @@ export function AuthProvider({ children }) {
 
     const updatePayload = {
       competition_name: updatedData.competition_name || currentPost.competition_name,
+      competition_id: updatedData.competition_id !== undefined ? updatedData.competition_id : currentPost.competition_id,
+      is_custom: updatedData.is_custom !== undefined ? Boolean(updatedData.is_custom) : currentPost.is_custom,
+      expires_at: updatedData.expires_at !== undefined ? updatedData.expires_at : currentPost.expires_at,
       organizer: updatedData.organizer !== undefined ? updatedData.organizer : currentPost.organizer,
       competition_link: updatedData.competition_link !== undefined ? updatedData.competition_link : currentPost.competition_link,
       phone_number: updatedData.phone_number !== undefined ? updatedData.phone_number : currentPost.phone_number,
