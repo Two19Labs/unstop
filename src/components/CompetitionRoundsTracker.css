@@ -658,19 +658,22 @@
   font-weight: 600;
   padding: 7px 14px;
   border-radius: 8px;
-  background: var(--ink);
-  color: var(--surface);
-  border: 1px solid var(--ink);
+  background: var(--primary, #0F3FFE);
+  color: #ffffff;
+  border: 1px solid var(--primary, #0F3FFE);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  transition: opacity 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .rounds-btn-apply:hover {
-  opacity: 0.9;
+  background: var(--primary-hover, #0C33CC);
+  border-color: var(--primary-hover, #0C33CC);
+  color: #ffffff;
+  opacity: 0.95;
 }
 
 .rounds-status-tag-closed {

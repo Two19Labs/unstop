@@ -802,7 +802,7 @@ export default function CompetitionsPage({
       comp.prizes ? `Prizes: ${comp.prizes}` : null,
       comp.teamSizeDisplay ? `Format: ${comp.teamSizeDisplay}` : null,
       comp.remainDaysText ? `Deadline: ${comp.remainDaysText}` : null,
-      `Apply on ${comp.sourceLabel || 'Unstop'}: ${comp.unstopUrl}`,
+      `Apply: ${comp.unstopUrl}`,
     ].filter(Boolean).join('\n');
 
     if (navigator.clipboard) {
@@ -1870,10 +1870,10 @@ export default function CompetitionsPage({
                       href={comp.unstopUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`cc-action-btn cc-btn-apply cc-btn-apply-${comp.sourcePlatform || 'unstop'}`}
+                      className="cc-action-btn cc-btn-apply"
                       onClick={() => trackCaseCompsEvent('apply_clicked', { comp_id: comp.id, title: comp.title, url: comp.unstopUrl })}
                     >
-                      <span>Apply on {comp.sourceLabel || 'Unstop'}</span>
+                      <span>Apply</span>
                       <ExternalLinkIcon size={12} />
                     </a>
 

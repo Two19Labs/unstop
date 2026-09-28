@@ -296,7 +296,7 @@ export default function CompetitionRoundsTracker({
                     rel="noopener noreferrer"
                     className="rounds-btn-apply"
                   >
-                    <span>Apply / Register on Unstop</span>
+                    <span>Apply</span>
                     <ExternalLinkIcon size={13} />
                   </a>
                 </div>

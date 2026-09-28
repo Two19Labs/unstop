@@ -2091,27 +2091,27 @@
 .cc-btn-apply {
   flex: 1.25;
   padding: 0 14px;
-  background: #1c4980;
+  background: var(--primary, #0F3FFE);
   color: #ffffff;
-  border: 1px solid #1c4980;
+  border: 1px solid var(--primary, #0F3FFE);
 }
 
 .cc-btn-apply:hover {
-  background: #143760;
-  border-color: #143760;
+  background: var(--primary-hover, #0C33CC);
+  border-color: var(--primary-hover, #0C33CC);
   color: #ffffff;
   transform: translateY(-1px);
 }
 
 [data-theme='dark'] .cc-btn-apply {
-  background: #1c4980;
+  background: var(--primary, #3B6BFF);
   color: #ffffff;
-  border-color: #2762a8;
+  border-color: var(--primary, #3B6BFF);
 }
 
 [data-theme='dark'] .cc-btn-apply:hover {
-  background: #2762a8;
-  border-color: #2762a8;
+  background: var(--primary-hover, #5982FF);
+  border-color: var(--primary-hover, #5982FF);
   color: #ffffff;
 }
 
@@ -3137,36 +3137,6 @@
   background: rgba(139, 92, 246, 0.15);
   color: #a78bfa;
   border-color: rgba(139, 92, 246, 0.35);
-}
-
-/* ── Platform-specific Apply Button Accents ── */
-.cc-btn-apply-institutional,
-.cc-btn-apply-campus_direct {
-  background: #047857 !important;
-  border-color: #047857 !important;
-}
-
-.cc-btn-apply-institutional:hover,
-.cc-btn-apply-campus_direct:hover {
-  background: #065f46 !important;
-}
-
-.cc-btn-apply-devpost {
-  background: #003e54 !important;
-  border-color: #003e54 !important;
-}
-
-.cc-btn-apply-devpost:hover {
-  background: #002c3c !important;
-}
-
-.cc-btn-apply-inside_campus {
-  background: #b91c1c !important;
-  border-color: #b91c1c !important;
-}
-
-.cc-btn-apply-inside_campus:hover {
-  background: #991b1b !important;
 }
 
 /* ── Active Filter Pills for Platforms and Subtracks ── */
