@@ -273,6 +273,9 @@ export function generateNotifications({
         ? roundsData.title
         : (comp?.title || roundsData?.title || 'Competition');
 
+    const compHost = comp?.host || comp?.orgName || roundsData?.host || roundsData?.orgName || '';
+    const hostSuffix = compHost ? ` (${compHost})` : '';
+
     const platformName = comp?.sourceLabel || (
       comp?.sourcePlatform === 'campus_direct' || comp?.sourcePlatform === 'institutional'
         ? `${(comp?.host || comp?.orgName || 'Campus').split('(')[0].trim()} Portal`
