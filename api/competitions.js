@@ -481,7 +481,7 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
       isDU: Boolean(r.is_du),
       isIIMorIIT: Boolean(r.is_iim_or_iit),
       isPremier: Boolean(r.is_premier),
-      isCorporate: false,
+      isCorporate: r.source_platform === 'corporate' || Boolean(r.is_corporate),
       isFlagship: Boolean(r.is_flagship)
     }));
   } catch (err) {

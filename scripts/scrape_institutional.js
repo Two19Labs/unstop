@@ -56,8 +56,59 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://ncnkzlugelkhafjtupbf.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbmt6bHVnZWxraGFmanR1cGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTcxNDYsImV4cCI6MjEwNDk3MzE0Nn0.DERn_Nf62VX0ScFXF9Jyokm9cLJZsdr_RcttHsoi8lU';
 
-// Target collegiate & fest portals across DU, IIMs, IITs, and Premier Institutions
+// Target collegiate, fest & premier corporate challenge portals
 const TARGET_SOURCES = [
+  // ─── 1. CORPORATE PROPRIETARY COMPETITION PORTALS ────────────────────────
+  {
+    institution: 'Tata Group (Tata Crucible Quiz & Tata Imagination Challenge)',
+    url: 'https://www.tatacrucible.com',
+    eventUrls: ['https://www.tatacrucible.com/campus/'],
+    circuit: 'corporate',
+    sourceLabel: 'Tata Crucible Official',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Tata_logo.svg/300px-Tata_logo.svg.png'
+  },
+  {
+    institution: 'Microsoft (Imagine Cup Global Student Competition)',
+    url: 'https://imaginecup.microsoft.com',
+    eventUrls: ['https://imaginecup.microsoft.com/en-us/Events'],
+    circuit: 'corporate',
+    sourceLabel: 'Microsoft Imagine Cup',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Microsoft_logo_%282012%29.svg/300px-Microsoft_logo_%282012%29.svg.png'
+  },
+  {
+    institution: 'Google (Summer of Code & Solution Challenge)',
+    url: 'https://summerofcode.withgoogle.com',
+    eventUrls: ['https://developers.google.com/community/gdsc-solution-challenge'],
+    circuit: 'corporate',
+    sourceLabel: 'Google Developer Challenges',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/300px-Google_2015_logo.svg.png'
+  },
+  {
+    institution: 'WorldQuant (International Quant Championship - IQC)',
+    url: 'https://platform.worldquantbrain.com',
+    eventUrls: ['https://www.worldquant.com/brain/'],
+    circuit: 'corporate',
+    sourceLabel: 'WorldQuant BRAIN IQC',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/WorldQuant_logo.svg/300px-WorldQuant_logo.svg.png'
+  },
+  {
+    institution: 'CFA Institute (Global Research Challenge)',
+    url: 'https://www.cfainstitute.org/en/societies/challenge',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'CFA Institute Direct',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/CFA_Institute_logo.svg/300px-CFA_Institute_logo.svg.png'
+  },
+  {
+    institution: "L'Oréal (Brandstorm Global Innovation Challenge)",
+    url: 'https://www.loreal.com/en/careers/',
+    eventUrls: ['https://brandstorm.loreal.com/en'],
+    circuit: 'corporate',
+    sourceLabel: "L'Oréal Brandstorm",
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/L%27Or%C3%A9al_logo.svg/300px-L%27Or%C3%A9al_logo.svg.png'
+  },
+
+  // ─── 2. PREMIER IIMS & B-SCHOOL SUMMITS ─────────────────────────────────
   {
     institution: 'IIM Ahmedabad (The Red Brick Summit & Confluence)',
     url: 'https://iima.ac.in',
@@ -73,12 +124,107 @@ const TARGET_SOURCES = [
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/12/IIM_Bangalore_Logo.svg/300px-IIM_Bangalore_Logo.svg.png'
   },
   {
-    institution: 'IIM Calcutta (Intaglio International Summit)',
+    institution: 'IIM Lucknow (Manfest-Varchasva)',
+    url: 'https://www.iiml-manfestvarchasva.com',
+    eventUrls: ['https://www.iiml.ac.in'],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/90/IIM_Lucknow_Logo.svg/300px-IIM_Lucknow_Logo.svg.png'
+  },
+  {
+    institution: 'IIM Calcutta (Intaglio & Carpe Diem)',
     url: 'https://www.iimcal.ac.in',
-    eventUrls: [],
+    eventUrls: ['https://iimcal.ac.in/events'],
     circuit: 'iim',
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b2/IIM_Calcutta_Logo.svg/300px-IIM_Calcutta_Logo.svg.png'
   },
+  {
+    institution: 'IIM Kozhikode (Backwaters & Horizons)',
+    url: 'https://www.iimk.ac.in',
+    eventUrls: ['https://www.iimk.ac.in/events'],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d4/IIM_Kozhikode_Logo.svg/300px-IIM_Kozhikode_Logo.svg.png'
+  },
+  {
+    institution: 'Indian School of Business (ISB)',
+    url: 'https://www.isb.edu',
+    eventUrls: ['https://www.isb.edu/en/events.html'],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Indian_School_of_Business_logo.svg/300px-Indian_School_of_Business_logo.svg.png'
+  },
+  {
+    institution: 'XLRI Jamshedpur (Ensemble-Valhalla & Maxi Fair)',
+    url: 'https://xlri.ac.in',
+    eventUrls: ['https://xlri.ac.in/events/'],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b8/XLRI_Jamshedpur_Logo.svg/300px-XLRI_Jamshedpur_Logo.svg.png'
+  },
+  {
+    institution: 'Faculty of Management Studies (FMS Delhi)',
+    url: 'https://fms.edu',
+    eventUrls: ['https://fms.edu/events'],
+    circuit: 'du',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cd/FMS_Delhi_Logo.png/300px-FMS_Delhi_Logo.png'
+  },
+
+  // ─── 3. PREMIER IITS & TECH FESTS ───────────────────────────────────────
+  {
+    institution: 'IIT Bombay (Mood Indigo & E-Cell Eureka)',
+    url: 'https://www.ecell.in/eureka',
+    eventUrls: ['https://moodi.org'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1d/IIT_Bombay_Logo.svg/300px-IIT_Bombay_Logo.svg.png'
+  },
+  {
+    institution: 'IIT Delhi (Tryst & Rendezvous)',
+    url: 'https://tryst-iitd.org',
+    eventUrls: ['https://home.iitd.ac.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fd/Indian_Institute_of_Technology_Delhi_Logo.svg/300px-Indian_Institute_of_Technology_Delhi_Logo.svg.png'
+  },
+  {
+    institution: 'IIT Madras (Shaastra Tech Summit)',
+    url: 'https://shaastra.org',
+    eventUrls: ['https://www.iitm.ac.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/69/IIT_Madras_Logo.svg/300px-IIT_Madras_Logo.svg.png'
+  },
+  {
+    institution: 'IIT Kharagpur (Kshitij Techno-Management Fest)',
+    url: 'https://ktj.in',
+    eventUrls: ['https://www.iitkgp.ac.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1c/IIT_Kharagpur_Logo.svg/300px-IIT_Kharagpur_Logo.svg.png'
+  },
+  {
+    institution: 'IIT Kanpur (Techkriti Innovation Fest)',
+    url: 'https://techkriti.org',
+    eventUrls: ['https://www.iitk.ac.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a3/IIT_Kanpur_Logo.svg/300px-IIT_Kanpur_Logo.svg.png'
+  },
+  {
+    institution: 'IIT Roorkee (Cognizance Fest)',
+    url: 'https://cognizance.org.in',
+    eventUrls: ['https://www.iitr.ac.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/IIT_Roorkee_logo.svg/300px-IIT_Roorkee_logo.svg.png'
+  },
+  {
+    institution: 'IIT Guwahati (Techniche Fest)',
+    url: 'https://techniche.org.in',
+    eventUrls: ['https://www.iitg.ac.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/12/IIT_Guwahati_Logo.svg/300px-IIT_Guwahati_Logo.svg.png'
+  },
+  {
+    institution: 'BITS Pilani (APOGEE, Oasis & Conquest)',
+    url: 'https://bits-apogee.org',
+    eventUrls: ['https://bits-oasis.org', 'https://conquest.org.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/BITS_Pilani-Logo.svg/300px-BITS_Pilani-Logo.svg.png'
+  },
+
+  // ─── 4. PREMIER DELHI UNIVERSITY COLLEGES ──────────────────────────────
   {
     institution: 'Shaheed Sukhdev College of Business Studies (SSCBS DU)',
     url: 'https://sscbs.du.ac.in',
@@ -94,39 +240,32 @@ const TARGET_SOURCES = [
     defaultLogo: 'https://www.srcc.edu/sites/default/files/srcc-logo.png'
   },
   {
-    institution: 'IIT Bombay (Mood Indigo & E-Cell Eureka)',
-    url: 'https://www.ecell.in/eureka',
-    eventUrls: ['https://moodi.org'],
-    circuit: 'iit',
-    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/1d/IIT_Bombay_Logo.svg/300px-IIT_Bombay_Logo.svg.png'
-  },
-  {
-    institution: 'IIT Delhi (Tryst & Rendezvous)',
-    url: 'https://home.iitd.ac.in',
-    eventUrls: ['https://tryst-iitd.org'],
-    circuit: 'iit',
-    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fd/Indian_Institute_of_Technology_Delhi_Logo.svg/300px-Indian_Institute_of_Technology_Delhi_Logo.svg.png'
-  },
-  {
-    institution: 'IIT Madras (Shaastra Tech Summit)',
-    url: 'https://shaastra.org',
+    institution: "St. Stephen's College (DU)",
+    url: 'https://www.ststephens.edu',
     eventUrls: [],
-    circuit: 'iit',
-    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/69/IIT_Madras_Logo.svg/300px-IIT_Madras_Logo.svg.png'
+    circuit: 'du',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/9c/St._Stephen%27s_College%2C_Delhi_crest.svg/300px-St._Stephen%27s_College%2C_Delhi_crest.svg.png'
   },
   {
-    institution: 'Indian School of Business (ISB)',
-    url: 'https://www.isb.edu',
+    institution: 'Hindu College (DU)',
+    url: 'https://hinducollege.ac.in',
     eventUrls: [],
-    circuit: 'iim',
-    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/91/Indian_School_of_Business_logo.svg/300px-Indian_School_of_Business_logo.svg.png'
+    circuit: 'du',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Hindu_College%2C_University_of_Delhi_logo.png/300px-Hindu_College%2C_University_of_Delhi_logo.png'
   },
   {
-    institution: 'BITS Pilani (Conquest & APOGEE)',
-    url: 'https://conquest.org.in',
-    eventUrls: ['https://bits-apogee.org'],
-    circuit: 'iit',
-    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/BITS_Pilani-Logo.svg/300px-BITS_Pilani-Logo.svg.png'
+    institution: 'Lady Shri Ram College (LSR DU)',
+    url: 'https://lsr.edu.in',
+    eventUrls: [],
+    circuit: 'du',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/55/Lady_Shri_Ram_College_for_Women_logo.svg/300px-Lady_Shri_Ram_College_for_Women_logo.svg.png'
+  },
+  {
+    institution: 'Hansraj College (DU)',
+    url: 'https://www.hansrajcollege.ac.in',
+    eventUrls: [],
+    circuit: 'du',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f6/Hansraj_College_logo.svg/300px-Hansraj_College_logo.svg.png'
   }
 ];
 
@@ -207,11 +346,11 @@ async function extractCompetitionsWithGemini(pageText, sourceMeta) {
   }
 
   const prompt = `
-You are an expert parser for collegiate competitions, business summits, fests, hackathons, and case challenges across premier Indian universities (DU, IIMs, IITs, B-schools).
-Analyze the following text extracted from the institutional website of "${sourceMeta.institution}".
+You are an expert parser for collegiate competitions, business summits, engineering fests, hackathons, and corporate challenges across premier Indian universities and global companies (DU, IIMs, IITs, B-schools, Fortune 500 tech & finance giants).
+Analyze the following text extracted from the portal of "${sourceMeta.institution}".
 
 Extract any active, upcoming, or recently announced competitions, case challenges, hackathons, quizzes, trading simulations, or debate summits.
-If the text describes a multi-event summit (like Eureka, Red Brick Summit, Vista, Mood Indigo), extract individual flagship competitions where possible.
+If the text describes a multi-event summit (like Eureka, Red Brick Summit, Vista, Mood Indigo, Techkriti, Tryst, Imagine Cup, Tata Crucible), extract individual flagship competitions where possible.
 
 Return a valid JSON array of objects. Return JSON only, with no commentary. Each object MUST strictly follow this structure:
 [
@@ -316,8 +455,10 @@ async function saveToSupabase(competitions, sourceMeta) {
       category_label: c.category_label || 'Case Competition',
       category_emoji: c.category_emoji || '💼',
       sub_tracks: Array.isArray(c.sub_tracks) && c.sub_tracks.length > 0 ? c.sub_tracks : ['General'],
-      source_platform: 'campus_direct',
-      source_label: `${sourceMeta.institution.split('(')[0].trim()} Direct`,
+      source_platform: sourceMeta.circuit === 'corporate' ? 'corporate' : 'campus_direct',
+      source_label: sourceMeta.circuit === 'corporate'
+        ? (sourceMeta.sourceLabel || sourceMeta.institution.split('(')[0].trim())
+        : `${sourceMeta.institution.split('(')[0].trim()} Direct`,
       apply_url: c.apply_url || sourceMeta.url,
       website_url: sourceMeta.url,
       banner_url: null,
@@ -396,8 +537,9 @@ async function main() {
   let totalFound = 0;
   let totalSaved = 0;
 
-  for (const source of TARGET_SOURCES) {
-    console.log(`\n🔍 Scanning: ${source.institution}...`);
+  for (let i = 0; i < TARGET_SOURCES.length; i++) {
+    const source = TARGET_SOURCES[i];
+    console.log(`\n[${i + 1}/${TARGET_SOURCES.length}] 🔍 Scanning: ${source.institution}...`);
     
     // Aggregate page text from main URL and any dedicated event URLs
     const urlsToFetch = [source.url, ...(source.eventUrls || [])];
