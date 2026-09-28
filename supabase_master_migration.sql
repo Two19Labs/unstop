@@ -1,5 +1,5 @@
 -- ═════════════════════════════════════════════════════════════════════════════════
--- OneStop by Two19 Labs  -  DEFINITIVE MASTER DATABASE MIGRATION
+-- OneStop by Two19 Labs  -  DEFINITIVE MASTER DATABASE MIGRATION (FIXED & HARDENED)
 -- Run this ONCE in your Supabase SQL Editor (Dashboard > SQL Editor > New Query)
 -- ═════════════════════════════════════════════════════════════════════════════════
 
@@ -37,15 +37,13 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFA
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Public profiles are viewable by everyone') THEN
-    CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can insert their own profile') THEN
-    CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can update own profile') THEN
-    CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-  END IF;
+  DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+  DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+  DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+
+  CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+  CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+  CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 END $$;
 
 
@@ -85,7 +83,7 @@ ALTER TABLE public.squad_posts ADD COLUMN IF NOT EXISTS is_custom BOOLEAN DEFAUL
 ALTER TABLE public.squad_posts ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
 ALTER TABLE public.squad_posts ADD COLUMN IF NOT EXISTS comm_method TEXT DEFAULT 'whatsapp';
 
--- Helpful performance indexes
+-- Performance indexes
 CREATE INDEX IF NOT EXISTS idx_squad_posts_expires_at ON public.squad_posts(expires_at);
 CREATE INDEX IF NOT EXISTS idx_squad_posts_competition_id ON public.squad_posts(competition_id);
 CREATE INDEX IF NOT EXISTS idx_squad_posts_user_id ON public.squad_posts(user_id);
@@ -94,18 +92,16 @@ CREATE INDEX IF NOT EXISTS idx_squad_posts_created_at ON public.squad_posts(crea
 ALTER TABLE public.squad_posts ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_posts' AND policyname = 'Squad posts viewable by authenticated users') THEN
-    CREATE POLICY "Squad posts viewable by authenticated users" ON public.squad_posts FOR SELECT TO authenticated USING (true);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_posts' AND policyname = 'Authenticated users can create squad posts') THEN
-    CREATE POLICY "Authenticated users can create squad posts" ON public.squad_posts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_posts' AND policyname = 'Users can update their own squad posts') THEN
-    CREATE POLICY "Users can update their own squad posts" ON public.squad_posts FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_posts' AND policyname = 'Users can delete their own squad posts') THEN
-    CREATE POLICY "Users can delete their own squad posts" ON public.squad_posts FOR DELETE TO authenticated USING (auth.uid() = user_id);
-  END IF;
+  DROP POLICY IF EXISTS "Squad posts viewable by authenticated users" ON public.squad_posts;
+  DROP POLICY IF EXISTS "Enable read access on squad_posts for everyone" ON public.squad_posts;
+  DROP POLICY IF EXISTS "Authenticated users can create squad posts" ON public.squad_posts;
+  DROP POLICY IF EXISTS "Users can update their own squad posts" ON public.squad_posts;
+  DROP POLICY IF EXISTS "Users can delete their own squad posts" ON public.squad_posts;
+
+  CREATE POLICY "Enable read access on squad_posts for everyone" ON public.squad_posts FOR SELECT USING (true);
+  CREATE POLICY "Authenticated users can create squad posts" ON public.squad_posts FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+  CREATE POLICY "Users can update their own squad posts" ON public.squad_posts FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  CREATE POLICY "Users can delete their own squad posts" ON public.squad_posts FOR DELETE TO authenticated USING (auth.uid() = user_id);
 END $$;
 
 
@@ -123,101 +119,160 @@ CREATE TABLE IF NOT EXISTS public.squad_applications (
   pitch_note TEXT,
   highlighted_skills TEXT[] DEFAULT '{}',
   comm_method TEXT DEFAULT 'whatsapp',
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'removed')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined', 'rejected', 'removed')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 ALTER TABLE public.squad_applications ADD COLUMN IF NOT EXISTS comm_method TEXT DEFAULT 'whatsapp';
+ALTER TABLE public.squad_applications ADD COLUMN IF NOT EXISTS applicant_phone TEXT;
 CREATE INDEX IF NOT EXISTS idx_squad_apps_post_id ON public.squad_applications(post_id);
 CREATE INDEX IF NOT EXISTS idx_squad_apps_applicant_id ON public.squad_applications(applicant_id);
 
 ALTER TABLE public.squad_applications ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_applications' AND policyname = 'Applications visible to post owner and applicant') THEN
-    CREATE POLICY "Applications visible to post owner and applicant" ON public.squad_applications FOR SELECT TO authenticated
-      USING (
-        auth.uid() = applicant_id 
-        OR auth.uid() IN (SELECT user_id FROM public.squad_posts WHERE id = squad_applications.post_id)
-      );
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_applications' AND policyname = 'Authenticated users can apply') THEN
-    CREATE POLICY "Authenticated users can apply" ON public.squad_applications FOR INSERT TO authenticated WITH CHECK (auth.uid() = applicant_id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_applications' AND policyname = 'Post owner or applicant can update application') THEN
-    CREATE POLICY "Post owner or applicant can update application" ON public.squad_applications FOR UPDATE TO authenticated
-      USING (
-        auth.uid() = applicant_id 
-        OR auth.uid() IN (SELECT user_id FROM public.squad_posts WHERE id = squad_applications.post_id)
-      );
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_applications' AND policyname = 'Applicants can delete their own applications') THEN
-    CREATE POLICY "Applicants can delete their own applications" ON public.squad_applications FOR DELETE TO authenticated USING (auth.uid() = applicant_id);
-  END IF;
+  DROP POLICY IF EXISTS "Applications visible to post owner and applicant" ON public.squad_applications;
+  DROP POLICY IF EXISTS "Enable read access on squad_applications" ON public.squad_applications;
+  DROP POLICY IF EXISTS "Authenticated users can apply" ON public.squad_applications;
+  DROP POLICY IF EXISTS "Post owner or applicant can update application" ON public.squad_applications;
+  DROP POLICY IF EXISTS "Post owners and applicants can update applications" ON public.squad_applications;
+  DROP POLICY IF EXISTS "Applicants can delete their own applications" ON public.squad_applications;
+
+  -- Type-safe comparison: sp.id::text = squad_applications.post_id::text
+  CREATE POLICY "Applications visible to post owner and applicant" ON public.squad_applications FOR SELECT TO authenticated
+    USING (
+      auth.uid() = applicant_id 
+      OR EXISTS (
+        SELECT 1 FROM public.squad_posts sp 
+        WHERE sp.id::text = squad_applications.post_id::text 
+          AND sp.user_id = auth.uid()
+      )
+    );
+
+  CREATE POLICY "Authenticated users can apply" ON public.squad_applications FOR INSERT TO authenticated WITH CHECK (auth.uid() = applicant_id);
+
+  CREATE POLICY "Post owner or applicant can update application" ON public.squad_applications FOR UPDATE TO authenticated
+    USING (
+      auth.uid() = applicant_id 
+      OR EXISTS (
+        SELECT 1 FROM public.squad_posts sp 
+        WHERE sp.id::text = squad_applications.post_id::text 
+          AND sp.user_id = auth.uid()
+      )
+    );
+
+  CREATE POLICY "Applicants can delete their own applications" ON public.squad_applications FOR DELETE TO authenticated USING (auth.uid() = applicant_id);
 END $$;
 
 
 -- 5. SQUAD MESSAGES TABLE (Realtime in-platform chat for squad)
 CREATE TABLE IF NOT EXISTS public.squad_messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  post_id UUID REFERENCES public.squad_posts(id) ON DELETE CASCADE NOT NULL,
-  sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  application_id TEXT,
+  post_id TEXT NOT NULL,
+  competition_id TEXT,
+  sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   sender_name TEXT NOT NULL,
+  sender_role VARCHAR(20) DEFAULT 'applicant',
   sender_avatar TEXT,
   content TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Ensure all columns exist whether table was created earlier or now
+ALTER TABLE public.squad_messages ADD COLUMN IF NOT EXISTS application_id TEXT;
+ALTER TABLE public.squad_messages ADD COLUMN IF NOT EXISTS competition_id TEXT;
+ALTER TABLE public.squad_messages ADD COLUMN IF NOT EXISTS sender_role VARCHAR(20) DEFAULT 'applicant';
+ALTER TABLE public.squad_messages ADD COLUMN IF NOT EXISTS sender_avatar TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_squad_messages_post_id ON public.squad_messages(post_id);
 CREATE INDEX IF NOT EXISTS idx_squad_messages_created_at ON public.squad_messages(created_at ASC);
 
 ALTER TABLE public.squad_messages ENABLE ROW LEVEL SECURITY;
 
+-- 100% TYPE-SAFE POLICIES (Resolves operator does not exist: uuid = text)
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_messages' AND policyname = 'Squad messages viewable by squad participants') THEN
-    CREATE POLICY "Squad messages viewable by squad participants" ON public.squad_messages FOR SELECT TO authenticated
-      USING (
-        auth.uid() = sender_id
-        OR auth.uid() IN (SELECT user_id FROM public.squad_posts WHERE id = squad_messages.post_id)
-        OR auth.uid() IN (SELECT applicant_id FROM public.squad_applications WHERE post_id = squad_messages.post_id)
-      );
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'squad_messages' AND policyname = 'Squad participants can insert messages') THEN
-    CREATE POLICY "Squad participants can insert messages" ON public.squad_messages FOR INSERT TO authenticated
-      WITH CHECK (auth.uid() = sender_id);
-  END IF;
+  DROP POLICY IF EXISTS "Squad messages viewable by squad participants" ON public.squad_messages;
+  DROP POLICY IF EXISTS "Squad participants can insert messages" ON public.squad_messages;
+  DROP POLICY IF EXISTS "Participants can view squad messages" ON public.squad_messages;
+  DROP POLICY IF EXISTS "Authenticated users can insert squad messages" ON public.squad_messages;
+
+  CREATE POLICY "Squad messages viewable by squad participants" ON public.squad_messages FOR SELECT TO authenticated
+    USING (
+      sender_id = auth.uid()
+      OR EXISTS (
+        SELECT 1 FROM public.squad_posts sp
+        WHERE sp.id::text = squad_messages.post_id::text
+          AND sp.user_id = auth.uid()
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.squad_applications sa
+        WHERE (
+          (sa.id IS NOT NULL AND squad_messages.application_id IS NOT NULL AND sa.id::text = squad_messages.application_id::text)
+          OR sa.post_id::text = squad_messages.post_id::text
+        )
+        AND sa.applicant_id = auth.uid()
+      )
+    );
+
+  CREATE POLICY "Squad participants can insert messages" ON public.squad_messages FOR INSERT TO authenticated
+    WITH CHECK (auth.uid() = sender_id);
 END $$;
 
 
 -- 6. USER NOTIFICATIONS TABLE (For chat messages and application updates)
 CREATE TABLE IF NOT EXISTS public.user_notifications (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type TEXT NOT NULL, -- 'chat_message', 'squad_apply', 'squad_accepted', 'squad_rejected'
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_email TEXT,
+  type TEXT NOT NULL,
   title TEXT NOT NULL,
   body TEXT,
+  message TEXT,
   link TEXT,
   data JSONB DEFAULT '{}'::jsonb,
   is_read BOOLEAN DEFAULT false,
+  read BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure all flexible columns exist
+ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS user_email TEXT;
+ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS message TEXT;
+ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS link TEXT;
+ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS data JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+ALTER TABLE public.user_notifications ADD COLUMN IF NOT EXISTS read BOOLEAN DEFAULT false;
+
 CREATE INDEX IF NOT EXISTS idx_user_notifications_user_id ON public.user_notifications(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_notifications_unread ON public.user_notifications(user_id) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_user_notifications_user_email ON public.user_notifications(user_email);
 
 ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_notifications' AND policyname = 'Users can view own notifications') THEN
-    CREATE POLICY "Users can view own notifications" ON public.user_notifications FOR SELECT TO authenticated USING (auth.uid() = user_id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_notifications' AND policyname = 'Users can update own notifications') THEN
-    CREATE POLICY "Users can update own notifications" ON public.user_notifications FOR UPDATE TO authenticated USING (auth.uid() = user_id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'user_notifications' AND policyname = 'Authenticated users can insert notifications') THEN
-    CREATE POLICY "Authenticated users can insert notifications" ON public.user_notifications FOR INSERT TO authenticated WITH CHECK (true);
-  END IF;
+  DROP POLICY IF EXISTS "Users can view own notifications" ON public.user_notifications;
+  DROP POLICY IF EXISTS "Users can update own notifications" ON public.user_notifications;
+  DROP POLICY IF EXISTS "Authenticated users can insert notifications" ON public.user_notifications;
+  DROP POLICY IF EXISTS "Users can view their own notifications" ON public.user_notifications;
+  DROP POLICY IF EXISTS "Users can update their own notifications" ON public.user_notifications;
+  DROP POLICY IF EXISTS "Users can insert notifications" ON public.user_notifications;
+
+  CREATE POLICY "Users can view own notifications" ON public.user_notifications FOR SELECT TO authenticated
+    USING (
+      (user_id IS NOT NULL AND auth.uid() = user_id)
+      OR (user_email IS NOT NULL AND user_email = auth.jwt() ->> 'email')
+    );
+
+  CREATE POLICY "Users can update own notifications" ON public.user_notifications FOR UPDATE TO authenticated
+    USING (
+      (user_id IS NOT NULL AND auth.uid() = user_id)
+      OR (user_email IS NOT NULL AND user_email = auth.jwt() ->> 'email')
+    );
+
+  CREATE POLICY "Authenticated users can insert notifications" ON public.user_notifications FOR INSERT TO authenticated
+    WITH CHECK (true);
 END $$;
 
 
@@ -267,17 +322,15 @@ CREATE INDEX IF NOT EXISTS idx_inst_comps_deadline ON public.institutional_compe
 ALTER TABLE public.institutional_competitions ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'institutional_competitions' AND policyname = 'Institutional competitions are viewable by everyone') THEN
-    CREATE POLICY "Institutional competitions are viewable by everyone" ON public.institutional_competitions FOR SELECT USING (true);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'institutional_competitions' AND policyname = 'Service role and admins can insert or update') THEN
-    CREATE POLICY "Service role and admins can insert or update" ON public.institutional_competitions FOR ALL TO authenticated USING (true) WITH CHECK (true);
-  END IF;
+  DROP POLICY IF EXISTS "Institutional competitions are viewable by everyone" ON public.institutional_competitions;
+  DROP POLICY IF EXISTS "Service role and admins can insert or update" ON public.institutional_competitions;
+
+  CREATE POLICY "Institutional competitions are viewable by everyone" ON public.institutional_competitions FOR SELECT USING (true);
+  CREATE POLICY "Service role and admins can insert or update" ON public.institutional_competitions FOR ALL TO authenticated USING (true) WITH CHECK (true);
 END $$;
 
 
 -- 8. AUTO-EXPIRY CLEANUP FUNCTION & TRIGGER
--- Hard deletes squad posts where the deadline has elapsed (cascades to applications & messages)
 CREATE OR REPLACE FUNCTION public.delete_expired_squad_posts()
 RETURNS INTEGER
 LANGUAGE plpgsql
@@ -294,7 +347,6 @@ BEGIN
 END;
 $$;
 
--- Trigger to clean up expired squad posts whenever new posts are created or fetched
 CREATE OR REPLACE FUNCTION public.trigger_cleanup_expired_posts()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -311,7 +363,6 @@ AFTER INSERT OR UPDATE ON public.squad_posts
 FOR EACH STATEMENT
 EXECUTE FUNCTION public.trigger_cleanup_expired_posts();
 
--- If pg_cron extension is available on your Supabase tier, schedule hourly auto-cleanup:
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_cron') THEN
     PERFORM cron.schedule(
@@ -321,10 +372,5 @@ DO $$ BEGIN
     );
   END IF;
 EXCEPTION WHEN OTHERS THEN
-  -- Fallback smoothly if pg_cron is not enabled
-  RAISE NOTICE 'pg_cron not enabled or available; statement trigger trg_cleanup_expired_posts handles cleanup.';
+  RAISE NOTICE 'pg_cron not enabled; trigger trg_cleanup_expired_posts handles cleanup on changes.';
 END $$;
-
--- ═════════════════════════════════════════════════════════════════════════════════
--- SUCCESS: Definitive migration created successfully!
--- ═════════════════════════════════════════════════════════════════════════════════
