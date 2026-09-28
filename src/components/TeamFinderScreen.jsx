@@ -1,7 +1,7 @@
 // src/components/TeamFinderScreen.jsx
 // OneStop Team Finder Standalone Page - Full High-Fidelity Implementation
 import React, { useState, useEffect, useMemo } from 'react';
-import { SKILLS, initialsOf, isMockPost } from '../data/initialData';
+import { SKILLS, initialsOf, isMockPost, isMockApp } from '../data/initialData';
 import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
 import PostSquadModal from './PostSquadModal';
