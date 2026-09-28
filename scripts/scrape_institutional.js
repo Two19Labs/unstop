@@ -91,11 +91,15 @@ async function fetchPageContent(url) {
   }
 }
 
-// Call Google AI Studio Gemini 1.5 Flash API (₹0 Free Tier)
+// // Call Google AI Studio Gemini 1.5 Flash API (₹0 Free Tier)
 async function extractCompetitionsWithGemini(pageText, sourceMeta) {
   if (!GEMINI_API_KEY) {
-    console.log('[Scanner] GEMINI_API_KEY not set. Using smart heuristics parser.');
-    return generateFallbackOpportunities(sourceMeta);
+    console.log(`[Scanner] GEMINI_API_KEY not configured. Skipping AI extraction for ${sourceMeta.institution}.`);
+    return [];
+  }
+
+  if (!pageText || pageText.length < 50) {
+    return [];
   }
 
   const prompt = `
@@ -146,7 +150,7 @@ ${pageText}
     if (!res.ok) {
       const errText = await res.text();
       console.warn(`[Scanner] Gemini API error (${res.status}):`, errText);
-      return generateFallbackOpportunities(sourceMeta);
+      return [];
     }
 
     const data = await res.json();
@@ -157,56 +161,8 @@ ${pageText}
     return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
     console.error(`[Scanner] Gemini parsing failed for ${sourceMeta.institution}:`, err.message);
-    return generateFallbackOpportunities(sourceMeta);
+    return [];
   }
-}
-
-// Fallback generator for standard flagship events if page is dynamic JS-only or API key is absent
-function generateFallbackOpportunities(sourceMeta) {
-  const isDu = sourceMeta.circuit === 'du';
-  const isIim = sourceMeta.circuit === 'iim';
-  const isIit = sourceMeta.circuit === 'iit';
-
-  const now = Date.now();
-  const futureDate = new Date(now + 12 * 24 * 60 * 60 * 1000).toISOString();
-
-  if (sourceMeta.institution.includes('SSCBS')) {
-    return [{
-      title: 'SSCBS Continuum Consulting Case Challenge 2026',
-      category: 'case',
-      category_label: 'Case Competition',
-      category_emoji: '💼',
-      sub_tracks: ['Strategy & Consulting', 'Finance'],
-      deadline: futureDate,
-      prizes: '₹75,000 Cash + Certificates',
-      fee: 'Free',
-      mode: 'Online',
-      min_team: 2,
-      max_team: 4,
-      apply_url: 'https://sscbs.du.ac.in',
-      description: 'Solve real-world corporate turnaround strategies designed by Shaheed Sukhdev College of Business Studies alumni.'
-    }];
-  }
-
-  if (sourceMeta.institution.includes('IIM Ahmedabad')) {
-    return [{
-      title: 'IIM-A Red Brick Summit: National Strategy Conclave',
-      category: 'case',
-      category_label: 'Case Competition',
-      category_emoji: '💼',
-      sub_tracks: ['Strategy & Consulting', 'Product Management'],
-      deadline: futureDate,
-      prizes: '₹1,50,000 Cash + PPI Opportunity',
-      fee: 'Free',
-      mode: 'Online',
-      min_team: 2,
-      max_team: 3,
-      apply_url: 'https://iima.ac.in',
-      description: 'The flagship business strategy competition of IIM Ahmedabad tackling digital transformation and market entry.'
-    }];
-  }
-
-  return [];
 }
 
 // Upsert into Supabase institutional_competitions
