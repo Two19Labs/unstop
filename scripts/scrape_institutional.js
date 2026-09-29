@@ -58,7 +58,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SE
 
 // Target collegiate, fest & premier corporate challenge portals
 const TARGET_SOURCES = [
-  // ─── 1. CORPORATE PROPRIETARY COMPETITION PORTALS ────────────────────────
+  // ─── 1. CORPORATE & GLOBAL PROPRIETARY COMPETITION PORTALS ───────────────
   {
     institution: 'Tata Group (Tata Crucible Quiz & Tata Imagination Challenge)',
     url: 'https://www.tatacrucible.com',
@@ -107,6 +107,62 @@ const TARGET_SOURCES = [
     sourceLabel: "L'Oréal Brandstorm",
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/L%27Or%C3%A9al_logo.svg/300px-L%27Or%C3%A9al_logo.svg.png'
   },
+  {
+    institution: 'Devpost (Global Hackathons & Challenges)',
+    url: 'https://devpost.com/hackathons',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'Devpost Official',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Devpost_logo.png/300px-Devpost_logo.png'
+  },
+  {
+    institution: 'Major League Hacking (MLH Global Hackathon League)',
+    url: 'https://mlh.io/events',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'MLH Hackathons',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Major_League_Hacking_logo.svg/300px-Major_League_Hacking_logo.svg.png'
+  },
+  {
+    institution: 'Amazon AWS (DeepRacer Student & AI League)',
+    url: 'https://aws.amazon.com/deepracer/student/',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'AWS DeepRacer League',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Amazon_Web_Services_Logo.svg/300px-Amazon_Web_Services_Logo.svg.png'
+  },
+  {
+    institution: 'IBM (Call for Code Global Challenge)',
+    url: 'https://callforcode.org',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'IBM Call for Code',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/IBM_logo.svg/300px-IBM_logo.svg.png'
+  },
+  {
+    institution: 'Procter & Gamble (P&G CEO Challenge Global Case Competition)',
+    url: 'https://www.pgcareers.com/ceochallenge',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'P&G CEO Challenge',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Procter_%26_Gamble_logo.svg/300px-Procter_%26_Gamble_logo.svg.png'
+  },
+  {
+    institution: 'Jane Street (Global Estimation & Quant Puzzles)',
+    url: 'https://www.janestreet.com/join-jane-street/programs-and-events/',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'Jane Street Programs',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Jane_Street_Capital_Logo.svg/300px-Jane_Street_Capital_Logo.svg.png'
+  },
+  {
+    institution: 'Red Bull (Basement Global Student Tech Challenge)',
+    url: 'https://www.redbull.com/in-en/events/red-bull-basement-india',
+    eventUrls: [],
+    circuit: 'corporate',
+    sourceLabel: 'Red Bull Basement',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f5/RedBullEnergyDrink.svg/300px-RedBullEnergyDrink.svg.png'
+  },
 
   // ─── 2. PREMIER IIMS & B-SCHOOL SUMMITS ─────────────────────────────────
   {
@@ -145,6 +201,13 @@ const TARGET_SOURCES = [
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d4/IIM_Kozhikode_Logo.svg/300px-IIM_Kozhikode_Logo.svg.png'
   },
   {
+    institution: 'IIM Indore (Atharv & Iris Conclaves)',
+    url: 'https://atharvthefest.in',
+    eventUrls: ['https://www.iimidr.ac.in'],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/69/Indian_Institute_of_Management_Indore_Logo.svg/300px-Indian_Institute_of_Management_Indore_Logo.svg.png'
+  },
+  {
     institution: 'Indian School of Business (ISB)',
     url: 'https://www.isb.edu',
     eventUrls: ['https://www.isb.edu/en/events.html'],
@@ -165,8 +228,29 @@ const TARGET_SOURCES = [
     circuit: 'du',
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cd/FMS_Delhi_Logo.png/300px-FMS_Delhi_Logo.png'
   },
+  {
+    institution: 'MDI Gurgaon (Delphique Management Conclave)',
+    url: 'https://www.mdi.ac.in',
+    eventUrls: [],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/5f/Management_Development_Institute_logo.png/300px-Management_Development_Institute_logo.png'
+  },
+  {
+    institution: 'SIBM Pune (Transcend Management Conclave)',
+    url: 'https://sibm.edu',
+    eventUrls: [],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/11/SIBM_Pune_Logo.svg/300px-SIBM_Pune_Logo.svg.png'
+  },
+  {
+    institution: 'NMIMS Mumbai (Paragana Conclave)',
+    url: 'https://nmims.edu',
+    eventUrls: [],
+    circuit: 'iim',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4c/NMIMS_logo.png/300px-NMIMS_logo.png'
+  },
 
-  // ─── 3. PREMIER IITS & TECH FESTS ───────────────────────────────────────
+  // ─── 3. PREMIER IITS, NITS & TECH FESTS ─────────────────────────────────
   {
     institution: 'IIT Bombay (Mood Indigo & E-Cell Eureka)',
     url: 'https://www.ecell.in/eureka',
@@ -217,9 +301,30 @@ const TARGET_SOURCES = [
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/12/IIT_Guwahati_Logo.svg/300px-IIT_Guwahati_Logo.svg.png'
   },
   {
+    institution: 'IIT Hyderabad (Elan & η-Vision)',
+    url: 'https://elan.org.in',
+    eventUrls: [],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/18/IIT_Hyderabad_Logo.svg/300px-IIT_Hyderabad_Logo.svg.png'
+  },
+  {
+    institution: 'NIT Trichy (Pragyan Techno-Managerial Conclave)',
+    url: 'https://pragyan.org',
+    eventUrls: [],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/National_Institute_of_Technology%2C_Tiruchirappalli_logo.png/300px-National_Institute_of_Technology%2C_Tiruchirappalli_logo.png'
+  },
+  {
     institution: 'BITS Pilani (APOGEE, Oasis & Conquest)',
     url: 'https://bits-apogee.org',
     eventUrls: ['https://bits-oasis.org', 'https://conquest.org.in'],
+    circuit: 'iit',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/BITS_Pilani-Logo.svg/300px-BITS_Pilani-Logo.svg.png'
+  },
+  {
+    institution: 'BITS Pilani Goa (Quark Technical Conclave)',
+    url: 'https://bits-quark.org',
+    eventUrls: [],
     circuit: 'iit',
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/BITS_Pilani-Logo.svg/300px-BITS_Pilani-Logo.svg.png'
   },
