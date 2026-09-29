@@ -484,9 +484,10 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
       isMBAorPG: Boolean(r.is_mba_or_pg),
       targetLevel: r.is_pg_only ? 'pg' : (r.is_undergrad_eligible !== false ? 'ug' : 'all'),
       isDU: Boolean(r.is_du),
-      isIIMorIIT: Boolean(r.is_iim_or_iit),
-      isPremier: Boolean(r.is_premier),
-      isCorporate: r.source_platform === 'corporate' || Boolean(r.is_corporate),
+      isIIMorIIT: Boolean(r.is_iim_or_iit) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
+      isPremier: Boolean(r.is_premier) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
+      isCorporate: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
+      isCorporateOrGlobal: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
       isFlagship: Boolean(r.is_flagship)
     }));
   } catch (err) {

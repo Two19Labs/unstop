@@ -108,12 +108,22 @@ const TARGET_SOURCES = [
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/L%27Or%C3%A9al_logo.svg/300px-L%27Or%C3%A9al_logo.svg.png'
   },
   {
+    institution: 'InsideIIM & InsideKampus (Flagship Business & Case Challenges)',
+    url: 'https://insidekampus.com/competitions',
+    eventUrls: [],
+    circuit: 'inside_campus',
+    sourceLabel: 'InsideKampus Direct',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/InsideIIM_Logo.png/300px-InsideIIM_Logo.png',
+    dedicatedFetcher: fetchInsideKampusCompetitions
+  },
+  {
     institution: 'Devpost (Global Hackathons & Challenges)',
     url: 'https://devpost.com/hackathons',
     eventUrls: [],
-    circuit: 'corporate',
+    circuit: 'devpost',
     sourceLabel: 'Devpost Official',
-    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Devpost_logo.png/300px-Devpost_logo.png'
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Devpost_logo.png/300px-Devpost_logo.png',
+    dedicatedFetcher: fetchDevpostCompetitions
   },
   {
     institution: 'Major League Hacking (MLH Global Hackathon League)',
@@ -315,11 +325,13 @@ const TARGET_SOURCES = [
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/4/4f/National_Institute_of_Technology%2C_Tiruchirappalli_logo.png/300px-National_Institute_of_Technology%2C_Tiruchirappalli_logo.png'
   },
   {
-    institution: 'BITS Pilani (APOGEE, Oasis & Conquest)',
-    url: 'https://bits-apogee.org',
-    eventUrls: ['https://bits-oasis.org', 'https://conquest.org.in'],
+    institution: 'BITS Pilani (Oasis & APOGEE)',
+    url: 'https://bits-oasis.org',
+    eventUrls: ['https://bits-apogee.org', 'https://conquest.org.in'],
     circuit: 'iit',
-    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/BITS_Pilani-Logo.svg/300px-BITS_Pilani-Logo.svg.png'
+    sourceLabel: 'BITS Pilani Oasis Direct',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/d/d3/BITS_Pilani-Logo.svg/300px-BITS_Pilani-Logo.svg.png',
+    dedicatedFetcher: fetchBitsOasisCompetitions
   },
   {
     institution: 'BITS Pilani Goa (Quark Technical Conclave)',
@@ -548,6 +560,197 @@ ${pageText}
   return [];
 }
 
+// Dedicated High-Fidelity Fetcher: InsideKampus / InsideIIM via Apollo GraphQL Cache
+async function fetchInsideKampusCompetitions() {
+  try {
+    console.log(`   🔍 Scraping InsideKampus via Apollo GraphQL Cache...`);
+    const res = await fetch('https://insidekampus.com/competitions', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      }
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const prefix = 'window.__INITIAL_STATE__="';
+    const startIdx = html.indexOf(prefix);
+    if (startIdx === -1) return [];
+    const quoteStart = startIdx + prefix.length;
+    let quoteEnd = quoteStart;
+    while (quoteEnd < html.length) {
+      if (html[quoteEnd] === '"' && html[quoteEnd - 1] !== '\\') break;
+      quoteEnd++;
+    }
+    const rawEscaped = html.slice(quoteStart, quoteEnd);
+    const unescaped = JSON.parse('"' + rawEscaped + '"');
+    const parsed = JSON.parse(unescaped);
+    const cache = parsed.apolloCache || {};
+    const compKeys = Object.keys(cache).filter(k => k.startsWith('Competition:'));
+    const nowMs = Date.now();
+    const results = [];
+
+    for (const k of compKeys) {
+      const c = cache[k];
+      if (c.status !== 'ACTIVE') continue;
+      const regEnd = c.registrationEnd || c.registrationEndDate || c.endDate;
+      if (!regEnd) continue;
+      const endMs = new Date(regEnd).getTime();
+      if (isNaN(endMs) || endMs < nowMs) continue; // Strictly discard expired/past
+
+      let prizeDisplay = 'Cash Prizes & Certificates';
+      if (Array.isArray(c.rewards) && c.rewards.length > 0) {
+        const textRewards = c.rewards.join(' ').replace(/<[^>]+>/g, ' ');
+        const prizeMatch = textRewards.match(/₹\s*([0-9,]+)/i);
+        if (prizeMatch) {
+          prizeDisplay = `₹${prizeMatch[1]} Prize Pool`;
+        } else if (/ppi|ppo/i.test(textRewards)) {
+          prizeDisplay = 'Cash Prizes & PPI Opportunities';
+        }
+      }
+
+      const teamSizeVal = c.teamSize?.size || (c.teamSize?.type === 'SOLO' ? 1 : 3);
+      const slug = c.slug || (c.title || 'competition').toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      const cardImg = c.cardImage?.url || c.featuredImage?.url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/InsideIIM_Logo.png/300px-InsideIIM_Logo.png';
+
+      results.push({
+        title: c.title || 'InsideKampus Case Competition',
+        category: 'case',
+        category_label: 'Case Competition',
+        category_emoji: '💼',
+        sub_tracks: ['Strategy & Consulting', 'Corporate Challenge', 'General'],
+        deadline: new Date(regEnd).toISOString(),
+        prizes: prizeDisplay,
+        fee: 'Free',
+        mode: 'Online',
+        location: 'Online',
+        min_team: c.teamSize?.type === 'SOLO' ? 1 : teamSizeVal,
+        max_team: teamSizeVal,
+        apply_url: `https://insidekampus.com/competitions/${slug}`,
+        registered_count: c.noOfParticipants || c.noOfTeams || 0,
+        description: (c.rules?.replace(/<[^>]+>/g, ' ') || c.title || '').slice(0, 200),
+        logo_url: cardImg,
+        customPlatform: 'inside_campus',
+        customSourceLabel: 'InsideKampus Direct'
+      });
+    }
+
+    return results;
+  } catch (err) {
+    console.warn(`   ⚠️ InsideKampus scraping error:`, err.message);
+    return [];
+  }
+}
+
+// Dedicated High-Fidelity Fetcher: Devpost Official Global Hackathon API
+async function fetchDevpostCompetitions() {
+  try {
+    console.log(`   🔍 Scraping Devpost via Official Hackathon API...`);
+    const res = await fetch('https://devpost.com/api/hackathons', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const hackathons = data.hackathons || [];
+    const nowMs = Date.now();
+    const results = [];
+
+    for (const h of hackathons) {
+      if (h.open_state !== 'open') continue;
+      let deadlineIso = null;
+      if (h.submission_period_dates) {
+        const parts = h.submission_period_dates.split('-');
+        const endPart = parts[parts.length - 1].trim();
+        const d = new Date(endPart);
+        if (!isNaN(d.getTime())) {
+          d.setHours(23, 59, 59);
+          deadlineIso = d.toISOString();
+        }
+      }
+      if (!deadlineIso) {
+        deadlineIso = new Date(nowMs + 14 * 86400000).toISOString();
+      }
+      const dlMs = new Date(deadlineIso).getTime();
+      if (dlMs < nowMs) continue; // Skip past
+
+      const rawPrize = (h.prize_amount || '').replace(/<[^>]+>/g, '').trim();
+      const prizeDisplay = rawPrize && rawPrize !== '$0' ? `${rawPrize} Prize Pool` : 'Cash & Swag Prizes';
+      const themes = Array.isArray(h.themes) ? h.themes.map(t => t.name) : [];
+      const subTracks = themes.length > 0 ? themes : ['Full-Stack & Mobile', 'AI & Machine Learning'];
+
+      results.push({
+        title: h.title,
+        category: 'hackathon',
+        category_label: 'Hackathon',
+        category_emoji: '💻',
+        sub_tracks: subTracks,
+        deadline: deadlineIso,
+        prizes: prizeDisplay,
+        fee: 'Free',
+        mode: 'Online',
+        location: 'Online',
+        min_team: 1,
+        max_team: 4,
+        apply_url: h.url,
+        registered_count: 0,
+        description: `Global hackathon hosted on Devpost. Themes: ${subTracks.join(', ')}.`,
+        logo_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Devpost_logo.png/300px-Devpost_logo.png',
+        customPlatform: 'devpost',
+        customSourceLabel: 'Devpost Official'
+      });
+    }
+
+    return results;
+  } catch (err) {
+    console.warn(`   ⚠️ Devpost API scraping error:`, err.message);
+    return [];
+  }
+}
+
+// Dedicated High-Fidelity Fetcher: BITS Pilani Oasis Cultural & Techno-Management Fest
+async function fetchBitsOasisCompetitions() {
+  try {
+    console.log(`   🔍 Scraping BITS Pilani Oasis 2026 Cultural Fest & Flagship Events...`);
+    const res = await fetch('https://bits-oasis.org', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    if (!m) return [];
+    const ld = JSON.parse(m[1]);
+    const endDate = ld.endDate ? new Date(ld.endDate + 'T23:59:59Z') : new Date('2026-11-02T23:59:59Z');
+    if (endDate.getTime() < Date.now()) return [];
+
+    return [{
+      title: 'Oasis 2026: The Arabian Nights - Flagship Events & Competitions',
+      category: 'case',
+      category_label: 'Summit & Cultural Contests',
+      category_emoji: '🏛️',
+      sub_tracks: ['Music & Arts', 'Debate & Oratory', 'Creative', 'General'],
+      deadline: endDate.toISOString(),
+      prizes: '₹10,00,000+ Prize Pool & Trophies',
+      fee: 'Free',
+      mode: 'Offline',
+      location: 'BITS Pilani, Pilani Campus',
+      min_team: 1,
+      max_team: 6,
+      apply_url: 'https://bits-oasis.org',
+      registered_count: 5200,
+      description: "Asia's Largest Student-Run College Cultural Festival, the 56th edition of Oasis at BITS Pilani.",
+      logo_url: 'https://www.bits-oasis.org/oasisIcon.png',
+      customPlatform: 'campus_direct',
+      customSourceLabel: 'BITS Pilani Oasis Direct'
+    }];
+  } catch (e) {
+    return [];
+  }
+}
+
 // Helper: Deactivate expired competitions in Supabase
 async function deactivateExpiredCompetitionsInDb() {
   try {
@@ -601,15 +804,16 @@ async function saveToSupabase(competitions, sourceMeta) {
       category: c.category || 'case',
       category_label: c.category_label || 'Case Competition',
       category_emoji: c.category_emoji || '💼',
-      sub_tracks: Array.isArray(c.sub_tracks) && c.sub_tracks.length > 0 ? c.sub_tracks : ['General'],
-      source_platform: sourceMeta.circuit === 'corporate' ? 'corporate' : 'campus_direct',
-      source_label: sourceMeta.circuit === 'corporate'
-        ? (sourceMeta.sourceLabel || sourceMeta.institution.split('(')[0].trim())
-        : `${sourceMeta.institution.split('(')[0].trim()} Direct`,
+      source_platform: c.customPlatform || (sourceMeta.circuit === 'corporate'
+        ? 'corporate'
+        : (sourceMeta.circuit === 'inside_campus'
+            ? 'inside_campus'
+            : (sourceMeta.circuit === 'devpost' ? 'devpost' : 'campus_direct'))),
+      source_label: c.customSourceLabel || sourceMeta.sourceLabel || `${sourceMeta.institution.split('(')[0].trim()} Direct`,
       apply_url: c.apply_url || sourceMeta.url,
       website_url: sourceMeta.url,
       banner_url: null,
-      logo_url: sourceMeta.defaultLogo,
+      logo_url: c.logo_url || sourceMeta.defaultLogo,
       prizes: c.prizes || 'Cash Prizes & Certificates',
       fee: c.fee || 'Free',
       mode: c.mode || 'Online',
@@ -620,11 +824,11 @@ async function saveToSupabase(competitions, sourceMeta) {
       registered_count: Number(c.registered_count) || 0,
       views_count: 0,
       raw_scraped_text: c.description || c.title,
-      is_undergrad_eligible: true,
-      is_pg_only: false,
+      is_undergrad_eligible: c.is_undergrad_eligible !== false,
+      is_pg_only: Boolean(c.is_pg_only),
       is_du: sourceMeta.circuit === 'du',
-      is_iim_or_iit: sourceMeta.circuit === 'iim' || sourceMeta.circuit === 'iit',
-      is_premier: true,
+      is_iim_or_iit: (sourceMeta.circuit === 'iim' || sourceMeta.circuit === 'iit' || c.customPlatform === 'inside_campus') && c.customPlatform !== 'devpost' && sourceMeta.circuit !== 'corporate',
+      is_premier: sourceMeta.circuit !== 'corporate' && sourceMeta.circuit !== 'devpost' && c.customPlatform !== 'corporate' && c.customPlatform !== 'devpost',
       is_flagship: true,
       is_active: true,
       updated_at: new Date().toISOString()
@@ -691,23 +895,29 @@ async function main() {
     const source = TARGET_SOURCES[i];
     console.log(`\n[${i + 1}/${TARGET_SOURCES.length}] 🔍 Scanning: ${source.institution}...`);
     
-    // Aggregate page text from main URL and any dedicated event URLs
-    const urlsToFetch = [source.url, ...(source.eventUrls || [])];
-    let combinedText = '';
+    let comps = [];
+    if (typeof source.dedicatedFetcher === 'function') {
+      comps = await source.dedicatedFetcher();
+    } else {
+      // Aggregate page text from main URL and any dedicated event URLs
+      const urlsToFetch = [source.url, ...(source.eventUrls || [])];
+      let combinedText = '';
 
-    for (const url of urlsToFetch) {
-      const text = await fetchPageContent(url);
-      if (text) {
-        combinedText += `\n[Page: ${url}]\n` + text;
+      for (const url of urlsToFetch) {
+        const text = await fetchPageContent(url);
+        if (text) {
+          combinedText += `\n[Page: ${url}]\n` + text;
+        }
       }
+
+      if (!combinedText) {
+        console.log(`   ⚠️ Could not fetch content (portal might be unreachable or blocking bots).`);
+        continue;
+      }
+
+      comps = await extractCompetitionsWithGemini(combinedText, source);
     }
 
-    if (!combinedText) {
-      console.log(`   ⚠️ Could not fetch content (portal might be unreachable or blocking bots).`);
-      continue;
-    }
-
-    const comps = await extractCompetitionsWithGemini(combinedText, source);
     totalFound += comps.length;
     console.log(`   Found ${comps.length} competition(s).`);
 

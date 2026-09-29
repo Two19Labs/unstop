@@ -191,6 +191,7 @@ const TRACK_OPTIONS = [
 
 const PLATFORM_OPTIONS = [
   { id: 'unstop', label: 'Unstop', countKey: 'unstop' },
+  { id: 'corporate', label: 'Corporate Direct', countKey: 'corporate' },
   { id: 'inside_campus', label: 'InsideKampus / InsideIIM', countKey: 'inside_campus' },
   { id: 'devpost', label: 'Devpost', countKey: 'devpost' },
   { id: 'institutional', label: 'Campus Direct', countKey: 'institutional' },
@@ -362,6 +363,7 @@ function isDUComp(comp) {
 }
 
 function isIIMorIITorPremierComp(comp) {
+  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate') return false;
   if (isDUComp(comp)) return false;
   if (typeof comp.isPremier === 'boolean') return comp.isPremier;
   if (typeof comp.isIIMorIITorPremier === 'boolean') return comp.isIIMorIITorPremier;
@@ -374,7 +376,9 @@ function isIIMorIITorPremierComp(comp) {
 const isIIMorIITorBschoolComp = isIIMorIITorPremierComp;
 
 function isCorporateOrGlobalComp(comp) {
-  if (isDUComp(comp) || isIIMorIITorPremierComp(comp)) return false;
+  if (isDUComp(comp)) return false;
+  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate') return true;
+  if (isIIMorIITorPremierComp(comp)) return false;
   if (typeof comp.isCorporateOrGlobal === 'boolean') return comp.isCorporateOrGlobal;
   const combined = `${comp.orgName || ''} ${comp.title || ''}`.toLowerCase();
   return (
@@ -484,15 +488,15 @@ function getCountdownDetails(deadlineStr, fallbackRemainText, nowMs) {
 
 function getCompCircuitKey(comp) {
   if (isDUComp(comp)) return 'du';
+  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate' || isCorporateOrGlobalComp(comp)) return 'corporate-global';
   if (isIIMorIITorPremierComp(comp)) return 'iim-iit-premier';
-  if (isCorporateOrGlobalComp(comp)) return 'corporate-global';
   return 'others';
 }
 
 function getCardCircuit(comp) {
   if (isDUComp(comp)) return { type: 'du', label: 'DU Circuit' };
+  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate' || isCorporateOrGlobalComp(comp)) return { type: 'corporate-global', label: 'Corporate & Global' };
   if (isIIMorIITorPremierComp(comp)) return { type: 'iim-iit', label: 'IIMs, IITs & Premier Colleges' };
-  if (isCorporateOrGlobalComp(comp)) return { type: 'corporate-global', label: 'Corporate & Global' };
   return { type: 'others', label: 'Others' };
 }
 
@@ -863,6 +867,7 @@ export default function CompetitionsPage({
 
     // Platform metrics
     const unstop = competitions.filter((c) => (c.sourcePlatform || 'unstop') === 'unstop').length;
+    const corporate = competitions.filter((c) => c.sourcePlatform === 'corporate').length;
     const inside_campus = competitions.filter((c) => c.sourcePlatform === 'inside_campus').length;
     const devpost = competitions.filter((c) => c.sourcePlatform === 'devpost').length;
     const institutional = competitions.filter((c) => c.sourcePlatform === 'institutional' || c.sourcePlatform === 'campus_direct').length;
@@ -882,6 +887,7 @@ export default function CompetitionsPage({
       simulations,
       debates,
       unstop,
+      corporate,
       inside_campus,
       devpost,
       institutional,
@@ -1793,9 +1799,27 @@ export default function CompetitionsPage({
                         fontSize={12}
                       />
                       <div className="cc-host-meta">
-                        <span className="cc-host-name" title={comp.orgName || 'Academic Host'}>
-                          {comp.orgName || 'Academic Host'}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span className="cc-host-name" title={comp.orgName || 'Academic Host'}>
+                            {comp.orgName || 'Academic Host'}
+                          </span>
+                          {comp.sourcePlatform && comp.sourcePlatform !== 'unstop' && (
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              background: 'rgba(15, 63, 254, 0.08)',
+                              color: 'var(--brand-primary, #0F3FFE)',
+                              border: '1px solid rgba(15, 63, 254, 0.18)',
+                              display: 'inline-block'
+                            }}>
+                              {comp.sourcePlatform === 'inside_campus' ? 'InsideKampus' :
+                               comp.sourcePlatform === 'devpost' ? 'Devpost' :
+                               comp.sourcePlatform === 'corporate' ? 'Corporate' : 'Campus Direct'}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
