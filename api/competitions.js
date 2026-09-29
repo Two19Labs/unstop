@@ -441,9 +441,14 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
     clearTimeout(timeout);
     if (!res.ok) return [];
     const rows = await res.json();
-    if (!Array.isArray(rows)) return [];
-    
-    return rows.map(r => ({
+    const nowMs = Date.now();
+    return rows
+      .filter(r => {
+        if (!r.deadline) return true;
+        const dl = new Date(r.deadline).getTime();
+        return !isNaN(dl) && dl >= nowMs;
+      })
+      .map(r => ({
       id: r.id || `inst_${r.slug || Math.random().toString(36).substring(7)}`,
       title: r.title,
       orgName: r.host_institution || r.organizer || 'Host Institution',

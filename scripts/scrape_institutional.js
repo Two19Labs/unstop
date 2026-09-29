@@ -345,12 +345,21 @@ async function extractCompetitionsWithGemini(pageText, sourceMeta) {
     return [];
   }
 
+  const now = new Date();
+  const todayIso = now.toISOString().split('T')[0];
+  const currentYear = now.getFullYear();
+
   const prompt = `
 You are an expert parser for collegiate competitions, business summits, engineering fests, hackathons, and corporate challenges across premier Indian universities and global companies (DU, IIMs, IITs, B-schools, Fortune 500 tech & finance giants).
 Analyze the following text extracted from the portal of "${sourceMeta.institution}".
 
-Extract any active, upcoming, or recently announced competitions, case challenges, hackathons, quizzes, trading simulations, or debate summits.
-If the text describes a multi-event summit (like Eureka, Red Brick Summit, Vista, Mood Indigo, Techkriti, Tryst, Imagine Cup, Tata Crucible), extract individual flagship competitions where possible.
+CRITICAL DATE & TIMELINESS VERIFICATION RULES:
+- Today's date is: ${todayIso} (Current Year: ${currentYear}).
+- STRICTLY EXCLUDE EXPIRED OR HISTORICAL COMPETITIONS:
+  If a competition, fest edition, or challenge already took place in the past (e.g. concluded earlier in ${currentYear} like Jan/Feb/March, or from previous years ${currentYear - 1}, ${currentYear - 2}), or if its registration deadline has passed, YOU MUST DISCARD IT. Do NOT extract it. Return [] for expired events.
+- ONLY extract competitions that are explicitly ACTIVE, UPCOMING, or CURRENTLY ACCEPTING APPLICATIONS for future dates in ${currentYear} or later.
+- If the text describes a multi-event summit, only extract individual flagship competitions that have FUTURE deadlines.
+- For "deadline": MUST be a valid ISO 8601 string strictly in the future (after ${todayIso}). If the competition has already concluded or registrations closed, omit it completely.
 
 Return a valid JSON array of objects. Return JSON only, with no commentary. Each object MUST strictly follow this structure:
 [
@@ -360,7 +369,7 @@ Return a valid JSON array of objects. Return JSON only, with no commentary. Each
     "category_label": "Case Competition" | "Hackathon" | "Quiz" | "Simulation" | "Writing & Research" | "Debates & MUNs",
     "category_emoji": "💼" | "💻" | "🧠" | "📈" | "✍️" | "🗣️",
     "sub_tracks": ["Finance", "Strategy & Consulting", "Marketing", "B-Plan", "Product", "Operations", "AI & ML", "Web & Mobile", "General"],
-    "deadline": "ISO 8601 string (e.g. 2026-10-15T23:59:59Z). If no exact date is mentioned, estimate 14 days from now",
+    "deadline": "ISO 8601 string strictly in the future (e.g. 2026-11-15T23:59:59Z)",
     "prizes": "Exact prize pool mentioned (e.g. ₹50,000 Cash Pool, or Certificates & Trophies)",
     "fee": "Free" or fee amount string,
     "mode": "Online" | "Offline" | "Hybrid",
@@ -373,7 +382,7 @@ Return a valid JSON array of objects. Return JSON only, with no commentary. Each
   }
 ]
 
-If no active competitions are found in the text, return an empty array: []
+If no active upcoming competitions are found in the text, return an empty array: []
 
 Extracted Page Text:
 """
@@ -434,11 +443,44 @@ ${pageText}
   return [];
 }
 
+// Helper: Deactivate expired competitions in Supabase
+async function deactivateExpiredCompetitionsInDb() {
+  try {
+    const nowIso = new Date().toISOString();
+    await fetch(`${SUPABASE_URL}/rest/v1/institutional_competitions?deadline=lt.${encodeURIComponent(nowIso)}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ is_active: false })
+    });
+  } catch (e) {}
+}
+
 // Upsert records into Supabase institutional_competitions table
 async function saveToSupabase(competitions, sourceMeta) {
   if (!competitions || competitions.length === 0) return 0;
 
-  const records = competitions.map(c => {
+  // Strict Programmatic Guard: Filter out any competition whose deadline has already passed
+  const nowMs = Date.now();
+  const validCompetitions = competitions.filter(c => {
+    if (!c.deadline) return true;
+    const dl = new Date(c.deadline).getTime();
+    if (!isNaN(dl) && dl < nowMs) {
+      console.log(`   ⏭️ Skipping expired/past competition: "${c.title}" (deadline: ${c.deadline})`);
+      return false;
+    }
+    return true;
+  });
+
+  if (validCompetitions.length === 0) {
+    console.log(`   ⚠️ All parsed competitions from this source were past/expired events.`);
+    return 0;
+  }
+
+  const records = validCompetitions.map(c => {
     const slug = (c.title || 'competition')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '_')
@@ -534,6 +576,9 @@ async function main() {
     console.log('═════════════════════════════════════════════════════════════════');
   }
 
+  // Automatically deactivate expired competitions in Supabase
+  await deactivateExpiredCompetitionsInDb();
+
   let totalFound = 0;
   let totalSaved = 0;
 
@@ -567,6 +612,11 @@ async function main() {
       });
       const saved = await saveToSupabase(comps, source);
       totalSaved += saved;
+    }
+
+    // Gentle 2.5s breathing room between targets to stay safely under 15 RPM
+    if (i < TARGET_SOURCES.length - 1) {
+      await new Promise(r => setTimeout(r, 2500));
     }
   }
 
