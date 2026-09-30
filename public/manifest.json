@@ -3,6 +3,8 @@
   "short_name": "OneStop",
   "description": "Real-time undergraduate competition discovery, deadline radar and peer squad finder.",
   "start_url": "/",
+  "scope": "/",
+  "orientation": "portrait",
   "display": "standalone",
   "background_color": "#0B0F19",
   "theme_color": "#0F3FFE",

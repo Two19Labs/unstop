@@ -17,6 +17,7 @@ import ThemeToggle from './components/ThemeToggle';
 import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
+import InstallShortcutPopup from './components/InstallShortcutPopup';
 import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
 import AdminConsolePage from './components/AdminConsolePage';
 import { isAdminEmail } from './lib/admin';
@@ -1301,6 +1302,11 @@ function OneStopInner() {
         bookmarksCount={bookmarks.length}
         profile={profile}
         user={user}
+      />
+
+      {/* Mobile Shortcut / PWA Install Popup on Phone */}
+      <InstallShortcutPopup
+        onInstalled={() => flash('🎉 OneStop shortcut added to home screen! Ready on the go.')}
       />
 
       {/* Global Toast */}

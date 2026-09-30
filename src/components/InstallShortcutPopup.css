@@ -1,0 +1,447 @@
+/* src/components/InstallShortcutPopup.css */
+/* OneStop Mobile Shortcut & PWA Install Popup */
+
+/* 1. Floating Bottom Popup Card */
+.onestop-install-popup {
+  position: fixed;
+  bottom: calc(56px + var(--sab, 0px) + 12px);
+  left: 12px;
+  right: 12px;
+  margin: 0 auto;
+  max-width: 480px;
+  z-index: 50;
+  animation: onestopPopupSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+}
+
+@media (min-width: 769px) {
+  .onestop-install-popup {
+    bottom: 24px;
+    right: 24px;
+    left: auto;
+    width: 390px;
+  }
+}
+
+@keyframes onestopPopupSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.onestop-install-popup-content {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme='dark'] .onestop-install-popup-content {
+  background: rgba(24, 25, 30, 0.94);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* App Icon Container */
+.onestop-install-popup-icon-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+}
+
+.onestop-install-popup-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  object-fit: cover;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] .onestop-install-popup-icon {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.onestop-install-popup-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  width: 17px;
+  height: 17px;
+  background: var(--primary);
+  color: #FFFFFF;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--surface);
+}
+
+/* Text Block */
+.onestop-install-popup-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5px;
+}
+
+.onestop-install-popup-header-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+}
+
+.onestop-install-popup-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.onestop-install-popup-dot {
+  font-size: 8px;
+  color: var(--ink-muted);
+}
+
+.onestop-install-popup-subtag {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  letter-spacing: 0.02em;
+}
+
+.onestop-install-popup-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.onestop-install-popup-desc {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--ink-secondary);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Action Buttons */
+.onestop-install-popup-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.onestop-install-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--primary);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(15, 63, 254, 0.28);
+  white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.onestop-install-btn-primary:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.onestop-install-btn-primary:active {
+  transform: scale(0.96);
+}
+
+.onestop-install-btn-icon {
+  margin-top: -1px;
+}
+
+.onestop-install-btn-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.onestop-install-btn-dismiss:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.onestop-install-btn-dismiss:active {
+  transform: scale(0.92);
+}
+
+/* 2. Step-by-Step Visual Guide Modal / Bottom Sheet */
+.onestop-guide-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 16, 19, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: onestopFadeIn 0.25s ease forwards;
+}
+
+@media (min-width: 600px) {
+  .onestop-guide-modal-backdrop {
+    align-items: center;
+    padding: 20px;
+  }
+}
+
+@keyframes onestopFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.onestop-guide-modal-sheet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 16px 20px 24px;
+  box-sizing: border-box;
+  animation: onestopSheetSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 600px) {
+  .onestop-guide-modal-sheet {
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes onestopSheetSlideUp {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.onestop-guide-drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--divider-dot);
+  margin: 0 auto 14px;
+}
+
+@media (min-width: 600px) {
+  .onestop-guide-drag-handle {
+    display: none;
+  }
+}
+
+.onestop-guide-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.onestop-guide-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.onestop-guide-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.onestop-guide-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.onestop-guide-subtitle {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+
+.onestop-guide-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.onestop-guide-close-btn:hover {
+  color: var(--ink);
+  background: var(--line);
+}
+
+/* Steps List */
+.onestop-guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.onestop-guide-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line-light);
+  border-radius: 12px;
+}
+
+.onestop-guide-step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.onestop-guide-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.onestop-guide-step-text strong {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.onestop-guide-step-text span {
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+
+.onestop-guide-inline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  padding: 2px 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--primary);
+  font-weight: 700;
+  margin: 0 2px;
+}
+
+/* Footer & Perks */
+.onestop-guide-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.onestop-guide-perks {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  padding: 8px 12px;
+  background: var(--surface-muted);
+  border-radius: 8px;
+}
+
+.onestop-guide-gotit-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 3px 12px rgba(15, 63, 254, 0.28);
+}
+
+.onestop-guide-gotit-btn:hover {
+  background: var(--primary-hover);
+}
+
+.onestop-guide-gotit-btn:active {
+  transform: scale(0.98);
+}
