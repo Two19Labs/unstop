@@ -137,8 +137,8 @@ function ProfileScreenContent({
 
   const handleSendTestPush = () => {
     const dispatched = dispatchBrowserNotification({
-      title: '🚨 Final 15m · Flipkart GRiD 6.0 (Sample)',
-      body: 'Round 1: Case Release cutoff is at Today, 11:59 PM IST (Flipkart). Emergency submission window closing—submit on Unstop before server lock.',
+      title: '🚨 Final 15m · Flipkart GRiD 6.0',
+      body: 'Flipkart · Round 1: Online Quiz cutoff at Today, 11:59 PM IST (15m left). Submit files before portal lock.',
       tag: 'test_push_' + Date.now()
     });
     if (dispatched && flashToast) {

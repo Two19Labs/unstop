@@ -164,8 +164,8 @@ export function evaluateExtensions({
             type: 'deadline_extended',
             category: 'deadlines',
             urgency: 'extension',
-            title: `🎉 Registration Extended · ${compactCompTitle}`,
-            subtitle: `${compName}${hostSuffix} registration extended by ${extraStr} (from ${oldStr} to ${newStr})! Take advantage of the new cutoff.`,
+            title: `🎉 Extended ${extraStr} · ${compactCompTitle}`,
+            subtitle: `${compHost ? `${compHost} · ` : ''}Registration deadline extended: ${oldStr} → ${newStr}.`,
             timestamp: now,
             badgeText: `Extended ${extraStr}`,
             data: {
@@ -231,8 +231,8 @@ export function evaluateExtensions({
                 type: 'round_extended',
                 category: 'deadlines',
                 urgency: 'extension',
-                title: `⏳ Round Extended · ${compactCompTitle}`,
-                subtitle: `${roundTitle} for ${compName}${hostSuffix} extended by ${extraStr} (new cutoff: ${newStr})! Keep polishing your submission.`,
+                title: `⏳ ${roundTitle} Extended ${extraStr} · ${compactCompTitle}`,
+                subtitle: `${compHost ? `${compHost} · ` : ''}${roundTitle} deadline extended: ${oldStr} → ${newStr}.`,
                 timestamp: now,
                 badgeText: extraStr ? `Extended ${extraStr}` : 'Round Extended',
                 data: {
@@ -243,13 +243,13 @@ export function evaluateExtensions({
                   roundId: round.id,
                   round,
                   roundTitle,
-                  publicUrl: round.publicUrl || comp.unstopUrl,
+                  publicUrl: round.publicUrl || comp.apply_url || comp.unstopUrl,
                   oldDeadline: storedRound.endDate,
                   newDeadline: round.endDate,
                   diffMs
                 },
                 actions: [
-                  { label: 'Enter Round Portal', actionType: 'portal', isPrimary: true, url: round.publicUrl || comp.unstopUrl }
+                  { label: 'Enter Round Portal ↗', actionType: 'portal', isPrimary: true, url: round.publicUrl || comp.apply_url || comp.unstopUrl }
                 ]
               };
 
@@ -295,14 +295,18 @@ export function evaluateExtensions({
           const compactC = cName.length > 38 ? `${cName.slice(0, 36).trim()}…` : cName;
 
           if (ext.type === 'round_extended') {
-            if (!ext.title.includes('·') || ext.title.endsWith('· Competition')) {
-              ext.title = `⏳ Round Extended · ${compactC}`;
+            const rTitle = ext.data?.round?.title || ext.data?.roundTitle || 'Round';
+            const oldStr = ext.data?.oldDeadline ? formatRoundDeadlineTime(new Date(ext.data.oldDeadline).getTime()) : '';
+            const newStr = ext.data?.newDeadline ? formatRoundDeadlineTime(new Date(ext.data.newDeadline).getTime()) : '';
+            const deadlineRange = (oldStr && newStr) ? `: ${oldStr} → ${newStr}.` : ' extended.';
+            const extraTime = ext.badgeText ? ` ${ext.badgeText.replace('Extended ', '')}` : '';
+
+            if (!ext.title.includes('Extended') || ext.title.endsWith('· Competition') || ext.title.startsWith('⏳ Round Extended')) {
+              ext.title = `⏳ ${rTitle} Extended${extraTime} · ${compactC}`;
               hasChanges = true;
             }
-            const rTitle = ext.data?.round?.title || ext.data?.roundTitle || 'Round';
-            if (!ext.subtitle || ext.subtitle.includes('· Competition') || !ext.subtitle.includes(cName)) {
-              const extraTime = ext.badgeText ? ` (${ext.badgeText})` : '';
-              ext.subtitle = `${rTitle} for ${cName}${hostSfx} extended${extraTime}! Keep working on your submission.`;
+            if (!ext.subtitle || ext.subtitle.includes('Keep working') || ext.subtitle.includes('Keep polishing') || ext.subtitle.includes('· Competition') || !ext.subtitle.includes('→')) {
+              ext.subtitle = `${cHost ? `${cHost} · ` : ''}${rTitle} deadline extended${deadlineRange}`;
               hasChanges = true;
             }
             if (ext.data) {
@@ -312,13 +316,17 @@ export function evaluateExtensions({
               hasChanges = true;
             }
           } else if (ext.type === 'deadline_extended') {
-            if (!ext.title.includes('·') || ext.title.endsWith('· Competition')) {
-              ext.title = `🎉 Registration Extended · ${compactC}`;
+            const oldStr = ext.data?.oldDeadline ? formatRoundDeadlineTime(new Date(ext.data.oldDeadline).getTime()) : '';
+            const newStr = ext.data?.newDeadline ? formatRoundDeadlineTime(new Date(ext.data.newDeadline).getTime()) : '';
+            const deadlineRange = (oldStr && newStr) ? `: ${oldStr} → ${newStr}.` : ' extended.';
+            const extraTime = ext.badgeText ? ` ${ext.badgeText.replace('Extended ', '')}` : '';
+
+            if (!ext.title.includes('Extended') || ext.title.endsWith('· Competition') || ext.title.startsWith('🎉 Registration Extended')) {
+              ext.title = `🎉 Extended${extraTime} · ${compactC}`;
               hasChanges = true;
             }
-            if (!ext.subtitle || ext.subtitle.includes('· Competition') || !ext.subtitle.includes(cName)) {
-              const extraTime = ext.badgeText ? ` (${ext.badgeText})` : '';
-              ext.subtitle = `${cName}${hostSfx} registration extended${extraTime}!`;
+            if (!ext.subtitle || ext.subtitle.includes('Take advantage') || ext.subtitle.includes('· Competition') || !ext.subtitle.includes('→')) {
+              ext.subtitle = `${cHost ? `${cHost} · ` : ''}Registration deadline extended${deadlineRange}`;
               hasChanges = true;
             }
             if (ext.data) {
