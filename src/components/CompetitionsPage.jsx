@@ -239,11 +239,15 @@ import './CompetitionsPage.css';
 
 const DU_KEYWORDS = [
   'delhi university', 'university of delhi', '(du)', 'sscbs', 'shaheed sukhdev',
-  'srcc', 'shri ram college', 'stephen', 'hindu', 'hansraj', 'lsr', 'lady shri ram',
+  'srcc', 'shri ram college', "stephen's", "st. stephen", "stephens college",
+  'hindu college', 'hansraj', 'lsr', 'lady shri ram',
   'sggscc', 'ramjas', 'kirori mal', 'kmc', 'drc', 'daulat ram', 'gargi', 'venkateswara',
-  'venky', 'sgtb khalsa', 'khalsa', 'keshav mahavidyalaya', 'deen dayal upadhyaya', 'ddu',
-  'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc', 'shaheed bhagat singh',
-  'motilal nehru', 'indraprastha college', 'ipcw', 'maharaja agrasen', 'ramanujan', 'kalindi', 'kamala nehru'
+  'venky', 'sgtb khalsa', 'sgtb', 'sri guru tegh bahadur khalsa', 'keshav mahavidyalaya',
+  'deen dayal upadhyaya college', 'ddu college',
+  'miranda house', 'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc',
+  'shaheed bhagat singh', 'motilal nehru college', 'indraprastha college', 'ipcw',
+  'maharaja agrasen college', 'ramanujan college', 'kalindi college', 'kamala nehru college',
+  'shaheed rajguru', 'bharati college', 'college of vocational studies', 'cvs'
 ];
 
 const IIM_IIT_PREMIER_KEYWORDS = [
@@ -251,10 +255,12 @@ const IIM_IIT_PREMIER_KEYWORDS = [
   'iim', 'indian institute of management', 'nitie',
   // IITs & Premier Research
   'iit', 'indian institute of technology', 'doms', 'dms', 'sjmsom', 'vgsom', 'iisc', 'indian institute of science', 'techkriti', 'ism dhanbad',
+  'iit bhu', 'banaras hindu university', 'iit (bhu)', 'iit-bhu',
   // BITS Pilani (All campuses: Pilani, Goa, Hyderabad)
   'bits pilani', 'birla institute of technology & science', 'birla institute of technology and science', 'bits goa', 'bits hyderabad', 'bits',
   // NITs (All National Institutes of Technology)
   'nit ', 'nit,', 'nit)', 'nit -', 'nit-', 'national institute of technology', 'vnit', 'mnit', 'mnnit', 'svnit', 'manit',
+  'motilal nehru national institute of technology',
   // IIITs (Indian Institutes of Information Technology)
   'iiit', 'iiit-delhi', 'iiitd', 'iiith', 'iiitb', 'iiit hyderabad', 'iiit bangalore', 'iiit delhi', 'iiit allahabad',
   // Top Tier 1 & Prominent B-Schools
@@ -319,7 +325,8 @@ const CORPORATE_KEYWORDS = [
   'amazon', 'flipkart', 'google', 'microsoft', 'apple', 'meta', 'uber', 'swiggy', 'zomato',
   'qualcomm', 'intel', 'cisco', 'ibm', 'infosys', 'wipro', 'hcl', 'cognizant', 'capgemini', 'tech mahindra',
   'airtel', 'jio', 'vodafone', 'supervity', 'salesforce', 'adobe',
-  // Conglomerates & Industrial
+  // Conglomerates, Industrial, Energy & PSUs
+  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail', 'ntpc', 'bhel', 'coal india',
   'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
   'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
   'hero motocorp', 'hero colabs', 'hero', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
@@ -349,14 +356,16 @@ const GLOBAL_KEYWORDS = [
 ];
 
 function isMatch(text, kw) {
-  if (kw.length <= 4 && /^[a-z0-9]+$/i.test(kw)) {
-    const regex = new RegExp(`\\b${kw}\\b`, 'i');
-    return regex.test(text);
-  }
-  return text.includes(kw);
+  const keyword = kw.trim().toLowerCase();
+  if (!keyword) return false;
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(^|\\b)${escaped}(\\b|$)`, 'i');
+  return regex.test(text);
 }
 
 function isDUComp(comp) {
+  if (comp.circuit === 'DU Circuit') return true;
+  if (comp.circuit && comp.circuit !== 'DU Circuit') return false;
   if (comp.isDU) return true;
   const combined = `${comp.orgName || ''} ${comp.title || ''}`.toLowerCase();
   return DU_KEYWORDS.some(kw => isMatch(combined, kw));
@@ -500,13 +509,16 @@ function getCountdownDetails(deadlineStr, fallbackRemainText, nowMs) {
 
 function getCompCircuitKey(comp) {
   if (!comp) return 'others';
-  if (comp.circuit === 'DU Circuit' || comp.isDU) return 'du';
-  if (comp.circuit === 'IIM / IIT' || comp.isPremier || comp.isIIMorIIT || comp.isIIMorIITorPremier) return 'iim-iit-premier';
-  if (comp.circuit === 'Corporate' || comp.isCorporate || comp.isCorporateOrGlobal) return 'corporate-global';
-  if (comp.circuit === 'Others' || comp.isOthers) return 'others';
-  if (isDUComp(comp)) return 'du';
+  if (comp.circuit === 'DU Circuit') return 'du';
+  if (comp.circuit === 'IIM / IIT') return 'iim-iit-premier';
+  if (comp.circuit === 'Corporate') return 'corporate-global';
+  if (comp.circuit === 'Others') return 'others';
+  if (comp.isIIMorIIT || comp.isPremier || comp.isIIMorIITorPremier || comp.isBschool) return 'iim-iit-premier';
+  if (comp.isCorporate || comp.isCorporateOrGlobal) return 'corporate-global';
+  if (comp.isDU) return 'du';
   if (isIIMorIITorPremierComp(comp)) return 'iim-iit-premier';
   if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate' || isCorporateOrGlobalComp(comp)) return 'corporate-global';
+  if (isDUComp(comp)) return 'du';
   return 'others';
 }
 

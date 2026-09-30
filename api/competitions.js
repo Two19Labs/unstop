@@ -13,11 +13,15 @@ const FLAGSHIP_KEYWORDS = [
 
 const DU_KEYWORDS = [
   'delhi university', 'university of delhi', '(du)', 'sscbs', 'shaheed sukhdev',
-  'srcc', 'shri ram college', 'stephen', 'hindu', 'hansraj', 'lsr', 'lady shri ram',
+  'srcc', 'shri ram college', "stephen's", "st. stephen", "stephens college",
+  'hindu college', 'hansraj', 'lsr', 'lady shri ram',
   'sggscc', 'ramjas', 'kirori mal', 'kmc', 'drc', 'daulat ram', 'gargi', 'venkateswara',
-  'venky', 'sgtb khalsa', 'khalsa', 'keshav mahavidyalaya', 'deen dayal upadhyaya', 'ddu',
-  'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc', 'shaheed bhagat singh',
-  'motilal nehru', 'indraprastha college', 'ipcw', 'maharaja agrasen', 'ramanujan', 'kalindi', 'kamala nehru'
+  'venky', 'sgtb khalsa', 'sgtb', 'sri guru tegh bahadur khalsa', 'keshav mahavidyalaya',
+  'deen dayal upadhyaya college', 'ddu college',
+  'miranda house', 'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc',
+  'shaheed bhagat singh', 'motilal nehru college', 'indraprastha college', 'ipcw',
+  'maharaja agrasen college', 'ramanujan college', 'kalindi college', 'kamala nehru college',
+  'shaheed rajguru', 'bharati college', 'college of vocational studies', 'cvs'
 ];
 
 const IIM_IIT_PREMIER_KEYWORDS = [
@@ -25,10 +29,12 @@ const IIM_IIT_PREMIER_KEYWORDS = [
   'iim', 'indian institute of management', 'nitie',
   // IITs & Premier Research
   'iit', 'indian institute of technology', 'doms', 'dms', 'sjmsom', 'vgsom', 'iisc', 'indian institute of science', 'techkriti', 'ism dhanbad',
+  'iit bhu', 'banaras hindu university', 'iit (bhu)', 'iit-bhu',
   // BITS Pilani (All campuses: Pilani, Goa, Hyderabad)
   'bits pilani', 'birla institute of technology & science', 'birla institute of technology and science', 'bits goa', 'bits hyderabad', 'bits',
   // NITs (All National Institutes of Technology)
   'nit ', 'nit,', 'nit)', 'nit -', 'nit-', 'national institute of technology', 'vnit', 'mnit', 'mnnit', 'svnit', 'manit',
+  'motilal nehru national institute of technology',
   // IIITs (Indian Institutes of Information Technology)
   'iiit', 'iiit-delhi', 'iiitd', 'iiith', 'iiitb', 'iiit hyderabad', 'iiit bangalore', 'iiit delhi', 'iiit allahabad',
   // Top Tier 1 & Prominent B-Schools
@@ -94,6 +100,7 @@ const CORPORATE_KEYWORDS = [
   'qualcomm', 'intel', 'cisco', 'ibm', 'infosys', 'wipro', 'hcl', 'cognizant', 'capgemini', 'tech mahindra',
   'airtel', 'jio', 'vodafone', 'supervity', 'salesforce', 'adobe',
   // Conglomerates & Industrial
+  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail',
   'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
   'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
   'hero motocorp', 'hero colabs', 'hero', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
@@ -123,11 +130,11 @@ const GLOBAL_KEYWORDS = [
 ];
 
 function matchesKeyword(text, keyword) {
-  if (keyword.length <= 4 && /^[a-z0-9]+$/i.test(keyword)) {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i');
-    return regex.test(text);
-  }
-  return text.includes(keyword);
+  const kw = keyword.trim().toLowerCase();
+  if (!kw) return false;
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(^|\\b)${escaped}(\\b|$)`, 'i');
+  return regex.test(text);
 }
 
 // Check if a competition is strictly for school/K-12 students
@@ -648,15 +655,25 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
     const lowerTitle = (item.title || '').toLowerCase();
     const combined = `${lowerOrg} ${lowerTitle}`;
 
-    // Tag categorization
-    const isDU = DU_KEYWORDS.some(kw => matchesKeyword(combined, kw));
-    const isIIMorIITorPremier = !isDU && IIM_IIT_PREMIER_KEYWORDS.some(kw => matchesKeyword(combined, kw));
-    const isCorporateOrGlobal = !isDU && !isIIMorIITorPremier && (
-      CORPORATE_KEYWORDS.some(kw => matchesKeyword(combined, kw)) ||
-      GLOBAL_KEYWORDS.some(kw => matchesKeyword(combined, kw)) ||
-      /\b(pvt ltd|private limited|technologies pvt|solutions pvt)\b/i.test(combined) ||
-      (item.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(orgName))
+    // Tag categorization: prioritize host institution
+    const isIIMorIITorPremier = IIM_IIT_PREMIER_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
+      /\b(iit|iim|nit|iiit|bits pilani|iisc)\b/i.test(lowerOrg) ||
+      (!/\b(college|university|institute|school of)\b/i.test(lowerOrg) && IIM_IIT_PREMIER_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)));
+
+    const isDU = !isIIMorIITorPremier && (
+      DU_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
+      /\b(delhi university|university of delhi|\(du\))\b/i.test(lowerOrg) ||
+      (!/\b(college|university|institute|school of)\b/i.test(lowerOrg) && DU_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)))
     );
+
+    const isCorporateOrGlobal = !isDU && !isIIMorIITorPremier && (
+      CORPORATE_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
+      GLOBAL_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
+      /\b(pvt ltd|private limited|corporation ltd|corporation limited|inc\b|technologies llc)\b/i.test(lowerOrg) ||
+      (item.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(lowerOrg)) ||
+      (!/\b(college|university|institute|school of)\b/i.test(lowerOrg) && CORPORATE_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)))
+    );
+
     const isOthers = !isDU && !isIIMorIITorPremier && !isCorporateOrGlobal;
     const isCorporate = isCorporateOrGlobal;
     const isFlagship = FLAGSHIP_KEYWORDS.some(kw => matchesKeyword(combined, kw));

@@ -104,29 +104,34 @@ export const SORT_LABELS = {
 
 const DU_KEYWORDS = [
   'delhi university', 'university of delhi', '(du)', 'sscbs', 'shaheed sukhdev',
-  'srcc', 'shri ram college', 'stephen', 'hindu', 'hansraj', 'lsr', 'lady shri ram',
+  'srcc', 'shri ram college', "stephen's", "st. stephen", "stephens college",
+  'hindu college', 'hansraj', 'lsr', 'lady shri ram',
   'sggscc', 'ramjas', 'kirori mal', 'kmc', 'drc', 'daulat ram', 'gargi', 'venkateswara',
-  'venky', 'sgtb khalsa', 'khalsa', 'keshav mahavidyalaya', 'deen dayal upadhyaya', 'ddu',
-  'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc', 'shaheed bhagat singh',
-  'motilal nehru', 'indraprastha college', 'ipcw', 'maharaja agrasen', 'ramanujan', 'kalindi', 'kamala nehru'
+  'venky', 'sgtb khalsa', 'sgtb', 'sri guru tegh bahadur khalsa', 'keshav mahavidyalaya',
+  'deen dayal upadhyaya college', 'ddu college',
+  'miranda house', 'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc',
+  'shaheed bhagat singh', 'motilal nehru college', 'indraprastha college', 'ipcw',
+  'maharaja agrasen college', 'ramanujan college', 'kalindi college', 'kamala nehru college',
+  'shaheed rajguru', 'bharati college', 'college of vocational studies', 'cvs'
 ];
 
 function isMatch(text, kw) {
-  if (kw.length <= 4 && /^[a-z0-9]+$/i.test(kw)) {
-    const regex = new RegExp(`\\b${kw}\\b`, 'i');
-    return regex.test(text);
-  }
-  return text.includes(kw);
+  const keyword = kw.trim().toLowerCase();
+  if (!keyword) return false;
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(^|\\b)${escaped}(\\b|$)`, 'i');
+  return regex.test(text);
 }
 
 function getCompCircuitKey(comp) {
   if (!comp) return 'others';
-  if (comp.isDU || comp.circuit === 'DU Circuit') return 'du';
-  const combined = `${comp.orgName || comp.host || ''} ${comp.title || ''}`.toLowerCase();
-  if (DU_KEYWORDS.some(kw => isMatch(combined, kw))) return 'du';
-  if (comp.isIIMorIIT || comp.isPremier || comp.isIIMorIITorPremier || comp.isBschool || comp.circuit === 'IIM / IIT') return 'iim-iit-premier';
-  if (comp.isCorporate || comp.isCorporateOrGlobal || comp.circuit === 'Corporate') return 'corporate-global';
-  if (comp.circuit === 'Others' || comp.isOthers) return 'others';
+  if (comp.circuit === 'DU Circuit') return 'du';
+  if (comp.circuit === 'IIM / IIT') return 'iim-iit-premier';
+  if (comp.circuit === 'Corporate') return 'corporate-global';
+  if (comp.circuit === 'Others') return 'others';
+  if (comp.isIIMorIIT || comp.isPremier || comp.isIIMorIITorPremier || comp.isBschool) return 'iim-iit-premier';
+  if (comp.isCorporate || comp.isCorporateOrGlobal) return 'corporate-global';
+  if (comp.isDU) return 'du';
   return 'others';
 }
 
