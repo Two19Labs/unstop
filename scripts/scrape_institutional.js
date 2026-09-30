@@ -495,9 +495,15 @@ Return a valid JSON array of objects. Return JSON only, with no commentary. Each
     "max_team": 4,
     "apply_url": "Direct registration URL or ${sourceMeta.url}",
     "registered_count": 0,
-    "description": "2 concise sentences explaining what participants are tasked with solving."
+    "description": "2 concise sentences explaining what participants are tasked with solving.",
+    "is_undergrad_eligible": true,
+    "is_pg_only": false
   }
 ]
+
+ELIGIBILITY EXTRACTION INSTRUCTIONS:
+- "is_undergrad_eligible": set to false if the event is strictly for MBA students, PGDM, or Postgraduates only. Set to true if undergraduates can participate or if open to all collegiate students.
+- "is_pg_only": set to true if the event is exclusively for MBA students, PGDM, or Postgraduates only. Set to false if undergraduates can participate.
 
 If no active upcoming competitions are found in the text, return an empty array: []
 
@@ -824,8 +830,22 @@ async function saveToSupabase(competitions, sourceMeta) {
       registered_count: Number(c.registered_count) || 0,
       views_count: 0,
       raw_scraped_text: c.description || c.title,
-      is_undergrad_eligible: c.is_undergrad_eligible !== false,
-      is_pg_only: Boolean(c.is_pg_only),
+      is_undergrad_eligible: (() => {
+        const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
+        const isMbaExcl = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only)\b/i.test(titleAndDesc) ||
+          (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
+        const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);
+        if (isMbaExcl && !explicitlyUg) return false;
+        return c.is_undergrad_eligible !== false && !c.is_pg_only;
+      })(),
+      is_pg_only: (() => {
+        const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
+        const isMbaExcl = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only)\b/i.test(titleAndDesc) ||
+          (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
+        const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);
+        if (isMbaExcl && !explicitlyUg) return true;
+        return Boolean(c.is_pg_only) || c.is_undergrad_eligible === false;
+      })(),
       is_du: sourceMeta.circuit === 'du',
       is_iim_or_iit: (sourceMeta.circuit === 'iim' || sourceMeta.circuit === 'iit' || c.customPlatform === 'inside_campus') && c.customPlatform !== 'devpost' && sourceMeta.circuit !== 'corporate',
       is_premier: sourceMeta.circuit !== 'corporate' && sourceMeta.circuit !== 'devpost' && c.customPlatform !== 'corporate' && c.customPlatform !== 'devpost',

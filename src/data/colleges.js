@@ -13,12 +13,17 @@ export const YEAR_OPTIONS = [
 
 export function normalizeYear(val) {
   if (!val) return 'UG 2nd Year';
-  if (val.includes('UG') || val.includes('PG')) return val;
-  if (val.includes('1st')) return 'UG 1st Year';
-  if (val.includes('2nd')) return 'UG 2nd Year';
-  if (val.includes('3rd')) return 'UG 3rd Year';
-  if (val.includes('4th')) return 'UG 4th Year';
-  if (val.toLowerCase().includes('postgraduate') || val.toLowerCase().includes('master') || val.includes('5th')) return 'PG 1st Year';
+  const str = String(val).trim();
+  if (str.includes('UG') || str.includes('PG')) return str;
+  const lower = str.toLowerCase();
+  const isPg = lower.includes('pg') || lower.includes('mba') || lower.includes('master') || lower.includes('postgraduate') || lower.includes('phd');
+  const prefix = isPg ? 'PG' : 'UG';
+
+  if (lower.includes('1st') || lower.includes('1')) return `${prefix} 1st Year`;
+  if (lower.includes('2nd') || lower.includes('2')) return `${prefix} 2nd Year`;
+  if (lower.includes('3rd') || lower.includes('3')) return isPg ? 'PG 2nd Year' : 'UG 3rd Year';
+  if (lower.includes('4th') || lower.includes('4')) return isPg ? 'PG 2nd Year' : 'UG 4th Year';
+  if (isPg) return 'PG 1st Year';
   return 'UG 2nd Year';
 }
 

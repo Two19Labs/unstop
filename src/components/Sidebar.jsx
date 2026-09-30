@@ -13,7 +13,8 @@ export default function Sidebar({
   profile,
   user = null,
   mobileOpen = false,
-  onCloseMobile = () => {}
+  onCloseMobile = () => {},
+  onOpenWalkthrough = () => {}
 }) {
   const navItems = [
     {
@@ -249,6 +250,44 @@ export default function Sidebar({
               >
                 ADMIN
               </span>
+            </button>
+          )}
+
+          {/* Platform Tour Button */}
+          {typeof onOpenWalkthrough === 'function' && (
+            <button
+              type="button"
+              onClick={onOpenWalkthrough}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                width: '100%',
+                textAlign: 'left',
+                border: '1px dashed var(--line)',
+                borderRadius: '8px',
+                background: 'transparent',
+                padding: '7px 10px',
+                cursor: 'pointer',
+                color: 'var(--ink-secondary)',
+                fontSize: '12px',
+                fontWeight: 600,
+                transition: 'all 120ms ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--surface-muted)';
+                e.currentTarget.style.color = 'var(--primary)';
+                e.currentTarget.style.borderColor = 'var(--primary-tint-35)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--ink-secondary)';
+                e.currentTarget.style.borderColor = 'var(--line)';
+              }}
+              aria-label="Platform tour"
+            >
+              <span style={{ fontSize: '13px' }}>✨</span>
+              <span>Platform Tour</span>
             </button>
           )}
 

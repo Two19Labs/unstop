@@ -567,6 +567,12 @@ export default function CompetitionsPage({
   onFilterPrefsChange,
 }) {
   const { user, profile, squadPosts = [], openAuthModal } = useAuth();
+  const effectiveIsPostgraduate = useMemo(() => {
+    if (typeof isPostgraduate === 'boolean' && isPostgraduate) return true;
+    const ed = (profile?.education_level || '').toLowerCase();
+    const yr = (profile?.year || profile?.batch || '').toUpperCase();
+    return ed === 'postgraduate' || yr.startsWith('PG');
+  }, [isPostgraduate, profile]);
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
   const bookmarksKey = `${LOCAL_STORAGE_KEY}${userKeySuffix}`;
 
@@ -1118,7 +1124,11 @@ export default function CompetitionsPage({
       if (feeFilter === 'paid' && comp.isFree) return false;
 
       // Undergraduate eligibility check
-      if (!isPostgraduate && comp.isUndergradEligible === false) return false;
+      if (!effectiveIsPostgraduate) {
+        if (comp.isUndergradEligible === false || comp.isPGOnly || comp.targetLevel === 'pg') {
+          return false;
+        }
+      }
 
       return true;
     });

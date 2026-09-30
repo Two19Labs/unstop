@@ -204,15 +204,20 @@ export default function TeamFinderScreen({
   // Apply Modal State
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [applyTargetPost, setApplyTargetPost] = useState(null);
-
-
+  const [chatModalApp, setChatModalApp] = useState(null);
 
   const profileSkills = useMemo(() => (profile?.skills?.length ? profile.skills : ['Market research', 'Deck design', 'Copywriting']), [profile]);
   const userCollege = (profile?.college || user?.user_metadata?.college || 'SRCC').trim();
   const userName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
+  const isViewerPostgraduate = useMemo(() => {
+    const ed = (profile?.education_level || '').toLowerCase();
+    const yr = (profile?.year || profile?.batch || '').toUpperCase();
+    return ed === 'postgraduate' || yr.startsWith('PG');
+  }, [profile]);
 
   const activeChatApp = useMemo(() => {
+    if (chatModalApp) return chatModalApp;
     if (!chatModalPost) return null;
     const existing = applications.find(a => String(a.postId || a.post_id) === String(chatModalPost.id) && !isMockApp(a));
     if (existing) return existing;
@@ -224,9 +229,9 @@ export default function TeamFinderScreen({
       applicant_year: userYear,
       comm_method: 'chat',
       status: 'pending',
-      dir: 'out'
+      dir: chatModalPost.isOwn ? 'in' : 'out'
     };
-  }, [chatModalPost, applications, userName, userCollege, userYear]);
+  }, [chatModalApp, chatModalPost, applications, userName, userCollege, userYear]);
 
   // Helper to find competition metadata
   const getCompMeta = (compId, fallbackTitle, fallbackHost) => {
@@ -296,7 +301,7 @@ export default function TeamFinderScreen({
 
   const allPosts = useMemo(() => {
     return realCleanPosts.map((p, i) => {
-      const comp = getCompMeta(p.compId, p.competition_name || p.title, p.organizer || p.host);
+      const comp = getCompMeta(p.compId || p.competition_id, p.competition_name || p.title, p.organizer || p.host);
       const isMine = Boolean(
         p.mine ||
         (user && p.user_id && p.user_id === user.id) ||
@@ -334,7 +339,12 @@ export default function TeamFinderScreen({
 
       const match = want.filter(w => profileSkills.includes(w)).length;
       const comm_method = p.comm_method || p.commMethod || (p.phone || p.phone_number || p.leadPhone ? 'whatsapp' : 'chat');
-      const safePhone = comm_method === 'chat' ? '' : (p.phone_number || p.phone || p.leadPhone || '');
+      // Filter out squads for PG/MBA only competitions if viewer is Undergraduate (unless it's user's own post)
+      if (!isViewerPostgraduate && !isMine && comp) {
+        if (comp.isPGOnly || comp.isUndergradEligible === false || comp.targetLevel === 'pg') {
+          return null;
+        }
+      }
 
       return {
         id: p.id,
@@ -372,8 +382,8 @@ export default function TeamFinderScreen({
         match,
         idx: i
       };
-    });
-  }, [realCleanPosts, competitions, applications, user, userName, userCollege, userYear, profileSkills]);
+    }).filter(Boolean);
+  }, [realCleanPosts, competitions, applications, user, userName, userCollege, userYear, profileSkills, isViewerPostgraduate]);
 
   // Pools
   const otherPool = useMemo(() => allPosts.filter(p => !p.isOwn && (p.state === 'open' || p.state === 'full')), [allPosts]);
@@ -498,17 +508,19 @@ export default function TeamFinderScreen({
 
     const existing = applications.find(a => String(a.postId || a.post_id) === String(post.id) && !isMockApp(a));
     if (existing) {
+      setChatModalApp(existing);
       setChatModalPost(post);
       return;
     }
 
     // Atomically create an application in squad_applications so the lead's inbox reflects it immediately
+    let targetApp = null;
     try {
       if (applyToSquad) {
-        await applyToSquad({
+        targetApp = await applyToSquad({
           post_id: post.id,
           applicant_name: userName || 'Applicant',
-          applicant_phone: null,
+          applicant_phone: profile?.phone || null,
           applicant_college: userCollege,
           applicant_year: userYear,
           pitch_note: 'Initiated conversation via In-Platform Chat.',
@@ -519,6 +531,7 @@ export default function TeamFinderScreen({
     } catch (err) {
       console.warn('Could not auto-create application for chat:', err);
     }
+    setChatModalApp(targetApp);
     setChatModalPost(post);
   };
 
@@ -1395,17 +1408,26 @@ export default function TeamFinderScreen({
                                 Squad full
                               </button>
                             ) : post.state === 'requested' ? (
-                              <button
-                                type="button"
-                                onClick={(e) => handleWithdraw(e, post)}
-                                className="tf-withdraw-btn"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <circle cx="12" cy="12" r="10"></circle>
-                                  <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                Requested · Withdraw
-                              </button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleOpenChat(e, post)}
+                                  className="tf-chat-btn tf-chat-inapp"
+                                  style={{ flex: 1, height: '36px', justifyContent: 'center', margin: 0 }}
+                                  title="Chat with squad lead"
+                                >
+                                  <ChatBubbleIcon size={14} />
+                                  <span>Chat with Lead</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleWithdraw(e, post)}
+                                  className="tf-withdraw-btn"
+                                  style={{ flex: 1, height: '36px', justifyContent: 'center', margin: 0 }}
+                                >
+                                  Withdraw
+                                </button>
+                              </div>
                             ) : post.state === 'accepted' ? (
                               post.comm_method === 'chat' ? (
                                 <button
@@ -1657,23 +1679,36 @@ export default function TeamFinderScreen({
               )}
 
               {detailTarget.state === 'requested' && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: 'var(--surface-sunken, #F9F9F7)', border: '1px solid var(--line, #E7E6E2)', borderRadius: '9px', padding: '10px 12px' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', color: 'var(--ink-secondary, #55534D)' }}>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    Request sent. Waiting on {detailTarget.lead.split(' ')[0]}.
-                  </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: 'var(--surface-sunken, #F9F9F7)', border: '1px solid var(--line, #E7E6E2)', borderRadius: '9px', padding: '10px 12px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', color: 'var(--ink-secondary, #55534D)' }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      Request sent. Waiting on {detailTarget.lead.split(' ')[0]}.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        handleWithdraw(e, detailTarget);
+                        setDetailPostId(null);
+                      }}
+                      style={{ color: 'var(--ink-muted, #75736C)', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', background: 'none', border: 'none', cursor: 'pointer' }}
+                    >
+                      Withdraw
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={(e) => {
-                      handleWithdraw(e, detailTarget);
+                      handleOpenChat(e, detailTarget);
                       setDetailPostId(null);
                     }}
-                    style={{ color: 'var(--ink-muted, #75736C)', fontSize: '13px', fontWeight: 500, whiteSpace: 'nowrap', background: 'none', border: 'none', cursor: 'pointer' }}
+                    className="tf-chat-accepted-btn"
+                    style={{ width: '100%', padding: '10px 14px', fontSize: '13.5px' }}
                   >
-                    Withdraw
+                    Chat with Lead
                   </button>
                 </div>
               )}
@@ -1888,6 +1923,21 @@ export default function TeamFinderScreen({
                             <>
                               <button
                                 type="button"
+                                onClick={() => {
+                                  const rawApp = applications.find(a => String(a.id) === String(app.id)) || app;
+                                  setChatModalApp({ ...rawApp, dir: 'in' });
+                                  setChatModalPost(reviewTarget);
+                                  setReviewPostId(null);
+                                }}
+                                className="tf-btn-secondary"
+                                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px' }}
+                                title="Chat with applicant before deciding"
+                              >
+                                <ChatBubbleIcon size={14} color="currentColor" />
+                                <span>Chat</span>
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => handleAcceptApplicant(app.id)}
                                 style={{
                                   border: '1px solid var(--primary, #0F3FFE)',
@@ -1919,6 +1969,8 @@ export default function TeamFinderScreen({
                                 <button
                                   type="button"
                                   onClick={() => {
+                                    const rawApp = applications.find(a => String(a.id) === String(app.id)) || app;
+                                    setChatModalApp({ ...rawApp, dir: 'in' });
                                     setChatModalPost(reviewTarget);
                                     setReviewPostId(null);
                                   }}
@@ -2047,12 +2099,17 @@ export default function TeamFinderScreen({
       {chatModalPost && (
         <CompetitionChatModal
           isOpen={Boolean(chatModalPost)}
-          onClose={() => setChatModalPost(null)}
+          onClose={() => {
+            setChatModalPost(null);
+            setChatModalApp(null);
+          }}
           application={activeChatApp}
           post={chatModalPost.rawPost || chatModalPost}
           competition={chatModalPost.comp}
           currentUser={user}
           profile={profile}
+          onAcceptApp={handleAcceptApplicant}
+          onDeclineApp={handleDeclineApplicant}
         />
       )}
 

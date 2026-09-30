@@ -18,6 +18,7 @@ import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import InstallShortcutPopup from './components/InstallShortcutPopup';
+import WalkthroughModal from './components/WalkthroughModal';
 import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
 import AdminConsolePage from './components/AdminConsolePage';
 import { isAdminEmail } from './lib/admin';
@@ -249,14 +250,36 @@ function OneStopInner() {
   // Boot loading screen: displays for exactly 1.5s on initial boot so users trust live data is real
   const [showBootScreen, setShowBootScreen] = useState(true);
 
+  // First-time walkthrough modal experience
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [fromWalkthrough, setFromWalkthrough] = useState(() => {
+    try {
+      return sessionStorage.getItem('onestop_from_walkthrough') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
   const handleBootComplete = useCallback(() => {
     setShowBootScreen(false);
+    try {
+      const seen = localStorage.getItem('onestop_walkthrough_seen');
+      if (!seen) {
+        setShowWalkthrough(true);
+      }
+    } catch (e) {}
   }, []);
 
   // Hard safety watchdog: ensure boot screen is ALWAYS dismissed within 3.5s no matter what
   useEffect(() => {
     const watchdog = setTimeout(() => {
       setShowBootScreen(false);
+      try {
+        const seen = localStorage.getItem('onestop_walkthrough_seen');
+        if (!seen) {
+          setShowWalkthrough(true);
+        }
+      } catch (e) {}
     }, 3500);
     return () => clearTimeout(watchdog);
   }, []);
@@ -375,7 +398,7 @@ function OneStopInner() {
           ...prev,
           name: authProfile.full_name || authProfile.name || '',
           college: authProfile.college || prev.college || '',
-          course: '',
+          course: authProfile.course || prev.course || '',
           year: yr,
           batch: yr,
           phone: authProfile.phone || prev.phone || '',
@@ -629,7 +652,7 @@ function OneStopInner() {
     if (isPostgraduate) {
       return competitions;
     }
-    return competitions.filter(c => c.isUndergradEligible !== false && !c.isPGOnly);
+    return competitions.filter(c => c.isUndergradEligible !== false && !c.isPGOnly && c.targetLevel !== 'pg');
   }, [competitions, isPostgraduate]);
 
   // Navigation Handler
@@ -650,6 +673,25 @@ function OneStopInner() {
     setDetailCompId(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Walkthrough completion & dismissal handlers
+  const handleCompleteWalkthrough = useCallback(() => {
+    try {
+      localStorage.setItem('onestop_walkthrough_seen', 'true');
+      sessionStorage.setItem('onestop_from_walkthrough', 'true');
+    } catch (e) {}
+    setShowWalkthrough(false);
+    setFromWalkthrough(true);
+    handleNavigate('profile');
+    flash('✨ Welcome to OneStop! Complete your profile to unlock catered opportunities.');
+  }, [flash]);
+
+  const handleCloseWalkthrough = useCallback(() => {
+    try {
+      localStorage.setItem('onestop_walkthrough_seen', 'true');
+    } catch (e) {}
+    setShowWalkthrough(false);
+  }, []);
 
   // Find Teammates Button from Competition Card
   const handleFindTeammates = (comp) => {
@@ -774,6 +816,9 @@ function OneStopInner() {
       try {
         await authCreatePost({
           competition_name: compTitle,
+          competition_id: draft.competition_id || draft.compId || null,
+          is_custom: Boolean(draft.is_custom),
+          expires_at: draft.expires_at || null,
           organizer: compHost,
           competition_link: compLink,
           title: `Squad for ${compTitle}`,
@@ -890,9 +935,11 @@ function OneStopInner() {
           applicant_name: applicantName,
           applicant_phone: applicantPhone,
           applicant_college: profile.college || '',
-          applicant_year: profile.batch || 'UG 2nd Year',
+          applicant_year: profile.batch || profile.year || 'UG 2nd Year',
+          applicant_course: profile.course || 'General',
           pitch_note: pitchText,
-          highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : profile.skills
+          highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : profile.skills,
+          comm_method: targetPost.comm_method || targetPost.commMethod || 'whatsapp'
         });
         if (refreshSquadData) refreshSquadData();
       } catch (err) {
@@ -1072,6 +1119,7 @@ function OneStopInner() {
           user={user}
           mobileOpen={false}
           onCloseMobile={() => setMobileSidebarOpen(false)}
+          onOpenWalkthrough={() => setShowWalkthrough(true)}
         />
       )}
 
@@ -1093,7 +1141,7 @@ function OneStopInner() {
           onToggleBookmark={handleToggleBookmark}
           bookmarkedOnly={false}
           isPostgraduate={isPostgraduate}
-          initialCompetitions={competitions}
+          initialCompetitions={visibleCompetitions}
           externalSortBy={browseSort}
           onSortChange={handleUpdateSort}
           onFilterPrefsChange={handleFilterPrefsChange}
@@ -1244,6 +1292,8 @@ function OneStopInner() {
                 onDeleteAccount={deleteAccount}
                 flashToast={flash}
                 onNavigate={handleNavigate}
+                isFromWalkthrough={fromWalkthrough}
+                onOpenWalkthrough={() => setShowWalkthrough(true)}
               />
             )}
           </div>
@@ -1273,7 +1323,7 @@ function OneStopInner() {
           setPostModalCompId(null);
           setEditingPost(null);
         }}
-        competitions={competitions}
+        competitions={visibleCompetitions}
         initialCompId={postModalCompId}
         editingPost={editingPost}
         profile={profile}
@@ -1315,6 +1365,13 @@ function OneStopInner() {
 
       {/* Supabase Auth Modal */}
       <AuthModal />
+
+      {/* Walkthrough Tour Modal */}
+      <WalkthroughModal
+        isOpen={showWalkthrough}
+        onClose={handleCloseWalkthrough}
+        onComplete={handleCompleteWalkthrough}
+      />
 
       {/* Fun Collegiate Boot Screen with Circular Ring Animation & Quotes */}
       {showBootScreen && (

@@ -199,12 +199,12 @@ export default function RequestsScreen({
                       </svg>
                       <span className="requests-btn-chat-label">Chat</span>
                     </button>
-                    {(post?.phone_number || post?.leadPhone || app.phone || app.applicant_phone) && (
+                    {(post?.phone_number || post?.leadPhone || app.lead_phone || app.leadPhone || app.phone || app.applicant_phone) && (
                       <button
                         onClick={() => {
                           if (app.dir === 'out') {
                             onOpenWhatsApp({
-                              phone: post?.phone_number || post?.leadPhone,
+                              phone: app.lead_phone || app.leadPhone || post?.phone_number || post?.leadPhone,
                               lead: post?.created_by_name || post?.lead,
                               displayTitle: compTitle
                             });

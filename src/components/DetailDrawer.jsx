@@ -1,9 +1,10 @@
 // src/components/DetailDrawer.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { formatDeadlineDateTime, formatDeadlineCountdown } from '../data/initialData';
 import InstitutionLogo from './InstitutionLogo';
 import { BookmarkIcon } from './icons';
 import { trackEvent } from '../lib/posthog';
+import { useAuth } from '../context/AuthContext';
 import './DetailDrawer.css';
 
 export default function DetailDrawer({
@@ -14,6 +15,17 @@ export default function DetailDrawer({
   onOpenPostSquad,
   squadsCount = 0
 }) {
+  const { profile } = useAuth();
+
+  const isPostgraduate = useMemo(() => {
+    const ed = (profile?.education_level || '').toLowerCase();
+    const yr = (profile?.year || profile?.batch || '').toUpperCase();
+    return ed === 'postgraduate' || yr.startsWith('PG');
+  }, [profile]);
+
+  const isCompPGExclusive = Boolean(item?.isPGOnly || item?.targetLevel === 'pg' || item?.isUndergradEligible === false);
+  const showIneligibilityNotice = !isPostgraduate && isCompPGExclusive;
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -92,6 +104,25 @@ export default function DetailDrawer({
             </p>
           </div>
         </div>
+
+        {/* Ineligibility Warning for Undergraduate users viewing PG-only competitions */}
+        {showIneligibilityNotice && (
+          <div style={{
+            margin: '0 20px 16px',
+            padding: '12px 14px',
+            borderRadius: '8px',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px'
+          }}>
+            <span style={{ fontSize: '16px', lineHeight: 1 }}>⚠️</span>
+            <div style={{ fontSize: '13px', lineHeight: 1.4, color: 'var(--ink)' }}>
+              <strong style={{ color: 'var(--urgency-red, #EF4444)' }}>Ineligible for Undergraduate Standing:</strong> This competition is strictly restricted to Postgraduate / MBA students based on organizer guidelines.
+            </div>
+          </div>
+        )}
 
         {/* Fact Table */}
         <div className="detail-drawer-facts">

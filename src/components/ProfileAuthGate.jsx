@@ -1,7 +1,7 @@
 // src/components/ProfileAuthGate.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { CheckIcon, AlertCircleIcon } from './icons';
+import { CheckIcon, AlertCircleIcon, SparklesIcon } from './icons';
 import SearchableCollegeSelect from './SearchableCollegeSelect';
 import OneStopLogo from './OneStopLogo';
 import { trackEvent } from '../lib/posthog';
@@ -30,7 +30,14 @@ function GoogleIcon({ size = 18 }) {
   );
 }
 
-export default function ProfileAuthGate({ initialMode = 'signup' }) {
+export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthrough = false }) {
+  const isPostWalkthrough = isFromWalkthrough || (() => {
+    try {
+      return sessionStorage.getItem('onestop_from_walkthrough') === 'true';
+    } catch (e) {
+      return false;
+    }
+  })();
   const {
     signInWithGoogle,
     signInWithPassword,
@@ -143,6 +150,45 @@ export default function ProfileAuthGate({ initialMode = 'signup' }) {
               : 'Sign in with your credentials to access your profile, applications, and saved competitions.'}
           </p>
         </div>
+
+        {/* Post-Walkthrough Onboarding Callout Banner */}
+        {isPostWalkthrough && mode === 'signup' && (
+          <div className="profile-auth-walkthrough-banner">
+            <div className="profile-auth-wt-badge">
+              <SparklesIcon size={13} />
+              <span>STEP 2: BUILD YOUR PROFILE</span>
+            </div>
+            <h2 className="profile-auth-wt-title">
+              Unlock Catered Opportunities & Teammates
+            </h2>
+            <p className="profile-auth-wt-desc">
+              Take 30 seconds to set up your account. We’ll tailor competition eligibility to your college & degree, and let squad leads find you based on your superpowers.
+            </p>
+            <div className="profile-auth-wt-perks">
+              <div className="profile-auth-wt-perk">
+                <span className="profile-auth-wt-emoji">🎯</span>
+                <div className="profile-auth-wt-perk-text">
+                  <strong>Catered Feed</strong>
+                  <span>Filtered for your degree eligibility</span>
+                </div>
+              </div>
+              <div className="profile-auth-wt-perk">
+                <span className="profile-auth-wt-emoji">🤝</span>
+                <div className="profile-auth-wt-perk-text">
+                  <strong>Squad Discovery</strong>
+                  <span>Get recruited across top colleges</span>
+                </div>
+              </div>
+              <div className="profile-auth-wt-perk">
+                <span className="profile-auth-wt-emoji">💬</span>
+                <div className="profile-auth-wt-perk-text">
+                  <strong>WhatsApp Connect</strong>
+                  <span>1-tap instant squad coordination</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error / Success Notifications */}
         {errorMsg && (

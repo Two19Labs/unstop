@@ -147,8 +147,8 @@ export function AuthProvider({ children }) {
   };
 
   // Column projections to minimize Supabase egress
-  const SQUAD_POSTS_SELECT = 'id, user_id, created_by_name, created_by_email, competition_name, organizer, competition_link, phone_number, title, description, skills_have, skills_looking_for, total_members, spots_left, initial_open_spots, is_open, college, course, year, accepted_emails, created_at, updated_at';
-  const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_course, applicant_year, pitch_note, highlighted_skills, status, lead_phone, created_at, updated_at';
+  const SQUAD_POSTS_SELECT = 'id, user_id, created_by_name, created_by_email, competition_name, competition_id, is_custom, expires_at, organizer, competition_link, phone_number, comm_method, title, description, skills_have, skills_looking_for, total_members, spots_left, initial_open_spots, is_open, college, course, year, accepted_emails, created_at, updated_at';
+  const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_course, applicant_year, pitch_note, highlighted_skills, status, lead_phone, comm_method, created_at, updated_at';
   const PROFILE_SELECT = 'id, email, full_name, college, course, year, phone, bio, education_level, profile_last_updated_at';
 
   // In-flight request caching & deduplication to eliminate duplicate parallel calls
@@ -277,7 +277,10 @@ export function AuthProvider({ children }) {
           .limit(40);
 
         if (!postErr && Array.isArray(posts)) {
-          const cleanPosts = posts.filter(p => !isMockPost(p));
+          const cleanPosts = posts.filter(p => !isMockPost(p)).map(p => ({
+            ...p,
+            compId: p.competition_id || p.compId,
+          }));
           setSquadPosts(cleanPosts);
           try {
             localStorage.setItem('onestop_posts', JSON.stringify(cleanPosts));
@@ -315,7 +318,8 @@ export function AuthProvider({ children }) {
                   phone: a.applicant_phone,
                   applicant_phone: a.applicant_phone,
                   leadPhone: a.lead_phone || '',
-                  lead_phone: a.lead_phone || ''
+                  lead_phone: a.lead_phone || '',
+                  comm_method: a.comm_method || 'whatsapp'
                 };
               });
             setSquadApps(cleanApps);
@@ -1109,6 +1113,7 @@ export function AuthProvider({ children }) {
       applicant_year: normalizeYear(appData.applicant_year || profile?.year || profile?.batch || 'UG 2nd Year'),
       pitch_note: appData.pitch_note || '',
       highlighted_skills: appData.highlighted_skills || [],
+      comm_method: appData.comm_method || 'whatsapp',
       status: 'pending',
     };
 
@@ -1139,7 +1144,8 @@ export function AuthProvider({ children }) {
         pitch: data.pitch_note,
         pitch_note: data.pitch_note,
         phone: data.applicant_phone,
-        applicant_phone: data.applicant_phone
+        applicant_phone: data.applicant_phone,
+        comm_method: data.comm_method || payload.comm_method || 'whatsapp'
       };
 
       setSquadApps(prev => [normalizedApp, ...prev].filter(a => !isMockApp(a)));

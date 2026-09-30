@@ -144,25 +144,43 @@ function isSchoolOnly(item) {
   return false;
 }
 
+const MBA_EXCLUSION_PATTERN = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|post-graduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|mba\s+graduates|pre-mba|b-school\s+only|only\s+b-school|mba\s+track|for\s+mba\s+students|for\s+pgdm\s+students|executive\s+mba|1st\s+year\s+mba|2nd\s+year\s+mba|pgp\s+only|only\s+pgp)\b/i;
+
 // Eligibility check: Allow competitions that undergraduates can participate in
 function isUndergradEligible(item) {
   if (!item) return false;
   if (isSchoolOnly(item)) return false;
 
-  const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase().trim());
-  const hasAll = filterNames.length === 0 || filterNames.includes('all');
-  const hasUG = filterNames.some(f => f.includes('undergraduate'));
-  const hasPG = filterNames.some(f => f.includes('postgraduate') || f.includes('mba'));
-  
   const title = (item.title || '').toLowerCase();
-  const mbaOnlyTitle = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|only\s+for\s+mba|mba\s+students\s+only|only\s+mba)\b/i.test(title);
+  const orgName = (item.organisation?.name || item.orgName || item.host || '').toLowerCase();
+  const desc = (item.description || item.raw_scraped_text || '').toLowerCase();
+  const combinedText = `${title} ${orgName}`;
 
-  // Strictly exclude if MBA/Postgraduate only, or MBA-only in title
-  if ((hasPG && !hasUG && !hasAll) || mbaOnlyTitle) {
+  // 1. Text-based strong MBA/PG exclusivity pattern
+  if (MBA_EXCLUSION_PATTERN.test(combinedText)) {
+    const explicitlyMentionsUG = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(combinedText + ' ' + desc);
+    if (!explicitlyMentionsUG) {
+      return false;
+    }
+  }
+
+  // Special catch: InsideIIM MBA Graduate awards
+  if (/\b(insideiim)\b/i.test(orgName) && /\b(mba|graduate|b-school)\b/i.test(title)) {
     return false;
   }
 
-  // Check structured registration eligibility payload from Unstop
+  const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase().trim());
+  const hasUG = filterNames.some(f => f.includes('undergraduate'));
+  const hasPG = filterNames.some(f => f.includes('postgraduate') || f.includes('mba'));
+
+  // 2. Filter-based exclusivity:
+  // If explicitly tagged for PG/MBA and NOT tagged for undergraduate, exclude for UG.
+  // We do NOT let a generic 'all' tag override this if hasPG is true and hasUG is false.
+  if (hasPG && !hasUG) {
+    return false;
+  }
+
+  // 3. Check structured registration eligibility payload from Unstop
   let regnEligibility = item.regnRequirements?.eligibility;
   if (typeof regnEligibility === 'string') {
     try {
@@ -176,9 +194,25 @@ function isUndergradEligible(item) {
     const engineering = Array.isArray(regnEligibility.engineering) ? regnEligibility.engineering : [];
     const others = Array.isArray(regnEligibility.others) ? regnEligibility.others : [];
 
+    const extractCourses = (arr) => arr.map(c => (typeof c === 'string' ? c : (c?.course || '')).toLowerCase()).filter(Boolean);
+    const bSchoolCourses = extractCourses(bSchools);
+    const engCourses = extractCourses(engineering);
+    const artsCourses = extractCourses(arts);
+
+    const hasUgInBschool = bSchoolCourses.some(c => c.includes('bba') || c.includes('bcom') || c.includes('bms') || c.includes('bhm'));
+    const hasPgInBschool = bSchoolCourses.some(c => c.includes('mba') || c.includes('pgdm') || c.includes('exec') || c.includes('phd'));
+
+    const hasEng = engCourses.length > 0;
+    const hasArts = artsCourses.length > 0;
+
     // If strictly restricted to B-schools with no undergrad/arts/tech access
-    if (bSchools.length > 0 && arts.length === 0 && engineering.length === 0 && (others.length === 0 || (others.length === 1 && others[0] === 'all' && hasPG && !hasUG))) {
-      return false;
+    if (bSchools.length > 0 && !hasEng && !hasArts) {
+      if (!hasUgInBschool && hasPgInBschool) {
+        return false;
+      }
+      if (others.length === 0 || (others.length === 1 && others[0] === 'all' && hasPG && !hasUG)) {
+        return false;
+      }
     }
   }
 
@@ -448,48 +482,62 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
         const dl = new Date(r.deadline).getTime();
         return !isNaN(dl) && dl >= nowMs;
       })
-      .map(r => ({
-      id: r.id || `inst_${r.slug || Math.random().toString(36).substring(7)}`,
-      title: r.title,
-      orgName: r.host_institution || r.organizer || 'Host Institution',
-      host: r.host_institution || r.organizer || 'Host Institution',
-      bannerUrl: r.banner_url || null,
-      logo: r.logo_url || null,
-      orgLogo: r.logo_url || null,
-      deadline: r.deadline,
-      startDate: r.start_date || null,
-      daysRemainingNum: r.deadline ? Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
-      remainDaysText: r.deadline ? `${Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24)))} days left` : '7 days left',
-      mode: r.mode || 'Online',
-      location: r.location || 'Online',
-      fee: r.fee || 'Free',
-      isFree: !r.fee || /free/i.test(r.fee),
-      prizes: r.prizes || 'Certificates & Cash Prize',
-      category: r.category || 'case',
-      categoryLabel: r.category_label || 'Case Competition',
-      categoryEmoji: r.category_emoji || '💼',
-      subTracks: Array.isArray(r.sub_tracks) ? r.sub_tracks : (r.sub_tracks ? [r.sub_tracks] : ['General']),
-      sourcePlatform: r.source_platform || 'campus_direct',
-      sourceLabel: r.source_label || (r.host_institution ? `${r.host_institution} Direct` : 'Campus Direct'),
-      unstopUrl: r.apply_url || r.website_url || '#',
-      sourceUrl: r.apply_url || r.website_url || '#',
-      registeredCount: r.registered_count || 0,
-      viewsCount: r.views_count || 0,
-      description: r.raw_scraped_text || r.description || r.title,
-      minTeam: r.min_team || 1,
-      maxTeam: r.max_team || 4,
-      teamSizeDisplay: (r.min_team || 1) === (r.max_team || 4) ? `${r.min_team || 1} Members` : `${r.min_team || 1} - ${r.max_team || 4} Members`,
-      isUndergradEligible: r.is_undergrad_eligible !== false,
-      isPGOnly: Boolean(r.is_pg_only),
-      isMBAorPG: Boolean(r.is_mba_or_pg),
-      targetLevel: r.is_pg_only ? 'pg' : (r.is_undergrad_eligible !== false ? 'ug' : 'all'),
-      isDU: Boolean(r.is_du),
-      isIIMorIIT: Boolean(r.is_iim_or_iit) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
-      isPremier: Boolean(r.is_premier) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
-      isCorporate: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
-      isCorporateOrGlobal: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
-      isFlagship: Boolean(r.is_flagship)
-    }));
+      .map(r => {
+        const rawInstItem = {
+          title: r.title,
+          description: r.raw_scraped_text || r.description || '',
+          filters: Array.isArray(r.filters) ? r.filters : [],
+          organisation: { name: r.host_institution || r.organizer || '' },
+          host: r.host_institution || r.organizer || ''
+        };
+        const autoUndergradEligible = isUndergradEligible(rawInstItem);
+        const isPGOnly = Boolean(r.is_pg_only) || !autoUndergradEligible;
+        const isUndergrad = r.is_undergrad_eligible !== false && !isPGOnly && autoUndergradEligible;
+        const isMBAorPG = isPGOnly || Boolean(r.is_mba_or_pg) || /\b(mba|pgdm|iim|b-school|insideiim)\b/i.test(`${r.title || ''} ${r.host_institution || ''}`);
+
+        return {
+          id: r.id || `inst_${r.slug || Math.random().toString(36).substring(7)}`,
+          title: r.title,
+          orgName: r.host_institution || r.organizer || 'Host Institution',
+          host: r.host_institution || r.organizer || 'Host Institution',
+          bannerUrl: r.banner_url || null,
+          logo: r.logo_url || null,
+          orgLogo: r.logo_url || null,
+          deadline: r.deadline,
+          startDate: r.start_date || null,
+          daysRemainingNum: r.deadline ? Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
+          remainDaysText: r.deadline ? `${Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24)))} days left` : '7 days left',
+          mode: r.mode || 'Online',
+          location: r.location || 'Online',
+          fee: r.fee || 'Free',
+          isFree: !r.fee || /free/i.test(r.fee),
+          prizes: r.prizes || 'Certificates & Cash Prize',
+          category: r.category || 'case',
+          categoryLabel: r.category_label || 'Case Competition',
+          categoryEmoji: r.category_emoji || '💼',
+          subTracks: Array.isArray(r.sub_tracks) ? r.sub_tracks : (r.sub_tracks ? [r.sub_tracks] : ['General']),
+          sourcePlatform: r.source_platform || 'campus_direct',
+          sourceLabel: r.source_label || (r.host_institution ? `${r.host_institution} Direct` : 'Campus Direct'),
+          unstopUrl: r.apply_url || r.website_url || '#',
+          sourceUrl: r.apply_url || r.website_url || '#',
+          registeredCount: r.registered_count || 0,
+          viewsCount: r.views_count || 0,
+          description: r.raw_scraped_text || r.description || r.title,
+          minTeam: r.min_team || 1,
+          maxTeam: r.max_team || 4,
+          teamSizeDisplay: (r.min_team || 1) === (r.max_team || 4) ? `${r.min_team || 1} Members` : `${r.min_team || 1} - ${r.max_team || 4} Members`,
+          isUndergradEligible: isUndergrad,
+          isPGOnly: isPGOnly,
+          isMBAorPG: isMBAorPG,
+          targetLevel: isPGOnly ? 'pg' : (isUndergrad ? 'ug' : 'all'),
+          isDU: Boolean(r.is_du),
+          isIIMorIIT: Boolean(r.is_iim_or_iit) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
+          isPremier: Boolean(r.is_premier) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
+          isCorporate: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
+          isCorporateOrGlobal: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
+          isFlagship: Boolean(r.is_flagship)
+        };
+      });
   } catch (err) {
     return [];
   }

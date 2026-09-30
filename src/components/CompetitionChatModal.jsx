@@ -23,7 +23,13 @@ export default function CompetitionChatModal({
   const inputRef = useRef(null);
 
   const appId = application?.id;
-  const isLead = application?.dir === 'in'; // 'in' = applicant applied to my squad, so I am the lead
+  const isLead = Boolean(
+    application?.dir === 'in' ||
+    (currentUser?.id && post?.user_id && post.user_id === currentUser.id) ||
+    (currentUser?.email && post?.created_by_email && post.created_by_email.toLowerCase() === currentUser.email.toLowerCase()) ||
+    post?.mine ||
+    post?.isOwn
+  );
   const isAccepted = application?.status === 'accepted';
   const isDeclined = application?.status === 'rejected' || application?.status === 'declined';
   const isPending = !isAccepted && !isDeclined;
@@ -38,7 +44,7 @@ export default function CompetitionChatModal({
 
   const otherPersonPhone = isLead
     ? (application?.applicant_phone || application?.phone || '')
-    : (post?.phone_number || post?.leadPhone || '');
+    : (application?.lead_phone || application?.leadPhone || post?.phone_number || post?.leadPhone || '');
 
   const compTitle = post?.competition_name || competition?.title || application?.meta || 'Competition Squad';
   const deadlineText = competition?.remainDaysText || (competition?.days ? `${competition.days}d left` : 'Active');
@@ -205,7 +211,7 @@ export default function CompetitionChatModal({
           },
         ]);
 
-        const recipientId = isLead ? (application.applicant_id || application.userId) : (post.user_id || post.userId);
+        const recipientId = isLead ? (application?.applicant_id || application?.userId) : (post?.user_id || post?.userId);
         if (recipientId && recipientId !== currentUser.id) {
           try {
             await supabase.from('user_notifications').insert([
