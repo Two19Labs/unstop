@@ -391,8 +391,20 @@ function isCorporateOrGlobalComp(comp) {
 
 function parsePrizeAmount(prizesStr) {
   if (!prizesStr) return 0;
-  const cleaned = prizesStr.replace(/,/g, '');
-  const match = cleaned.match(/\d+/);
+  const str = String(prizesStr).toLowerCase().replace(/,/g, '');
+  if (str.includes('$')) {
+    const m = str.match(/\$\s*([\d.]+)/);
+    if (m) return parseFloat(m[1]) * 85;
+  }
+  if (str.includes('lakh')) {
+    const m = str.match(/([\d.]+)\s*lakh/);
+    if (m) return parseFloat(m[1]) * 100000;
+  }
+  if (str.includes('crore')) {
+    const m = str.match(/([\d.]+)\s*crore/);
+    if (m) return parseFloat(m[1]) * 10000000;
+  }
+  const match = str.match(/\d+/);
   return match ? parseInt(match[0], 10) : 0;
 }
 
@@ -487,16 +499,22 @@ function getCountdownDetails(deadlineStr, fallbackRemainText, nowMs) {
 }
 
 function getCompCircuitKey(comp) {
+  if (!comp) return 'others';
+  if (comp.circuit === 'DU Circuit' || comp.isDU) return 'du';
+  if (comp.circuit === 'IIM / IIT' || comp.isPremier || comp.isIIMorIIT || comp.isIIMorIITorPremier) return 'iim-iit-premier';
+  if (comp.circuit === 'Corporate' || comp.isCorporate || comp.isCorporateOrGlobal) return 'corporate-global';
+  if (comp.circuit === 'Others' || comp.isOthers) return 'others';
   if (isDUComp(comp)) return 'du';
-  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate' || isCorporateOrGlobalComp(comp)) return 'corporate-global';
   if (isIIMorIITorPremierComp(comp)) return 'iim-iit-premier';
+  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate' || isCorporateOrGlobalComp(comp)) return 'corporate-global';
   return 'others';
 }
 
 function getCardCircuit(comp) {
-  if (isDUComp(comp)) return { type: 'du', label: 'DU Circuit' };
-  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate' || isCorporateOrGlobalComp(comp)) return { type: 'corporate-global', label: 'Corporate & Global' };
-  if (isIIMorIITorPremierComp(comp)) return { type: 'iim-iit', label: 'IIMs, IITs & Premier Colleges' };
+  const key = getCompCircuitKey(comp);
+  if (key === 'du') return { type: 'du', label: 'DU Circuit' };
+  if (key === 'iim-iit-premier') return { type: 'iim-iit', label: 'IIMs, IITs & Premier Colleges' };
+  if (key === 'corporate-global') return { type: 'corporate-global', label: 'Corporate & Global' };
   return { type: 'others', label: 'Others' };
 }
 
@@ -859,10 +877,10 @@ export default function CompetitionsPage({
   // Metrics computation from 100% real Unstop competitions
   const metrics = useMemo(() => {
     const total = competitions.length;
-    const du = competitions.filter((c) => isDUComp(c)).length;
-    const iimIitPremier = competitions.filter((c) => isIIMorIITorPremierComp(c)).length;
-    const corporateGlobal = competitions.filter((c) => isCorporateOrGlobalComp(c)).length;
-    const others = competitions.filter((c) => !isDUComp(c) && !isIIMorIITorPremierComp(c) && !isCorporateOrGlobalComp(c)).length;
+    const du = competitions.filter((c) => getCompCircuitKey(c) === 'du').length;
+    const iimIitPremier = competitions.filter((c) => getCompCircuitKey(c) === 'iim-iit-premier').length;
+    const corporateGlobal = competitions.filter((c) => getCompCircuitKey(c) === 'corporate-global').length;
+    const others = competitions.filter((c) => getCompCircuitKey(c) === 'others').length;
     const bookmarked = competitions.filter((c) => bookmarkedIds.includes(String(c.id))).length;
     const cases = competitions.filter((c) => c.category === 'case').length;
     const hackathons = competitions.filter((c) => c.category === 'hackathon').length;
@@ -874,7 +892,7 @@ export default function CompetitionsPage({
     // Platform metrics
     const unstop = competitions.filter((c) => (c.sourcePlatform || 'unstop') === 'unstop').length;
     const corporate = competitions.filter((c) => c.sourcePlatform === 'corporate').length;
-    const inside_campus = competitions.filter((c) => c.sourcePlatform === 'inside_campus').length;
+    const inside_campus = competitions.filter((c) => c.sourcePlatform === 'inside_campus' || c.sourcePlatform === 'inside_iim').length;
     const devpost = competitions.filter((c) => c.sourcePlatform === 'devpost').length;
     const institutional = competitions.filter((c) => c.sourcePlatform === 'institutional' || c.sourcePlatform === 'campus_direct').length;
 

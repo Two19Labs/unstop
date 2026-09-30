@@ -144,6 +144,13 @@ function isSchoolOnly(item) {
   return false;
 }
 
+// Check if an item is a fest pass, delegate ticket, or entry ticket rather than a competition
+function isJunkOrPass(item) {
+  if (!item) return true;
+  const title = (item.title || '').toLowerCase();
+  return /\b(gold pass|silver pass|platinum pass|event pass|entry pass|delegate pass|accommodation pass|student pass|general pass|festival pass|ticket pass|entry ticket|workshop pass)\b/i.test(title);
+}
+
 const MBA_EXCLUSION_PATTERN = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|post-graduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|mba\s+graduates|pre-mba|b-school\s+only|only\s+b-school|mba\s+track|for\s+mba\s+students|for\s+pgdm\s+students|executive\s+mba|1st\s+year\s+mba|2nd\s+year\s+mba|pgp\s+only|only\s+pgp)\b/i;
 
 // Eligibility check: Allow competitions that undergraduates can participate in
@@ -244,30 +251,41 @@ function classifyOpportunity(item) {
   const type = (item.type || '').toLowerCase();
   const subtype = (item.subtype || item.subType || '').toLowerCase();
   const title = (item.title || '').toLowerCase();
+  const seoUrl = (item.seo_url || '').toLowerCase();
   const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase());
+  const workFunctions = Array.isArray(item.workfunction) 
+    ? item.workfunction.map(w => (w?.name || '').toLowerCase())
+    : [];
+  const tags = Array.isArray(item.tags)
+    ? item.tags.map(t => (t?.name || t || '').toLowerCase())
+    : [];
+  const combined = `${title} ${seoUrl} ${filterNames.join(' ')} ${workFunctions.join(' ')} ${tags.join(' ')}`;
 
-  // 1. Hackathons & Coding Contests
+  // 1. Hackathons, Coding & Tech Innovation
   if (
     type === 'hackathons' ||
     subtype === 'online_coding_challenge' ||
-    filterNames.some(f => f.includes('programming') || f.includes('hackathon') || f.includes('coding')) ||
-    /\b(hackathon|codefest|coding|hack\b|devfest|web dev|app dev|fullstack|machine learning|ai\/ml|data science|datathon|cybersecurity|blockchain|dapp|algorithmic|kaggle)\b/i.test(title)
+    filterNames.some(f => f.includes('programming') || f.includes('hackathon') || f.includes('coding') || f.includes('computer') || f.includes('software')) ||
+    workFunctions.some(w => w.includes('software') || w.includes('data science') || w.includes('artificial intelligence') || w.includes('engineering') || w.includes('cyber') || w.includes('robotics')) ||
+    /\b(hackathon|codefest|coding|hack\b|devfest|web dev|app dev|fullstack|machine learning|ai\/ml|data science|datathon|cybersecurity|blockchain|dapp|algorithmic|kaggle|robotics|robot\b|prompt challenge|prompt engineering|techfest|symposium|iot|hardware challenge|rc plane|drone|developer challenge|open source|ctf\b|code\b)\b/i.test(combined)
   ) {
     return { category: 'hackathon', categoryLabel: 'Hackathon', categoryEmoji: '💻' };
   }
 
   // 2. Simulations, Auctions & Mock Stocks
   if (
-    filterNames.some(f => f.includes('simulation')) ||
-    /\b(auction\b|ipl auction|football auction|cricket auction|mock stock|stock trading|trading simulation|simulation game|deal room|portfolio management|bidding)\b/i.test(title)
+    filterNames.some(f => f.includes('simulation') || f.includes('gaming')) ||
+    workFunctions.some(w => w.includes('trading') || w.includes('simulation') || w.includes('gaming')) ||
+    /\b(auction\b|ipl auction|football auction|cricket auction|player auction|mock stock|stock trading|trading simulation|simulation game|deal room|portfolio|portfolio management|bidding|equities prediction|prediction challenge|game theory|boardroom challenge|crisis simulation|monopoly)\b/i.test(combined)
   ) {
     return { category: 'simulation', categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' };
   }
 
   // 3. Writing, Essays & Research Papers
   if (
-    filterNames.some(f => f.includes('writing') || f.includes('essay') || f.includes('paper presentation')) ||
-    /\b(article writing|essay writing|essay\b|paper presentation|research paper|editorial|journalism|case writing|call for papers|article\b|blog writing|white paper)\b/i.test(title)
+    filterNames.some(f => f.includes('writing') || f.includes('essay') || f.includes('paper presentation') || f.includes('research')) ||
+    workFunctions.some(w => w.includes('writing') || w.includes('content') || w.includes('journalism') || w.includes('research')) ||
+    /\b(article writing|essay writing|essay\b|paper presentation|research paper|editorial|journalism|case writing|call for papers|article\b|blog writing|white paper|policy brief|creative writing|poetry)\b/i.test(combined)
   ) {
     return { category: 'writing', categoryLabel: 'Writing & Research', categoryEmoji: '✍️' };
   }
@@ -275,31 +293,33 @@ function classifyOpportunity(item) {
   // 4. Quizzes & Trivia
   if (
     type === 'quizzes' ||
-    filterNames.some(f => f.includes('quiz') || f.includes('quizzing')) ||
-    /\b(quiz\b|trivia\b|quizzing|brain teaser|inquisitive|inquizire|knowledge bowl)\b/i.test(title)
+    filterNames.some(f => f.includes('quiz') || f.includes('quizzing') || f.includes('trivia')) ||
+    /\b(quiz\b|trivia\b|quizzing|brain teaser|inquisitive|inquizire|knowledge bowl|sawaal|sawaal jawaab|buzzer|jeopardy|kahoot|brainwave|mindspree|treasure hunt)\b/i.test(combined)
   ) {
     return { category: 'quiz', categoryLabel: 'Quiz & Trivia', categoryEmoji: '🧠' };
   }
 
   // 5. Debates & Model UN
   if (
-    filterNames.some(f => f.includes('debate')) ||
-    /\b(debate\b|debating|parliamentary debate|asian pd|turncoat|mun\b|model united nations|youth parliament|oratory)\b/i.test(title)
+    filterNames.some(f => f.includes('debate') || f.includes('mun')) ||
+    /\b(debate\b|debating|parliamentary debate|asian pd|british parliamentary|turncoat|mun\b|model united nations|youth parliament|oratory|public speaking|gavel|battle of ideas|cross-examination)\b/i.test(combined)
   ) {
     return { category: 'debate', categoryLabel: 'Debate & MUN', categoryEmoji: '🗣️' };
   }
 
-  // 6. Case Competitions & Strategy (Core default)
+  // 6. Case Competitions, Consulting & Strategy
   if (
     subtype === 'case_competition' ||
     subtype === 'case-competitions' ||
-    filterNames.some(f => f.includes('case') || f.includes('strategy') || f.includes('business plan') || f.includes('marketing') || f.includes('entrepreneurship')) ||
-    /\b(case\b|case study|case competition|consulting|strategy|b-plan|business plan|pitch deck|pitch\b|valuation|shark tank|ideathon|venture|entrepreneurship|consultant)\b/i.test(title)
+    filterNames.some(f => f.includes('case') || f.includes('strategy') || f.includes('business plan') || f.includes('marketing') || f.includes('entrepreneurship') || f.includes('finance') || f.includes('consulting')) ||
+    workFunctions.some(w => w.includes('strategy') || w.includes('consulting') || w.includes('business') || w.includes('marketing') || w.includes('finance') || w.includes('operations')) ||
+    /\b(case\b|case study|case competition|consulting|strategy|b-plan|business plan|pitch deck|pitch\b|valuation|shark tank|impact tank|tank\b|ideathon|venture|entrepreneurship|consultant|product innovation|marketing challenge|brand challenge|brand storm|market entry|growth hack|case challenge|business challenge|enact|enactus|fintech)\b/i.test(combined)
   ) {
     return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
   }
 
-  return { category: 'general', categoryLabel: 'General Comp', categoryEmoji: '🎯' };
+  // Default collegiate fallback: Case Comp (eliminates dead general track)
+  return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
 }
 
 export function extractSubTracks(item, mainCategory) {
@@ -535,6 +555,9 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
           isPremier: Boolean(r.is_premier) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
           isCorporate: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
           isCorporateOrGlobal: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
+          isOthers: !Boolean(r.is_du) && !Boolean(r.is_iim_or_iit) && !Boolean(r.is_premier) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost' && !Boolean(r.is_corporate),
+          circuit: Boolean(r.is_du) ? 'DU Circuit' : (Boolean(r.is_iim_or_iit) || Boolean(r.is_premier)) ? 'IIM / IIT' : (r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate)) ? 'Corporate' : 'Others',
+          discipline: r.category_label || 'Case',
           isFlagship: Boolean(r.is_flagship)
         };
       });
@@ -548,89 +571,28 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
     return cachedCompetitions;
   }
 
-  const queryEndpoints = [
-    // Category & Core Theme Keywords
-    'opportunity=competitions&subType=case-competitions&per_page=50',
-    'opportunity=competitions&searchTerm=case competitions&per_page=50',
-    'opportunity=competitions&searchTerm=case study&per_page=50',
-    'opportunity=competitions&searchTerm=case&per_page=50',
-    'opportunity=competitions&searchTerm=consulting&per_page=50',
-    'opportunity=competitions&searchTerm=strategy&per_page=50',
-    'opportunity=competitions&searchTerm=b-plan&per_page=50',
-    'opportunity=competitions&searchTerm=challenge&per_page=50',
-
-    // Hackathons & Coding Contests
-    'opportunity=hackathons&per_page=50',
-    'opportunity=competitions&searchTerm=hackathon&per_page=50',
-    'opportunity=competitions&searchTerm=coding&per_page=50',
-
-    // Simulations, Auctions & Mock Stocks
-    'opportunity=competitions&searchTerm=auction&per_page=50',
-    'opportunity=competitions&searchTerm=mock stock&per_page=50',
-    'opportunity=competitions&searchTerm=trading&per_page=50',
-
-    // Writing, Research & Papers
-    'opportunity=competitions&searchTerm=article writing&per_page=50',
-    'opportunity=competitions&searchTerm=essay&per_page=50',
-    'opportunity=competitions&searchTerm=paper presentation&per_page=50',
-
-    // Quizzes & Trivia
-    'opportunity=quizzes&per_page=50',
-    'opportunity=competitions&searchTerm=quiz&per_page=50',
-
-    // Debates & MUNs
-    'opportunity=competitions&searchTerm=debate&per_page=50',
-    'opportunity=competitions&searchTerm=mun&per_page=50',
-
-    // Delhi University Circuit (Top Colleges)
-    'opportunity=competitions&searchTerm=delhi university&per_page=50',
-    'opportunity=competitions&searchTerm=du&per_page=50',
-    'opportunity=competitions&searchTerm=sscbs&per_page=50',
-    'opportunity=competitions&searchTerm=srcc&per_page=50',
-    'opportunity=competitions&searchTerm=hindu&per_page=50',
-    'opportunity=competitions&searchTerm=miranda&per_page=50',
-    'opportunity=competitions&searchTerm=hansraj&per_page=50',
-    'opportunity=competitions&searchTerm=kirori mal&per_page=50',
-    'opportunity=competitions&searchTerm=ramjas&per_page=50',
-    'opportunity=competitions&searchTerm=lsr&per_page=50',
-    'opportunity=competitions&searchTerm=stephen&per_page=50',
-    'opportunity=competitions&searchTerm=sggscc&per_page=50',
-    'opportunity=competitions&searchTerm=venky&per_page=50',
-    'opportunity=competitions&searchTerm=gargi&per_page=50',
-
-    // Premier National B-Schools, MBA & Postgraduate Opportunities
-    'opportunity=competitions&searchTerm=mba&per_page=50',
-    'opportunity=competitions&searchTerm=postgraduate&per_page=50',
-    'opportunity=competitions&searchTerm=b-school&per_page=50',
-    'opportunity=competitions&searchTerm=iim&per_page=50',
-    'opportunity=competitions&searchTerm=iit&per_page=50',
-    'opportunity=competitions&searchTerm=xlri&per_page=50',
-    'opportunity=competitions&searchTerm=isb&per_page=50',
-    'opportunity=competitions&searchTerm=mdi&per_page=50',
-    'opportunity=competitions&searchTerm=bits pilani&per_page=50',
-    'opportunity=competitions&searchTerm=nit&per_page=50',
-    'opportunity=competitions&searchTerm=spjimr&per_page=50',
-    'opportunity=competitions&searchTerm=dtu&per_page=50',
-    'opportunity=competitions&searchTerm=nsut&per_page=50',
-
-    // Corporate & Global / International Challenges
-    'opportunity=competitions&searchTerm=corporate&per_page=50',
-    'opportunity=competitions&searchTerm=global&per_page=50',
-    'opportunity=competitions&searchTerm=international&per_page=50',
-    'opportunity=competitions&searchTerm=loreal&per_page=50'
-  ];
+  const queryEndpoints = [];
+  // 14 pages of competitions (covers ~680 open competitions)
+  for (let p = 1; p <= 14; p++) queryEndpoints.push(`opportunity=competitions&oppstatus=open&per_page=50&page=${p}`);
+  // 5 pages of hackathons (covers ~240 open hackathons)
+  for (let p = 1; p <= 5; p++) queryEndpoints.push(`opportunity=hackathons&oppstatus=open&per_page=50&page=${p}`);
+  // 2 pages of quizzes (covers ~60 open quizzes)
+  for (let p = 1; p <= 2; p++) queryEndpoints.push(`opportunity=quizzes&oppstatus=open&per_page=50&page=${p}`);
 
   const headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept': 'application/json, text/plain, */*',
   };
 
-  const fetchChunk = (chunk) =>
-    Promise.all(
+  const batches = [];
+  // Fetch in concurrent batches of 5 requests with 6000ms timeout
+  for (let i = 0; i < queryEndpoints.length; i += 5) {
+    const chunk = queryEndpoints.slice(i, i + 5);
+    const chunkResults = await Promise.all(
       chunk.map(q =>
         fetch(`https://unstop.com/api/public/opportunity/search-result?${q}`, {
           headers,
-          signal: AbortSignal.timeout(7000)
+          signal: AbortSignal.timeout(6000)
         })
           .then(res => (res.ok ? res.json() : null))
           .then(json => (json?.data?.data || []))
@@ -640,18 +602,10 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
           })
       )
     );
+    batches.push(...chunkResults);
+  }
 
-  const chunk1 = queryEndpoints.slice(0, 13);
-  const chunk2 = queryEndpoints.slice(13, 26);
-  const chunk3 = queryEndpoints.slice(26);
-  const [res1, res2, res3] = await Promise.all([
-    fetchChunk(chunk1),
-    fetchChunk(chunk2),
-    fetchChunk(chunk3)
-  ]);
-  const batches = [...res1, ...res2, ...res3];
   const now = Date.now();
-
   const map = new Map();
 
   for (const list of batches) {
@@ -673,6 +627,9 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
 
       // Strictly exclude school-only / K-12 competitions
       if (isSchoolOnly(item)) continue;
+
+      // Strictly exclude festival passes, tickets, or delegate cards
+      if (isJunkOrPass(item)) continue;
 
       // Ensure item is eligible for collegiate students (either Undergrad or Postgrad/MBA)
       const undergradOk = isUndergradEligible(item);
@@ -700,6 +657,7 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
       /\b(pvt ltd|private limited|technologies pvt|solutions pvt)\b/i.test(combined) ||
       (item.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(orgName))
     );
+    const isOthers = !isDU && !isIIMorIITorPremier && !isCorporateOrGlobal;
     const isCorporate = isCorporateOrGlobal;
     const isFlagship = FLAGSHIP_KEYWORDS.some(kw => matchesKeyword(combined, kw));
 
@@ -736,10 +694,11 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
     const isPGOnly = !undergradOk;
     const isMBAorPG = isPGOnly || (item.filters || []).some(f => /mba|postgraduate/i.test(f.name || '')) || /\b(mba|pgdm|iim|b-school)\b/i.test(combined);
 
-    let circuitVal = 'DU Circuit';
+    let circuitVal = 'Others';
     if (isDU) circuitVal = 'DU Circuit';
     else if (isIIMorIITorPremier) circuitVal = 'IIM / IIT';
-    else circuitVal = 'Corporate';
+    else if (isCorporateOrGlobal) circuitVal = 'Corporate';
+    else circuitVal = 'Others';
 
     let disciplineVal = categoryLabel || 'Case';
     if (disciplineVal.includes('Hackathon') || disciplineVal.includes('Tech')) disciplineVal = 'Hackathon';
@@ -810,6 +769,7 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
       isIIMorIITorPremier,
       isCorporate,
       isCorporateOrGlobal,
+      isOthers,
       isFirstYearFriendly,
       registeredCount: item.registerCount || 0,
       viewsCount: item.viewsCount || 0,

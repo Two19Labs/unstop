@@ -23,6 +23,10 @@ const CARDS_PER_RAIL = 3;
 function parsePrizeAmount(prizesStr) {
   if (!prizesStr) return 0;
   const str = String(prizesStr).toLowerCase().replace(/,/g, '');
+  if (str.includes('$')) {
+    const m = str.match(/\$\s*([\d.]+)/);
+    if (m) return parseFloat(m[1]) * 85;
+  }
   if (str.includes('lakh')) {
     const m = str.match(/([\d.]+)\s*lakh/);
     if (m) return parseFloat(m[1]) * 100000;
@@ -122,6 +126,7 @@ function getCompCircuitKey(comp) {
   if (DU_KEYWORDS.some(kw => isMatch(combined, kw))) return 'du';
   if (comp.isIIMorIIT || comp.isPremier || comp.isIIMorIITorPremier || comp.isBschool || comp.circuit === 'IIM / IIT') return 'iim-iit-premier';
   if (comp.isCorporate || comp.isCorporateOrGlobal || comp.circuit === 'Corporate') return 'corporate-global';
+  if (comp.circuit === 'Others' || comp.isOthers) return 'others';
   return 'others';
 }
 
@@ -145,7 +150,9 @@ export function matchCompetition(comp, f = {}) {
       if (cId === 'corporate-global' || cId === 'Corporate') {
         return compCircuitKey === 'corporate-global' || comp.circuit === 'Corporate' || comp.isCorporate || comp.isCorporateOrGlobal;
       }
-      if (cId === 'others') return compCircuitKey === 'others';
+      if (cId === 'others' || cId === 'Others') {
+        return compCircuitKey === 'others' || comp.circuit === 'Others' || comp.isOthers;
+      }
       return comp.circuit === cId;
     });
     if (!matchesCircuit) return false;
@@ -174,9 +181,13 @@ export function matchCompetition(comp, f = {}) {
 
   // 3. Team format filter
   const team = f.teamFilter || f.team;
-  const isSolo = comp.maxTeam === 1 || (comp.team && (String(comp.team).trim().startsWith('1') || String(comp.team).toLowerCase().includes('solo')));
+  const isSolo = (comp.maxTeam !== undefined && comp.maxTeam <= 1) ||
+    (comp.team && (String(comp.team).toLowerCase().includes('solo') || String(comp.team).trim() === '1' || String(comp.team).trim() === '1 Member' || String(comp.team).trim() === '1 Person')) ||
+    (comp.teamSizeDisplay && comp.teamSizeDisplay.toLowerCase().includes('solo'));
+  const isTeam = (comp.maxTeam !== undefined && comp.maxTeam > 1) || !isSolo;
+
   if (team === 'solo' && !isSolo) return false;
-  if (team === 'team' && isSolo) return false;
+  if (team === 'team' && !isTeam) return false;
 
   // 4. Fee filter
   const fee = f.feeFilter || f.fee;
@@ -186,7 +197,7 @@ export function matchCompetition(comp, f = {}) {
 
   // 5. Platform filter
   const selectedPlatforms = Array.isArray(f.selectedPlatforms) ? f.selectedPlatforms : [];
-  if (selectedPlatforms.length > 0 && selectedPlatforms.length < 4) {
+  if (selectedPlatforms.length > 0 && selectedPlatforms.length < 5) {
     const compPlatform = (comp.sourcePlatform || 'unstop').toLowerCase();
     const matchesPlatform = selectedPlatforms.some(p => {
       const lower = p.toLowerCase();
