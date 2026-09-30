@@ -10,8 +10,11 @@ import {
   CheckIcon,
   CloseIcon,
   ZapIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  FlameIcon,
+  CalendarIcon
 } from './icons';
+import InstitutionLogo from './InstitutionLogo';
 import OneStopLogo from './OneStopLogo';
 import { trackEvent } from '../lib/posthog';
 import './WalkthroughModal.css';
@@ -21,18 +24,23 @@ const SLIDES = [
     id: 'curated-speed',
     badge: 'Curated Speed Layer',
     badgeIcon: ZapIcon,
-    title: 'Supercharge Your Case Comps & Hackathons',
-    subtitle: 'The collegiate speed layer for Unstop competitions',
+    title: 'Every Premier Student Competition in One Place',
+    subtitle: 'Aggregated & verified across top platforms, circuits & campus portals',
     description:
-      'Skip digging through 10,000+ cluttered listings. OneStop hand-curates premier corporate & collegiate circuits—including Tata Imagination, Flipkart GRiD, L’Oréal Brandstorm, Reliance TUP, and the DU Circuit—with instant eligibility checks.',
+      'Skip digging through fragmented portals and cluttered listings. OneStop aggregates and curates high-impact student competitions across India—from corporate flagships (Tata, Flipkart, L’Oréal, Reliance) to university circuits (DU, IITs, IIMs, BITS)—covering case challenges, hackathons, quizzes, simulations, and corporate awards with instant eligibility verification.',
     previewType: 'competition',
     previewData: {
-      tag: 'Premier Circuit',
-      title: 'Flipkart GRiD 6.0 — Robotics & Tech Challenge',
-      host: 'Flipkart · Engineering Circuit',
-      prize: '₹5,25,000 Cash Pool',
-      deadline: 'Closing in 2 days',
-      format: 'Teams of 2–3 · Free Entry'
+      circuit: 'Premier Corporate Circuit',
+      title: 'Tata Imagination Challenge 2026',
+      host: 'Tata Sons',
+      logo: 'https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-66c3426e256b7_tata.png',
+      prize: '₹5,00,000 Cash Pool',
+      fee: 'Free',
+      team: '1–3 Members',
+      mode: 'Online · National Track',
+      registrations: '18,450',
+      countdown: 'Closing in 2 days',
+      squadCount: 3
     }
   },
   {
@@ -42,14 +50,14 @@ const SLIDES = [
     title: 'Never Miss a Submission Cutoff Again',
     subtitle: 'Live multi-round countdowns & emergency alerts',
     description:
-      'Competitions don’t just have one deadline. Track Round 1 online quizzes, Round 2 executive case summaries, and Round 3 finals with real-time countdowns, automated revalidation, and instant desktop alerts before server locks.',
+      'Competitions don’t just have one deadline. Track online quizzes, business simulations, executive case summaries, prototype submissions, and national finals with real-time countdowns and instant desktop alerts before server locks.',
     previewType: 'rounds',
     previewData: {
       comp: 'Tata Imagination Challenge 2026',
       rounds: [
-        { name: 'Round 1: Online Brand Quiz', status: 'completed', text: 'Completed · 100% Score' },
-        { name: 'Round 2: Detailed Case Deck', status: 'active', text: 'Submissions close in 14h 22m' },
-        { name: 'Round 3: National Grand Finale', status: 'upcoming', text: 'Live Presentation at Mumbai' }
+        { name: 'Round 1: Online Brand & Logic Quiz', status: 'completed', text: 'Completed · 100% Score' },
+        { name: 'Round 2: Executive Case Deck & Pitch', status: 'active', text: 'Submissions close in 14h 22m' },
+        { name: 'Round 3: National Grand Finale Presentation', status: 'upcoming', text: 'Live Jury Round · Mumbai' }
       ]
     }
   },
@@ -60,11 +68,11 @@ const SLIDES = [
     title: 'Build Your Dream Team Across Colleges',
     subtitle: 'Vetted teammates matching complementary superpowers',
     description:
-      'Don’t scramble solo or settle for random groups. Recruit high-caliber peers from SRCC, IIT, IIM, BITS, SSCBS, and colleges across India. Filter by skills—developers, financial modelers, deck designers, and pitch presenters.',
+      'Don’t scramble solo or settle for random groups. Recruit high-caliber peers from SRCC, IIT, IIM, BITS, SSCBS, and colleges across India. Filter by skills—developers, financial modelers, deck designers, researchers, and pitch presenters.',
     previewType: 'squad',
     previewData: {
-      role: 'Seeking: Financial Analyst & UI Deck Lead',
-      competition: 'L’Oréal Brandstorm 2026',
+      role: 'Seeking: Financial Modeling & Deck Design Lead',
+      competition: 'Tata Imagination Challenge 2026',
       lead: 'Devanshi K. · SRCC (UG 3rd Year)',
       tags: ['Financial Modeling', 'Deck Design', 'Pitching'],
       urgency: '1 spot remaining'
@@ -77,12 +85,12 @@ const SLIDES = [
     title: 'Instant 1-Tap WhatsApp Squad Coordination',
     subtitle: 'Zero friction, zero email delay',
     description:
-      'When a squad lead accepts your application—or when you accept a prospective teammate—OneStop provides a direct WhatsApp connection prefilled with the competition context so you can immediately begin working on your pitch deck.',
+      'When a squad lead accepts your application—or when you accept a prospective teammate—OneStop provides a direct WhatsApp connection prefilled with the competition context so you can immediately begin collaborating on your submission.',
     previewType: 'whatsapp',
     previewData: {
       recipient: 'Ananya Sharma (IIT Delhi)',
-      comp: 'Reliance TUP 9.0',
-      message: 'Hey Ananya! Connecting regarding our squad for "Reliance TUP 9.0". Let’s sync on the problem statement!'
+      comp: 'Tata Imagination Challenge 2026',
+      message: 'Hey Ananya! Connecting regarding our squad for "Tata Imagination Challenge 2026". Let’s sync on the problem statement!'
     }
   },
   {
@@ -92,11 +100,11 @@ const SLIDES = [
     title: 'Build Your Profile & Unlock Catered Matches',
     subtitle: 'Personalized opportunities & teammate recruiting',
     description:
-      'Set your college, degree (UG vs. PG), and core superpowers. OneStop filters out competitions you aren’t eligible for, highlights dream matches, and lets squad leaders recruit you directly.',
+      'Set your college, degree (UG vs. PG), and core superpowers. OneStop filters out competitions you aren’t eligible for across all platforms, highlights dream matches, and lets squad leaders recruit you directly.',
     previewType: 'profile_perks',
     previewData: {
       perks: [
-        { icon: '🎯', title: 'Catered Competition Feed', desc: 'Curated strictly for your college and course eligibility.' },
+        { icon: '🎯', title: 'Catered Competition Feed', desc: 'Curated strictly for your college and course eligibility across all sources.' },
         { icon: '🚀', title: 'Recruitment Spotlight', desc: 'Squad leads searching for your skills can discover & invite you.' },
         { icon: '🔔', title: 'Multi-Round Push Alerts', desc: 'Get notified before submission windows lock.' }
       ]
@@ -261,25 +269,74 @@ export default function WalkthroughModal({
           {/* Right / Bottom: Interactive Visual Preview */}
           <div className="walkthrough-visual-pane">
             {slide.previewType === 'competition' && (
-              <div className="wt-preview-comp-card">
-                <div className="wt-preview-comp-header">
-                  <span className="wt-pill-circuit">{slide.previewData.tag}</span>
-                  <span className="wt-pill-deadline">{slide.previewData.deadline}</span>
-                </div>
-                <h4 className="wt-preview-comp-title">{slide.previewData.title}</h4>
-                <div className="wt-preview-comp-host">{slide.previewData.host}</div>
-                <div className="wt-preview-comp-meta">
-                  <div className="wt-meta-item">
-                    <span className="wt-meta-label">Prize</span>
-                    <span className="wt-meta-val wt-val-prize">{slide.previewData.prize}</span>
-                  </div>
-                  <div className="wt-meta-item">
-                    <span className="wt-meta-label">Participation</span>
-                    <span className="wt-meta-val">{slide.previewData.format}</span>
+              <div className="home-rail-card wt-authentic-rail-card">
+                {/* Top Bar: Host Profile with InstitutionLogo + Circuit Tag */}
+                <div className="wt-card-host-row">
+                  <InstitutionLogo
+                    logo={slide.previewData.logo}
+                    name={slide.previewData.host}
+                    size={38}
+                    borderRadius={9}
+                    fontSize={12}
+                  />
+                  <div className="wt-card-host-meta">
+                    <span className="wt-card-host-name">{slide.previewData.host}</span>
+                    <span className="wt-card-circuit-tag">{slide.previewData.circuit}</span>
                   </div>
                 </div>
-                <div className="wt-preview-comp-footer">
-                  <span className="wt-speed-badge">⚡ Instant 1-Click Verification</span>
+
+                {/* Competition Title */}
+                <h3 className="wt-card-title" title={slide.previewData.title}>
+                  {slide.previewData.title}
+                </h3>
+
+                {/* Featured Prize & Entry Bar */}
+                <div className="wt-card-prize-bar">
+                  <div className="wt-card-prize-info">
+                    <TrophyIcon size={14} color="#059669" />
+                    <span className="wt-card-prize-text">{slide.previewData.prize}</span>
+                  </div>
+                  <span className="wt-card-fee-badge">{slide.previewData.fee}</span>
+                </div>
+
+                {/* Specs Row: Team Format + Mode / Location */}
+                <div className="wt-card-specs-row">
+                  <div className="wt-card-spec-item">
+                    <UsersIcon size={13} color="var(--ink-secondary)" />
+                    <span>{slide.previewData.team}</span>
+                  </div>
+                  <span className="wt-card-spec-dot" />
+                  <div className="wt-card-spec-item">
+                    <CalendarIcon size={13} color="var(--ink-secondary)" />
+                    <span>{slide.previewData.mode}</span>
+                  </div>
+                </div>
+
+                {/* Metrics Row: Registration Social Proof + Live Urgency Countdown Pill */}
+                <div className="wt-card-metrics-row">
+                  <div className="wt-card-registrations">
+                    <FlameIcon size={13} color="#f97316" />
+                    <span>
+                      <strong>{slide.previewData.registrations}</strong> registrations
+                    </span>
+                  </div>
+
+                  <span className="wt-card-urgency-pill">
+                    <span className="wt-card-pulse-dot" />
+                    <ClockIcon size={11} color="var(--primary)" />
+                    <span>{slide.previewData.countdown}</span>
+                  </span>
+                </div>
+
+                {/* Action Buttons Row */}
+                <div className="wt-card-actions-grid">
+                  <button type="button" className="wt-card-btn-primary" tabIndex={-1}>
+                    View Details
+                  </button>
+                  <button type="button" className="wt-card-btn-secondary" tabIndex={-1}>
+                    <UsersIcon size={13} />
+                    <span>Find Teammates ({slide.previewData.squadCount})</span>
+                  </button>
                 </div>
               </div>
             )}

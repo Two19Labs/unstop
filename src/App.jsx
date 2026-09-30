@@ -584,10 +584,13 @@ function OneStopInner() {
         const json = await res.json();
         if (isMounted && json.success && Array.isArray(json.data)) {
           const mapped = json.data.map(c => {
-            let circuitVal = 'DU Circuit';
-            if (c.isDU) circuitVal = 'DU Circuit';
-            else if (c.isIIMorIIT || c.isPremier) circuitVal = 'IIM / IIT';
-            else circuitVal = 'Corporate';
+            let circuitVal = c.circuit;
+            if (!circuitVal) {
+              if (c.isDU) circuitVal = 'DU Circuit';
+              else if (c.isIIMorIIT || c.isPremier || c.isIIMorIITorPremier) circuitVal = 'IIM / IIT';
+              else if (c.isCorporate || c.isCorporateOrGlobal) circuitVal = 'Corporate';
+              else circuitVal = 'Others';
+            }
 
             let disciplineVal = c.categoryLabel || 'Case';
             if (disciplineVal.includes('Hackathon') || disciplineVal.includes('Tech')) disciplineVal = 'Hackathon';

@@ -181,100 +181,197 @@
   width: 100%;
 }
 
-/* 1. Competition Preview Card */
-.wt-preview-comp-card {
-  background-color: var(--surface-sunken);
+/* 1. Authentic OneStop Rail Card Preview */
+.wt-authentic-rail-card {
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  padding: 16px;
+  border-radius: var(--radius-lg, 12px);
+  padding: 15px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  max-width: 320px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+  text-align: left;
 }
 
-.wt-preview-comp-header {
+.wt-card-host-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 10px;
 }
 
-.wt-pill-circuit {
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: var(--primary-tint-8);
-  color: var(--primary);
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.wt-pill-deadline {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--urgency-red, #dc2626);
-  background: rgba(220, 38, 38, 0.08);
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.wt-preview-comp-title {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--ink);
-  margin: 0 0 4px;
-  line-height: 1.3;
-}
-
-.wt-preview-comp-host {
-  font-size: 12px;
-  color: var(--ink-muted);
-  margin-bottom: 12px;
-}
-
-.wt-preview-comp-meta {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 10px;
-  background-color: var(--surface);
-  border: 1px solid var(--line-light);
-  border-radius: var(--radius-md);
-  margin-bottom: 10px;
-}
-
-.wt-meta-item {
+.wt-card-host-meta {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
-.wt-meta-label {
-  font-size: 10.5px;
-  color: var(--ink-muted);
+.wt-card-host-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.wt-card-circuit-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
-.wt-meta-val {
+.wt-card-title {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-wrap: pretty;
+}
+
+.wt-card-prize-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.22);
+  border-radius: 9px;
+  padding: 7px 11px;
+}
+
+.wt-card-prize-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.wt-card-prize-text {
   font-size: 12px;
   font-weight: 700;
+  color: #047857;
+  white-space: nowrap;
+}
+
+.wt-card-fee-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.32);
+}
+
+.wt-card-specs-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--ink-secondary);
+  font-weight: 600;
+}
+
+.wt-card-spec-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wt-card-spec-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.wt-card-metrics-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wt-card-registrations {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+
+.wt-card-registrations strong {
   color: var(--ink);
 }
 
-.wt-val-prize {
-  color: var(--success, #16a34a);
+.wt-card-urgency-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--primary-tint-35, rgba(15, 63, 254, 0.35));
+  background: var(--primary-tint-8, rgba(15, 63, 254, 0.08));
+  color: var(--primary, #0F3FFE);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.wt-preview-comp-footer {
-  display: flex;
-  justify-content: center;
+.wt-card-pulse-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: wtPulse 1.5s infinite;
 }
 
-.wt-speed-badge {
+.wt-card-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.wt-card-btn-primary {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: default;
+  pointer-events: none;
+  text-align: center;
+}
+
+.wt-card-btn-secondary {
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  padding: 8px 8px;
   font-size: 11px;
-  font-weight: 600;
-  color: var(--primary);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: default;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 /* 2. Multi-Round Timeline Preview */
