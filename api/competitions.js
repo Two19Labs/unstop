@@ -3,12 +3,13 @@
 
 const FLAGSHIP_KEYWORDS = [
   'iim', 'iit', 'srcc', 'sscbs', 'shri ram', 'bits', 'xlri', 'fms',
-  'stephen', 'hansraj', 'hindu', 'lsr', 'lady shri ram', 'sggscc',
+  "stephen's", "st. stephen", 'stephens college', 'hansraj', 'hindu college', 'lsr', 'lady shri ram', 'sggscc',
   'nsut', 'dtu', "l'oreal", 'loreal', 'tata', 'hul', 'hindustan unilever',
   'aditya birla', 'mckinsey', 'bain', 'bcg', 'boston consulting', 'kearney',
   'ey', 'deloitte', 'pwc', 'kpmg', 'reliance', 'amazon', 'flipkart',
   'google', 'microsoft', 'tvs', 'optum', 'marico', 'itc', 'mondelez',
-  'reckitt', 'accenture', 'sibm', 'spjimr', 'mdi', 'great lakes', 'glim'
+  'reckitt', 'accenture', 'sibm', 'spjimr', 'mdi', 'great lakes', 'glim',
+  'maruti suzuki', 'qualcomm', 'asian paints'
 ];
 
 const DU_KEYWORDS = [
@@ -55,7 +56,7 @@ const IIM_IIT_PREMIER_KEYWORDS = [
   'ximb', 'xim university', 'xavier institute of management',
   'gim', 'goa institute of management',
   'k j somaiya', 'kj somaiya', 'somaiya', 'simsr', 'kj sim',
-  'fore', 'fore school',
+  'fore school', 'fore school of management',
   'lbsim', 'lal bahadur shastri',
   'irma', 'institute of rural management',
   'imi', 'international management institute',
@@ -72,7 +73,7 @@ const IIM_IIT_PREMIER_KEYWORDS = [
   // Premier State / Central Tech Universities
   'nsut', 'netaji subhas', 'dtu', 'delhi technological university', 'dce',
   'bit mesra', 'birla institute of technology (bit), mesra', 'birla institute of technology, mesra',
-  'punjab engineering college', 'pec ', 'pec,', 'pec)', 'coep', 'vjti',
+  'punjab engineering college', 'pec chandigarh', 'pec, chandigarh', 'coep', 'vjti',
   'jadavpur university', 'anna university', 'ceg guindy', 'thapar',
   'psg tech', 'psg college of technology', 'rvce', 'bmsce', 'msrit', 'mit manipal', 'mahe',
   // Premier Autonomous & Multidisciplinary Colleges
@@ -95,15 +96,16 @@ const CORPORATE_KEYWORDS = [
   "l'oreal", 'loreal', 'brandstorm', 'hul', 'hindustan unilever', 'lime', 'unilever',
   'itc', 'interrobang', 'marico', 'over the wall', 'mondelez', 'reckitt', 'nestle', 'p&g', 'procter & gamble',
   'pepsico', 'coca-cola', 'coke', 'aditya birla', 'stratfresh', 'abg', 'dabur', 'godrej', 'asian paints', 'berger paints', 'britannia',
+  // Automotive, Industrial, Energy & PSUs
+  'maruti suzuki', 'maruti', 'satin finserv',
+  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail', 'ntpc', 'bhel', 'coal india',
+  'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
+  'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
+  'hero motocorp', 'hero colabs', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
   // Tech, E-commerce, Telecom & Semis
   'amazon', 'flipkart', 'google', 'microsoft', 'apple', 'meta', 'uber', 'swiggy', 'zomato',
   'qualcomm', 'intel', 'cisco', 'ibm', 'infosys', 'wipro', 'hcl', 'cognizant', 'capgemini', 'tech mahindra',
   'airtel', 'jio', 'vodafone', 'supervity', 'salesforce', 'adobe',
-  // Conglomerates & Industrial
-  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail',
-  'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
-  'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
-  'hero motocorp', 'hero colabs', 'hero', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
   // Banking & Financial Services
   'goldman sachs', 'jpmorgan', 'jp morgan', 'morgan stanley', 'citi', 'citigroup', 'hsbc',
   'american express', 'amex', 'standard chartered', 'barclays', 'deutsche bank',
@@ -113,7 +115,7 @@ const CORPORATE_KEYWORDS = [
   'product space', 'mhtechin', 'monomousumi', 'kartexa', 'skilled sapiens', 'indiastox',
   'godstockss', 'acecubing', 'campusorbit', 'pharmaorbit', 'boss console', 'hackathon raptors',
   'heritage vastra', 'code-x-novas', 'elite coders', 'wecodecoders', 'interactup', 'internhill',
-  'innovation hacks', 'gradient learnings', 'bharat academix', 'cyber hx'
+  'innovation hacks', 'gradient learnings', 'bharat academix', 'cyber hx', 'talentsec', 'techverse', 'peakforge'
 ];
 
 const GLOBAL_KEYWORDS = [
@@ -145,7 +147,11 @@ function isSchoolOnly(item) {
     return true;
   }
   const title = (item.title || '').toLowerCase();
-  if (/\b(school students only|school students|class [1-9]|class 1[0-2]|k-12)\b/i.test(title)) {
+  const org = (item.organisation?.name || item.orgName || item.host || '').toLowerCase();
+  if (/\b(school students only|school students|class [1-9]|class 1[0-2]|k-12|junior robo|junior hackathon|junior make-a-thon|junior drone)\b/i.test(title)) {
+    return true;
+  }
+  if (/\b(grammar school|high school|public school|senior secondary school|vidyalaya)\b/i.test(org) && !/\b(college|university|institute|school of)\b/i.test(org)) {
     return true;
   }
   return false;
@@ -266,60 +272,92 @@ function classifyOpportunity(item) {
   const tags = Array.isArray(item.tags)
     ? item.tags.map(t => (t?.name || t || '').toLowerCase())
     : [];
-  const combined = `${title} ${seoUrl} ${filterNames.join(' ')} ${workFunctions.join(' ')} ${tags.join(' ')}`;
 
-  // 1. Hackathons, Coding & Tech Innovation
+  // Exclude broad workfunction category 'quizzes & treasure hunt' from corrupting case comps!
+  const cleanedWorkFunctions = workFunctions.filter(w => w !== 'quizzes & treasure hunt');
+  const combined = `${title} ${seoUrl} ${filterNames.join(' ')} ${cleanedWorkFunctions.join(' ')} ${tags.join(' ')}`;
+
+  // Priority 1: High-confidence Title & Explicit Subtype Signals
+  // 1a. Explicit Case Comps (Unstop subtype OR title explicitly mentions case comp/study)
+  if (
+    subtype === 'case_competition' ||
+    subtype === 'case-competitions' ||
+    /\b(case competition|case study|case challenge|case comp|business case|consulting challenge|case quest|break the case|crack the case)\b/i.test(title)
+  ) {
+    return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
+  }
+
+  // 1b. Explicit Coding Challenges & Hackathons (online coding contest or type hackathon)
   if (
     type === 'hackathons' ||
     subtype === 'online_coding_challenge' ||
-    filterNames.some(f => f.includes('programming') || f.includes('hackathon') || f.includes('coding') || f.includes('computer') || f.includes('software')) ||
-    workFunctions.some(w => w.includes('software') || w.includes('data science') || w.includes('artificial intelligence') || w.includes('engineering') || w.includes('cyber') || w.includes('robotics')) ||
-    /\b(hackathon|codefest|coding|hack\b|devfest|web dev|app dev|fullstack|machine learning|ai\/ml|data science|datathon|cybersecurity|blockchain|dapp|algorithmic|kaggle|robotics|robot\b|prompt challenge|prompt engineering|techfest|symposium|iot|hardware challenge|rc plane|drone|developer challenge|open source|ctf\b|code\b)\b/i.test(combined)
+    /\b(hackathon|codefest|coding challenge|hack\b|devfest|web dev|app dev|fullstack|machine learning|ai\/ml|data science|datathon|cybersecurity|blockchain|dapp|algorithmic|kaggle|robotics|robot\b|prompt challenge|prompt engineering|techfest|symposium|iot|hardware challenge|developer challenge|open source|ctf\b|code\b)\b/i.test(title)
   ) {
     return { category: 'hackathon', categoryLabel: 'Hackathon', categoryEmoji: '💻' };
   }
 
-  // 2. Simulations, Auctions & Mock Stocks
-  if (
-    filterNames.some(f => f.includes('simulation') || f.includes('gaming')) ||
-    workFunctions.some(w => w.includes('trading') || w.includes('simulation') || w.includes('gaming')) ||
-    /\b(auction\b|ipl auction|football auction|cricket auction|player auction|mock stock|stock trading|trading simulation|simulation game|deal room|portfolio|portfolio management|bidding|equities prediction|prediction challenge|game theory|boardroom challenge|crisis simulation|monopoly)\b/i.test(combined)
-  ) {
-    return { category: 'simulation', categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' };
-  }
-
-  // 3. Writing, Essays & Research Papers
-  if (
-    filterNames.some(f => f.includes('writing') || f.includes('essay') || f.includes('paper presentation') || f.includes('research')) ||
-    workFunctions.some(w => w.includes('writing') || w.includes('content') || w.includes('journalism') || w.includes('research')) ||
-    /\b(article writing|essay writing|essay\b|paper presentation|research paper|editorial|journalism|case writing|call for papers|article\b|blog writing|white paper|policy brief|creative writing|poetry)\b/i.test(combined)
-  ) {
-    return { category: 'writing', categoryLabel: 'Writing & Research', categoryEmoji: '✍️' };
-  }
-
-  // 4. Quizzes & Trivia
+  // 1c. Explicit Quizzes & Trivia
   if (
     type === 'quizzes' ||
-    filterNames.some(f => f.includes('quiz') || f.includes('quizzing') || f.includes('trivia')) ||
-    /\b(quiz\b|trivia\b|quizzing|brain teaser|inquisitive|inquizire|knowledge bowl|sawaal|sawaal jawaab|buzzer|jeopardy|kahoot|brainwave|mindspree|treasure hunt)\b/i.test(combined)
+    /\b(quiz\b|trivia\b|quizzing|brain teaser|inquisitive|inquizire|knowledge bowl|sawaal|sawaal jawaab|buzzer|jeopardy|kahoot|brainwave|mindspree)\b/i.test(title) ||
+    filterNames.some(f => f.includes('quiz') || f.includes('quizzing') || f.includes('trivia'))
   ) {
     return { category: 'quiz', categoryLabel: 'Quiz & Trivia', categoryEmoji: '🧠' };
   }
 
-  // 5. Debates & Model UN
+  // 1d. Explicit Debates & Model UN
   if (
-    filterNames.some(f => f.includes('debate') || f.includes('mun')) ||
-    /\b(debate\b|debating|parliamentary debate|asian pd|british parliamentary|turncoat|mun\b|model united nations|youth parliament|oratory|public speaking|gavel|battle of ideas|cross-examination)\b/i.test(combined)
+    /\b(debate\b|debating|parliamentary debate|asian pd|british parliamentary|turncoat|mun\b|model united nations|youth parliament|oratory|public speaking|gavel|battle of ideas)\b/i.test(title) ||
+    filterNames.some(f => f.includes('debate') || f.includes('mun'))
   ) {
     return { category: 'debate', categoryLabel: 'Debate & MUN', categoryEmoji: '🗣️' };
   }
 
-  // 6. Case Competitions, Consulting & Strategy
+  // 1e. Explicit Writing & Research
   if (
-    subtype === 'case_competition' ||
-    subtype === 'case-competitions' ||
+    /\b(article writing|essay writing|essay competition|essay contest|paper presentation|research paper|call for papers|white paper)\b/i.test(title) ||
+    filterNames.some(f => f.includes('writing') || f.includes('essay') || f.includes('paper presentation') || f.includes('research'))
+  ) {
+    return { category: 'writing', categoryLabel: 'Writing & Research', categoryEmoji: '✍️' };
+  }
+
+  // 1f. Explicit Simulations & Auctions
+  if (
+    /\b(auction\b|ipl auction|football auction|cricket auction|player auction|mock stock|stock trading|trading simulation|simulation game|deal room|portfolio management|bidding|equities prediction|monopoly)\b/i.test(title) ||
+    filterNames.some(f => f.includes('simulation') || f.includes('gaming'))
+  ) {
+    return { category: 'simulation', categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' };
+  }
+
+  // Priority 2: Workfunction & Tag Fallbacks
+  if (
+    filterNames.some(f => f.includes('programming') || f.includes('hackathon') || f.includes('coding') || f.includes('computer') || f.includes('software')) ||
+    cleanedWorkFunctions.some(w => w.includes('software') || w.includes('data science') || w.includes('artificial intelligence') || w.includes('engineering') || w.includes('cyber') || w.includes('robotics'))
+  ) {
+    return { category: 'hackathon', categoryLabel: 'Hackathon', categoryEmoji: '💻' };
+  }
+
+  if (
+    cleanedWorkFunctions.some(w => w.includes('trading') || w.includes('simulation') || w.includes('gaming'))
+  ) {
+    return { category: 'simulation', categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' };
+  }
+
+  if (
+    cleanedWorkFunctions.some(w => w.includes('writing') || w.includes('content') || w.includes('journalism') || w.includes('research'))
+  ) {
+    return { category: 'writing', categoryLabel: 'Writing & Research', categoryEmoji: '✍️' };
+  }
+
+  if (
+    workFunctions.some(w => w.includes('quiz') || w.includes('trivia'))
+  ) {
+    return { category: 'quiz', categoryLabel: 'Quiz & Trivia', categoryEmoji: '🧠' };
+  }
+
+  if (
     filterNames.some(f => f.includes('case') || f.includes('strategy') || f.includes('business plan') || f.includes('marketing') || f.includes('entrepreneurship') || f.includes('finance') || f.includes('consulting')) ||
-    workFunctions.some(w => w.includes('strategy') || w.includes('consulting') || w.includes('business') || w.includes('marketing') || w.includes('finance') || w.includes('operations')) ||
+    cleanedWorkFunctions.some(w => w.includes('strategy') || w.includes('consulting') || w.includes('business') || w.includes('marketing') || w.includes('finance') || w.includes('operations')) ||
     /\b(case\b|case study|case competition|consulting|strategy|b-plan|business plan|pitch deck|pitch\b|valuation|shark tank|impact tank|tank\b|ideathon|venture|entrepreneurship|consultant|product innovation|marketing challenge|brand challenge|brand storm|market entry|growth hack|case challenge|business challenge|enact|enactus|fintech)\b/i.test(combined)
   ) {
     return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
@@ -669,7 +707,7 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
     const isCorporateOrGlobal = !isDU && !isIIMorIITorPremier && (
       CORPORATE_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
       GLOBAL_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
-      /\b(pvt ltd|private limited|corporation ltd|corporation limited|inc\b|technologies llc)\b/i.test(lowerOrg) ||
+      (/\b(pvt ltd|private limited|corporation ltd|corporation limited|inc\b|technologies llc|llp\b|limited$|ltd$)\b/i.test(lowerOrg.trim()) && !/\b(college|university|institute|school of|academy|society|trust)\b/i.test(lowerOrg)) ||
       (item.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(lowerOrg)) ||
       (!/\b(college|university|institute|school of)\b/i.test(lowerOrg) && CORPORATE_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)))
     );

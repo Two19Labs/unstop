@@ -281,7 +281,7 @@ const IIM_IIT_PREMIER_KEYWORDS = [
   'ximb', 'xim university', 'xavier institute of management',
   'gim', 'goa institute of management',
   'k j somaiya', 'kj somaiya', 'somaiya', 'simsr', 'kj sim',
-  'fore', 'fore school',
+  'fore school', 'fore school of management',
   'lbsim', 'lal bahadur shastri',
   'irma', 'institute of rural management',
   'imi', 'international management institute',
@@ -298,7 +298,7 @@ const IIM_IIT_PREMIER_KEYWORDS = [
   // Premier State / Central Tech Universities
   'nsut', 'netaji subhas', 'dtu', 'delhi technological university', 'dce',
   'bit mesra', 'birla institute of technology (bit), mesra', 'birla institute of technology, mesra',
-  'punjab engineering college', 'pec ', 'pec,', 'pec)', 'coep', 'vjti',
+  'punjab engineering college', 'pec chandigarh', 'pec, chandigarh', 'coep', 'vjti',
   'jadavpur university', 'anna university', 'ceg guindy', 'thapar',
   'psg tech', 'psg college of technology', 'rvce', 'bmsce', 'msrit', 'mit manipal', 'mahe',
   // Premier Autonomous & Multidisciplinary Colleges
@@ -321,15 +321,16 @@ const CORPORATE_KEYWORDS = [
   "l'oreal", 'loreal', 'brandstorm', 'hul', 'hindustan unilever', 'lime', 'unilever',
   'itc', 'interrobang', 'marico', 'over the wall', 'mondelez', 'reckitt', 'nestle', 'p&g', 'procter & gamble',
   'pepsico', 'coca-cola', 'coke', 'aditya birla', 'stratfresh', 'abg', 'dabur', 'godrej', 'asian paints', 'berger paints', 'britannia',
+  // Automotive, Industrial, Energy & PSUs
+  'maruti suzuki', 'maruti', 'satin finserv',
+  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail', 'ntpc', 'bhel', 'coal india',
+  'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
+  'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
+  'hero motocorp', 'hero colabs', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
   // Tech, E-commerce, Telecom & Semis
   'amazon', 'flipkart', 'google', 'microsoft', 'apple', 'meta', 'uber', 'swiggy', 'zomato',
   'qualcomm', 'intel', 'cisco', 'ibm', 'infosys', 'wipro', 'hcl', 'cognizant', 'capgemini', 'tech mahindra',
   'airtel', 'jio', 'vodafone', 'supervity', 'salesforce', 'adobe',
-  // Conglomerates, Industrial, Energy & PSUs
-  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail', 'ntpc', 'bhel', 'coal india',
-  'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
-  'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
-  'hero motocorp', 'hero colabs', 'hero', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
   // Banking & Financial Services
   'goldman sachs', 'jpmorgan', 'jp morgan', 'morgan stanley', 'citi', 'citigroup', 'hsbc',
   'american express', 'amex', 'standard chartered', 'barclays', 'deutsche bank',
@@ -339,7 +340,7 @@ const CORPORATE_KEYWORDS = [
   'product space', 'mhtechin', 'monomousumi', 'kartexa', 'skilled sapiens', 'indiastox',
   'godstockss', 'acecubing', 'campusorbit', 'pharmaorbit', 'boss console', 'hackathon raptors',
   'heritage vastra', 'code-x-novas', 'elite coders', 'wecodecoders', 'interactup', 'internhill',
-  'innovation hacks', 'gradient learnings', 'bharat academix', 'cyber hx'
+  'innovation hacks', 'gradient learnings', 'bharat academix', 'cyber hx', 'talentsec', 'techverse', 'peakforge'
 ];
 
 const GLOBAL_KEYWORDS = [
@@ -385,16 +386,20 @@ function isIIMorIITorPremierComp(comp) {
 const isIIMorIITorBschoolComp = isIIMorIITorPremierComp;
 
 function isCorporateOrGlobalComp(comp) {
+  if (comp.circuit === 'Corporate') return true;
+  if (comp.circuit && comp.circuit !== 'Corporate') return false;
   if (isDUComp(comp)) return false;
   if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate') return true;
   if (isIIMorIITorPremierComp(comp)) return false;
   if (typeof comp.isCorporateOrGlobal === 'boolean') return comp.isCorporateOrGlobal;
-  const combined = `${comp.orgName || ''} ${comp.title || ''}`.toLowerCase();
+  const org = (comp.orgName || '').toLowerCase().trim();
+  const title = (comp.title || '').toLowerCase();
+  const combined = `${org} ${title}`;
   return (
     CORPORATE_KEYWORDS.some(kw => isMatch(combined, kw)) ||
     GLOBAL_KEYWORDS.some(kw => isMatch(combined, kw)) ||
-    /\b(pvt ltd|private limited|technologies pvt|solutions pvt)\b/i.test(combined) ||
-    (comp.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(comp.orgName || ''))
+    (/\b(pvt ltd|private limited|corporation ltd|corporation limited|inc\b|technologies llc|llp\b|limited$|ltd$)\b/i.test(org) && !/\b(college|university|institute|school of|academy|society|trust)\b/i.test(org)) ||
+    (comp.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(org))
   );
 }
 
