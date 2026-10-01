@@ -1,7 +1,7 @@
 // src/components/SearchableCollegeSelect.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { searchColleges } from '../data/colleges';
-import { SearchIcon, CheckIcon, CloseIcon } from './icons';
+import { searchColleges, COLLEGES_DATABASE } from '../data/colleges';
+import { SearchIcon, CheckIcon, CloseIcon, WhatsAppIcon } from './icons';
 import './SearchableCollegeSelect.css';
 
 export default function SearchableCollegeSelect({
@@ -22,21 +22,6 @@ export default function SearchableCollegeSelect({
   useEffect(() => {
     setQuery(value || '');
   }, [value]);
-
-  // Outside click listener
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
-        // If user left query without selecting, keep the external value
-        if (value && query !== value) {
-          setQuery(value);
-        }
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [value, query]);
 
   // Compute live filtered options
   const filteredOptions = useMemo(() => {
@@ -66,6 +51,25 @@ export default function SearchableCollegeSelect({
     inputRef.current?.focus();
   };
 
+  // Outside click listener - revert unselected query to external value
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+        const exact = COLLEGES_DATABASE.find(
+          (c) => c.name.toLowerCase() === query.trim().toLowerCase()
+        );
+        if (exact) {
+          handleSelect(exact.name);
+        } else if (query !== value) {
+          setQuery(value || '');
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [value, query]);
+
   const handleKeyDown = (e) => {
     if (!isOpen) {
       if (e.key === 'ArrowDown' || e.key === 'Enter') {
@@ -74,25 +78,34 @@ export default function SearchableCollegeSelect({
       }
     }
 
-    const totalCount = filteredOptions.length + (!isExactMatch && query.trim() ? 1 : 0);
-
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev + 1) % Math.max(1, totalCount));
+      if (filteredOptions.length > 0) {
+        setHighlightedIndex((prev) => (prev + 1) % filteredOptions.length);
+      }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setHighlightedIndex((prev) => (prev - 1 + totalCount) % Math.max(1, totalCount));
+      if (filteredOptions.length > 0) {
+        setHighlightedIndex((prev) => (prev - 1 + filteredOptions.length) % filteredOptions.length);
+      }
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
         handleSelect(filteredOptions[highlightedIndex].name);
-      } else if (!isExactMatch && query.trim()) {
-        handleSelect(query.trim());
       }
     } else if (e.key === 'Escape') {
       setIsOpen(false);
     }
   };
+
+  // WhatsApp redirect for requesting unlisted colleges (7007679485)
+  const whatsAppUrl = useMemo(() => {
+    const requested = query.trim();
+    const message = requested
+      ? `Hi, I'd like to request adding my college "${requested}" to OneStop.`
+      : `Hi, I'd like to request adding my college to OneStop.`;
+    return `https://wa.me/917007679485?text=${encodeURIComponent(message)}`;
+  }, [query]);
 
   return (
     <div className={`t19-college-select-root ${disabled ? 't19-college-disabled' : ''}`} ref={containerRef}>
@@ -141,48 +154,60 @@ export default function SearchableCollegeSelect({
       {!disabled && isOpen && (
         <div className="t19-college-dropdown-menu" role="listbox">
           {filteredOptions.length > 0 ? (
-            filteredOptions.map((opt, idx) => {
-              const isSelected = value === opt.name;
-              const isHighlighted = highlightedIndex === idx;
+            <>
+              {filteredOptions.map((opt, idx) => {
+                const isSelected = value === opt.name;
+                const isHighlighted = highlightedIndex === idx;
 
-              return (
-                <div
-                  key={opt.name}
-                  role="option"
-                  aria-selected={isSelected}
-                  className={`t19-college-option-row ${isHighlighted ? 'highlighted' : ''} ${isSelected ? 'selected' : ''}`}
-                  onMouseEnter={() => setHighlightedIndex(idx)}
-                  onClick={() => handleSelect(opt.name)}
-                >
-                  <span className="t19-college-option-name">{opt.name}</span>
-                  {isSelected && (
-                    <CheckIcon size={14} className="t19-college-option-check" color="var(--color-lab-blue, #0F3FFE)" />
-                  )}
+                return (
+                  <div
+                    key={opt.name}
+                    role="option"
+                    aria-selected={isSelected}
+                    className={`t19-college-option-row ${isHighlighted ? 'highlighted' : ''} ${isSelected ? 'selected' : ''}`}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
+                    onClick={() => handleSelect(opt.name)}
+                  >
+                    <span className="t19-college-option-name">{opt.name}</span>
+                    {isSelected && (
+                      <CheckIcon size={14} className="t19-college-option-check" color="var(--color-lab-blue, #0F3FFE)" />
+                    )}
+                  </div>
+                );
+              })}
+
+              {!isExactMatch && query.trim().length > 1 && (
+                <div className="t19-college-request-card">
+                  <div className="t19-college-request-label">Can't find your college?</div>
+                  <a
+                    href={whatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="t19-college-request-action"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <WhatsAppIcon size={15} />
+                    <span>Request to add this college</span>
+                  </a>
                 </div>
-              );
-            })
+              )}
+            </>
           ) : (
-            <div className="t19-college-no-match">
-              No matching colleges in primary directory
-            </div>
-          )}
-
-          {/* Custom write-in option if user typed something not matching standard directory */}
-          {!isExactMatch && query.trim().length > 1 && (
-            <div
-              className={`t19-college-option-row custom-add ${highlightedIndex === filteredOptions.length ? 'highlighted' : ''}`}
-              onMouseEnter={() => setHighlightedIndex(filteredOptions.length)}
-              onClick={() => handleSelect(query.trim())}
-            >
-              <div className="t19-college-option-main">
-                <span className="t19-college-custom-label">
-                  Use custom: <strong>"{query.trim()}"</strong>
-                </span>
-                <span className="t19-college-custom-desc">
-                  Select this if your institution is not listed above
-                </span>
+            <div className="t19-college-not-found-card">
+              <div className="t19-college-not-found-title">College not found</div>
+              <div className="t19-college-not-found-sub">
+                Can't find your institution in our directory?
               </div>
-              <span className="t19-college-custom-badge">+ Add</span>
+              <a
+                href={whatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="t19-college-request-action empty-state"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <WhatsAppIcon size={16} />
+                <span>Request to add this college</span>
+              </a>
             </div>
           )}
         </div>

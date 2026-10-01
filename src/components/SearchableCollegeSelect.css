@@ -154,44 +154,77 @@
   flex-shrink: 0;
 }
 
-.t19-college-no-match {
-  padding: 12px;
-  font-size: 0.8rem;
-  color: var(--text-muted, #7E7C77);
+/* College Request WhatsApp Banner */
+.t19-college-request-card {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border, #E4E1DA);
+  background: rgba(37, 211, 102, 0.05);
+  border-radius: 0 0 8px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.t19-college-request-label {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #5C5A55);
+  font-weight: 500;
+}
+
+.t19-college-request-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0F5132;
+  background-color: #D1E7DD;
+  border: 1px solid #BADBCC;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.t19-college-request-action:hover {
+  background-color: #25D366;
+  color: #FFFFFF;
+  border-color: #25D366;
+}
+
+.t19-college-request-action svg {
+  flex-shrink: 0;
+}
+
+/* Empty state when no colleges match */
+.t19-college-not-found-card {
+  padding: 18px 14px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-/* Custom Add Option */
-.t19-college-option-row.custom-add {
-  border-top: 1px dashed var(--border, #D9D5CD);
-  margin-top: 4px;
-  padding-top: 8px;
-  background-color: rgba(245, 158, 11, 0.05);
-}
-
-.t19-college-option-row.custom-add:hover,
-.t19-college-option-row.custom-add.highlighted {
-  background-color: rgba(245, 158, 11, 0.12);
-}
-
-.t19-college-custom-label {
-  font-size: 0.82rem;
+.t19-college-not-found-title {
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--ink, #0E0E0E);
 }
 
-.t19-college-custom-desc {
-  font-size: 0.7rem;
+.t19-college-not-found-sub {
+  font-size: 0.75rem;
   color: var(--text-muted, #7E7C77);
+  margin-bottom: 6px;
 }
 
-.t19-college-custom-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #B45309;
-  background: rgba(245, 158, 11, 0.15);
-  padding: 2px 8px;
-  border-radius: 4px;
-  flex-shrink: 0;
+.t19-college-request-action.empty-state {
+  padding: 8px 16px;
+  font-size: 0.8rem;
 }
 
 /* Dark Mode Adjustments */
@@ -214,6 +247,34 @@
 
 [data-theme='dark'] .t19-college-option-name {
   color: #F4F4F5;
+}
+
+[data-theme='dark'] .t19-college-request-card {
+  background: rgba(37, 211, 102, 0.08);
+  border-top-color: #27272A;
+}
+
+[data-theme='dark'] .t19-college-request-label {
+  color: #A1A1AA;
+}
+
+[data-theme='dark'] .t19-college-request-action {
+  background-color: rgba(37, 211, 102, 0.15);
+  color: #4ADE80;
+  border-color: rgba(37, 211, 102, 0.25);
+}
+
+[data-theme='dark'] .t19-college-request-action:hover {
+  background-color: #25D366;
+  color: #FFFFFF;
+}
+
+[data-theme='dark'] .t19-college-not-found-title {
+  color: #F4F4F5;
+}
+
+[data-theme='dark'] .t19-college-not-found-sub {
+  color: #A1A1AA;
 }
 
 /* Disabled State */
