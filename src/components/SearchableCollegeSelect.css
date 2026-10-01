@@ -14,14 +14,17 @@
 .t19-college-search-icon {
   position: absolute;
   left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--text-muted, #7E7C77);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
+.t19-college-input-wrapper input.t19-college-input,
 .t19-college-input {
   width: 100%;
-  padding: 10px 36px 10px 36px;
+  padding: 10px 36px 10px 38px !important;
   font-family: inherit;
   font-size: 0.88rem;
   font-weight: 500;
@@ -42,6 +45,8 @@
 .t19-college-clear-btn {
   position: absolute;
   right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,6 +57,7 @@
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.15s ease;
+  z-index: 2;
 }
 
 .t19-college-clear-btn:hover {

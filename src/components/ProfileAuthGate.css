@@ -230,7 +230,7 @@
   justify-content: space-between;
 }
 
-.profile-auth-field input[type="text"],
+.profile-auth-field input[type="text"]:not(.t19-college-input),
 .profile-auth-field input[type="email"],
 .profile-auth-field input[type="password"],
 .profile-auth-field input[type="tel"] {
@@ -246,12 +246,27 @@
   transition: border-color 140ms ease;
 }
 
+.profile-auth-field .t19-college-input {
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--line);
+  background-color: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  padding: 9px 36px 9px 38px !important;
+}
+
+.profile-auth-field .t19-college-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(15, 63, 254, 0.10);
+}
+
 /* Minimum 16px on mobile viewports to prevent iOS auto-zoom */
 @media (max-width: 768px) {
   .profile-auth-field input[type="text"],
   .profile-auth-field input[type="email"],
   .profile-auth-field input[type="password"],
-  .profile-auth-field input[type="tel"] {
+  .profile-auth-field input[type="tel"],
+  .profile-auth-field .t19-college-input {
     font-size: 16px !important;
   }
 }

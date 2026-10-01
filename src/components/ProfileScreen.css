@@ -785,7 +785,7 @@
   border: 1px solid var(--line);
   background-color: var(--surface);
   color: var(--ink);
-  padding: 10px 36px;
+  padding: 10px 36px 10px 38px !important;
 }
 
 .profile-screen-container .t19-college-input:focus {
