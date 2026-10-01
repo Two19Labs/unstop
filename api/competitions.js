@@ -646,14 +646,14 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
   };
 
   const batches = [];
-  // Fetch in concurrent batches of 5 requests with 6000ms timeout
-  for (let i = 0; i < queryEndpoints.length; i += 5) {
-    const chunk = queryEndpoints.slice(i, i + 5);
+  // Fetch in concurrent batches of 10 requests with 4500ms timeout for ultra-fast response
+  for (let i = 0; i < queryEndpoints.length; i += 10) {
+    const chunk = queryEndpoints.slice(i, i + 10);
     const chunkResults = await Promise.all(
       chunk.map(q =>
         fetch(`https://unstop.com/api/public/opportunity/search-result?${q}`, {
           headers,
-          signal: AbortSignal.timeout(6000)
+          signal: AbortSignal.timeout(4500)
         })
           .then(res => (res.ok ? res.json() : null))
           .then(json => (json?.data?.data || []))
@@ -899,6 +899,36 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('Error fetching competitions from Unstop:', error);
+
+    // Resilient fallback 1: Return in-memory cache if available
+    if (cachedCompetitions && cachedCompetitions.length > 0) {
+      console.warn('Serving from in-memory fallback cache');
+      res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+      return res.status(200).json({
+        success: true,
+        count: cachedCompetitions.length,
+        fromCache: true,
+        updatedAt: new Date(cacheTimestamp).toISOString(),
+        data: cachedCompetitions,
+      });
+    }
+
+    // Resilient fallback 2: Return institutional competitions from Supabase
+    try {
+      const fallback = await fetchInstitutionalCompetitionsFromSupabase();
+      if (Array.isArray(fallback) && fallback.length > 0) {
+        console.warn('Serving from Supabase institutional fallback');
+        res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+        return res.status(200).json({
+          success: true,
+          count: fallback.length,
+          fallback: true,
+          updatedAt: new Date().toISOString(),
+          data: fallback,
+        });
+      }
+    } catch (e) {}
+
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch competitions from Unstop',

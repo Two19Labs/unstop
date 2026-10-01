@@ -97,7 +97,11 @@ export default function AuthModal() {
       // Google OAuth will redirect the page
     } catch (err) {
       console.error('Google Auth Error:', err);
-      setErrorMsg(err.message || 'Failed to initiate Google sign in.');
+      let gMsg = err.message || 'Failed to initiate Google sign in.';
+      if (gMsg.toLowerCase().includes('provider is not enabled') || gMsg.toLowerCase().includes('unsupported provider')) {
+        gMsg = 'Google sign-in is currently being configured in Supabase. Please sign in or register with email and password below.';
+      }
+      setErrorMsg(gMsg);
       setSubmitting(false);
     }
   };
@@ -156,6 +160,8 @@ export default function AuthModal() {
         msg = 'Your email is not confirmed yet. Please check your inbox (and spam folder) for the verification link.';
       } else if (msg.toLowerCase().includes('invalid login credentials')) {
         msg = 'Invalid email or password. Please try again or click "Forgot password?".';
+      } else if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('rate_limit') || msg.toLowerCase().includes('over_email_send_rate_limit')) {
+        msg = 'Email rate limit reached for signup verification. Please wait a few minutes or sign in with Google.';
       }
       setErrorMsg(msg);
     } finally {

@@ -261,8 +261,8 @@ export default function CompetitionChatModal({
             <div className="comp-chat-info">
               <div className="comp-chat-name-row">
                 <span className="comp-chat-person-name">{otherPersonName}</span>
-                <span className={`comp-chat-role-badge ${isLead ? 'badge-applicant' : 'badge-lead'}`}>
-                  {isLead ? 'Applicant' : 'Squad Lead'}
+                <span className={`comp-chat-role-badge ${isLead ? (isAccepted ? 'badge-teammate' : 'badge-applicant') : 'badge-lead'}`}>
+                  {isLead ? (isAccepted ? 'Teammate' : 'Applicant') : 'Squad Lead'}
                 </span>
                 {isAccepted && (
                   <span className="comp-chat-status-badge accepted">

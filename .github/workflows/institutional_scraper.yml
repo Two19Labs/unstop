@@ -19,6 +19,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Validate Environment Secrets
+        run: |
+          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "::warning::GEMINI_API_KEY secret is not set in GitHub repository settings. Dedicated crawlers (InsideKampus, Devpost, BITS Oasis) will continue running. To enable AI portal extraction, add GEMINI_API_KEY in Repository Settings > Secrets > Actions."
+          fi
+
       - name: Run Institutional AI Scanner
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
