@@ -154,17 +154,7 @@ export default function SearchableCollegeSelect({
                   onMouseEnter={() => setHighlightedIndex(idx)}
                   onClick={() => handleSelect(opt.name)}
                 >
-                  <div className="t19-college-option-main">
-                    <span className="t19-college-option-name">{opt.name}</span>
-                    <div className="t19-college-option-badges">
-                      {opt.short && (
-                        <span className="t19-college-tag-short">{opt.short}</span>
-                      )}
-                      {opt.city && (
-                        <span className="t19-college-tag-city">{opt.city}</span>
-                      )}
-                    </div>
-                  </div>
+                  <span className="t19-college-option-name">{opt.name}</span>
                   {isSelected && (
                     <CheckIcon size={14} className="t19-college-option-check" color="var(--color-lab-blue, #0F3FFE)" />
                   )}
