@@ -618,6 +618,24 @@ async function fetchInsideKampusCompetitions() {
       const slug = c.slug || (c.title || 'competition').toLowerCase().replace(/[^a-z0-9]+/g, '_');
       const cardImg = c.cardImage?.url || c.featuredImage?.url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/InsideIIM_Logo.png/300px-InsideIIM_Logo.png';
 
+      const cleanEligibility = (c.eligibility || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const cleanRules = (c.rules || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const cleanDesc = (c.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      const catList = Array.isArray(c.categories) ? c.categories.map(cat => (typeof cat === 'string' ? cat : (cat.name || ''))).filter(Boolean) : [];
+      const campusList = Array.isArray(c.campuses) ? c.campuses.map(camp => (typeof camp === 'string' ? camp : (camp.name || ''))).filter(Boolean) : [];
+      const combinedText = `${c.title || ''} ${cleanEligibility} ${cleanRules} ${cleanDesc} ${catList.join(' ')} ${campusList.join(' ')}`.toLowerCase();
+
+      // Check positive UG indicators
+      const hasUgCohort = /\b(undergraduate|undergrad|undergraduates|ug\s+campuses|ug\s+students|engineering\s+campuses|engineering\s+students|b\.tech|bba|b\.com|bcom|bachelor|bachelors|bsc|b\.sc|b\.a\b|open\s+to\s+all\s+branches|all\s+years|1st\s+to\s+4th\s+year|open\s+to\s+all\s+students|all\s+students\s+eligible)\b/i.test(combinedText) ||
+        catList.some(cat => /engineering|undergraduate|tech|bachelor/i.test(cat));
+
+      // Check explicit MBA exclusivity phrases
+      const isMbaExclusive = /\b(only\s+open\s+for\s+.*b-schools|only\s+open\s+for\s+1st\s+year\s+students\s+from\s+the\s+following\s+b-schools|only\s+open\s+for\s+2nd\s+year\s+students\s+from\s+the\s+following\s+b-schools|mba\s+students\s+only|only\s+for\s+mba|mba\s+only|pgdm\s+only|postgraduate\s+only|post-graduate\s+only|pre-mba|pgp\s+only|full-time\s+mba|two-year\s+mba|participating\s+b-schools)\b/i.test(cleanEligibility || combinedText);
+
+      // Eligible for UG if has affirmative UG cohort and not restricted to B-schools only
+      const isUndergradEligible = hasUgCohort && (!isMbaExclusive || /\b(ug\s+campuses|engineering\s+campuses|undergraduate\s+track)\b/i.test(combinedText));
+      const isPgOnly = !isUndergradEligible;
+
       results.push({
         title: c.title || 'InsideKampus Case Competition',
         category: 'case',
@@ -633,10 +651,15 @@ async function fetchInsideKampusCompetitions() {
         max_team: teamSizeVal,
         apply_url: `https://insidekampus.com/competitions/${slug}`,
         registered_count: c.noOfParticipants || c.noOfTeams || 0,
-        description: (c.rules?.replace(/<[^>]+>/g, ' ') || c.title || '').slice(0, 200),
+        description: cleanEligibility ? `${cleanEligibility.slice(0, 160)}. ${cleanDesc.slice(0, 140)}` : (cleanDesc || cleanRules || c.title || '').slice(0, 300),
+        raw_scraped_text: `${cleanEligibility} ${cleanRules} ${cleanDesc}`.slice(0, 2000),
         logo_url: cardImg,
         customPlatform: 'inside_campus',
-        customSourceLabel: 'InsideKampus Direct'
+        customSourceLabel: 'InsideKampus Direct',
+        is_undergrad_eligible: isUndergradEligible,
+        is_pg_only: isPgOnly,
+        is_mba_or_pg: true,
+        target_level: isUndergradEligible ? (isMbaExclusive ? 'all' : 'ug') : 'pg'
       });
     }
 
@@ -829,8 +852,11 @@ async function saveToSupabase(competitions, sourceMeta) {
       deadline: c.deadline || new Date(Date.now() + 14 * 86400000).toISOString(),
       registered_count: Number(c.registered_count) || 0,
       views_count: 0,
-      raw_scraped_text: c.description || c.title,
+      raw_scraped_text: c.raw_scraped_text || c.description || c.title,
       is_undergrad_eligible: (() => {
+        if (c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus') {
+          return c.is_undergrad_eligible === true;
+        }
         const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
         const isInsideCampus = c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus' || /\binside(iim|kampus)\b/i.test(sourceMeta.institution || '');
         const isMbaExcl = isInsideCampus || /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla|itc\s+interrobang|hul\s+l\.i\.m\.e\.)\b/i.test(titleAndDesc) ||
@@ -840,8 +866,10 @@ async function saveToSupabase(competitions, sourceMeta) {
         return c.is_undergrad_eligible !== false && !c.is_pg_only;
       })(),
       is_pg_only: (() => {
+        if (c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus') {
+          return c.is_undergrad_eligible !== true;
+        }
         const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
-        const isInsideCampus = c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus' || /\binside(iim|kampus)\b/i.test(sourceMeta.institution || '');
         const isMbaExcl = isInsideCampus || /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla|itc\s+interrobang|hul\s+l\.i\.m\.e\.)\b/i.test(titleAndDesc) ||
           (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
         const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);

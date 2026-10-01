@@ -180,12 +180,18 @@ function isUndergradEligible(item) {
   const fullText = `${title} ${orgName} ${desc}`;
 
   // 1. InsideKampus & InsideIIM: Dedicated MBA / B-School platform
-  // Exclusively PG/MBA unless explicitly affirmative for Undergraduates
+  // Exclusively PG/MBA unless explicitly affirmative for Undergraduates / Engineering
   const isInsideCampus = platform === 'inside_campus' || platform === 'inside_iim' ||
     /\binside(iim|kampus)\b/i.test(orgName) || /\binside(iim|kampus)\b/i.test(title);
 
   if (isInsideCampus) {
-    if (!UG_AFFIRMATIVE_PATTERN.test(fullText)) {
+    const hasUgAffirmative = UG_AFFIRMATIVE_PATTERN.test(fullText);
+    const hasMbaExclusion = MBA_EXCLUSION_PATTERN.test(fullText);
+    const hasUgCohort = /\b(ug\s+campuses|engineering\s+campuses|undergraduate\s+track)\b/i.test(fullText);
+
+    if (hasUgAffirmative && (!hasMbaExclusion || hasUgCohort)) {
+      // Eligible for UG
+    } else {
       return false;
     }
   }
@@ -564,8 +570,10 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
         };
         const autoUndergradEligible = isUndergradEligible(rawInstItem);
         const isInsideCampus = r.source_platform === 'inside_campus' || r.source_platform === 'inside_iim';
-        const isPGOnly = Boolean(r.is_pg_only) || !autoUndergradEligible || isInsideCampus;
-        const isUndergrad = r.is_undergrad_eligible !== false && !isPGOnly && autoUndergradEligible;
+        const isUndergrad = isInsideCampus
+          ? (r.is_undergrad_eligible === true && !r.is_pg_only && autoUndergradEligible)
+          : (r.is_undergrad_eligible !== false && !Boolean(r.is_pg_only) && autoUndergradEligible);
+        const isPGOnly = !isUndergrad;
         const isMBAorPG = isPGOnly || Boolean(r.is_mba_or_pg) || isInsideCampus || /\b(mba|pgdm|iim|b-school|insideiim)\b/i.test(`${r.title || ''} ${r.host_institution || ''}`);
 
         return {

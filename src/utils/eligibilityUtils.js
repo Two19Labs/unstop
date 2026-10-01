@@ -26,11 +26,18 @@ export function isEligibleForUndergrad(comp) {
 
   const title = (comp.title || '').toLowerCase();
   const desc = (comp.desc || comp.description || comp.raw_scraped_text || '').toLowerCase();
-  const fullText = `${title} ${host} ${desc}`;
+  const eligibility = (comp.eligibility || comp.eligibility_text || '').toLowerCase();
+  const fullText = `${title} ${host} ${desc} ${eligibility}`;
 
   if (isInsideCampus) {
-    // InsideKampus is exclusively PG/MBA unless it explicitly affirms undergraduate eligibility
-    if (!UG_AFFIRMATIVE_PATTERN.test(fullText)) {
+    // InsideKampus: Exclusively PG/MBA by default, but allows legitimate UG cohorts
+    const hasUgAffirmative = UG_AFFIRMATIVE_PATTERN.test(fullText);
+    const hasMbaExclusion = MBA_EXCLUSION_PATTERN.test(fullText);
+    const hasUgCohort = /\b(ug\s+campuses|engineering\s+campuses|undergraduate\s+track)\b/i.test(fullText);
+
+    if (hasUgAffirmative && (!hasMbaExclusion || hasUgCohort)) {
+      // Affirmatively eligible for UG
+    } else {
       return false;
     }
   }
