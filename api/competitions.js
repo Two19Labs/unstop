@@ -9,7 +9,8 @@ const FLAGSHIP_KEYWORDS = [
   'ey', 'deloitte', 'pwc', 'kpmg', 'reliance', 'amazon', 'flipkart',
   'google', 'microsoft', 'tvs', 'optum', 'marico', 'itc', 'mondelez',
   'reckitt', 'accenture', 'sibm', 'spjimr', 'mdi', 'great lakes', 'glim',
-  'maruti suzuki', 'qualcomm', 'asian paints'
+  'maruti suzuki', 'qualcomm', 'asian paints',
+  'brainwars', 'cafta', 'steel-a-thon', 'the ultimate pitch', 'stratos', 'flipkart grid', 'finserv atom'
 ];
 
 const DU_KEYWORDS = [

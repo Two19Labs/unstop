@@ -173,6 +173,38 @@ const TARGET_SOURCES = [
     sourceLabel: 'Red Bull Basement',
     defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f5/RedBullEnergyDrink.svg/300px-RedBullEnergyDrink.svg.png'
   },
+  {
+    institution: 'Bain & Company (BrAINWARS & Bain Consulting Case Competitions)',
+    url: 'https://www.bain.com/careers/roles/bcn/',
+    eventUrls: ['https://www.bain.com/careers/'],
+    circuit: 'corporate',
+    sourceLabel: 'Bain Capability Network',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Bain_%26_Company_Logo.svg/300px-Bain_%26_Company_Logo.svg.png'
+  },
+  {
+    institution: 'Ernst & Young (EY CAFTA Case Championship & EY Techathon)',
+    url: 'https://www.ey.com/en_in',
+    eventUrls: ['https://www.ey.com/en_in/services/learning-solutions/cafta', 'https://www.ey.com/en_in/careers/students'],
+    circuit: 'corporate',
+    sourceLabel: 'EY India Direct',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/EY_logo_2019.svg/300px-EY_logo_2019.svg.png'
+  },
+  {
+    institution: 'Reliance Industries (The Ultimate Pitch - TUP Flagship B-Plan)',
+    url: 'https://www.ril.com',
+    eventUrls: ['https://theultimatepitch.in'],
+    circuit: 'corporate',
+    sourceLabel: 'Reliance TUP',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/99/Reliance_Industries_Logo.svg/300px-Reliance_Industries_Logo.svg.png'
+  },
+  {
+    institution: 'Tata Steel (Steel-a-thon Annual Campus Challenge)',
+    url: 'https://www.tatasteel.com',
+    eventUrls: ['https://www.tatasteel.com/careers/campus-connect/'],
+    circuit: 'corporate',
+    sourceLabel: 'Tata Steel-a-thon',
+    defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Tata_logo.svg/300px-Tata_logo.svg.png'
+  },
 
   // ─── 2. PREMIER IIMS & B-SCHOOL SUMMITS ─────────────────────────────────
   {
@@ -401,8 +433,8 @@ function cleanHtml(html) {
 
   if (text.length <= 6000) return text;
 
-  // Intelligently select paragraphs/sentences containing collegiate event keywords
-  const KEYWORDS = /(competition|challenge|hackathon|summit|fest|conclave|round|case|prize|deadline|register|quiz|trophy|cash|ppi|prizes|team)/i;
+  // Intelligently select paragraphs/sentences containing collegiate & corporate event keywords
+  const KEYWORDS = /(competition|challenge|hackathon|summit|fest|conclave|round|case|prize|deadline|register|quiz|trophy|cash|ppi|prizes|team|brainwars|cafta|steel-a-thon|stratos|lime|finace)/i;
   const segments = text.split(/(?<=[.!?\n])\s+/);
   const relevant = segments.filter(s => KEYWORDS.test(s));
 
