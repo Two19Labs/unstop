@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F6F6F4;color:#1A1A19}
+*{box-sizing:border-box}
+button{font-family:inherit}
+a{color:#0F3FFE}a:hover{color:#0C33CC}
+@keyframes wtPulse{0%{transform:scale(.9);opacity:.8}50%{transform:scale(1.4);opacity:1}100%{transform:scale(.9);opacity:.8}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:rgba(26,26,25,0.35);display:flex;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;box-shadow:0 20px 48px -12px rgba(0,0,0,0.28),0 0 0 1px #F0EFEB;width:100%;max-width:760px;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid #E7E6E2;background:#F9F9F7">
+      <div style="display:flex;align-items:center;gap:8px">
+        <img src="assets/onestop-logo.png" alt="OneStop" style="height:22px;width:auto;display:block">
+        <span style="color:#C9C7C1;font-weight:300;font-size:13px">/</span>
+        <span style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:#0F3FFE;background:rgba(15,63,254,0.08);padding:2px 7px;border-radius:20px">TOUR</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:12px;font-weight:600;color:#75736C">{{ stepNum }} of 5</span>
+        <button type="button" onClick="{{ restart }}" style="background:transparent;border:1px solid transparent;color:#55534D;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F2F1ED;color:#1A1A19;border-color:#E7E6E2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;padding:26px 24px 22px;min-height:310px;align-items:center">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(15,63,254,0.08);color:#0F3FFE;border:1px solid rgba(15,63,254,0.18);padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:0.02em;width:fit-content">
+          <sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></sc-if>
+          <sc-if value="{{ s1 }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></sc-if>
+          <sc-if value="{{ s2 }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.870"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></sc-if>
+          <sc-if value="{{ s3 }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.030-1.054 2.512s1.079 2.913 1.230 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg></sc-if>
+          <sc-if value="{{ s4 }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg></sc-if>
+          <span>{{ slide.badge }}</span>
+        </div>
+        <h2 style="font-size:22px;font-weight:800;color:#1A1A19;line-height:1.25;margin:0;letter-spacing:-0.02em">{{ slide.title }}</h2>
+        <p style="font-size:13.5px;font-weight:600;color:#0F3FFE;margin:0;line-height:1.35">{{ slide.subtitle }}</p>
+        <p style="font-size:13.5px;line-height:1.6;color:#55534D;margin:0">{{ slide.description }}</p>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:center;width:100%">
+        <sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:12px;padding:15px 16px;display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;box-shadow:0 4px 18px rgba(0,0,0,0.06);text-align:left">
+            <div style="display:flex;align-items:center;gap:10px">
+              <img src="https://d8it4huxumps7.cloudfront.net/uploads/images/150x150/uploadedManual-66c3426e256b7_tata.png" alt="Tata Sons" style="width:38px;height:38px;border-radius:9px;object-fit:contain;border:1px solid #E7E6E2;background:#FFFFFF;flex-shrink:0">
+              <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+                <span style="font-size:13px;font-weight:600;color:#1A1A19;line-height:1.3">Tata Sons</span>
+                <span style="font-size:10px;font-weight:700;color:#0F3FFE;text-transform:uppercase;letter-spacing:0.04em">Premier Corporate Circuit</span>
+              </div>
+            </div>
+            <h3 style="margin:0;font-size:14.5px;font-weight:700;line-height:1.35;letter-spacing:-0.01em;color:#1A1A19">Tata Imagination Challenge 2026</h3>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.22);border-radius:9px;padding:7px 11px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                <span style="font-size:12px;font-weight:700;color:#047857;white-space:nowrap">₹5,00,000 Cash Pool</span>
+              </div>
+              <span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:#FFFFFF;color:#10B981;border:1px solid rgba(16,185,129,0.32)">Free</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:#55534D;font-weight:600">
+              <div style="display:flex;align-items:center;gap:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>1–3 Members</span></div>
+              <span style="width:3px;height:3px;border-radius:50%;background:#E7E6E2"></span>
+              <div style="display:flex;align-items:center;gap:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg><span>Online · National Track</span></div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div style="display:flex;align-items:center;gap:5px;font-size:11.5px;color:#75736C"><svg width="13" height="13" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg><span><strong style="color:#1A1A19">18,450</strong> registrations</span></div>
+              <span style="display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(15,63,254,0.35);background:rgba(15,63,254,0.08);color:#0F3FFE;border-radius:20px;padding:2px 8px;font-size:10.5px;font-weight:700;white-space:nowrap">
+                <span style="width:5px;height:5px;border-radius:50%;background:#0F3FFE;animation:wtPulse 1.5s infinite"></span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0F3FFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>Closing in 2 days</span>
+              </span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1.15fr;gap:7px;margin-top:2px">
+              <div style="background:#0F3FFE;border:1px solid #0F3FFE;border-radius:8px;color:#FFFFFF;padding:8px 10px;font-size:11.5px;font-weight:700;text-align:center">View Details</div>
+              <div style="background:#F9F9F7;border:1px solid #E7E6E2;border-radius:8px;color:#1A1A19;padding:8px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Find Teammates (3)</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s1 }}">
+          <div style="background:#F9F9F7;border:1px solid #E7E6E2;border-radius:12px;padding:16px;width:100%">
+            <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#1A1A19;margin-bottom:14px;border-bottom:1px solid #E7E6E2;padding-bottom:8px">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+              <span>Tata Imagination Challenge 2026</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;position:relative">
+              <div style="position:absolute;left:11px;top:14px;bottom:14px;width:2px;background:#E7E6E2"></div>
+              <div style="display:flex;align-items:flex-start;gap:12px;position:relative;z-index:1">
+                <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#17A34A;border:2px solid #17A34A"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:12px;font-weight:700;color:#1A1A19">Round 1: Online Brand &amp; Logic Quiz</div><div style="font-size:11px;color:#55534D">Completed · 100% Score</div></div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:12px;position:relative;z-index:1">
+                <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(15,63,254,0.08);border:2px solid #0F3FFE"><div style="width:8px;height:8px;border-radius:50%;background:#0F3FFE;animation:wtPulse 1.5s infinite"></div></div>
+                <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:12px;font-weight:700;color:#0F3FFE">Round 2: Executive Case Deck &amp; Pitch</div><div style="font-size:11px;color:#55534D">Submissions close in 14h 22m</div></div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:12px;position:relative;z-index:1">
+                <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#FFFFFF;border:2px solid #E7E6E2;font-size:11px;font-weight:700;color:#75736C">3</div>
+                <div style="display:flex;flex-direction:column;gap:2px"><div style="font-size:12px;font-weight:700;color:#1A1A19">Round 3: National Grand Finale Presentation</div><div style="font-size:11px;color:#55534D">Live Jury Round · Mumbai</div></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s2 }}">
+          <div style="background:#F9F9F7;border:1px solid #E7E6E2;border-radius:12px;padding:16px;width:100%">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-size:11px;font-weight:700;color:#b45309;background:rgba(180,83,9,0.1);padding:2px 7px;border-radius:6px">1 spot remaining</span>
+              <span style="font-size:11.5px;color:#75736C;font-weight:500">Tata Imagination Challenge 2026</span>
+            </div>
+            <h4 style="font-size:14px;font-weight:800;color:#1A1A19;margin:0 0 6px">Seeking: Financial Modeling &amp; Deck Design Lead</h4>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#55534D;margin-bottom:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Devanshi K. · SRCC (UG 3rd Year)</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+              <span style="font-size:11px;background:#FFFFFF;border:1px solid #E7E6E2;color:#55534D;padding:2px 8px;border-radius:20px;font-weight:600">Financial Modeling</span>
+              <span style="font-size:11px;background:#FFFFFF;border:1px solid #E7E6E2;color:#55534D;padding:2px 8px;border-radius:20px;font-weight:600">Deck Design</span>
+              <span style="font-size:11px;background:#FFFFFF;border:1px solid #E7E6E2;color:#55534D;padding:2px 8px;border-radius:20px;font-weight:600">Pitching</span>
+            </div>
+            <div style="width:100%;background:#0F3FFE;color:#FFFFFF;border-radius:9px;padding:8px;font-size:12px;font-weight:700;text-align:center">Request to Join Squad →</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s3 }}">
+          <div style="background:#F9F9F7;border:1px solid #E7E6E2;border-radius:12px;padding:16px;width:100%">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:rgba(37,211,102,0.14);display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.276-.101-.477-.15-.678.15-.201.3-.778.978-.954 1.179-.176.2-.351.226-.652.075-.301-.15-1.272-.469-2.423-1.496-.896-.799-1.501-1.786-1.677-2.087-.176-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.201-.3.301-.501.101-.2.05-.376-.025-.526-.075-.15-.678-1.635-.929-2.239-.245-.588-.493-.508-.678-.518l-.578-.01c-.2 0-.527.075-.803.376-.276.301-1.054 1.03-1.054 2.512s1.079 2.913 1.23 3.114c.15.201 2.124 3.243 5.145 4.549.719.31 1.281.496 1.719.635.722.23 1.379.197 1.9.12.58-.087 1.78-.727 2.03-1.43.251-.703.251-1.305.176-1.43-.075-.126-.276-.201-.577-.352z"></path><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.982-1.396A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.167c-1.614 0-3.12-.486-4.383-1.323l-.314-.207-2.955.828.84-2.88-.204-.325A8.134 8.134 0 0 1 3.833 12c0-4.503 3.664-8.167 8.167-8.167s8.167 3.664 8.167 8.167-3.664 8.167-8.167 8.167z"></path></svg></div>
+              <div><div style="font-size:13px;font-weight:700;color:#1A1A19">Ananya Sharma (IIT Delhi)</div><div style="font-size:11px;color:#75736C">Tata Imagination Challenge 2026</div></div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:12px;border-top-left-radius:3px;padding:12px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.04)">
+              <p style="font-size:12px;color:#1A1A19;line-height:1.45;margin:0 0 6px">Hey Ananya! Connecting regarding our squad for "Tata Imagination Challenge 2026". Let’s sync on the problem statement!</p>
+              <span style="font-size:10px;color:#75736C">Just now · Sent via OneStop Handshake</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#15803D;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path><path d="m9 12 2 2 4-4"></path></svg><span>Verified phone exchange upon mutual request acceptance</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s4 }}">
+          <div style="background:#F9F9F7;border:1px solid #E7E6E2;border-radius:12px;padding:16px;width:100%">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:flex-start;gap:12px;background:#FFFFFF;border:1px solid #F0EFEB;border-radius:9px;padding:10px 12px"><div style="font-size:18px;line-height:1">🎯</div><div><div style="font-size:12.5px;font-weight:700;color:#1A1A19;margin-bottom:2px">Catered Competition Feed</div><div style="font-size:11px;color:#55534D;line-height:1.4">Curated strictly for your college and course eligibility across all sources.</div></div></div>
+              <div style="display:flex;align-items:flex-start;gap:12px;background:#FFFFFF;border:1px solid #F0EFEB;border-radius:9px;padding:10px 12px"><div style="font-size:18px;line-height:1">🚀</div><div><div style="font-size:12.5px;font-weight:700;color:#1A1A19;margin-bottom:2px">Recruitment Spotlight</div><div style="font-size:11px;color:#55534D;line-height:1.4">Squad leads searching for your skills can discover &amp; invite you.</div></div></div>
+              <div style="display:flex;align-items:flex-start;gap:12px;background:#FFFFFF;border:1px solid #F0EFEB;border-radius:9px;padding:10px 12px"><div style="font-size:18px;line-height:1">🔔</div><div><div style="font-size:12.5px;font-weight:700;color:#1A1A19;margin-bottom:2px">Multi-Round Push Alerts</div><div style="font-size:11px;color:#55534D;line-height:1.4">Get notified before submission windows lock.</div></div></div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 22px;border-top:1px solid #E7E6E2;background:#F9F9F7">
+      <div style="display:flex;align-items:center;gap:8px">
+        <sc-for list="{{ dots }}" as="d" hint-placeholder-count="5">
+          <button type="button" onClick="{{ d.go }}" style="width:{{ d.w }};height:8px;border-radius:4px;background:{{ d.bg }};border:none;padding:0;cursor:pointer;transition:all 0.25s cubic-bezier(0.16,1,0.3,1)"></button>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button type="button" onClick="{{ restart }}" style="background:transparent;border:none;font-size:13px;font-weight:600;color:#75736C;cursor:pointer;padding:8px 12px;border-radius:9px" style-hover="color:#1A1A19;background:#F2F1ED">Skip tour</button>
+        <sc-if value="{{ notFirst }}">
+          <button type="button" onClick="{{ prev }}" style="background:#FFFFFF;border:1px solid #E7E6E2;color:#1A1A19;font-size:13px;font-weight:700;padding:8px 16px;border-radius:9px;cursor:pointer" style-hover="background:#F2F1ED;border-color:#BFB9AC">Back</button>
+        </sc-if>
+        <button type="button" onClick="{{ next }}" style="background:#0F3FFE;border:1px solid #0F3FFE;color:#FFFFFF;font-size:13.5px;font-weight:700;padding:9px 18px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px -2px rgba(15,63,254,0.35)" style-hover="background:#0C33CC;border-color:#0C33CC">
+          <span>{{ nextLabel }}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SLIDES = [
+  { badge: 'Curated Speed Layer', title: 'Every Premier Student Competition in One Place', subtitle: 'Aggregated & verified across top platforms, circuits & campus portals', description: 'Skip digging through fragmented portals and cluttered listings. OneStop aggregates and curates high-impact student competitions across India—from corporate flagships (Tata, Flipkart, L’Oréal, Reliance) to university circuits (DU, IITs, IIMs, BITS)—covering case challenges, hackathons, quizzes, simulations, and corporate awards with instant eligibility verification.' },
+  { badge: 'Multi-Round Deadlines', title: 'Never Miss a Submission Cutoff Again', subtitle: 'Live multi-round countdowns & emergency alerts', description: 'Competitions don’t just have one deadline. Track online quizzes, business simulations, executive case summaries, prototype submissions, and national finals with real-time countdowns and instant desktop alerts before server locks.' },
+  { badge: 'Collegiate Squad Finder', title: 'Build Your Dream Team Across Colleges', subtitle: 'Vetted teammates matching complementary superpowers', description: 'Don’t scramble solo or settle for random groups. Recruit high-caliber peers from SRCC, IIT, IIM, BITS, SSCBS, and colleges across India. Filter by skills—developers, financial modelers, deck designers, researchers, and pitch presenters.' },
+  { badge: 'Instant Handshake', title: 'Instant 1-Tap WhatsApp Squad Coordination', subtitle: 'Zero friction, zero email delay', description: 'When a squad lead accepts your application—or when you accept a prospective teammate—OneStop provides a direct WhatsApp connection prefilled with the competition context so you can immediately begin collaborating on your submission.' },
+  { badge: 'Personalized For You', title: 'Build Your Profile & Unlock Catered Matches', subtitle: 'Personalized opportunities & teammate recruiting', description: 'Set your college, degree (UG vs. PG), and core superpowers. OneStop filters out competitions you aren’t eligible for across all platforms, highlights dream matches, and lets squad leaders recruit you directly.' }
+];
+class Component extends DCLogic {
+  state = { step: 0 };
+  componentDidMount() {
+    this._k = (e) => { if (e.key === 'ArrowRight') this.go(this.state.step + 1); if (e.key === 'ArrowLeft') this.go(this.state.step - 1); };
+    window.addEventListener('keydown', this._k);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this._k); }
+  go(i) { this.setState({ step: Math.max(0, Math.min(SLIDES.length - 1, i)) }); }
+  renderVals() {
+    const s = this.state.step;
+    const isLast = s === SLIDES.length - 1;
+    return {
+      slide: SLIDES[s], stepNum: s + 1,
+      s0: s === 0, s1: s === 1, s2: s === 2, s3: s === 3, s4: s === 4,
+      notFirst: s > 0,
+      nextLabel: isLast ? 'Build My Profile & Start Winning' : 'Next',
+      dots: SLIDES.map((_, i) => ({ w: i === s ? '24px' : '8px', bg: i === s ? '#0F3FFE' : '#E7E6E2', go: () => this.go(i) })),
+      next: () => isLast ? this.go(0) : this.go(s + 1),
+      prev: () => this.go(s - 1),
+      restart: () => this.go(0)
+    };
+  }
+}
+</script>
+</body>
+</html>

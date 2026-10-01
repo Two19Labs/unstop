@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Archivo',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F6F6F4;color:#1A1A19}
+*{box-sizing:border-box}
+button{font-family:inherit}
+a{color:#0F3FFE}a:hover{color:#0C33CC}
+</style>
+</helmet>
+<div style="min-height:100vh;background:rgba(26,26,25,0.35);display:flex;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:14px;box-shadow:0 20px 48px -12px rgba(0,0,0,0.28),0 0 0 1px #F0EFEB;width:100%;max-width:660px;display:flex;flex-direction:column;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid #E7E6E2;background:#F9F9F7">
+      <div style="display:flex;align-items:center;gap:8px">
+        <img src="assets/onestop-logo.png" alt="OneStop" style="height:20px;width:auto;display:block">
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:12px;font-weight:600;color:#75736C">{{ stepNum }} of 6</span>
+        <button type="button" onClick="{{ restart }}" style="background:transparent;border:1px solid transparent;color:#55534D;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#F2F1ED;color:#1A1A19;border-color:#E7E6E2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;padding:18px 20px 16px;min-height:330px;align-items:center">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:13px;font-weight:600;color:#0F3FFE">{{ slide.badge }}</span>
+        <h2 style="font-size:25px;font-weight:700;color:#1A1A19;line-height:1.15;margin:0;letter-spacing:-0.025em;text-wrap:balance">{{ slide.title }}</h2>
+        <p style="font-size:14.5px;line-height:1.5;color:#55534D;margin:0;text-wrap:pretty;max-width:300px">{{ slide.description }}</p>
+      </div>
+
+      <div ref="{{ paneRef }}" style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:300px">
+        <div style="zoom:0.78;display:flex;align-items:center;justify-content:center;width:100%">
+
+        <sc-if value="{{ s0 }}" hint-placeholder-val="{{ true }}">
+          <div style="width:268px;flex:none;background:#FFFFFF;border:1px solid #E7E6E2;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:7px;box-shadow:0 4px 18px rgba(0,0,0,0.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid #E7E6E2;min-height:27px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:14.7px;font-weight:700;color:#1A1A19;letter-spacing:-0.2px">Filters</span>
+                <sc-if value="{{ f.any }}"><span style="background:rgba(113,34,44,0.1);color:#71222c;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:9999px;letter-spacing:0.2px">{{ f.total }}</span></sc-if>
+              </div>
+              <sc-if value="{{ f.any }}"><span style="font-size:11.7px;color:#71222c;font-weight:700;padding:2px 5px;border-radius:4px">Reset All</span></sc-if>
+            </div>
+
+            <div style="display:flex;flex-direction:column;padding-top:2px">
+              <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex:1;padding:4px 0">
+                  <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg><span style="font-size:13.4px;font-weight:700;color:#1A1A19;letter-spacing:-0.1px">Circuits</span></div>
+                  <sc-if value="{{ f.du }}"><span style="background:rgba(113,34,44,0.1);color:#71222c;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:9999px;letter-spacing:0.2px">1</span></sc-if>
+                </div>
+                <span style="font-size:10.9px;font-weight:700;color:#55534D;padding:2px 6px;line-height:1">All</span>
+              </div>
+              <div style="padding-top:4px;display:flex;flex-direction:column;gap:4px">
+                <div data-cue="du" style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:{{ f.duInk }};padding:2px 0">
+                  <span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid {{ f.duBd }};background:{{ f.duBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s ease;transform:{{ press.du }}"><sc-if value="{{ f.du }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if></span>
+                  <span style="flex:1;line-height:1.25;font-weight:500">DU Circuit</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(48)</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:#55534D;padding:2px 0"><span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid #cbd5e1;background:#FFFFFF;flex-shrink:0"></span><span style="flex:1;line-height:1.25;font-weight:500">IIMs, IITs &amp; Premier</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(36)</span></div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:#55534D;padding:2px 0"><span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid #cbd5e1;background:#FFFFFF;flex-shrink:0"></span><span style="flex:1;line-height:1.25;font-weight:500">Corporate &amp; Global</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(72)</span></div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:#55534D;padding:2px 0"><span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid #cbd5e1;background:#FFFFFF;flex-shrink:0"></span><span style="flex:1;line-height:1.25;font-weight:500">Others</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(58)</span></div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;padding-top:6px;border-top:1px solid rgba(0,0,0,0.05)">
+              <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex:1;padding:4px 0">
+                  <div style="display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg><span style="font-size:13.4px;font-weight:700;color:#1A1A19;letter-spacing:-0.1px">Categories</span></div>
+                  <sc-if value="{{ f.case }}"><span style="background:rgba(113,34,44,0.1);color:#71222c;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:9999px;letter-spacing:0.2px">1</span></sc-if>
+                </div>
+                <span style="font-size:10.9px;font-weight:700;color:#55534D;padding:2px 6px;line-height:1">All</span>
+              </div>
+              <div style="padding-top:4px;display:flex;flex-direction:column;gap:4px">
+                <div data-cue="case" style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:{{ f.caseInk }};padding:2px 0">
+                  <span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid {{ f.caseBd }};background:{{ f.caseBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s ease;transform:{{ press.case }}"><sc-if value="{{ f.case }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if></span>
+                  <span style="flex:1;line-height:1.25;font-weight:500">Case Comps</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(64)</span>
+                </div>
+                <sc-if value="{{ f.case }}">
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 6px 8px 24px">
+                    <span data-cue="fin" style="display:inline-flex;align-items:center;gap:4px;padding:2.5px 8px;font-size:10.9px;font-weight:600;border-radius:6px;border:1px solid {{ f.finBd }};background:{{ f.finBg }};color:{{ f.finInk }};line-height:1.3;transition:all .15s ease;transform:{{ press.fin }}"><span>Finance &amp; Valuation</span><sc-if value="{{ f.fin }}"><span>✓</span></sc-if></span>
+                    <span style="display:inline-flex;align-items:center;padding:2.5px 8px;font-size:10.9px;font-weight:600;border-radius:6px;border:1px solid #E7E6E2;background:#FFFFFF;color:#55534D;line-height:1.3">Strategy &amp; Consulting</span>
+                    <span style="display:inline-flex;align-items:center;padding:2.5px 8px;font-size:10.9px;font-weight:600;border-radius:6px;border:1px solid #E7E6E2;background:#FFFFFF;color:#55534D;line-height:1.3">Marketing &amp; Brand</span>
+                    <span style="display:inline-flex;align-items:center;padding:2.5px 8px;font-size:10.9px;font-weight:600;border-radius:6px;border:1px solid #E7E6E2;background:#FFFFFF;color:#55534D;line-height:1.3">B-Plan &amp; Pitch</span>
+                  </div>
+                </sc-if>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:#55534D;padding:2px 0"><span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid #cbd5e1;background:#FFFFFF;flex-shrink:0"></span><span style="flex:1;line-height:1.25;font-weight:500">Hackathons</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(41)</span></div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:#55534D;padding:2px 0"><span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid #cbd5e1;background:#FFFFFF;flex-shrink:0"></span><span style="flex:1;line-height:1.25;font-weight:500">Quizzes</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(27)</span></div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:12.4px;color:#55534D;padding:2px 0"><span style="width:14px;height:14px;border-radius:3.5px;border:1.5px solid #cbd5e1;background:#FFFFFF;flex-shrink:0"></span><span style="flex:1;line-height:1.25;font-weight:500">Debates</span><span style="font-size:11.2px;color:#55534D;font-weight:600;opacity:0.85">(22)</span></div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;padding-top:6px;border-top:1px solid rgba(0,0,0,0.05);gap:4px">
+              <span style="font-size:11.4px;font-weight:700;color:#55534D;text-transform:uppercase;letter-spacing:0.4px;padding:1px 0">Entry Fee</span>
+              <div style="display:flex;border:1px solid #E7E6E2;border-radius:7px;padding:2px;gap:2px;width:100%">
+                <span style="flex:1;font-size:11.5px;padding:4px 5px;border-radius:5px;text-align:center;white-space:nowrap;background:{{ f.allBg }};color:{{ f.allInk }};font-weight:{{ f.allFw }};box-shadow:{{ f.allSh }};transition:all .15s ease">All</span>
+                <span data-cue="free" style="flex:1;font-size:11.5px;padding:4px 5px;border-radius:5px;text-align:center;white-space:nowrap;background:{{ f.freeBg }};color:{{ f.freeInk }};font-weight:{{ f.freeFw }};box-shadow:{{ f.freeSh }};transition:all .15s ease;transform:{{ press.free }}">Free</span>
+                <span style="flex:1;font-size:11.5px;font-weight:600;padding:4px 5px;border-radius:5px;text-align:center;white-space:nowrap;color:#55534D">Paid</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s1 }}">
+          <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:330px">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="opacity:{{ a.c0 }};transform:translateY({{ a.c0y }});transition:opacity .25s ease,transform .25s ease;display:inline-flex;align-items:center;font-size:11.5px;border-radius:999px;padding:2.5px 9px;white-space:nowrap;line-height:1.3;background:#F2F1ED;color:#1A1A19;border:1px solid #E7E6E2;font-weight:700"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>Closing soonest</span>
+              <span style="opacity:{{ a.c1 }};transform:translateY({{ a.c1y }});transition:opacity .25s ease,transform .25s ease;display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:2.5px 9px;white-space:nowrap;line-height:1.3;background:rgba(15,63,254,0.07);color:#0F3FFE;border:1px solid rgba(15,63,254,0.20)">DU Circuit</span>
+              <span style="opacity:{{ a.c2 }};transform:translateY({{ a.c2y }});transition:opacity .25s ease,transform .25s ease;display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:2.5px 9px;white-space:nowrap;line-height:1.3;background:rgba(15,63,254,0.07);color:#0F3FFE;border:1px solid rgba(15,63,254,0.20)">Case Comps</span>
+              <span style="opacity:{{ a.c3 }};transform:translateY({{ a.c3y }});transition:opacity .25s ease,transform .25s ease;display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:2.5px 9px;white-space:nowrap;line-height:1.3;background:rgba(15,63,254,0.07);color:#0F3FFE;border:1px solid rgba(15,63,254,0.20)">Free</span>
+              <span style="opacity:{{ a.c4 }};transition:opacity .25s ease;font-size:12.5px;font-weight:600;color:#0F3FFE;padding:2px 4px;white-space:nowrap">Edit in Browse</span>
+            </div>
+            <div ref="{{ winRef }}" style="height:360px;overflow:hidden;display:flex;justify-content:center;-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 4%,#000 88%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 4%,#000 88%,transparent 100%);opacity:{{ a.card }};transition:opacity .35s ease">
+              <div ref="{{ gridRef }}" style="display:grid;grid-template-columns:302px;gap:12px;padding:8px 2px 24px;align-self:flex-start;transform:translateY({{ a.scroll }})">
+                <sc-for list="{{ cards }}" as="c" hint-placeholder-count="4">
+                  <div style="border:1px solid {{ c.bd }};background:{{ c.bg }};box-shadow:{{ c.sh }};border-radius:12px;display:flex;flex-direction:column;width:302px;padding:16px 17px 17px;gap:12px">
+                    <div style="display:grid;grid-template-columns:40px minmax(0,1fr);align-items:start;gap:11px">
+                      <div style="width:40px;height:40px;border-radius:9px;border:1px solid #E7E6E2;background:#F2F1ED;color:#55534D;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;box-shadow:0 1px 2px rgba(0,0,0,0.03);position:relative">{{ c.ini }}<span style="position:absolute;inset:2px;background-image:{{ c.bgImg }};background-position:center;background-size:contain;background-repeat:no-repeat"></span></div>
+                      <span style="font-size:13px;font-weight:500;color:#55534D;line-height:1.35;padding-top:2px">{{ c.host }}</span>
+                    </div>
+                    <h3 style="margin:0;font-size:16px;font-weight:700;line-height:1.35;letter-spacing:-0.01em;color:#1A1A19;min-height:42px;text-wrap:pretty">{{ c.title }}</h3>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.22);border-radius:10px;padding:8px 12px">
+                      <div style="display:flex;align-items:center;gap:7px;min-width:0;flex:1">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                        <span style="font-size:12px;font-weight:700;color:#047857;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.prize }}</span>
+                      </div>
+                      <span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:0.2px;flex-shrink:0;white-space:nowrap;background:#FFFFFF;color:#10B981;border:1px solid rgba(16,185,129,0.32)">Free Entry</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#55534D;font-weight:600;min-height:20px;flex-wrap:wrap">
+                      <div style="display:flex;align-items:center;gap:5px;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>{{ c.team }}</span></div>
+                      <span style="width:3px;height:3px;border-radius:50%;background:#E7E6E2;flex-shrink:0"></span>
+                      <div style="display:flex;align-items:center;gap:5px;white-space:nowrap"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#55534D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg><span>Ends {{ c.ends }}</span></div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px">
+                      <sc-if value="{{ c.hasRegs }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#75736C"><svg width="13" height="13" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg><span><strong style="color:#1A1A19">{{ c.regs }}</strong> registrations</span></div></sc-if>
+                      <sc-if value="{{ c.noRegs }}"><span style="color:#0F3FFE;font-weight:600;font-size:11px">Recently Listed</span></sc-if>
+                      <span style="display:inline-flex;align-items:center;gap:5px;border:{{ c.uBd }};border-radius:20px;background:{{ c.uBg }};color:{{ c.uInk }};padding:3px 9px;font-size:11px;font-weight:700;white-space:nowrap">
+                        <span style="width:6px;height:6px;border-radius:50%;background:{{ c.uInk }};display:inline-block"></span>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        <span>{{ c.left }}</span>
+                      </span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-top:4px">
+                      <div style="border:1px solid #0F3FFE;border-radius:9px;background:#0F3FFE;color:#FFFFFF;padding:9px 10px;font-size:13px;font-weight:600;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px"><span>Apply</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" x2="21" y1="14" y2="3"></line></svg></div>
+                      <div style="border:1px solid #E7E6E2;border-radius:9px;background:#FFFFFF;color:#1A1A19;padding:9px 10px;font-size:13px;font-weight:600;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1A19" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg><span>Squad up</span></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s2 }}">
+          <div style="width:296px;flex:none;min-height:274px;background:#FFFDF5;border:1.5px solid rgba(245,158,11,0.40);border-radius:16px;padding:14px 15px 15px;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 22px rgba(0,0,0,0.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+                <div style="width:30px;height:30px;border-radius:7px;border:1px solid #E7E6E2;background:#F2F1ED;color:#55534D;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;box-shadow:0 1px 2px rgba(0,0,0,0.03);user-select:none;position:relative">SR<span style="position:absolute;inset:2px;background-image:url('https://www.pikpng.com/pngl/m/145-1453183_srcc-logo-png-shri-ram-college-of-commerce.png');background-position:center;background-size:contain;background-repeat:no-repeat"></span></div>
+                <span style="font-size:12px;font-weight:500;color:#55534D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Shri Ram College of Commerce (SRCC)</span>
+              </div>
+              <span style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:1px solid #E7E6E2;background:#F2F1ED;color:#75736C;font-size:14px;font-weight:500;border-radius:7px;line-height:1;flex-shrink:0">×</span>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;color:#1A1A19;line-height:1.25;margin:0;min-height:38px">SRCC Business Conclave Case Challenge 2026</h3>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:11px;background:#FFFBEB;border:1px solid rgba(245,158,11,0.28)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+                <span style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#D97706;white-space:nowrap">Round 2 of 3</span>
+                <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap;background:#FFFBEB;border:1px solid #FCD34D;color:#D97706">Closing soon</span>
+              </div>
+              <div style="font-size:13.5px;font-weight:700;color:#1A1A19;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;margin-top:1px">Executive Case Deck &amp; Pitch</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11.5px;font-weight:500;margin-top:1px">
+                <span style="color:#55534D;white-space:nowrap">Due 12 Oct, 11:59 PM</span>
+                <span style="font-weight:600;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:4px;color:#D97706;white-space:nowrap"><span style="font-size:12px">⏱</span><span>{{ timer }}</span></span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:4px;font-size:11.5px;color:#75736C;white-space:nowrap;overflow:hidden;padding:1px 2px;min-height:18px">
+              <span style="font-size:12px">→</span><span>Next: </span><span style="color:#1A1A19;font-weight:600;overflow:hidden;text-overflow:ellipsis">National Grand Finale</span><span style="color:#55534D;font-weight:500"> · 20 Oct</span>
+            </div>
+            <div data-cue="open" style="transform:{{ press.open }};transition:transform .12s ease,background .12s ease;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:38px;border-radius:10px;background:{{ a.openBg }};color:#FFFFFF;font-size:13.5px;font-weight:600"><span>Open Portal</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s3 }}">
+          <div style="background:#FFFFFF;border:1px solid #E7E6E2;border-radius:12px;display:flex;flex-direction:column;width:302px;flex:none;padding:16px 17px 17px;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,0.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <span style="background:rgba(15,63,254,0.08);color:#0F3FFE;border:1px solid rgba(15,63,254,0.35);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:0.02em;white-space:nowrap">1 spot left</span>
+              <span style="font-size:12px;color:#75736C;white-space:nowrap">2h ago</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:38px;height:38px;border-radius:50%;background:#0F3FFE;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none">D</span>
+              <div style="min-width:0;flex:1">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700;color:#1A1A19">Devanshi K.</span><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;display:inline-block"></span></div>
+                <div style="font-size:12px;color:#75736C;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">SRCC · UG 3rd Year</div>
+              </div>
+            </div>
+            <div style="border-top:1px solid #E7E6E2;padding-top:10px">
+              <span style="font-size:11px;font-weight:600;color:#75736C;text-transform:uppercase">Competing in</span>
+              <h3 style="margin:3px 0 0;font-size:15px;font-weight:700;color:#1A1A19;line-height:1.35;text-wrap:pretty">SRCC Business Conclave Case Challenge 2026</h3>
+              <div style="margin-top:5px"><span style="font-size:12px;color:#55534D">Shri Ram College of Commerce (SRCC)</span></div>
+            </div>
+            <div>
+              <span style="font-size:11px;font-weight:600;color:#75736C">Teammates needed with:</span>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px">
+                <span style="background:rgba(15,63,254,0.08);color:#0F3FFE;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;white-space:nowrap">Financial Modeling</span>
+                <span style="background:rgba(15,63,254,0.08);color:#0F3FFE;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;white-space:nowrap">Deck Design</span>
+                <span style="background:rgba(15,63,254,0.08);color:#0F3FFE;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;white-space:nowrap">Pitching</span>
+              </div>
+            </div>
+            <div style="padding-top:10px;border-top:1px solid #E7E6E2">
+              <sc-if value="{{ a.notRequested }}" hint-placeholder-val="{{ true }}">
+                <div data-cue="join" style="transform:{{ press.join }};transition:transform .12s ease;width:100%;border:1px solid #0F3FFE;border-radius:9px;background:#0F3FFE;color:#FFFFFF;padding:10px 14px;font-size:13px;font-weight:600;text-align:center">Request to join</div>
+              </sc-if>
+              <sc-if value="{{ a.requested }}">
+                <div style="width:100%;border:1px solid #E7E6E2;border-radius:9px;background:#F2F1ED;color:#75736C;padding:10px 14px;font-size:13px;font-weight:600;text-align:center">Requested  -  pending</div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s4 }}">
+          <div style="display:flex;flex-direction:column;align-items:center;width:100%">
+            <div style="width:100%;max-width:340px;background:#FFFFFF;border:1px solid #E7E6E2;border-radius:12px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.06)">
+              <div style="display:flex;flex-direction:column;gap:12px;padding:16px 18px">
+                <div style="display:flex;flex-direction:column">
+                  <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                    <span style="font-size:14px;font-weight:600;color:#1A1A19">Ananya Sharma</span>
+                    <sc-if value="{{ a.notAccepted }}" hint-placeholder-val="{{ true }}"><span style="border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap;background:#F9F9F7;color:#75736C;border:1px solid #E7E6E2">Pending</span></sc-if>
+                    <sc-if value="{{ a.accepted }}"><span style="border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap;background:rgba(22,163,74,0.15);color:#16A34A;border:1px solid rgba(22,163,74,0.35)">Accepted</span></sc-if>
+                  </div>
+                  <p style="margin:5px 0 0;font-size:13px;color:#75736C">IIT Delhi · applied to SRCC Business Conclave Case Challenge 2026</p>
+                  <p style="margin:9px 0 0;font-size:13px;color:#1A1A19;line-height:1.5;border-left:2px solid #E7E6E2;padding-left:11px">Built the financial model for our Round 1 deck. Happy to own the numbers.</p>
+                  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:9px">
+                    <span style="background:#F2F1ED;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500;color:#55534D;white-space:nowrap">Financial Modeling</span>
+                    <span style="background:#F2F1ED;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500;color:#55534D;white-space:nowrap">Excel</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span data-cue="chat" style="border:1px solid #0F3FFE;border-radius:8px;background:{{ a.chatBg }};color:{{ a.chatInk }};transition:all .12s ease;padding:8px 12px;white-space:nowrap;font-size:13px;font-weight:600;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span>Chat</span></span>
+                  <sc-if value="{{ a.notAccepted }}" hint-placeholder-val="{{ true }}">
+                    <span style="border:1px solid #E7E6E2;border-radius:8px;background:#FFFFFF;color:#55534D;padding:8px 14px;white-space:nowrap;font-size:13px;font-weight:500;min-height:38px;display:inline-flex;align-items:center;justify-content:center">Decline</span>
+                    <span data-cue="accept" style="transform:{{ press.accept }};transition:transform .12s ease;border:1px solid #0F3FFE;border-radius:8px;background:#0F3FFE;color:#FFFFFF;padding:8px 14px;white-space:nowrap;font-size:13px;font-weight:600;min-height:38px;display:inline-flex;align-items:center;justify-content:center">Accept</span>
+                  </sc-if>
+                  <sc-if value="{{ a.accepted }}">
+                    <span data-cue="wa" style="border:1px solid #16A34A;border-radius:8px;background:#16A34A;color:#FFFFFF;padding:8px 14px;white-space:nowrap;font-size:13px;font-weight:600;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px">WhatsApp</span>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <div style="opacity:{{ a.capOp }};transition:opacity .3s ease;display:flex;flex-direction:column;gap:6px;width:100%;max-width:340px;margin-top:12px;font-size:12px;color:#75736C">
+              <div style="display:flex;align-items:center;gap:7px"><span style="width:6px;height:6px;border-radius:50%;background:#0F3FFE;flex:none"></span><span><strong style="color:#1A1A19;font-weight:600">chat</strong> stays on onestop, no number shared</span></div>
+              <div style="display:flex;align-items:center;gap:7px"><span style="width:6px;height:6px;border-radius:50%;background:#16A34A;flex:none"></span><span><strong style="color:#1A1A19;font-weight:600">whatsapp</strong> opens a direct chat with the context prefilled</span></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s5 }}">
+          <div style="width:100%;max-width:340px;background:#FFFFFF;border:1px solid #E7E6E2;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;box-shadow:0 4px 18px rgba(0,0,0,0.06)">
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em;line-height:1.2;color:#1A1A19;white-space:nowrap">Good evening, Aarav</h1>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#75736C">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0F3FFE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                <span style="color:#55534D;font-weight:500">SRCC</span><span style="color:#75736C">·</span><span style="color:#75736C">UG 2nd Year</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;row-gap:8px;align-items:stretch;margin-left:-18px">
+              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:2px 18px;border-left:1px solid #E7E6E2"><span style="font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1.15;color:#1A1A19;font-variant-numeric:tabular-nums">{{ a.k1 }}</span><span style="font-size:12px;font-weight:500;color:#75736C;white-space:nowrap">new today</span></div>
+              <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:2px 18px;border-left:1px solid #E7E6E2"><span style="font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1.15;color:#1A1A19;font-variant-numeric:tabular-nums">{{ a.k2 }}</span><span style="font-size:12px;font-weight:500;color:#75736C;white-space:nowrap">squads for you</span></div>
+              <div data-cue="req" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:2px 18px;border-left:1px solid #E7E6E2;opacity:{{ a.reqOp }};transition:opacity .14s ease"><span style="font-size:20px;font-weight:700;letter-spacing:-0.02em;line-height:1.15;color:#0F3FFE;font-variant-numeric:tabular-nums">{{ a.k3 }}</span><span style="font-size:12px;font-weight:500;color:#75736C;white-space:nowrap">requests</span></div>
+            </div>
+          </div>
+        </sc-if>
+        </div>
+
+        <div style="position:absolute;left:{{ cur.rx }};top:{{ cur.ry }};width:28px;height:28px;border-radius:50%;background:rgba(15,63,254,0.25);opacity:{{ cur.rop }};transform:scale({{ cur.rs }});pointer-events:none;z-index:4"></div>
+        <div style="position:absolute;left:{{ cur.x }};top:{{ cur.y }};opacity:{{ cur.op }};transform:scale({{ cur.s }});transform-origin:0 0;transition:transform .1s ease;pointer-events:none;z-index:5;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.25))">
+          <svg width="20" height="22" viewBox="0 0 20 22"><path d="M1.5 1.5 L1.5 17.5 L5.6 13.8 L8.4 20.2 L11.2 19 L8.5 12.7 L14 12.7 Z" fill="#1A1A19" stroke="#FFFFFF" stroke-width="1.4" stroke-linejoin="round"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:10px 18px;border-top:1px solid #E7E6E2;background:#F9F9F7">
+      <div style="display:flex;align-items:center;gap:8px">
+        <sc-for list="{{ dots }}" as="d" hint-placeholder-count="6">
+          <button type="button" onClick="{{ d.go }}" style="width:{{ d.w }};height:8px;border-radius:4px;background:{{ d.bg }};border:none;padding:0;cursor:pointer;overflow:hidden;display:flex;transition:width 0.25s cubic-bezier(0.16,1,0.3,1)"><span style="display:block;height:100%;width:{{ d.fill }};background:#0F3FFE;border-radius:4px"></span></button>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button type="button" onClick="{{ restart }}" style="background:transparent;border:none;font-size:13px;font-weight:600;color:#75736C;cursor:pointer;padding:8px 12px;border-radius:9px" style-hover="color:#1A1A19;background:#F2F1ED">Skip</button>
+        <sc-if value="{{ notFirst }}">
+          <button type="button" onClick="{{ prev }}" style="background:#FFFFFF;border:1px solid #E7E6E2;color:#1A1A19;font-size:13px;font-weight:600;padding:8px 16px;border-radius:9px;cursor:pointer" style-hover="background:#F2F1ED;border-color:#BFB9AC">Back</button>
+        </sc-if>
+        <button type="button" onClick="{{ next }}" style="background:#0F3FFE;border:1px solid #0F3FFE;color:#FFFFFF;font-size:13.5px;font-weight:600;padding:9px 18px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px -2px rgba(15,63,254,0.35)" style-hover="background:#0C33CC;border-color:#0C33CC">
+          <span>{{ nextLabel }}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;autoAdvance&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Playback&quot;}}">
+const SLIDES = [
+  { badge: 'filters', title: 'tell us what you’re into', description: 'pick circuits, categories, sub-tracks and fee. counts update as you go.' },
+  { badge: 'browse', title: 'every competition that fits, in one place', description: 'pulled from every major platform and campus portal. undergrad-only, nothing expired, soonest deadlines first.' },
+  { badge: 'bookmarks', title: 'every round, counted down', description: 'bookmark a competition and we track each round’s deadline, not just registration.' },
+  { badge: 'team finder', title: 'find teammates from any college', description: 'post a squad or request to join one. see the skills each squad needs upfront.' },
+  { badge: 'requests', title: 'accepted? whatsapp them, or chat here', description: 'open whatsapp in one tap, or keep it on onestop chat if you’d rather not share your number.' },
+  { badge: 'profile', title: 'add your college, get your feed', description: 'set your college, year and skills. we hide what you can’t enter and show squads that need you.' }
+];
+const SCRIPTS = [
+  { len: 7200, steps: [{ at: 1300, cue: 'du' }, { at: 2500, cue: 'case' }, { at: 3700, cue: 'fin' }, { at: 4900, cue: 'free' }] },
+  { len: 8000, steps: [] },
+  { len: 5000, steps: [{ at: 2400, cue: 'open' }] },
+  { len: 5000, steps: [{ at: 2000, cue: 'join' }] },
+  { len: 6800, steps: [{ at: 1900, cue: 'accept' }, { at: 3400, cue: 'wa', hover: true }, { at: 4600, cue: 'chat', hover: true }] },
+  { len: 5000, steps: [{ at: 2600, cue: 'req', hover: true }] }
+];
+const U = { blue: ['1px solid rgba(15,63,254,0.35)', 'rgba(15,63,254,0.08)', '#0F3FFE', '#E7E6E2', '#FFFFFF', 'none'], yellow: ['1px solid rgba(245,158,11,0.40)', 'rgba(245,158,11,0.14)', '#F59E0B', 'rgba(245,158,11,0.45)', 'linear-gradient(180deg, rgba(254,252,232,0.70) 0%, #FFFFFF 42%)', '0 2px 8px rgba(245,158,11,0.08)'], red: ['1px solid rgba(239,68,68,0.40)', 'rgba(239,68,68,0.12)', '#EF4444', 'rgba(239,68,68,0.45)', 'linear-gradient(180deg, rgba(254,242,242,0.65) 0%, #FFFFFF 42%)', '0 2px 8px rgba(239,68,68,0.08)'] };
+const LOGOS = {"SR":"https://www.pikpng.com/pngl/m/145-1453183_srcc-logo-png-shri-ram-college-of-commerce.png","SS":"https://sscbs.du.ac.in/wp-content/uploads/2020/04/logo-296x300.png","KM":"https://cdn.cp.adobe.io/content/2/dcx/8ff4d31c-fc74-4c97-a4b3-a0464667c9a0/rendition/renditions/cover-2000-2000.jpg/version/0/format/jpg/dimension/width/size/1200","HC":"https://www.pngitem.com/pimgs/m/95-959821_hindu-logo-png-hindu-college-delhi-university-logo.png","HR":"https://cdn.shopify.com/s/files/1/0880/1560/1965/files/Hansraj_College.webp?v=1753945516","SC":"https://images.seeklogo.com/logo-png/45/1/crest-of-st-stephens-coll-uod-logo-png_seeklogo-457966.png","SV":"https://svc.ac.in/svc_home/img/Logo_cropped.png","LS":"https://images.careerindia.com/img/2023/06/ladyshriramcollegeforwomen-1685700624.jpg","MH":"https://www.kindpng.com/picc/m/609-6091378_miranda-house-university-of-delhi-logo-hd-png.png","RC":"https://pbs.twimg.com/profile_images/1363688372745560066/bUMYuJ_G_400x400.jpg"};
+const CARDS = [
+  ['SR', 'Shri Ram College of Commerce (SRCC)', 'SRCC Business Conclave Case Challenge 2026', '₹1,50,000 Prize Pool', '1–3 Members', '12 Oct, 11:59 PM', '3,240', '10 days left', 'blue'],
+  ['SS', 'Shaheed Sukhdev College of Business Studies', 'SSCBS Consulting Case Challenge', '₹1,00,000 Prize Pool', '1–4 Members', '3 Oct, 11:59 PM', '2,410', '18h left', 'yellow'],
+  ['KM', 'Kirori Mal College', 'KMC Finance Case Showdown', '₹50,000 Prize Pool', '1–3 Members', '2 Oct, 6:00 PM', '1,920', '4h left', 'red'],
+  ['HC', 'Hindu College', 'Hindu Case Clash 2026', '₹75,000 Prize Pool', '2–4 Members', '7 Oct, 11:59 PM', '1,180', '5 days left', 'blue'],
+  ['HR', 'Hansraj College', 'Hansraj Strategy Summit Case Comp', '₹60,000 Prize Pool', '2–3 Members', '8 Oct, 11:59 PM', '860', '6 days left', 'blue'],
+  ['SC', 'St. Stephen’s College', 'Stephen’s Policy Case Competition', '₹45,000 Prize Pool', '1–3 Members', '11 Oct, 11:59 PM', '780', '9 days left', 'blue'],
+  ['SV', 'Sri Venkateswara College', 'Venky Valuation Case Cup', '₹55,000 Prize Pool', '1–3 Members', '13 Oct, 11:59 PM', '1,050', '11 days left', 'blue'],
+  ['LS', 'Lady Shri Ram College for Women', 'LSR Marketing Case Fiesta', '₹40,000 Prize Pool', '2–3 Members', '14 Oct, 11:59 PM', '640', '12 days left', 'blue'],
+  ['MH', 'Miranda House', 'Miranda ESG Case Challenge', '₹35,000 Prize Pool', '2–4 Members', '16 Oct, 11:59 PM', '420', '14 days left', 'blue'],
+  ['RC', 'Ramjas College', 'Ramjas B-Plan & Case Duel', '₹30,000 Prize Pool', '2–3 Members', '18 Oct, 11:59 PM', '', '16 days left', 'blue']
+].map(([ini, host, title, prize, team, ends, regs, left, u]) => ({ bgImg: `#FFFFFF url("${LOGOS[ini]}")`.replace(/^#FFFFFF /, ''), ini, host, title, prize, team, ends, regs, left, hasRegs: !!regs, noRegs: !regs, uBd: U[u][0], uBg: U[u][1], uInk: U[u][2], bd: U[u][3], bg: U[u][4], sh: U[u][5] }));
+const ease = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const CLICK = 240;
+class Component extends DCLogic {
+  state = { step: 0, t: 0, cur: { x: 0, y: 0, op: 0, clickK: -1 } };
+  paneRef = el => { this.pane = el; };
+  gridRef = el => { this.gridEl = el; };
+  winRef = el => { this.winEl = el; };
+  componentDidMount() {
+    this._start = Date.now();
+    this._k = (e) => { if (e.key === 'ArrowRight') this.go(this.state.step + 1); if (e.key === 'ArrowLeft') this.go(this.state.step - 1); };
+    window.addEventListener('keydown', this._k);
+    this._last = performance.now();
+    this._i = setInterval(() => this.tick(), 40);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this._k); clearInterval(this._i); }
+  go(i) { this.setState({ step: Math.max(0, Math.min(SLIDES.length - 1, i)), t: 0 }); }
+  tick() {
+    const now = performance.now(); const dt = Math.min(100, now - this._last); this._last = now;
+    let { step, t } = this.state; t += dt;
+    if (t >= SCRIPTS[step].len) { t = 0; if ((this.props.autoAdvance ?? true) && step < SLIDES.length - 1) step++; }
+    this.setState({ step, t, cur: this.cursorAt(SCRIPTS[step], t) });
+  }
+  cursorAt(sc, t) {
+    if (!this.pane) return { x: 0, y: 0, op: 0, clickK: -1 };
+    const pr = this.pane.getBoundingClientRect();
+    const pos = cue => { const el = this.pane.querySelector('[data-cue="' + cue + '"]'); if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.left - pr.left + Math.min(r.width * 0.5, 40), y: r.top - pr.top + r.height * 0.55 }; };
+    let p = { x: pr.width * 0.88, y: pr.height * 0.96 };
+    for (const s of sc.steps) {
+      const st = s.at - 850, en = s.at - 120;
+      if (t < st) break;
+      const tg = pos(s.cue) || this._lastPos?.[s.cue];
+      if (!tg) break;
+      this._lastPos = { ...(this._lastPos || {}), [s.cue]: tg };
+      if (t >= en) { p = tg; continue; }
+      const k = ease((t - st) / (en - st));
+      p = { x: p.x + (tg.x - p.x) * k, y: p.y + (tg.y - p.y) * k };
+      break;
+    }
+    if (!sc.steps.length) return { x: p.x, y: p.y, op: 0, clickK: -1 };
+    const last = sc.steps[sc.steps.length - 1].at;
+    let op = t < 300 ? t / 300 : 1;
+    if (t > last + 1100) op = Math.max(0, 1 - (t - last - 1100) / 300);
+    const c = sc.steps.find(s => !s.hover && t >= s.at && t < s.at + CLICK * 2);
+    return { x: p.x, y: p.y, op, clickK: c ? (t - c.at) / (CLICK * 2) : -1, clickCue: c && t < c.at + CLICK ? c.cue : null };
+  }
+  renderVals() {
+    const s = this.state.step, t = this.state.t, cur = this.state.cur;
+    const sc = SCRIPTS[s];
+    const isLast = s === SLIDES.length - 1;
+    const after = at => t >= at;
+    const fade = (at) => after(at) ? 1 : 0;
+    const press = {}; ['squadup', 'du', 'case', 'fin', 'free', 'open', 'join', 'accept'].forEach(k => { press[k] = cur.clickCue === k ? 'scale(0.94)' : 'scale(1)'; });
+    const p = n => String(n).padStart(2, '0');
+    const secs = Math.max(0, 14 * 3600 + 22 * 60 + 9 - Math.floor((Date.now() - (this._start || Date.now())) / 1000));
+    const st = SCRIPTS[0].steps;
+    const du = s === 0 && after(st[0].at), cs = s === 0 && after(st[1].at), fin = s === 0 && after(st[2].at), free = s === 0 && after(st[3].at);
+    let scroll = 0;
+    if (s === 1 && this.gridEl && this.winEl) { const max = Math.max(0, this.gridEl.offsetHeight - this.winEl.clientHeight); const kk = Math.min(1, Math.max(0, (t - 1300) / 6000)); scroll = max * ease(kk); }
+    const cb = on => ({ bg: on ? '#1c4980' : '#FFFFFF', bd: on ? '#1c4980' : '#cbd5e1', ink: on ? '#1A1A19' : '#55534D' });
+    const seg = on => ({ bg: on ? '#FFFFFF' : 'transparent', ink: on ? '#1A1A19' : '#55534D', fw: on ? 700 : 600, sh: on ? '0 1px 2px rgba(0,0,0,0.08)' : 'none' });
+    const cDu = cb(du), cCs = cb(cs), sAll = seg(!free), sFree = seg(free);
+    const total = [du, cs, fin, free].filter(Boolean).length;
+    const cnt = (n, d) => String(Math.round(n * Math.min(1, Math.max(0, (t - d) / 1100))));
+    const accepted = s === 4 && after(SCRIPTS[4].steps[0].at);
+    const requested = s === 3 && after(SCRIPTS[3].steps[0].at);
+    const k = cur.clickK;
+    return {
+      slide: SLIDES[s], stepNum: s + 1,
+      s0: s === 0, s1: s === 1, s2: s === 2, s3: s === 3, s4: s === 4, s5: s === 5,
+      notFirst: s > 0,
+      paneRef: this.paneRef, gridRef: this.gridRef, winRef: this.winRef, cards: CARDS,
+      press,
+      timer: `${Math.floor(secs / 3600)}h ${p(Math.floor(secs % 3600 / 60))}m ${p(secs % 60)}s`,
+      a: {
+        c0: fade(150), c0y: after(150) ? '0px' : '6px', c1: fade(330), c1y: after(330) ? '0px' : '6px', c2: fade(510), c2y: after(510) ? '0px' : '6px', c3: fade(690), c3y: after(690) ? '0px' : '6px', c4: fade(870),
+        card: fade(900), scroll: (-scroll) + 'px',
+        openBg: s === 2 && t > 1700 && t < 2900 ? '#0E4ED3' : '#155EEF',
+        requested, notRequested: !requested,
+        accepted, notAccepted: !accepted,
+        chatBg: s === 4 && t > 4400 ? '#0F3FFE' : 'rgba(15,63,254,0.08)', chatInk: s === 4 && t > 4400 ? '#FFFFFF' : '#0F3FFE',
+        capOp: accepted ? 1 : 0.35,
+        k1: s === 5 ? cnt(12, 300) : '0', k2: s === 5 ? cnt(4, 450) : '0', k3: s === 5 ? cnt(2, 600) : '0',
+        reqOp: s === 5 && t > 2300 && t < 3800 ? 0.75 : 1
+      },
+      f: {
+        du, case: cs, fin, any: total > 0, total: String(total),
+        duBg: cDu.bg, duBd: cDu.bd, duInk: cDu.ink, caseBg: cCs.bg, caseBd: cCs.bd, caseInk: cCs.ink,
+        finBg: fin ? '#0F3FFE' : '#FFFFFF', finBd: fin ? '#0F3FFE' : '#E7E6E2', finInk: fin ? '#FFFFFF' : '#55534D',
+        allBg: sAll.bg, allInk: sAll.ink, allFw: sAll.fw, allSh: sAll.sh, freeBg: sFree.bg, freeInk: sFree.ink, freeFw: sFree.fw, freeSh: sFree.sh
+      },
+      cur: {
+        x: cur.x + 'px', y: cur.y + 'px', op: cur.op, s: cur.clickCue ? 0.85 : 1,
+        rx: (cur.x - 14) + 'px', ry: (cur.y - 14) + 'px', rop: k >= 0 ? 1 - k : 0, rs: k >= 0 ? 0.4 + k * 1.1 : 0.4
+      },
+      nextLabel: isLast ? 'Set up profile' : 'Next',
+      dots: SLIDES.map((_, i) => ({ w: i === s ? '24px' : '8px', bg: i < s ? '#0F3FFE' : (i === s ? 'rgba(15,63,254,0.18)' : '#E7E6E2'), fill: i === s ? Math.min(100, t / sc.len * 100) + '%' : '0%', go: () => this.go(i) })),
+      next: () => isLast ? this.go(0) : this.go(s + 1),
+      prev: () => this.go(s - 1),
+      restart: () => this.go(0)
+    };
+  }
+}
+</script>
+</body>
+</html>

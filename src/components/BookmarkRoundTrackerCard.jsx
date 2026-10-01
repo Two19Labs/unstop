@@ -100,7 +100,7 @@ export default function BookmarkRoundTrackerCard({
           className="br-action-btn"
           onClick={(e) => e.stopPropagation()}
         >
-          <span>Open Unstop</span>
+          <span>Open Portal</span>
           <ExternalLinkIcon size={13} color="#FFFFFF" />
         </a>
       </div>
@@ -212,7 +212,7 @@ export default function BookmarkRoundTrackerCard({
         className="br-action-btn"
         onClick={(e) => e.stopPropagation()}
       >
-        <span>Open Unstop</span>
+        <span>Open Portal</span>
         <ExternalLinkIcon size={13} color="#FFFFFF" />
       </a>
     </div>
