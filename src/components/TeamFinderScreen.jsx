@@ -674,7 +674,7 @@ export default function TeamFinderScreen({
             <div className="tf-title-block">
               <h1 className="tf-title">Team finder</h1>
               <p className="tf-subtitle">
-                Find a squad for any competition, or post your own. Message the lead on WhatsApp before or after you request.
+                find vetted teammates across colleges and build squads
               </p>
             </div>
           </div>

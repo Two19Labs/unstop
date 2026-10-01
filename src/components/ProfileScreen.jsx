@@ -309,7 +309,7 @@ function ProfileScreenContent({
       <header className="profile-header">
         <div className="profile-header-titles">
           <h1>Profile</h1>
-          <p>Squad leads see this when you apply. Skills drive what gets recommended to you.</p>
+          <p>visible to squad leads · powers catered recommendations</p>
         </div>
         {typeof onOpenWalkthrough === 'function' && (
           <button
@@ -551,7 +551,7 @@ function ProfileScreenContent({
             <div className="profile-section-header">
               <h2 className="profile-section-title">Personal &amp; Campus Information</h2>
               <p className="profile-section-subtitle">
-                Your collegiate identity displayed on squad applications and team invitations.
+                your student identity across applications and invites
               </p>
             </div>
 
@@ -593,7 +593,7 @@ function ProfileScreenContent({
                   required
                 />
                 <span className="profile-field-help">
-                  Compulsory for profile &amp; squad matching. Kept private; shared only once you are accepted into a squad or choose WhatsApp fast-track.
+                  shared with your squad only if you opt-in
                 </span>
               </div>
 
@@ -642,9 +642,9 @@ function ProfileScreenContent({
                 </div>
                 <span className="profile-field-help">
                   {isPostgraduate ? (
-                    <span>MBA &amp; PG challenges + open tracks eligible.</span>
+                    <span>shows mba, pg, and open challenges</span>
                   ) : (
-                    <span>Undergrad-eligible tracks only (MBA listings hidden).</span>
+                    <span>shows undergrad tracks only · mba challenges hidden</span>
                   )}
                 </span>
               </div>
@@ -657,7 +657,7 @@ function ProfileScreenContent({
               <div className="profile-section-header">
                 <h2 className="profile-section-title">Skills &amp; Capabilities</h2>
                 <p className="profile-section-subtitle">
-                  Choose skills that match your experience. Squad leads filter and recruit based on these tags.
+                  used by squad leads to filter and recruit teammates
                 </p>
               </div>
               <span className="profile-skills-count-badge">
@@ -691,7 +691,7 @@ function ProfileScreenContent({
             <div className="profile-section-header">
               <h2 className="profile-section-title">Reminders &amp; Notification Preferences</h2>
               <p className="profile-section-subtitle">
-                Configure browser alerts and radar reminders for deadlines, round cutoffs, and squad activity.
+                deadline cutoffs, round alerts, and squad notifications
               </p>
             </div>
 
@@ -706,7 +706,7 @@ function ProfileScreenContent({
                   )}
                 </div>
                 <p className="profile-notif-setting-desc">
-                  Receive native OS alerts on your phone and computer 1 hour before registration deadlines, 30 minutes before round cutoffs, and instantly when deadlines get extended.
+                  native alerts 1h before deadlines and 30m before cutoffs
                 </p>
                 {isIOS() && !isStandalone() && (
                   <div style={{ marginTop: '8px', fontSize: '11.5px', color: 'var(--ink)', background: 'rgba(245, 158, 11, 0.08)', padding: '7px 10px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
