@@ -817,73 +817,79 @@ async function saveToSupabase(competitions, sourceMeta) {
     return 0;
   }
 
-  const records = validCompetitions.map(c => {
-    const slug = (c.title || 'competition')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '_')
-      .slice(0, 50);
-    const id = `inst_${slug}`;
+  const records = [];
+  for (const c of validCompetitions) {
+    try {
+      const slug = (c.title || 'competition')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .slice(0, 50);
+      const id = `inst_${slug}`;
 
-    return {
-      id,
-      title: c.title,
-      slug,
-      host_institution: sourceMeta.institution,
-      organizer: sourceMeta.institution,
-      category: c.category || 'case',
-      category_label: c.category_label || 'Case Competition',
-      category_emoji: c.category_emoji || '💼',
-      source_platform: c.customPlatform || (sourceMeta.circuit === 'corporate'
-        ? 'corporate'
-        : (sourceMeta.circuit === 'inside_campus'
-            ? 'inside_campus'
-            : (sourceMeta.circuit === 'devpost' ? 'devpost' : 'campus_direct'))),
-      source_label: c.customSourceLabel || sourceMeta.sourceLabel || `${sourceMeta.institution.split('(')[0].trim()} Direct`,
-      apply_url: c.apply_url || sourceMeta.url,
-      website_url: sourceMeta.url,
-      banner_url: null,
-      logo_url: c.logo_url || sourceMeta.defaultLogo,
-      prizes: c.prizes || 'Cash Prizes & Certificates',
-      fee: c.fee || 'Free',
-      mode: c.mode || 'Online',
-      location: c.location || (c.mode === 'Offline' ? sourceMeta.institution : 'Online'),
-      min_team: typeof c.min_team === 'number' ? c.min_team : 1,
-      max_team: typeof c.max_team === 'number' ? c.max_team : 4,
-      deadline: c.deadline || new Date(Date.now() + 14 * 86400000).toISOString(),
-      registered_count: Number(c.registered_count) || 0,
-      views_count: 0,
-      raw_scraped_text: c.raw_scraped_text || c.description || c.title,
-      is_undergrad_eligible: (() => {
-        if (c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus') {
-          return c.is_undergrad_eligible === true;
-        }
-        const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
-        const isInsideCampus = c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus' || /\binside(iim|kampus)\b/i.test(sourceMeta.institution || '');
-        const isMbaExcl = isInsideCampus || /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla|itc\s+interrobang|hul\s+l\.i\.m\.e\.)\b/i.test(titleAndDesc) ||
-          (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
-        const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);
-        if (isMbaExcl && !explicitlyUg) return false;
-        return c.is_undergrad_eligible !== false && !c.is_pg_only;
-      })(),
-      is_pg_only: (() => {
-        if (c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus') {
-          return c.is_undergrad_eligible !== true;
-        }
-        const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
-        const isMbaExcl = isInsideCampus || /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla|itc\s+interrobang|hul\s+l\.i\.m\.e\.)\b/i.test(titleAndDesc) ||
-          (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
-        const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);
-        if (isMbaExcl && !explicitlyUg) return true;
-        return Boolean(c.is_pg_only) || c.is_undergrad_eligible === false;
-      })(),
-      is_du: sourceMeta.circuit === 'du',
-      is_iim_or_iit: (sourceMeta.circuit === 'iim' || sourceMeta.circuit === 'iit' || c.customPlatform === 'inside_campus') && c.customPlatform !== 'devpost' && sourceMeta.circuit !== 'corporate',
-      is_premier: sourceMeta.circuit !== 'corporate' && sourceMeta.circuit !== 'devpost' && c.customPlatform !== 'corporate' && c.customPlatform !== 'devpost',
-      is_flagship: true,
-      is_active: true,
-      updated_at: new Date().toISOString()
-    };
-  });
+      const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
+      const isInsideCampus = c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus' || /\binside(iim|kampus)\b/i.test(sourceMeta.institution || '');
+      const isMbaExcl = isInsideCampus || /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla|itc\s+interrobang|hul\s+l\.i\.m\.e\.)\b/i.test(titleAndDesc) ||
+        (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
+      const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);
+
+      let isUndergradEligible = true;
+      let isPgOnly = false;
+
+      if (isInsideCampus) {
+        isUndergradEligible = c.is_undergrad_eligible === true;
+        isPgOnly = !isUndergradEligible;
+      } else if (isMbaExcl && !explicitlyUg) {
+        isUndergradEligible = false;
+        isPgOnly = true;
+      } else {
+        isUndergradEligible = c.is_undergrad_eligible !== false && !c.is_pg_only;
+        isPgOnly = Boolean(c.is_pg_only) || c.is_undergrad_eligible === false;
+      }
+
+      records.push({
+        id,
+        title: c.title,
+        slug,
+        host_institution: sourceMeta.institution,
+        organizer: sourceMeta.institution,
+        category: c.category || 'case',
+        category_label: c.category_label || 'Case Competition',
+        category_emoji: c.category_emoji || '💼',
+        source_platform: c.customPlatform || (sourceMeta.circuit === 'corporate'
+          ? 'corporate'
+          : (sourceMeta.circuit === 'inside_campus'
+              ? 'inside_campus'
+              : (sourceMeta.circuit === 'devpost' ? 'devpost' : 'campus_direct'))),
+        source_label: c.customSourceLabel || sourceMeta.sourceLabel || `${sourceMeta.institution.split('(')[0].trim()} Direct`,
+        apply_url: c.apply_url || sourceMeta.url,
+        website_url: sourceMeta.url,
+        banner_url: null,
+        logo_url: c.logo_url || sourceMeta.defaultLogo,
+        prizes: c.prizes || 'Cash Prizes & Certificates',
+        fee: c.fee || 'Free',
+        mode: c.mode || 'Online',
+        location: c.location || (c.mode === 'Offline' ? sourceMeta.institution : 'Online'),
+        min_team: typeof c.min_team === 'number' ? c.min_team : 1,
+        max_team: typeof c.max_team === 'number' ? c.max_team : 4,
+        deadline: c.deadline || new Date(Date.now() + 14 * 86400000).toISOString(),
+        registered_count: Number(c.registered_count) || 0,
+        views_count: 0,
+        raw_scraped_text: c.raw_scraped_text || c.description || c.title,
+        is_undergrad_eligible: isUndergradEligible,
+        is_pg_only: isPgOnly,
+        is_du: sourceMeta.circuit === 'du',
+        is_iim_or_iit: (sourceMeta.circuit === 'iim' || sourceMeta.circuit === 'iit' || c.customPlatform === 'inside_campus') && c.customPlatform !== 'devpost' && sourceMeta.circuit !== 'corporate',
+        is_premier: sourceMeta.circuit !== 'corporate' && sourceMeta.circuit !== 'devpost' && c.customPlatform !== 'corporate' && c.customPlatform !== 'devpost',
+        is_flagship: true,
+        is_active: true,
+        updated_at: new Date().toISOString()
+      });
+    } catch (err) {
+      console.warn(`   ⚠️ Error transforming competition "${c.title}":`, err.message);
+    }
+  }
+
+  if (records.length === 0) return 0;
 
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/institutional_competitions`, {
@@ -945,38 +951,42 @@ async function main() {
     const source = TARGET_SOURCES[i];
     console.log(`\n[${i + 1}/${TARGET_SOURCES.length}] 🔍 Scanning: ${source.institution}...`);
     
-    let comps = [];
-    if (typeof source.dedicatedFetcher === 'function') {
-      comps = await source.dedicatedFetcher();
-    } else {
-      // Aggregate page text from main URL and any dedicated event URLs
-      const urlsToFetch = [source.url, ...(source.eventUrls || [])];
-      let combinedText = '';
+    try {
+      let comps = [];
+      if (typeof source.dedicatedFetcher === 'function') {
+        comps = await source.dedicatedFetcher();
+      } else {
+        // Aggregate page text from main URL and any dedicated event URLs
+        const urlsToFetch = [source.url, ...(source.eventUrls || [])];
+        let combinedText = '';
 
-      for (const url of urlsToFetch) {
-        const text = await fetchPageContent(url);
-        if (text) {
-          combinedText += `\n[Page: ${url}]\n` + text;
+        for (const url of urlsToFetch) {
+          const text = await fetchPageContent(url);
+          if (text) {
+            combinedText += `\n[Page: ${url}]\n` + text;
+          }
         }
+
+        if (!combinedText) {
+          console.log(`   ⚠️ Could not fetch content (portal might be unreachable or blocking bots).`);
+          continue;
+        }
+
+        comps = await extractCompetitionsWithGemini(combinedText, source);
       }
 
-      if (!combinedText) {
-        console.log(`   ⚠️ Could not fetch content (portal might be unreachable or blocking bots).`);
-        continue;
+      totalFound += comps.length;
+      console.log(`   Found ${comps.length} competition(s).`);
+
+      if (comps.length > 0) {
+        comps.forEach(c => {
+          console.log(`     • ${c.title} (${c.category_label || c.category}) | ${c.prizes || 'Free'}`);
+        });
+        const saved = await saveToSupabase(comps, source);
+        totalSaved += saved;
       }
-
-      comps = await extractCompetitionsWithGemini(combinedText, source);
-    }
-
-    totalFound += comps.length;
-    console.log(`   Found ${comps.length} competition(s).`);
-
-    if (comps.length > 0) {
-      comps.forEach(c => {
-        console.log(`     • ${c.title} (${c.category_label || c.category}) | ${c.prizes || 'Free'}`);
-      });
-      const saved = await saveToSupabase(comps, source);
-      totalSaved += saved;
+    } catch (targetErr) {
+      console.warn(`   ⚠️ Target scan warning for ${source.institution}:`, targetErr.message);
     }
 
     // Gentle 2.5s breathing room between targets to stay safely under 15 RPM
