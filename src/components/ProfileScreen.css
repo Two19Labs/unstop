@@ -684,23 +684,98 @@
 
 .profile-fields-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 14px;
   width: 100%;
 }
 
-.profile-phone-group {
-  margin-top: 2px;
+@media (max-width: 640px) {
+  .profile-fields-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
 }
 
 .profile-phone-input {
-  max-width: 340px;
+  width: 100%;
 }
 
 .profile-field-help {
   font-size: 12px;
   color: var(--ink-muted);
   line-height: 1.35;
+}
+
+/* Academic Standing Compact Controls (UG/PG + Year) */
+.profile-academic-compact-labels {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.profile-academic-compact-controls {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+}
+
+.profile-seg-toggle {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 3px;
+  box-sizing: border-box;
+  gap: 3px;
+  width: 100%;
+}
+
+.profile-seg-btn {
+  flex: 1;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 130ms ease;
+  user-select: none;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+
+.profile-seg-btn:hover:not(.active) {
+  color: var(--ink);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.profile-seg-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.profile-seg-btn.active {
+  background: var(--surface);
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.profile-select-compact {
+  height: 42px;
+  box-sizing: border-box;
+  padding: 10px 32px 10px 13px;
 }
 
 /* Ensure SearchableCollegeSelect input styling inside profile matches form */
@@ -1187,6 +1262,26 @@
   background: var(--surface-sunken);
   border-color: var(--line);
   color: var(--ink);
+}
+
+[data-theme='dark'] .profile-seg-toggle {
+  background: var(--surface-sunken);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .profile-seg-btn {
+  color: var(--ink-muted);
+}
+
+[data-theme='dark'] .profile-seg-btn:hover:not(.active) {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] .profile-seg-btn.active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme='dark'] .profile-skill-chip {

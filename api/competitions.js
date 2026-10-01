@@ -833,6 +833,7 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
         ? (minTeam === 1 ? 'Solo / Individual' : `${minTeam} Members`) 
         : `${minTeam} - ${maxTeam} Members`,
       prizes: prizeDisplay,
+      prize: prizeDisplay,
       isFree,
       isFlagship,
       isDU,

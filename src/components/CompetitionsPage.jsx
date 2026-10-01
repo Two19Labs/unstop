@@ -1224,8 +1224,8 @@ export default function CompetitionsPage({
           return (b.registeredCount || 0) - (a.registeredCount || 0);
         }
         case 'prize-highest': {
-          const prizeA = parsePrizeAmount(a.prizes);
-          const prizeB = parsePrizeAmount(b.prizes);
+          const prizeA = parsePrizeAmount(a.prizes || a.prize);
+          const prizeB = parsePrizeAmount(b.prizes || b.prize);
           if (prizeA !== prizeB) return prizeB - prizeA;
           return (b.registeredCount || 0) - (a.registeredCount || 0);
         }
@@ -1915,8 +1915,8 @@ export default function CompetitionsPage({
                   <div className="cc-prize-bar">
                     <div className="cc-prize-left">
                       <TrophyIcon size={14} className="cc-prize-trophy" />
-                      <span className="cc-prize-text" title={(comp.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool')}>
-                        {(comp.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool')}
+                      <span className="cc-prize-text" title={(comp.prizes || comp.prize || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool')}>
+                        {(comp.prizes || comp.prize || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool')}
                       </span>
                     </div>
                     <span className={`cc-entry-tag ${comp.isFree ? 'free' : 'paid'}`}>
