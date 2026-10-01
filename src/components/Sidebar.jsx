@@ -253,7 +253,7 @@ export default function Sidebar({
             </button>
           )}
 
-          {/* Platform Tour Button */}
+          {/* What is OneStop? Button */}
           {typeof onOpenWalkthrough === 'function' && (
             <button
               type="button"
@@ -264,30 +264,50 @@ export default function Sidebar({
                 gap: '8px',
                 width: '100%',
                 textAlign: 'left',
-                border: '1px dashed var(--line)',
-                borderRadius: '8px',
-                background: 'transparent',
-                padding: '7px 10px',
+                border: '1px solid var(--line)',
+                borderRadius: '9px',
+                background: 'var(--surface-sunken)',
+                padding: '8px 12px',
                 cursor: 'pointer',
                 color: 'var(--ink-secondary)',
-                fontSize: '12px',
-                fontWeight: 600,
-                transition: 'all 120ms ease'
+                fontSize: '13px',
+                fontWeight: 500,
+                transition: 'background-color 150ms ease, color 150ms ease, border-color 150ms ease'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'var(--surface-muted)';
-                e.currentTarget.style.color = 'var(--primary)';
-                e.currentTarget.style.borderColor = 'var(--primary-tint-35)';
+                e.currentTarget.style.color = 'var(--ink)';
+                e.currentTarget.style.borderColor = 'var(--card-hover-border)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.background = 'var(--surface-sunken)';
                 e.currentTarget.style.color = 'var(--ink-secondary)';
                 e.currentTarget.style.borderColor = 'var(--line)';
               }}
-              aria-label="Platform tour"
+              aria-label="What is OneStop?"
             >
-              <span style={{ fontSize: '13px' }}>✨</span>
-              <span>Platform Tour</span>
+              <span
+                style={{
+                  fontSize: '14px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                ✨
+              </span>
+              <span
+                style={{
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                What is OneStop?
+              </span>
             </button>
           )}
 

@@ -315,10 +315,10 @@ function ProfileScreenContent({
             type="button"
             className="profile-tour-action-btn"
             onClick={onOpenWalkthrough}
-            title="Take a quick tour of OneStop"
+            title="What is OneStop?"
           >
             <span>✨</span>
-            <span>Platform Tour</span>
+            <span>What is OneStop?</span>
           </button>
         )}
       </header>
