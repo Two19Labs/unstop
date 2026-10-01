@@ -14,6 +14,7 @@ import {
 } from './icons';
 import { useCompetitionRounds } from '../hooks/useCompetitionRounds';
 import BookmarkRoundTrackerCard from './BookmarkRoundTrackerCard';
+import { compareCompetitionDeadlines } from '../utils/roundDeadlineUtils';
 import { useAuth } from '../context/AuthContext';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
@@ -60,9 +61,20 @@ export function sortCompetitions(list, sortBy = 'closing-soonest') {
       case 'title-desc':
         return (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' });
       case 'closing-soonest': {
+        const now = Date.now();
         const timeA = getDeadlineTimestamp(a);
         const timeB = getDeadlineTimestamp(b);
-        if (timeA !== timeB) return timeA - timeB;
+        const isPastA = timeA !== Infinity && timeA < now;
+        const isPastB = timeB !== Infinity && timeB < now;
+        if (!isPastA && !isPastB) {
+          if (timeA !== timeB) return timeA - timeB;
+        } else if (!isPastA && isPastB) {
+          return -1;
+        } else if (isPastA && !isPastB) {
+          return 1;
+        } else {
+          if (timeA !== timeB) return timeB - timeA;
+        }
         return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
       }
       case 'closing-latest': {
@@ -851,11 +863,7 @@ export default function HomeScreen({
       return true;
     });
 
-    return activeList.sort((a, b) => {
-      const timeA = a.deadline ? new Date(a.deadline).getTime() : 9999999999999;
-      const timeB = b.deadline ? new Date(b.deadline).getTime() : 9999999999999;
-      return timeA - timeB;
-    });
+    return activeList.sort((a, b) => compareCompetitionDeadlines(a, b, roundsMap, now));
   }, [competitions, bookmarkIds, roundsMap]);
 
   const bookmarkTotal = allBookmarkComps.length;

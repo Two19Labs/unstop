@@ -5,7 +5,8 @@ import InstitutionLogo from './InstitutionLogo';
 import {
   formatRoundDeadlineTime,
   getRoundCountdown,
-  useLiveSecondTicker
+  useLiveSecondTicker,
+  compareCompetitionDeadlines
 } from '../utils/roundDeadlineUtils';
 import './CompetitionRoundsTracker.css';
 
@@ -125,6 +126,8 @@ export default function CompetitionRoundsTracker({
 
       return true;
     });
+
+    return list.sort((a, b) => compareCompetitionDeadlines(a, b, roundsMap, now));
   }, [competitions, roundsMap, activeFilter, getRoundsForComp]);
 
   const nowMs = useLiveSecondTicker();

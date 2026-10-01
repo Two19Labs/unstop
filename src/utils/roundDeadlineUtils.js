@@ -255,3 +255,164 @@ export function useLiveSecondTicker() {
 
   return now;
 }
+
+/**
+ * Resolves the accurate next active deadline for any competition,
+ * seamlessly bridging pre-registration (Apply Mode) and multi-round (Rounds Tracker Mode).
+ * 
+ * Returns: {
+ *   timestamp: number (epoch ms, or Infinity if unknown),
+ *   isPast: boolean (true if timestamp < nowMs),
+ *   type: 'round' | 'registration' | 'fallback',
+ *   label: string
+ * }
+ */
+export function getEffectiveCompetitionDeadline(comp, roundsData = null, nowMs = Date.now()) {
+  if (!comp) {
+    return { timestamp: Infinity, isPast: false, type: 'fallback', label: 'TBA' };
+  }
+
+  // Determine registration deadline timestamp from comp or roundsData
+  let regTime = 0;
+  if (comp.deadline) {
+    const t = new Date(comp.deadline).getTime();
+    if (!isNaN(t)) regTime = t;
+  }
+  if (regTime === 0 && roundsData?.deadline) {
+    const t = new Date(roundsData.deadline).getTime();
+    if (!isNaN(t)) regTime = t;
+  }
+  if (regTime === 0 && Array.isArray(roundsData?.rounds)) {
+    const regRound = roundsData.rounds.find(r => r.type === 'registration');
+    if (regRound?.endDate) {
+      const t = new Date(regRound.endDate).getTime();
+      if (!isNaN(t)) regTime = t;
+    }
+  }
+  if (regTime === 0 && comp.days !== undefined && comp.days !== null) {
+    regTime = nowMs + Number(comp.days) * 24 * 60 * 60 * 1000;
+  }
+
+  // Determine if registration is closed
+  const isRegClosed = roundsData?.isRegistrationClosed !== undefined
+    ? roundsData.isRegistrationClosed
+    : (regTime > 0 && regTime <= nowMs);
+
+  // If registration is closed, the competition is in round tracking mode
+  if (isRegClosed) {
+    // 1. Check multi-round pipeline if available
+    if (roundsData && Array.isArray(roundsData.rounds) && roundsData.rounds.length > 0) {
+      const { currentRound } = getActiveOrNextRound(roundsData, nowMs);
+      if (currentRound?.endDate) {
+        const roundEnd = new Date(currentRound.endDate).getTime();
+        if (!isNaN(roundEnd) && roundEnd > 0) {
+          return {
+            timestamp: roundEnd,
+            isPast: roundEnd < nowMs,
+            type: 'round',
+            label: currentRound.title || 'Round'
+          };
+        }
+      }
+    }
+
+    // 2. Fallbacks from roundsData if rounds array didn't resolve an active round
+    if (roundsData?.nextDeadline) {
+      const nextEnd = new Date(roundsData.nextDeadline).getTime();
+      if (!isNaN(nextEnd) && nextEnd > 0) {
+        return {
+          timestamp: nextEnd,
+          isPast: nextEnd < nowMs,
+          type: 'round',
+          label: roundsData.nextDeadlineLabel || 'Round'
+        };
+      }
+    }
+
+    if (roundsData?.finalDeadline) {
+      const finalEnd = new Date(roundsData.finalDeadline).getTime();
+      if (!isNaN(finalEnd) && finalEnd > 0) {
+        return {
+          timestamp: finalEnd,
+          isPast: finalEnd < nowMs,
+          type: 'round',
+          label: 'Final Round'
+        };
+      }
+    }
+  } else {
+    // Registration is currently OPEN (Apply Mode)
+    if (regTime > 0) {
+      return {
+        timestamp: regTime,
+        isPast: regTime < nowMs,
+        type: 'registration',
+        label: 'Registration'
+      };
+    }
+  }
+
+  // Fallback if neither resolved to a valid future timestamp
+  if (regTime > 0) {
+    return {
+      timestamp: regTime,
+      isPast: regTime < nowMs,
+      type: 'registration',
+      label: 'Registration'
+    };
+  }
+
+  return { timestamp: Infinity, isPast: false, type: 'fallback', label: 'TBA' };
+}
+
+/**
+ * Strict comparator to sort competitions by SOONEST upcoming deadlines first.
+ * Works seamlessly whether the active deadline is a registration deadline or a round deadline.
+ * 
+ * Rules:
+ * 1. Active upcoming deadlines (>= nowMs) always precede past / expired deadlines.
+ * 2. Active upcoming deadlines are sorted ascending by timestamp (soonest first).
+ * 3. Expired deadlines (< nowMs) are sorted after upcoming ones (most recently expired first).
+ * 4. Competitions with no date (Infinity) are placed at the very end.
+ * 5. Ties broken by registered count (popularity) descending, then alphabetical title.
+ */
+export function compareCompetitionDeadlines(a, b, roundsMap = null, nowMs = Date.now()) {
+  const idA = a?.id != null ? String(a.id) : '';
+  const idB = b?.id != null ? String(b.id) : '';
+  const rDataA = roundsMap ? (roundsMap[idA] || (a?.id != null ? roundsMap[a.id] : null)) : (Array.isArray(a?.rounds) ? a : null);
+  const rDataB = roundsMap ? (roundsMap[idB] || (b?.id != null ? roundsMap[b.id] : null)) : (Array.isArray(b?.rounds) ? b : null);
+
+  const infoA = getEffectiveCompetitionDeadline(a, rDataA, nowMs);
+  const infoB = getEffectiveCompetitionDeadline(b, rDataB, nowMs);
+
+  // 1. Both upcoming (>= nowMs)
+  if (!infoA.isPast && !infoB.isPast) {
+    if (infoA.timestamp !== infoB.timestamp) {
+      return infoA.timestamp - infoB.timestamp; // Smaller timestamp = sooner
+    }
+  }
+
+  // 2. One upcoming, one expired
+  if (!infoA.isPast && infoB.isPast) return -1;
+  if (infoA.isPast && !infoB.isPast) return 1;
+
+  // 3. Both expired (< nowMs)
+  if (infoA.isPast && infoB.isPast) {
+    if (infoA.timestamp !== infoB.timestamp) {
+      return infoB.timestamp - infoA.timestamp; // Most recently expired first
+    }
+  }
+
+  // 4. Handle Infinity (no deadline)
+  if (infoA.timestamp === Infinity && infoB.timestamp !== Infinity) return 1;
+  if (infoA.timestamp !== Infinity && infoB.timestamp === Infinity) return -1;
+
+  // 5. Tiebreak by registrations count
+  const regsA = Number(a.regs || a.registeredCount || 0);
+  const regsB = Number(b.regs || b.registeredCount || 0);
+  if (regsB !== regsA) return regsB - regsA;
+
+  // 6. Tiebreak by title
+  return (a.title || '').localeCompare(b.title || '');
+}
+

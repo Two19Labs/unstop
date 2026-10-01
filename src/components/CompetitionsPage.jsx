@@ -1182,9 +1182,20 @@ export default function CompetitionsPage({
         case 'title-desc':
           return (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' });
         case 'closing-soonest': {
+          const now = Date.now();
           const timeA = getDeadlineTimestamp(a);
           const timeB = getDeadlineTimestamp(b);
-          if (timeA !== timeB) return timeA - timeB;
+          const isPastA = timeA !== Infinity && timeA < now;
+          const isPastB = timeB !== Infinity && timeB < now;
+          if (!isPastA && !isPastB) {
+            if (timeA !== timeB) return timeA - timeB;
+          } else if (!isPastA && isPastB) {
+            return -1;
+          } else if (isPastA && !isPastB) {
+            return 1;
+          } else {
+            if (timeA !== timeB) return timeB - timeA;
+          }
           return (b.registeredCount || 0) - (a.registeredCount || 0);
         }
         case 'closing-latest': {
