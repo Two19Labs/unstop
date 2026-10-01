@@ -15,6 +15,7 @@ import {
 import { useCompetitionRounds } from '../hooks/useCompetitionRounds';
 import BookmarkRoundTrackerCard from './BookmarkRoundTrackerCard';
 import { compareCompetitionDeadlines } from '../utils/roundDeadlineUtils';
+import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 import { useAuth } from '../context/AuthContext';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
@@ -147,8 +148,13 @@ function getCompCircuitKey(comp) {
   return 'others';
 }
 
-export function matchCompetition(comp, f = {}) {
+export function matchCompetition(comp, f = {}, isViewerPostgrad = false) {
   if (!comp) return false;
+
+  // 0. Eligibility check: Never show PG/MBA exclusive competitions to Undergraduates
+  if (!isViewerPostgrad && !isEligibleForUndergrad(comp)) {
+    return false;
+  }
 
   // 1. Circuit filter
   const selectedCircuits = Array.isArray(f.selectedCircuits)
@@ -520,10 +526,7 @@ export default function HomeScreen({
     : (profile?.full_name?.trim() ? profile.full_name.trim().split(/\s+/)[0] : (user?.email ? user.email.split('@')[0] : 'there'));
   const firstName = rawFirst ? (rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()) : 'there';
 
-  const isPostgraduate =
-    (profile?.education_level || '').toLowerCase() === 'postgraduate' ||
-    (profile?.year || '').toUpperCase().startsWith('PG') ||
-    (profile?.batch || '').toUpperCase().startsWith('PG');
+  const isPostgraduate = checkIsPostgraduate(profile);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -603,14 +606,14 @@ export default function HomeScreen({
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
     return competitions.filter(c => {
-      if (!matchCompetition(c, effectiveFilter || {})) return false;
+      if (!matchCompetition(c, effectiveFilter || {}, isPostgraduate)) return false;
       const startTimestamp = c.startDate ? new Date(c.startDate).getTime() : 0;
       const isNewByStartDate = startTimestamp > 0 && (now - startTimestamp <= oneDayMs);
       const seenAt = firstSeenMap ? firstSeenMap[String(c.id)] : null;
       const isNewByFirstSeen = seenAt && (now - seenAt <= oneDayMs);
       return isNewByStartDate || isNewByFirstSeen;
     }).length;
-  }, [competitions, firstSeenMap, effectiveFilter]);
+  }, [competitions, firstSeenMap, effectiveFilter, isPostgraduate]);
 
   // KPI 2: Open squads looking for skills on user profile
   const userSkills = useMemo(() => {
@@ -852,8 +855,9 @@ export default function HomeScreen({
       }
     });
 
-    // 3. Filter out concluded competitions (State 3: Auto-removal when all rounds have completed)
+    // 3. Filter out concluded competitions (State 3) & PG-only competitions for UG viewers
     const activeList = Array.from(map.values()).filter(c => {
+      if (!isPostgraduate && !isEligibleForUndergrad(c)) return false;
       const rData = roundsMap ? roundsMap[String(c.id)] : null;
       if (rData?.isConcluded) return false;
       if (rData?.rounds && rData.rounds.length > 0) {
@@ -864,16 +868,16 @@ export default function HomeScreen({
     });
 
     return activeList.sort((a, b) => compareCompetitionDeadlines(a, b, roundsMap, now));
-  }, [competitions, bookmarkIds, roundsMap]);
+  }, [competitions, bookmarkIds, roundsMap, isPostgraduate]);
 
   const bookmarkTotal = allBookmarkComps.length;
   const displayedBookmarks = allBookmarkComps.slice(0, CARDS_PER_RAIL);
 
   // 2. Top Competitions Rail (Matches saved Browse filter, sorted according to last chosen Browse sort)
   const allFilteredComps = useMemo(() => {
-    const filtered = competitions.filter(c => matchCompetition(c, effectiveFilter || {}));
+    const filtered = competitions.filter(c => matchCompetition(c, effectiveFilter || {}, isPostgraduate));
     return sortCompetitions(filtered, effectiveSort);
-  }, [competitions, effectiveFilter, effectiveSort]);
+  }, [competitions, effectiveFilter, effectiveSort, isPostgraduate]);
 
   const compTotal = allFilteredComps.length;
   const displayedComps = allFilteredComps.slice(0, CARDS_PER_RAIL);
@@ -896,7 +900,7 @@ export default function HomeScreen({
       );
 
       if (comp) {
-        return matchCompetition(comp, effectiveFilter);
+        return matchCompetition(comp, effectiveFilter, isPostgraduate);
       }
 
       // Fallback evaluation if competition isn't in current list
@@ -910,9 +914,9 @@ export default function HomeScreen({
         fee: 'Free',
         isFree: true
       };
-      return matchCompetition(fallbackComp, effectiveFilter);
+      return matchCompetition(fallbackComp, effectiveFilter, isPostgraduate);
     });
-  }, [posts, competitions, effectiveFilter, hasFilter]);
+  }, [posts, competitions, effectiveFilter, hasFilter, isPostgraduate]);
 
   const squadTotal = allFilteredSquads.length;
   const displayedSquads = allFilteredSquads.slice(0, CARDS_PER_RAIL);

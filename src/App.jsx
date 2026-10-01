@@ -24,6 +24,7 @@ import AdminConsolePage from './components/AdminConsolePage';
 import { isAdminEmail } from './lib/admin';
 import { sendPresencePing, initGlobalPresence } from './lib/presenceService';
 import { useCompetitionRounds } from './hooks/useCompetitionRounds';
+import { isEligibleForUndergrad, checkIsPostgraduate } from './utils/eligibilityUtils';
 
 import {
   describeFilter,
@@ -623,10 +624,10 @@ function OneStopInner() {
               orgLogo: c.orgLogo || c.logo || null,
               bannerUrl: c.bannerUrl || null,
               unstopUrl: c.unstopUrl || 'https://unstop.com',
-              isUndergradEligible: c.isUndergradEligible !== false,
-              isPGOnly: Boolean(c.isPGOnly),
-              isMBAorPG: Boolean(c.isMBAorPG),
-              targetLevel: c.targetLevel || (c.isPGOnly ? 'pg' : 'ug')
+              isUndergradEligible: c.isUndergradEligible !== false && isEligibleForUndergrad(c),
+              isPGOnly: Boolean(c.isPGOnly) || !isEligibleForUndergrad(c),
+              isMBAorPG: Boolean(c.isMBAorPG) || !isEligibleForUndergrad(c),
+              targetLevel: (!isEligibleForUndergrad(c) || c.isPGOnly) ? 'pg' : (c.targetLevel || 'ug')
             };
           });
 
@@ -645,17 +646,14 @@ function OneStopInner() {
     };
   }, []);
 
-  const isPostgraduate =
-    (profile?.education_level || '').toLowerCase() === 'postgraduate' ||
-    (profile?.year || '').toUpperCase().startsWith('PG') ||
-    (profile?.batch || '').toUpperCase().startsWith('PG');
+  const isPostgraduate = checkIsPostgraduate(profile);
 
   // Dynamic eligibility filtering based on profile education level
   const visibleCompetitions = useMemo(() => {
     if (isPostgraduate) {
       return competitions;
     }
-    return competitions.filter(c => c.isUndergradEligible !== false && !c.isPGOnly && c.targetLevel !== 'pg');
+    return competitions.filter(isEligibleForUndergrad);
   }, [competitions, isPostgraduate]);
 
   // Navigation Handler
@@ -1097,7 +1095,7 @@ function OneStopInner() {
           <ThemeToggle variant="compact" />
           <NotificationCenter
             applications={applications}
-            competitions={competitions}
+            competitions={visibleCompetitions}
             bookmarks={bookmarks}
             posts={posts}
             profile={profile}
@@ -1153,7 +1151,7 @@ function OneStopInner() {
               <ThemeToggle variant="compact" />
               <NotificationCenter
                 applications={applications}
-                competitions={competitions}
+                competitions={visibleCompetitions}
                 bookmarks={bookmarks}
                 posts={posts}
                 profile={profile}
@@ -1172,7 +1170,7 @@ function OneStopInner() {
           onBack={() => handleNavigate('home')}
           onNavigate={handleNavigate}
           posts={posts}
-          competitions={visibleCompetitions.length > 0 ? visibleCompetitions : competitions}
+          competitions={visibleCompetitions}
           profile={profile}
           applications={applications}
           user={user}
@@ -1194,7 +1192,7 @@ function OneStopInner() {
               <ThemeToggle variant="compact" />
               <NotificationCenter
                 applications={applications}
-                competitions={competitions}
+                competitions={visibleCompetitions}
                 bookmarks={bookmarks}
                 posts={posts}
                 profile={profile}
@@ -1215,7 +1213,7 @@ function OneStopInner() {
               <ThemeToggle variant="compact" />
               <NotificationCenter
                 applications={applications}
-                competitions={competitions}
+                competitions={visibleCompetitions}
                 bookmarks={bookmarks}
                 posts={posts}
                 profile={profile}
@@ -1254,7 +1252,7 @@ function OneStopInner() {
                     <ThemeToggle variant="compact" />
                     <NotificationCenter
                       applications={applications}
-                      competitions={competitions}
+                      competitions={visibleCompetitions}
                       bookmarks={bookmarks}
                       posts={posts}
                       profile={profile}

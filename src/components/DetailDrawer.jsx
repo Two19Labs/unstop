@@ -5,6 +5,7 @@ import InstitutionLogo from './InstitutionLogo';
 import { BookmarkIcon } from './icons';
 import { trackEvent } from '../lib/posthog';
 import { useAuth } from '../context/AuthContext';
+import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 import './DetailDrawer.css';
 
 export default function DetailDrawer({
@@ -18,12 +19,15 @@ export default function DetailDrawer({
   const { profile } = useAuth();
 
   const isPostgraduate = useMemo(() => {
-    const ed = (profile?.education_level || '').toLowerCase();
-    const yr = (profile?.year || profile?.batch || '').toUpperCase();
-    return ed === 'postgraduate' || yr.startsWith('PG');
+    return checkIsPostgraduate(profile);
   }, [profile]);
 
-  const isCompPGExclusive = Boolean(item?.isPGOnly || item?.targetLevel === 'pg' || item?.isUndergradEligible === false);
+  const isCompPGExclusive = Boolean(
+    item?.isPGOnly ||
+    item?.targetLevel === 'pg' ||
+    item?.isUndergradEligible === false ||
+    (item && !isEligibleForUndergrad(item))
+  );
   const showIneligibilityNotice = !isPostgraduate && isCompPGExclusive;
 
   useEffect(() => {
@@ -38,7 +42,7 @@ export default function DetailDrawer({
 
   const disciplineCircuit = `${item.discipline || 'Competition'} · ${item.circuit || 'All Circuits'}`;
 
-  const eligibilityDisplay = item.isPGOnly
+  const eligibilityDisplay = isCompPGExclusive
     ? 'Postgraduate / MBA Exclusive'
     : (item.isMBAorPG ? 'Undergraduate & Postgraduate / MBA' : 'Undergraduate & All Collegiate');
 

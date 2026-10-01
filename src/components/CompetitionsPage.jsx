@@ -5,6 +5,7 @@ import SectionLoadingWidget from './SectionLoadingWidget';
 import CompetitionRoundsTracker from './CompetitionRoundsTracker';
 import { BROWSE_PUNS } from './FunLoadingScreen';
 import Footer from './Footer';
+import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 const trackCaseCompsEvent = () => {};
 
 const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
@@ -603,10 +604,8 @@ export default function CompetitionsPage({
 }) {
   const { user, profile, squadPosts = [], openAuthModal } = useAuth();
   const effectiveIsPostgraduate = useMemo(() => {
-    if (typeof isPostgraduate === 'boolean' && isPostgraduate) return true;
-    const ed = (profile?.education_level || '').toLowerCase();
-    const yr = (profile?.year || profile?.batch || '').toUpperCase();
-    return ed === 'postgraduate' || yr.startsWith('PG');
+    if (typeof isPostgraduate === 'boolean') return isPostgraduate;
+    return checkIsPostgraduate(profile);
   }, [isPostgraduate, profile]);
   const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
   const bookmarksKey = `${LOCAL_STORAGE_KEY}${userKeySuffix}`;
@@ -806,10 +805,17 @@ export default function CompetitionsPage({
       if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to reach Unstop`);
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
-        const sanitized = data.data.map((c) => ({
+        let sanitized = data.data.map((c) => ({
           ...c,
           prizes: c.prizes ? c.prizes.replace(/Cash Pool/gi, 'Prize Pool') : c.prizes,
+          isUndergradEligible: c.isUndergradEligible !== false && isEligibleForUndergrad(c),
+          isPGOnly: Boolean(c.isPGOnly) || !isEligibleForUndergrad(c),
+          isMBAorPG: Boolean(c.isMBAorPG) || !isEligibleForUndergrad(c),
+          targetLevel: (!isEligibleForUndergrad(c) || c.isPGOnly) ? 'pg' : (c.targetLevel || 'ug')
         }));
+        if (!effectiveIsPostgraduate) {
+          sanitized = sanitized.filter(isEligibleForUndergrad);
+        }
         setCompetitions(sanitized);
         if (onCountUpdate) onCountUpdate(sanitized.length);
         setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -824,7 +830,7 @@ export default function CompetitionsPage({
     } finally {
       setLoading(false);
     }
-  }, [onCountUpdate]);
+  }, [onCountUpdate, effectiveIsPostgraduate]);
 
   // Sync initialCompetitions from parent if updated
   useEffect(() => {
@@ -1030,12 +1036,21 @@ export default function CompetitionsPage({
     });
   };
 
-  const isAllPlatformsSelected = selectedPlatforms.length === PLATFORM_OPTIONS.length;
+  const availablePlatformOptions = useMemo(() => {
+    return PLATFORM_OPTIONS.filter((opt) => {
+      if (opt.id === 'inside_campus' && !effectiveIsPostgraduate && (metrics[opt.countKey] || 0) === 0) {
+        return false;
+      }
+      return true;
+    });
+  }, [effectiveIsPostgraduate, metrics]);
+
+  const isAllPlatformsSelected = selectedPlatforms.length === availablePlatformOptions.length && availablePlatformOptions.length > 0;
   const handleToggleAllPlatforms = () => {
     if (isAllPlatformsSelected) {
       setSelectedPlatforms([]);
     } else {
-      setSelectedPlatforms(PLATFORM_OPTIONS.map((p) => p.id));
+      setSelectedPlatforms(availablePlatformOptions.map((p) => p.id));
     }
   };
 
@@ -1065,7 +1080,7 @@ export default function CompetitionsPage({
   const activeFilterCount =
     (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length ? selectedCircuits.length : 0) +
     (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length ? selectedTracks.length : 0) +
-    (selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length ? selectedPlatforms.length : 0) +
+    (selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length ? selectedPlatforms.length : 0) +
     selectedSubTracks.length +
     (teamFilter !== 'all' ? 1 : 0) +
     (feeFilter !== 'all' ? 1 : 0);
@@ -1074,7 +1089,7 @@ export default function CompetitionsPage({
     searchQuery.trim() !== '' ||
     (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length) ||
     (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length) ||
-    (selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length) ||
+    (selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length) ||
     selectedSubTracks.length > 0 ||
     teamFilter !== 'all' ||
     feeFilter !== 'all' ||
@@ -1139,7 +1154,7 @@ export default function CompetitionsPage({
       }
 
       // Sourcing Platform filter (multi-select)
-      if (selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length) {
+      if (selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length) {
         const compPlatform = comp.sourcePlatform || 'unstop';
         const matchesPlatform = selectedPlatforms.some((p) => {
           if (p === 'institutional' || p === 'campus_direct') {
@@ -1160,7 +1175,7 @@ export default function CompetitionsPage({
 
       // Undergraduate eligibility check
       if (!effectiveIsPostgraduate) {
-        if (comp.isUndergradEligible === false || comp.isPGOnly || comp.targetLevel === 'pg') {
+        if (!isEligibleForUndergrad(comp)) {
           return false;
         }
       }
@@ -1460,7 +1475,7 @@ export default function CompetitionsPage({
                     <ChevronDownIcon size={13} className="cc-accordion-chevron" />
                     <span className="cc-accordion-title">Platforms</span>
                   </div>
-                  {selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length && (
+                  {selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length && (
                     <span className="cc-active-count-badge">{selectedPlatforms.length}</span>
                   )}
                 </button>
@@ -1477,7 +1492,7 @@ export default function CompetitionsPage({
               {openSections.platforms && (
                 <div className="cc-accordion-content">
                   <div className="cc-checkbox-list">
-                    {PLATFORM_OPTIONS.map((opt) => {
+                    {availablePlatformOptions.map((opt) => {
                       const isChecked = selectedPlatforms.includes(opt.id);
                       return (
                         <label key={opt.id} className="cc-filter-checkbox-row">
@@ -1730,7 +1745,7 @@ export default function CompetitionsPage({
                         <button type="button" onClick={() => toggleTrack(trackKey)} aria-label={`Remove ${getTrackLabel(trackKey)} filter`}>✕</button>
                       </span>
                     ))}
-                    {selectedPlatforms.length > 0 && selectedPlatforms.length < PLATFORM_OPTIONS.length && selectedPlatforms.map((platformKey) => (
+                    {selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length && selectedPlatforms.map((platformKey) => (
                       <span key={platformKey} className="cc-active-pill pill-platform">
                         {getPlatformLabel(platformKey)}
                         <button type="button" onClick={() => togglePlatform(platformKey)} aria-label={`Remove ${getPlatformLabel(platformKey)} filter`}>✕</button>

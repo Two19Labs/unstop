@@ -164,43 +164,49 @@ function isJunkOrPass(item) {
   return /\b(gold pass|silver pass|platinum pass|event pass|entry pass|delegate pass|accommodation pass|student pass|general pass|festival pass|ticket pass|entry ticket|workshop pass)\b/i.test(title);
 }
 
-const MBA_EXCLUSION_PATTERN = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|post-graduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|mba\s+graduates|pre-mba|b-school\s+only|only\s+b-school|mba\s+track|for\s+mba\s+students|for\s+pgdm\s+students|executive\s+mba|1st\s+year\s+mba|2nd\s+year\s+mba|pgp\s+only|only\s+pgp)\b/i;
+const MBA_EXCLUSION_PATTERN = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|post-graduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|mba\s+graduates|pre-mba|b-school\s+only|only\s+b-school|mba\s+track|for\s+mba\s+students|for\s+pgdm\s+students|executive\s+mba|1st\s+year\s+mba|2nd\s+year\s+mba|pgp\s+only|only\s+pgp|full-time\s+mba|first\s+year\s+mba|second\s+year\s+mba|two-year\s+mba|premier\s+b-schools|eligible\s+b-schools|participating\s+b-schools|1st\s+year\s+students\s+of\s+2-year|2nd\s+year\s+students\s+of\s+2-year|management\s+students\s+only|open\s+only\s+to\s+b-school|open\s+to\s+b-school\s+students|open\s+to\s+mba\s+students|b-school\s+students\s+and\s+corporate|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla\s+group\s+stratos|itc\s+interrobang|hul\s+l\.i\.m\.e\.|marico\s+over\s+the\s+wall|asian\s+paints\s+canvas|colgate\s+transcend|india's\s+most\s+employable\s+mba)\b/i;
+
+const UG_AFFIRMATIVE_PATTERN = /\b(undergraduate|undergrad|undergraduates|ug\s+only|only\s+for\s+ug|ug\s+students|all\s+collegiate|all\s+college\s+students|open\s+to\s+all\s+students|all\s+students\s+eligible|b\.tech|bba|b\.com|bcom|bachelor|bachelors|b\.sc|bsc|b\.a\b|engineering\s+students)\b/i;
 
 // Eligibility check: Allow competitions that undergraduates can participate in
 function isUndergradEligible(item) {
   if (!item) return false;
   if (isSchoolOnly(item)) return false;
 
+  const platform = (item.sourcePlatform || item.source_platform || '').toLowerCase();
   const title = (item.title || '').toLowerCase();
-  const orgName = (item.organisation?.name || item.orgName || item.host || '').toLowerCase();
+  const orgName = (item.organisation?.name || item.orgName || item.host || item.host_institution || item.organizer || '').toLowerCase();
   const desc = (item.description || item.raw_scraped_text || '').toLowerCase();
-  const combinedText = `${title} ${orgName}`;
+  const fullText = `${title} ${orgName} ${desc}`;
 
-  // 1. Text-based strong MBA/PG exclusivity pattern
-  if (MBA_EXCLUSION_PATTERN.test(combinedText)) {
-    const explicitlyMentionsUG = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(combinedText + ' ' + desc);
-    if (!explicitlyMentionsUG) {
+  // 1. InsideKampus & InsideIIM: Dedicated MBA / B-School platform
+  // Exclusively PG/MBA unless explicitly affirmative for Undergraduates
+  const isInsideCampus = platform === 'inside_campus' || platform === 'inside_iim' ||
+    /\binside(iim|kampus)\b/i.test(orgName) || /\binside(iim|kampus)\b/i.test(title);
+
+  if (isInsideCampus) {
+    if (!UG_AFFIRMATIVE_PATTERN.test(fullText)) {
       return false;
     }
   }
 
-  // Special catch: InsideIIM MBA Graduate awards
-  if (/\b(insideiim)\b/i.test(orgName) && /\b(mba|graduate|b-school)\b/i.test(title)) {
-    return false;
+  // 2. Text-based strong MBA/PG exclusivity pattern across title, host and description
+  if (MBA_EXCLUSION_PATTERN.test(fullText)) {
+    if (!UG_AFFIRMATIVE_PATTERN.test(fullText)) {
+      return false;
+    }
   }
 
-  const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase().trim());
-  const hasUG = filterNames.some(f => f.includes('undergraduate'));
-  const hasPG = filterNames.some(f => f.includes('postgraduate') || f.includes('mba'));
+  // 3. Filter-based exclusivity from Unstop tags:
+  const filterNames = (item.filters || []).map(f => (typeof f === 'string' ? f : (f.name || '')).toLowerCase().trim());
+  const hasUG = filterNames.some(f => f.includes('undergraduate') || f.includes('engineering') || f.includes('arts') || f.includes('bachelor'));
+  const hasPG = filterNames.some(f => f.includes('postgraduate') || f.includes('mba') || f.includes('b-school'));
 
-  // 2. Filter-based exclusivity:
-  // If explicitly tagged for PG/MBA and NOT tagged for undergraduate, exclude for UG.
-  // We do NOT let a generic 'all' tag override this if hasPG is true and hasUG is false.
   if (hasPG && !hasUG) {
     return false;
   }
 
-  // 3. Check structured registration eligibility payload from Unstop
+  // 4. Check structured registration eligibility payload from Unstop
   let regnEligibility = item.regnRequirements?.eligibility;
   if (typeof regnEligibility === 'string') {
     try {
@@ -553,12 +559,14 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
           description: r.raw_scraped_text || r.description || '',
           filters: Array.isArray(r.filters) ? r.filters : [],
           organisation: { name: r.host_institution || r.organizer || '' },
-          host: r.host_institution || r.organizer || ''
+          host: r.host_institution || r.organizer || '',
+          sourcePlatform: r.source_platform
         };
         const autoUndergradEligible = isUndergradEligible(rawInstItem);
-        const isPGOnly = Boolean(r.is_pg_only) || !autoUndergradEligible;
+        const isInsideCampus = r.source_platform === 'inside_campus' || r.source_platform === 'inside_iim';
+        const isPGOnly = Boolean(r.is_pg_only) || !autoUndergradEligible || isInsideCampus;
         const isUndergrad = r.is_undergrad_eligible !== false && !isPGOnly && autoUndergradEligible;
-        const isMBAorPG = isPGOnly || Boolean(r.is_mba_or_pg) || /\b(mba|pgdm|iim|b-school|insideiim)\b/i.test(`${r.title || ''} ${r.host_institution || ''}`);
+        const isMBAorPG = isPGOnly || Boolean(r.is_mba_or_pg) || isInsideCampus || /\b(mba|pgdm|iim|b-school|insideiim)\b/i.test(`${r.title || ''} ${r.host_institution || ''}`);
 
         return {
           id: r.id || `inst_${r.slug || Math.random().toString(36).substring(7)}`,

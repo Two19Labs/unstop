@@ -9,6 +9,7 @@ import ApplyModal from './ApplyModal';
 import SectionLoadingWidget from './SectionLoadingWidget';
 import CompetitionChatModal from './CompetitionChatModal';
 import { SQUAD_PUNS } from './FunLoadingScreen';
+import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN } from '../utils/eligibilityUtils';
 import './TeamFinderScreen.css';
 
 const CATS = ['Case Comps', 'Hackathons', 'Writing & Research', 'Quizzes', 'Simulations', 'Debates'];
@@ -211,9 +212,7 @@ export default function TeamFinderScreen({
   const userName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
   const isViewerPostgraduate = useMemo(() => {
-    const ed = (profile?.education_level || '').toLowerCase();
-    const yr = (profile?.year || profile?.batch || '').toUpperCase();
-    return ed === 'postgraduate' || yr.startsWith('PG');
+    return checkIsPostgraduate(profile);
   }, [profile]);
 
   const activeChatApp = useMemo(() => {
@@ -340,8 +339,13 @@ export default function TeamFinderScreen({
       const match = want.filter(w => profileSkills.includes(w)).length;
       const comm_method = p.comm_method || p.commMethod || (p.phone || p.phone_number || p.leadPhone ? 'whatsapp' : 'chat');
       // Filter out squads for PG/MBA only competitions if viewer is Undergraduate (unless it's user's own post)
-      if (!isViewerPostgraduate && !isMine && comp) {
-        if (comp.isPGOnly || comp.isUndergradEligible === false || comp.targetLevel === 'pg') {
+      if (!isViewerPostgraduate && !isMine) {
+        if (comp && !isEligibleForUndergrad(comp)) {
+          return null;
+        }
+        const postCompTitle = p.competition_name || p.title || '';
+        const postOrg = p.organizer || p.host || '';
+        if (MBA_EXCLUSION_PATTERN.test(postCompTitle) || MBA_EXCLUSION_PATTERN.test(postOrg)) {
           return null;
         }
       }

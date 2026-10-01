@@ -832,7 +832,8 @@ async function saveToSupabase(competitions, sourceMeta) {
       raw_scraped_text: c.description || c.title,
       is_undergrad_eligible: (() => {
         const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
-        const isMbaExcl = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only)\b/i.test(titleAndDesc) ||
+        const isInsideCampus = c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus' || /\binside(iim|kampus)\b/i.test(sourceMeta.institution || '');
+        const isMbaExcl = isInsideCampus || /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla|itc\s+interrobang|hul\s+l\.i\.m\.e\.)\b/i.test(titleAndDesc) ||
           (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
         const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);
         if (isMbaExcl && !explicitlyUg) return false;
@@ -840,7 +841,8 @@ async function saveToSupabase(competitions, sourceMeta) {
       })(),
       is_pg_only: (() => {
         const titleAndDesc = `${c.title || ''} ${c.description || ''} ${sourceMeta.institution || ''}`.toLowerCase();
-        const isMbaExcl = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only)\b/i.test(titleAndDesc) ||
+        const isInsideCampus = c.customPlatform === 'inside_campus' || sourceMeta.circuit === 'inside_campus' || /\binside(iim|kampus)\b/i.test(sourceMeta.institution || '');
+        const isMbaExcl = isInsideCampus || /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|pre-mba|b-school\s+only|only\s+b-school|executive\s+mba|pgp\s+only|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla|itc\s+interrobang|hul\s+l\.i\.m\.e\.)\b/i.test(titleAndDesc) ||
           (/\binsideiim\b/i.test(sourceMeta.institution || '') && /\b(mba|graduate)\b/i.test(c.title || ''));
         const explicitlyUg = /\b(undergraduate|b\.tech|bba|b\.com|bachelor|ug\s+students)\b/i.test(titleAndDesc);
         if (isMbaExcl && !explicitlyUg) return true;
