@@ -214,8 +214,9 @@ function ProfileScreenContent({
   }, [name, college, level, yearNum, phone, skills, savedSnapshot]);
 
   // Level switch: validate yearNum against valid options for new level
-  const handleLevelChange = (e) => {
-    const newLevel = e.target.value;
+  const handleLevelChange = (valOrEvent) => {
+    const newLevel = typeof valOrEvent === 'string' ? valOrEvent : valOrEvent?.target?.value;
+    if (!newLevel || !YEARS[newLevel]) return;
     setLevel(newLevel);
     if (!YEARS[newLevel].includes(yearNum)) {
       setYearNum('1st');
@@ -577,77 +578,76 @@ function ProfileScreenContent({
               </div>
             </div>
 
-            <div className="profile-field-group profile-phone-group">
-              <label className="profile-field-label" htmlFor="profile-phone-input">
-                WhatsApp Number <span style={{ color: 'var(--primary)', fontWeight: 600 }}>*</span>
-              </label>
-              <input
-                id="profile-phone-input"
-                type="tel"
-                className="profile-input profile-phone-input"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+91 98••• ••210"
-                required
-              />
-              <span className="profile-field-help">
-                Compulsory for profile &amp; squad matching. Kept private; shared only once you are accepted into a squad or choose WhatsApp fast-track.
-              </span>
-            </div>
-          </section>
-
-          {/* Section 2: Academic Standing */}
-          <section className="profile-section-card">
-            <div className="profile-section-header">
-              <h2 className="profile-section-title">Academic Standing</h2>
-              <p className="profile-section-subtitle">
-                Configures competition eligibility across all national case challenges, hackathons, and corporate summits.
-              </p>
-            </div>
-
-            <div className="profile-academic-selects-grid">
+            <div className="profile-fields-row">
               <div className="profile-field-group">
-                <label className="profile-field-label" htmlFor="profile-level-select">UG or PG</label>
-                <div className="profile-select-wrapper">
-                  <select
-                    id="profile-level-select"
-                    className="profile-select"
-                    value={level}
-                    onChange={handleLevelChange}
-                  >
-                    <option value="UG">UG · Undergraduate</option>
-                    <option value="PG">PG · Postgraduate</option>
-                  </select>
-                  <ChevronDownIcon size={16} className="profile-select-icon" color="var(--ink-muted)" />
-                </div>
+                <label className="profile-field-label" htmlFor="profile-phone-input">
+                  WhatsApp Number <span style={{ color: 'var(--primary)', fontWeight: 600 }}>*</span>
+                </label>
+                <input
+                  id="profile-phone-input"
+                  type="tel"
+                  className="profile-input profile-phone-input"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+91 98••• ••210"
+                  required
+                />
+                <span className="profile-field-help">
+                  Compulsory for profile &amp; squad matching. Kept private; shared only once you are accepted into a squad or choose WhatsApp fast-track.
+                </span>
               </div>
 
               <div className="profile-field-group">
-                <label className="profile-field-label" htmlFor="profile-year-select">Year</label>
-                <div className="profile-select-wrapper">
-                  <select
-                    id="profile-year-select"
-                    className="profile-select"
-                    value={yearNum}
-                    onChange={(e) => setYearNum(e.target.value)}
-                  >
-                    {YEARS[level].map((y) => (
-                      <option key={y} value={y}>
-                        {y} Year
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDownIcon size={16} className="profile-select-icon" color="var(--ink-muted)" />
+                <div className="profile-academic-compact-labels">
+                  <label className="profile-field-label">UG / PG</label>
+                  <label className="profile-field-label" htmlFor="profile-year-select">Year</label>
                 </div>
-              </div>
-            </div>
+                <div className="profile-academic-compact-controls">
+                  <div className="profile-seg-toggle" role="radiogroup" aria-label="Education level">
+                    <button
+                      type="button"
+                      className={`profile-seg-btn ${level === 'UG' ? 'active' : ''}`}
+                      onClick={() => handleLevelChange('UG')}
+                      aria-checked={level === 'UG'}
+                      role="radio"
+                    >
+                      UG
+                    </button>
+                    <button
+                      type="button"
+                      className={`profile-seg-btn ${level === 'PG' ? 'active' : ''}`}
+                      onClick={() => handleLevelChange('PG')}
+                      aria-checked={level === 'PG'}
+                      role="radio"
+                    >
+                      PG
+                    </button>
+                  </div>
 
-            <div className="profile-eligibility-note">
-              {isPostgraduate ? (
-                <span>You'll see MBA &amp; PG challenges plus all open competitions.</span>
-              ) : (
-                <span>You'll see undergrad-eligible competitions only. MBA/PG listings are hidden.</span>
-              )}
+                  <div className="profile-select-wrapper">
+                    <select
+                      id="profile-year-select"
+                      className="profile-select profile-select-compact"
+                      value={yearNum}
+                      onChange={(e) => setYearNum(e.target.value)}
+                    >
+                      {YEARS[level].map((y) => (
+                        <option key={y} value={y}>
+                          {y} Year
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDownIcon size={15} className="profile-select-icon" color="var(--ink-muted)" />
+                  </div>
+                </div>
+                <span className="profile-field-help">
+                  {isPostgraduate ? (
+                    <span>MBA &amp; PG challenges + open tracks eligible.</span>
+                  ) : (
+                    <span>Undergrad-eligible tracks only (MBA listings hidden).</span>
+                  )}
+                </span>
+              </div>
             </div>
           </section>
 
