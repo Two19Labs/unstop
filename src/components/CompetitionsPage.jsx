@@ -318,6 +318,7 @@ const CORPORATE_KEYWORDS = [
   // Management Consulting & Professional Services
   'mckinsey', 'bain', 'bcg', 'boston consulting', 'kearney', 'oliver wyman', 'strategy&',
   'deloitte', 'pwc', 'pricewaterhousecoopers', 'ey', 'ernst & young', 'kpmg', 'grant thornton', 'bdo', 'accenture',
+  'brainwars', 'bain capability network', 'cafta', 'steel-a-thon', 'the ultimate pitch', 'stratos', 'flipkart grid', 'finserv atom',
   // FMCG & Consumer Brands
   "l'oreal", 'loreal', 'brandstorm', 'hul', 'hindustan unilever', 'lime', 'unilever',
   'itc', 'interrobang', 'marico', 'over the wall', 'mondelez', 'reckitt', 'nestle', 'p&g', 'procter & gamble',
