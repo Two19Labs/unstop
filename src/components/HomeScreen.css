@@ -773,6 +773,38 @@
   color: var(--primary) !important;
 }
 
+/* Home Rail Card Bookmark Button */
+.home-rail-bookmark-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--line, #E5E7EB);
+  color: var(--ink-muted, #6B7280);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 140ms ease;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.home-rail-bookmark-btn:hover {
+  color: var(--primary, #0F3FFE);
+  border-color: rgba(15, 63, 254, 0.4);
+  background: rgba(15, 63, 254, 0.06);
+  transform: scale(1.06);
+}
+
+.home-rail-bookmark-btn.active {
+  color: var(--primary, #0F3FFE);
+  background: rgba(15, 63, 254, 0.10);
+  border-color: rgba(15, 63, 254, 0.40);
+}
+
+
 /* Skeleton Loaders */
 .skeleton-box {
   background: linear-gradient(90deg, #ECEBE6 25%, #F7F6F3 50%, #ECEBE6 75%);
@@ -1085,8 +1117,14 @@
   .home-compact-actions a,
   .home-compact-actions button,
   .home-rail-card a,
-  .home-rail-card button {
+  .home-rail-card button:not(.home-rail-bookmark-btn) {
     min-height: 44px;
+  }
+  .home-rail-card .home-rail-bookmark-btn {
+    min-height: 28px !important;
+    max-height: 28px !important;
+    height: 28px !important;
+    width: 28px !important;
   }
   .home-compact-btn-apply {
     background: #0F3FFE !important;

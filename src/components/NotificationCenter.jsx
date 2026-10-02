@@ -456,7 +456,7 @@ export default function NotificationCenter({
                     ? 'No pending squad applications or accepted handshakes right now.'
                     : activeTab === 'deadlines'
                     ? 'No urgent deadlines or extensions right now. Bookmark competitions to track their rounds.'
-                    : 'You are all caught up! Bookmarked deadlines, round cutoffs, and squad requests will appear here.'}
+                    : 'You are all caught up! Bookmarked deadlines, round deadlines, and squad requests will appear here.'}
                 </p>
               </div>
             ) : (

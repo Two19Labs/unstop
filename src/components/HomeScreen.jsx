@@ -10,7 +10,8 @@ import {
   CalendarIcon,
   FlameIcon,
   ClockIcon,
-  ExternalLinkIcon
+  ExternalLinkIcon,
+  BookmarkIcon
 } from './icons';
 import { useCompetitionRounds } from '../hooks/useCompetitionRounds';
 import BookmarkRoundTrackerCard from './BookmarkRoundTrackerCard';
@@ -1377,11 +1378,12 @@ export default function HomeScreen({
               const feeText = isFree ? 'Free Entry' : (c.fee ? (c.fee.toLowerCase().includes('entry') ? c.fee : `${c.fee} Entry`) : 'Paid');
               const teamText = c.team || c.teamSizeDisplay || 'Solo / Team';
               const prizeText = (c.prize || c.prizes || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool');
+              const isBookmarked = bookmarkIds.includes(String(c.id));
 
               return (
                 <div
                   key={c.id}
-                  className={`home-rail-card card-urgency-${urgencyLevel}`}
+                  className={`home-rail-card card-urgency-${urgencyLevel} ${isBookmarked ? 'is-bookmarked' : ''}`}
                   onClick={() => onOpenDetail && onOpenDetail(c.id)}
                   style={{
                     flex: '0 0 302px',
@@ -1391,8 +1393,8 @@ export default function HomeScreen({
                     cursor: 'pointer'
                   }}
                 >
-                  {/* Top Bar: Host Profile */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr)', alignItems: 'start', gap: '11px' }}>
+                  {/* Top Bar: Host Profile & Bookmark Button */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '40px minmax(0, 1fr) 28px', alignItems: 'start', gap: '10px' }}>
                     <InstitutionLogo
                       logo={c.orgLogo || c.logo || c.bannerUrl}
                       name={c.host || c.orgName}
@@ -1403,6 +1405,18 @@ export default function HomeScreen({
                     <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink-secondary)', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty' }}>
                       {c.host}
                     </span>
+                    <button
+                      type="button"
+                      className={`home-rail-bookmark-btn ${isBookmarked ? 'active' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onToggleBookmark) onToggleBookmark(c.id);
+                      }}
+                      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this competition'}
+                      aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this competition'}
+                    >
+                      <BookmarkIcon size={15} filled={isBookmarked} />
+                    </button>
                   </div>
 
                   {/* Competition Title */}

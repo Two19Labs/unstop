@@ -1,5 +1,5 @@
 // src/lib/presenceService.js
-import { supabase, hasValidCredentials } from './supabaseClient';
+import { supabase, hasValidCredentials } from './supabaseClient.js';
 
 export const SCREEN_LABELS = {
   home: 'Home Dashboard',
@@ -20,17 +20,24 @@ export const SCREEN_COLORS = {
 };
 
 const LOCAL_STORAGE_KEY = 'onestop_active_sessions_v1';
+const PRESENCE_TTL_MS = 60000; // 60 seconds TTL before considering a session inactive
+const HEARTBEAT_INTERVAL_MS = 15000; // 15 seconds heartbeat for real-time responsiveness
 
 let tabSessionId = null;
 export function getTabSessionId() {
   if (!tabSessionId) {
     try {
-      tabSessionId = sessionStorage.getItem('onestop_tab_session_id');
-      if (!tabSessionId) {
-        tabSessionId = `tab_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-        sessionStorage.setItem('onestop_tab_session_id', tabSessionId);
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        tabSessionId = sessionStorage.getItem('onestop_tab_session_id');
+        if (!tabSessionId) {
+          tabSessionId = `tab_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+          sessionStorage.setItem('onestop_tab_session_id', tabSessionId);
+        }
       }
     } catch {
+      // Fallback
+    }
+    if (!tabSessionId) {
       tabSessionId = `tab_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     }
   }
@@ -38,7 +45,7 @@ export function getTabSessionId() {
 }
 
 export function getDeviceType() {
-  if (typeof window === 'undefined') return 'Desktop';
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'Desktop';
   const ua = navigator.userAgent || '';
   if (/Android/i.test(ua)) return 'Android';
   if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
@@ -52,11 +59,13 @@ let activeChannel = null;
 let presenceSubscribers = new Set();
 let latestPresenceMap = {};
 let heartbeatTimer = null;
-let isVisibilityListenerAttached = false;
+let isListenersAttached = false;
+let isReconnecting = false;
 
 let globalCurrentUser = null;
 let globalCurrentProfile = null;
 let globalCurrentScreen = 'home';
+let lastPresencePingAt = 0;
 
 function buildPresencePayload() {
   const sid = getTabSessionId();
@@ -75,22 +84,23 @@ function buildPresencePayload() {
   return {
     sessionId: sid,
     userId: globalCurrentUser?.id || sid,
-    email: globalCurrentUser?.email || 'guest@onestop.internal',
+    email: isAuth ? globalCurrentUser.email : `guest_${sid}@onestop.internal`,
     name: userName,
     college: userCollege,
     course: userCourse,
     year: userYear,
     phone: userPhone,
-    currentScreen: globalCurrentScreen || 'home',
+    currentScreen: (globalCurrentScreen || 'home').toLowerCase(),
     device: getDeviceType(),
     lastPing: Date.now(),
     isRegistered: isAuth,
-    skills: []
+    skills: Array.isArray(globalCurrentProfile?.skills) ? globalCurrentProfile.skills : []
   };
 }
 
 function updateLocalSessions(payload) {
   try {
+    if (typeof window === 'undefined' || !window.localStorage) return {};
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
     let map = raw ? JSON.parse(raw) : {};
     if (typeof map !== 'object' || !map) map = {};
@@ -100,11 +110,11 @@ function updateLocalSessions(payload) {
       map[payload.sessionId] = payload;
     }
 
-    // Retain sessions active in the last 120 seconds
+    // Retain only sessions active within PRESENCE_TTL_MS
     const cleanMap = {};
     Object.keys(map).forEach((k) => {
       const item = map[k];
-      if (item && Math.abs(now - (item.lastPing || 0)) < 120000) {
+      if (item && Math.abs(now - (Number(item.lastPing) || 0)) <= PRESENCE_TTL_MS) {
         cleanMap[k] = item;
       }
     });
@@ -116,80 +126,109 @@ function updateLocalSessions(payload) {
   }
 }
 
-function computeConsolidatedPresence() {
-  if (presenceSubscribers.size === 0) return;
-
+export function computeConsolidatedPresence() {
   const now = Date.now();
   const merged = {};
 
-  // 1. Local storage active sessions
-  const localMap = updateLocalSessions(null);
-  Object.values(localMap).forEach((p) => {
-    if (p && p.sessionId && Math.abs(now - (p.lastPing || 0)) < 120000) {
-      merged[p.sessionId] = p;
-    }
-  });
-
-  // 2. Realtime WebSocket channel presence
+  // 1. Realtime WebSocket channel presence
+  let hasRealtimePresences = false;
   if (activeChannel && typeof activeChannel.presenceState === 'function') {
     try {
       const state = activeChannel.presenceState();
-      if (state) {
-        Object.values(state).forEach((presences) => {
+      if (state && typeof state === 'object') {
+        Object.keys(state).forEach((stateKey) => {
+          const presences = state[stateKey];
           if (Array.isArray(presences)) {
             presences.forEach((p) => {
-              if (p && (p.sessionId || p.email)) {
-                const key = p.sessionId || p.email;
-                merged[key] = {
-                  ...p,
-                  lastPing: p.lastPing || now
-                };
+              if (p && typeof p === 'object') {
+                const sid = p.sessionId || stateKey;
+                const pingTime = Number(p.lastPing) || now;
+                // Only consider sessions active within PRESENCE_TTL_MS
+                if (Math.abs(now - pingTime) <= PRESENCE_TTL_MS) {
+                  merged[sid] = {
+                    ...p,
+                    sessionId: sid,
+                    lastPing: pingTime
+                  };
+                  hasRealtimePresences = true;
+                }
               }
             });
           }
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Presence] Error reading realtime presence state:', e);
+    }
   }
 
-  // 3. Deduplicate: one card per unique student (keyed by email if registered, else sessionId)
+  // 2. Always ensure the current client tab's own presence is included
+  const currentTabPayload = buildPresencePayload();
+  if (currentTabPayload && currentTabPayload.sessionId) {
+    merged[currentTabPayload.sessionId] = currentTabPayload;
+  }
+
+  // 3. Fallback to localStorage active sessions (useful across local tabs or if Realtime is connecting)
+  const localMap = updateLocalSessions(currentTabPayload);
+  if (!hasRealtimePresences) {
+    Object.values(localMap).forEach((p) => {
+      if (p && p.sessionId && Math.abs(now - (Number(p.lastPing) || 0)) <= PRESENCE_TTL_MS) {
+        if (!merged[p.sessionId]) {
+          merged[p.sessionId] = p;
+        }
+      }
+    });
+  }
+
+  // 4. Deduplicate: one card per registered student (by email) or per unique guest session
   const uniqueUsers = {};
   Object.values(merged).forEach((p) => {
     if (!p) return;
-    const isGuest = !p.isRegistered || p.email.endsWith('@onestop.internal');
-    const key = isGuest ? p.sessionId : p.email.toLowerCase();
+    const isGuest = !p.isRegistered || (p.email && p.email.endsWith('@onestop.internal'));
+    const dedupeKey = isGuest
+      ? (p.sessionId || p.userId)
+      : (p.email || p.userId || p.sessionId).toLowerCase();
 
-    const existing = uniqueUsers[key];
-    if (!existing || (p.lastPing || 0) >= (existing.lastPing || 0)) {
-      uniqueUsers[key] = p;
+    const existing = uniqueUsers[dedupeKey];
+    if (!existing || (Number(p.lastPing) || 0) >= (Number(existing.lastPing) || 0)) {
+      uniqueUsers[dedupeKey] = p;
     }
   });
 
   latestPresenceMap = uniqueUsers;
-  notifySubscribers();
+  const list = Object.values(uniqueUsers);
+  notifySubscribers(list);
+  return list;
 }
 
-function notifySubscribers() {
-  const list = Object.values(latestPresenceMap);
+function notifySubscribers(list = Object.values(latestPresenceMap)) {
   presenceSubscribers.forEach((cb) => {
     try {
       cb(list);
     } catch (e) {
-      console.warn('Presence subscriber error:', e);
+      console.warn('[Presence] Subscriber callback error:', e);
     }
   });
 }
 
-let lastPresencePingAt = 0;
-
 export function sendPresencePing(user = globalCurrentUser, profile = globalCurrentProfile, screen = globalCurrentScreen, force = false) {
-  if (user) globalCurrentUser = user;
-  if (profile) globalCurrentProfile = profile;
-  if (screen) globalCurrentScreen = screen;
+  let hasContextChanged = false;
+  if (user && user !== globalCurrentUser) {
+    globalCurrentUser = user;
+    hasContextChanged = true;
+  }
+  if (profile && profile !== globalCurrentProfile) {
+    globalCurrentProfile = profile;
+    hasContextChanged = true;
+  }
+  if (screen && screen !== globalCurrentScreen) {
+    globalCurrentScreen = screen;
+    hasContextChanged = true;
+  }
 
   const now = Date.now();
-  // Throttle pings to at most once every 30s unless forced
-  if (!force && now - lastPresencePingAt < 30000) {
+  // Allow immediate ping if screen/user changed or forced; otherwise throttle background pings to 10s
+  if (!force && !hasContextChanged && (now - lastPresencePingAt < 10000)) {
     return;
   }
   lastPresencePingAt = now;
@@ -197,23 +236,15 @@ export function sendPresencePing(user = globalCurrentUser, profile = globalCurre
   const payload = buildPresencePayload();
   updateLocalSessions(payload);
 
-  if (!hasValidCredentials) {
-    computeConsolidatedPresence();
-    return;
+  if (activeChannel && typeof activeChannel.track === 'function') {
+    try {
+      activeChannel.track(payload).catch((err) => {
+        console.warn('[Presence] Track error:', err);
+      });
+    } catch (e) {}
   }
 
-  if (!activeChannel) {
-    initGlobalPresence(user, profile, screen);
-    return;
-  }
-
-  try {
-    activeChannel.track(payload).catch(() => {});
-  } catch (e) {}
-
-  if (presenceSubscribers.size > 0) {
-    computeConsolidatedPresence();
-  }
+  computeConsolidatedPresence();
 }
 
 export function initGlobalPresence(user, profile, screen) {
@@ -224,13 +255,14 @@ export function initGlobalPresence(user, profile, screen) {
   const initialPayload = buildPresencePayload();
   updateLocalSessions(initialPayload);
 
-  if (!hasValidCredentials) {
+  if (!hasValidCredentials || !supabase) {
     computeConsolidatedPresence();
     return;
   }
 
+  // If channel is already joined and healthy, send a ping to refresh context
   if (activeChannel) {
-    sendPresencePing();
+    sendPresencePing(user, profile, screen, true);
     return;
   }
 
@@ -241,9 +273,7 @@ export function initGlobalPresence(user, profile, screen) {
     });
 
     const handleSync = () => {
-      if (presenceSubscribers.size > 0) {
-        computeConsolidatedPresence();
-      }
+      computeConsolidatedPresence();
     };
 
     activeChannel
@@ -251,62 +281,114 @@ export function initGlobalPresence(user, profile, screen) {
       .on('presence', { event: 'join' }, handleSync)
       .on('presence', { event: 'leave' }, handleSync);
 
-    activeChannel.subscribe((status) => {
+    activeChannel.subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
+        isReconnecting = false;
         const payload = buildPresencePayload();
-        activeChannel.track(payload).catch(() => {});
-        if (presenceSubscribers.size > 0) {
+        activeChannel.track(payload).then(() => {
           computeConsolidatedPresence();
+        }).catch(() => {});
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        console.warn(`[Presence] Channel error (${status}), will attempt reconnect:`, err);
+        if (!isReconnecting) {
+          isReconnecting = true;
+          setTimeout(() => {
+            if (activeChannel) {
+              try { supabase.removeChannel(activeChannel); } catch (e) {}
+              activeChannel = null;
+            }
+            initGlobalPresence();
+          }, 3500);
         }
       }
     });
 
+    // Start 15-second heartbeat for continuous live sync
     if (!heartbeatTimer) {
-      // Egress optimization: 90s heartbeat (reduced from 30s) and pauses when tab is hidden
       heartbeatTimer = setInterval(() => {
-        if (typeof document === 'undefined' || !document.hidden) {
-          sendPresencePing(null, null, null, true);
-        }
-      }, 90000);
+        sendPresencePing(null, null, null, true);
+      }, HEARTBEAT_INTERVAL_MS);
     }
 
-    if (typeof document !== 'undefined' && !isVisibilityListenerAttached) {
-      isVisibilityListenerAttached = true;
+    if (typeof window !== 'undefined' && !isListenersAttached) {
+      isListenersAttached = true;
+
+      // On tab focus or visibility change, ping immediately
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
-          sendPresencePing();
+          sendPresencePing(null, null, null, true);
         }
       });
       window.addEventListener('focus', () => {
-        sendPresencePing();
+        sendPresencePing(null, null, null, true);
+      });
+
+      // Untrack presence cleanly on tab close or page navigation
+      window.addEventListener('beforeunload', () => {
+        try {
+          if (activeChannel && typeof activeChannel.untrack === 'function') {
+            activeChannel.untrack();
+          }
+          const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (raw) {
+            const map = JSON.parse(raw);
+            delete map[sid];
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(map));
+          }
+        } catch (e) {}
+      });
+
+      window.addEventListener('pagehide', () => {
+        try {
+          if (activeChannel && typeof activeChannel.untrack === 'function') {
+            activeChannel.untrack();
+          }
+        } catch (e) {}
       });
     }
   } catch (err) {
-    console.warn('Realtime presence init error:', err);
+    console.warn('[Presence] Realtime presence init error:', err);
   }
 }
 
 /**
- * Subscribes a listener in AdminConsolePage to live online presence list.
+ * Subscribes a listener (e.g. in AdminConsolePage) to the live online presence list.
+ * Returns an unsubscribe function.
  */
 export function subscribeToPresence(user, profile, screen, onSync) {
   if (user) globalCurrentUser = user;
   if (profile) globalCurrentProfile = profile;
   if (screen) globalCurrentScreen = screen;
 
-  if (onSync) {
+  if (typeof onSync === 'function') {
     presenceSubscribers.add(onSync);
+  }
+
+  // Ensure global presence channel is active
+  initGlobalPresence(user, profile, screen);
+
+  // Send an immediate forced ping so admin's presence is registered as 'admin'
+  sendPresencePing(user, profile, screen, true);
+
+  // Immediately compute and pass the current consolidated presence to the subscriber
+  const immediateList = computeConsolidatedPresence();
+  if (typeof onSync === 'function') {
     try {
-      onSync(Object.values(latestPresenceMap));
+      onSync(immediateList);
     } catch (e) {}
   }
 
-  initGlobalPresence(user, profile, screen);
-  sendPresencePing();
-
   return () => {
-    if (onSync) {
+    if (typeof onSync === 'function') {
       presenceSubscribers.delete(onSync);
     }
   };
+}
+
+/**
+ * Manually force a presence refresh and return the latest list.
+ */
+export function refreshPresence() {
+  sendPresencePing(null, null, null, true);
+  return computeConsolidatedPresence();
 }

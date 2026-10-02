@@ -4,13 +4,14 @@ import { isAdminEmail } from '../lib/admin';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import {
   subscribeToPresence,
+  refreshPresence,
   SCREEN_LABELS,
   SCREEN_COLORS
 } from '../lib/presenceService';
 import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
 import './AdminConsolePage.css';
 
-export default function AdminConsolePage({ onBack, user }) {
+export default function AdminConsolePage({ onBack, user, profile }) {
   const isAuthorized = isAdminEmail(user?.email);
 
   if (!isAuthorized) {
@@ -41,10 +42,10 @@ export default function AdminConsolePage({ onBack, user }) {
     );
   }
 
-  return <AdminConsoleContent onBack={onBack} user={user} />;
+  return <AdminConsoleContent onBack={onBack} user={user} profile={profile} />;
 }
 
-function AdminConsoleContent({ onBack, user }) {
+function AdminConsoleContent({ onBack, user, profile }) {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
   const [onlinePresence, setOnlinePresence] = useState([]);
@@ -67,13 +68,13 @@ function AdminConsoleContent({ onBack, user }) {
 
   // Real-Time Online Presence Subscription
   useEffect(() => {
-    const unsubscribe = subscribeToPresence(user, null, 'admin', (presenceList) => {
+    const unsubscribe = subscribeToPresence(user, profile, 'admin', (presenceList) => {
       setOnlinePresence(presenceList || []);
     });
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [user]);
+  }, [user, profile]);
 
   // Fetch 100% Real Data from Supabase
   const fetchData = useCallback(async () => {
@@ -268,6 +269,14 @@ function AdminConsoleContent({ onBack, user }) {
     setTimeout(() => setCopyFeedback(''), 2000);
   };
 
+  const handleRefresh = useCallback(() => {
+    fetchData();
+    const updated = refreshPresence();
+    if (Array.isArray(updated)) {
+      setOnlinePresence(updated);
+    }
+  }, [fetchData]);
+
   return (
     <div className="admin-console-container">
       {/* ── Top Header ── */}
@@ -292,7 +301,7 @@ function AdminConsoleContent({ onBack, user }) {
             <span className="admin-email">{user?.email}</span>
           </div>
 
-          <button className="btn-admin-action" onClick={fetchData} title="Refresh real-time data">
+          <button className="btn-admin-action" onClick={handleRefresh} title="Refresh real-time data">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="23 4 23 10 17 10"></polyline>
               <polyline points="1 20 1 14 7 14"></polyline>
@@ -381,7 +390,7 @@ function AdminConsoleContent({ onBack, user }) {
 
           {onlinePresence.length === 0 ? (
             <div className="no-registry-results">
-              <p>Connecting to real-time presence channel...</p>
+              <p>No active sessions detected. Waiting for visitors...</p>
             </div>
           ) : (
             <div className="table-scroll-container-admin">
@@ -401,11 +410,22 @@ function AdminConsoleContent({ onBack, user }) {
                     .sort((a, b) => (b.lastPing || 0) - (a.lastPing || 0))
                     .map((item) => {
                       const pingSec = Math.max(0, Math.floor((tickerNow - (item.lastPing || tickerNow)) / 1000));
-                      const scrKey = item.currentScreen || 'home';
+                      const scrKey = (item.currentScreen || 'home').toLowerCase();
                       const chipStyle = SCREEN_COLORS[scrKey] || SCREEN_COLORS.home;
 
                       // Find profile for this user if registered
                       const matchedProfile = students.find(s => s.email && s.email.toLowerCase() === (item.email || '').toLowerCase());
+                      const isGuest = !item.isRegistered || (item.email && item.email.includes('@onestop.internal'));
+                      const displayName = isGuest
+                        ? `Guest Visitor (${item.device || 'Web'})`
+                        : (matchedProfile?.full_name || item.name || 'Anonymous Student');
+                      const displayEmail = isGuest ? 'Browsing OneStop · Unregistered' : item.email;
+                      const displayCollege = isGuest
+                        ? 'Visiting OneStop'
+                        : (matchedProfile?.college || item.college || 'Setup Pending');
+                      const displayStanding = isGuest
+                        ? 'Guest Session'
+                        : (matchedProfile?.year || item.year || 'UG 2nd Year');
 
                       return (
                         <tr
@@ -414,18 +434,21 @@ function AdminConsoleContent({ onBack, user }) {
                         >
                           <td>
                             <div className="student-name-cell">
-                              <span className="online-avatar-badge">
-                                {item.name ? item.name.charAt(0).toUpperCase() : 'S'}
+                              <span
+                                className="online-avatar-badge"
+                                style={isGuest ? { background: 'rgba(100, 116, 139, 0.15)', color: '#64748B' } : undefined}
+                              >
+                                {isGuest ? '👤' : (displayName ? displayName.charAt(0).toUpperCase() : 'S')}
                               </span>
                               <div>
-                                <strong className="student-name-text">{item.name || 'Anonymous Student'}</strong>
-                                <span className="student-email-text">{item.email}</span>
+                                <strong className="student-name-text">{displayName}</strong>
+                                <span className="student-email-text">{displayEmail}</span>
                               </div>
                             </div>
                           </td>
                           <td>
                             <span className="course-sem-chip">
-                              {item.college || 'Setup Pending'} · {item.year || 'UG'}
+                              {displayCollege} · {displayStanding}
                             </span>
                           </td>
                           <td>
@@ -814,92 +837,114 @@ function AdminConsoleContent({ onBack, user }) {
             </div>
 
             <div className="drawer-body">
-              {/* Hero Identification Card */}
-              <div className="drawer-hero-card">
-                <div className="drawer-avatar-large">
-                  {selectedStudentForInspect.avatar_url ? (
-                    <img src={selectedStudentForInspect.avatar_url} alt="" />
-                  ) : (
-                    (selectedStudentForInspect.full_name || selectedStudentForInspect.name || 'S').charAt(0).toUpperCase()
-                  )}
-                </div>
-                <div className="drawer-hero-info">
-                  <h4 className="drawer-student-name">
-                    {selectedStudentForInspect.full_name || selectedStudentForInspect.name || 'Anonymous Student'}
-                  </h4>
-                  <div className="drawer-student-email">
-                    <span>{selectedStudentForInspect.email}</span>
-                  </div>
-                  {onlineEmailSet.has((selectedStudentForInspect.email || '').toLowerCase()) ? (
-                    <span className="drawer-status-pill online">
-                      🟢 Online Right Now
-                    </span>
-                  ) : (
-                    <span className="drawer-status-pill offline">
-                      ⚪ Offline
-                    </span>
-                  )}
-                </div>
-              </div>
+              {(() => {
+                const isSelectedGuest = !selectedStudentForInspect.isRegistered && (!selectedStudentForInspect.id || String(selectedStudentForInspect.id).startsWith('tab_') || (selectedStudentForInspect.email && selectedStudentForInspect.email.includes('@onestop.internal')));
+                const isOnlineNow = onlineEmailSet.has((selectedStudentForInspect.email || '').toLowerCase()) ||
+                  onlinePresence.some(p => p.sessionId === selectedStudentForInspect.sessionId || (p.email && selectedStudentForInspect.email && p.email.toLowerCase() === selectedStudentForInspect.email.toLowerCase()));
 
-              {/* Contact & Outreach Actions */}
-              <div className="drawer-section-card">
-                <h5 className="drawer-section-title">Direct Outreach &amp; WhatsApp</h5>
-                {selectedStudentForInspect.phone ? (
-                  <div className="drawer-actions-row">
-                    <a
-                      href={formatWhatsAppUrl(selectedStudentForInspect.phone, `Hey ${selectedStudentForInspect.full_name ? selectedStudentForInspect.full_name.split(' ')[0] : ''}! Connecting with you from OneStop Admin.`)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="drawer-btn-whatsapp"
-                    >
-                      <span>💬 Chat on WhatsApp</span>
-                    </a>
-                    <button
-                      type="button"
-                      className="drawer-btn-copy"
-                      onClick={() => handleCopyText(selectedStudentForInspect.phone, 'phone')}
-                    >
-                      {copyFeedback === 'phone' ? '✓ Copied' : 'Copy Phone'}
-                    </button>
-                  </div>
-                ) : (
-                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--ink-muted)' }}>
-                    No contact number provided by this student yet.
-                  </p>
-                )}
-              </div>
+                return (
+                  <>
+                    {/* Hero Identification Card */}
+                    <div className="drawer-hero-card">
+                      <div className="drawer-avatar-large" style={isSelectedGuest ? { background: 'rgba(100, 116, 139, 0.15)', color: '#64748B' } : undefined}>
+                        {selectedStudentForInspect.avatar_url ? (
+                          <img src={selectedStudentForInspect.avatar_url} alt="" />
+                        ) : isSelectedGuest ? (
+                          '👤'
+                        ) : (
+                          (selectedStudentForInspect.full_name || selectedStudentForInspect.name || 'S').charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="drawer-hero-info">
+                        <h4 className="drawer-student-name">
+                          {isSelectedGuest
+                            ? `Guest Visitor (${selectedStudentForInspect.device || 'Web'})`
+                            : (selectedStudentForInspect.full_name || selectedStudentForInspect.name || 'Anonymous Student')}
+                        </h4>
+                        <div className="drawer-student-email">
+                          <span>
+                            {isSelectedGuest
+                              ? 'Anonymous Session · Unregistered'
+                              : selectedStudentForInspect.email}
+                          </span>
+                        </div>
+                        {isOnlineNow ? (
+                          <span className="drawer-status-pill online">
+                            🟢 Online Right Now
+                          </span>
+                        ) : (
+                          <span className="drawer-status-pill offline">
+                            ⚪ Offline
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-              {/* Collegiate Profile Details */}
-              <div className="drawer-section-card">
-                <h5 className="drawer-section-title">Collegiate Information</h5>
-                <div className="drawer-info-grid">
-                  <div className="drawer-info-item">
-                    <span className="drawer-info-label">College</span>
-                    <span className="drawer-info-value">
-                      {selectedStudentForInspect.college || 'Setup Pending'}
-                    </span>
-                  </div>
-                  <div className="drawer-info-item">
-                    <span className="drawer-info-label">Course</span>
-                    <span className="drawer-info-value">
-                      {selectedStudentForInspect.course || 'Unset'}
-                    </span>
-                  </div>
-                  <div className="drawer-info-item">
-                    <span className="drawer-info-label">Academic Standing</span>
-                    <span className="drawer-info-value">
-                      {selectedStudentForInspect.year || 'UG 2nd Year'}
-                    </span>
-                  </div>
-                  <div className="drawer-info-item">
-                    <span className="drawer-info-label">Education Level</span>
-                    <span className="drawer-info-value" style={{ textTransform: 'capitalize' }}>
-                      {selectedStudentForInspect.education_level || 'Undergraduate'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                    {/* Contact & Outreach Actions */}
+                    <div className="drawer-section-card">
+                      <h5 className="drawer-section-title">Direct Outreach &amp; WhatsApp</h5>
+                      {isSelectedGuest ? (
+                        <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--ink-muted)' }}>
+                          This visitor is currently browsing OneStop without an account. Once they create an account, their verified profile and WhatsApp contact will appear here.
+                        </p>
+                      ) : selectedStudentForInspect.phone ? (
+                        <div className="drawer-actions-row">
+                          <a
+                            href={formatWhatsAppUrl(selectedStudentForInspect.phone, `Hey ${selectedStudentForInspect.full_name ? selectedStudentForInspect.full_name.split(' ')[0] : ''}! Connecting with you from OneStop Admin.`)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="drawer-btn-whatsapp"
+                          >
+                            <span>💬 Chat on WhatsApp</span>
+                          </a>
+                          <button
+                            type="button"
+                            className="drawer-btn-copy"
+                            onClick={() => handleCopyText(selectedStudentForInspect.phone, 'phone')}
+                          >
+                            {copyFeedback === 'phone' ? '✓ Copied' : 'Copy Phone'}
+                          </button>
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--ink-muted)' }}>
+                          No contact number provided by this student yet.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Collegiate Profile Details */}
+                    <div className="drawer-section-card">
+                      <h5 className="drawer-section-title">Collegiate Information</h5>
+                      <div className="drawer-info-grid">
+                        <div className="drawer-info-item">
+                          <span className="drawer-info-label">College</span>
+                          <span className="drawer-info-value">
+                            {isSelectedGuest ? 'Visiting OneStop' : (selectedStudentForInspect.college || 'Setup Pending')}
+                          </span>
+                        </div>
+                        <div className="drawer-info-item">
+                          <span className="drawer-info-label">Course</span>
+                          <span className="drawer-info-value">
+                            {isSelectedGuest ? 'N/A (Guest Session)' : (selectedStudentForInspect.course || 'Unset')}
+                          </span>
+                        </div>
+                        <div className="drawer-info-item">
+                          <span className="drawer-info-label">Academic Standing</span>
+                          <span className="drawer-info-value">
+                            {isSelectedGuest ? 'Guest Visitor' : (selectedStudentForInspect.year || 'UG 2nd Year')}
+                          </span>
+                        </div>
+                        <div className="drawer-info-item">
+                          <span className="drawer-info-label">Education Level</span>
+                          <span className="drawer-info-value" style={{ textTransform: 'capitalize' }}>
+                            {isSelectedGuest ? 'Guest' : (selectedStudentForInspect.education_level || 'Undergraduate')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
 
               {/* Highlighted Skills */}
               <div className="drawer-section-card">

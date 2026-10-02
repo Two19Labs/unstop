@@ -308,13 +308,13 @@ export function generateNotifications({
     const totalHours = Math.ceil(diffMs / (1000 * 60 * 60));
     const daysLeft = Math.ceil(totalHours / 24);
     const countdownStr = formatDeadlineCountdown(deadlineSource, comp?.remain, comp?.days ?? roundsData?.daysRemaining);
-    const cutoffTime = formatRoundDeadlineTime(deadlineMs);
+    const deadlineTime = formatRoundDeadlineTime(deadlineMs);
     const compactComp = compName.length > 40 ? `${compName.slice(0, 38).trim()}…` : compName;
     const hostPrefix = compHost ? `${compHost} · ` : '';
 
     let urgency = 'info';
     let title = `📌 Tracking · ${compactComp}`;
-    let subtitle = `${hostPrefix}Registration cutoff: ${cutoffTime} (${countdownStr}).`;
+    let subtitle = `${hostPrefix}Registration deadline: ${deadlineTime} (${countdownStr}).`;
     let pushTitle = '';
     let pushBody = '';
     let badgeText = `${daysLeft}d left`;
@@ -324,31 +324,31 @@ export function generateNotifications({
       // Final 1 Hour Critical Alert!
       urgency = 'critical';
       title = `🚨 Closes in ${totalMinutes}m · ${compactComp}`;
-      subtitle = `${hostPrefix}Registration cutoff at ${cutoffTime}. Finalize team & register now.`;
+      subtitle = `${hostPrefix}Registration deadline: ${deadlineTime}. Finalize team & register now.`;
       pushTitle = `🚨 Closes in ${totalMinutes}m · ${compactComp}`;
-      pushBody = `${hostPrefix}Registration cutoff: ${cutoffTime}. Submit team entry on portal now.`;
+      pushBody = `${hostPrefix}Registration deadline: ${deadlineTime}. Submit team entry on portal now.`;
       badgeText = `${totalMinutes}m left`;
       isUrgentPush = true;
     } else if (diffMs <= 6 * 60 * 60 * 1000) {
       // 6 Hours Warning
       urgency = 'critical';
       title = `⚠️ Closes in ${totalHours}h · ${compactComp}`;
-      subtitle = `${hostPrefix}Registration closes today at ${cutoffTime}. Complete your team entry.`;
+      subtitle = `${hostPrefix}Registration deadline: ${deadlineTime}. Complete your team entry.`;
       pushTitle = `⚠️ Closes in ${totalHours}h · ${compactComp}`;
-      pushBody = `${hostPrefix}Registration cutoff is today at ${cutoffTime} on the portal.`;
+      pushBody = `${hostPrefix}Registration deadline: ${deadlineTime} on the portal.`;
       badgeText = `${totalHours}h left`;
       isUrgentPush = true;
     } else if (diffMs <= 24 * 60 * 60 * 1000) {
       // 24 Hours Warning
       urgency = 'warning';
       title = `⏳ Closes Tomorrow · ${compactComp}`;
-      subtitle = `${hostPrefix}Registration deadline is tomorrow at ${cutoffTime}. Lock in your squad.`;
+      subtitle = `${hostPrefix}Registration deadline: ${deadlineTime}. Lock in your squad.`;
       badgeText = countdownStr;
     } else if (diffMs <= 72 * 60 * 60 * 1000) {
       // 2-3 Days Warning
       urgency = 'info';
       title = `📅 ${daysLeft} Days Left · ${compactComp}`;
-      subtitle = `${hostPrefix}Registration closes on ${cutoffTime}. Form your squad or register early.`;
+      subtitle = `${hostPrefix}Registration deadline: ${deadlineTime}. Form your squad or register early.`;
       badgeText = `${daysLeft} days left`;
     }
 
@@ -366,7 +366,7 @@ export function generateNotifications({
         competition: comp || roundsData,
         competitionTitle: compName,
         host: compHost,
-        deadlineTime: cutoffTime,
+        deadlineTime,
         url: targetUrl
       },
       actions: [
@@ -422,7 +422,7 @@ export function generateNotifications({
 
       const startMs = round.startDate ? new Date(round.startDate).getTime() : 0;
       const endMs = round.endDate ? new Date(round.endDate).getTime() : 0;
-      const cutoffTime = formatRoundDeadlineTime(endMs);
+      const roundDeadlineTime = formatRoundDeadlineTime(endMs);
       const startTime = formatRoundDeadlineTime(startMs);
       const targetPortalUrl = round.publicUrl || comp?.apply_url || comp?.applyUrl || comp?.sourceUrl || comp?.website_url || comp?.unstopUrl || roundsData?.unstopUrl || (sId.startsWith('inst_') ? (comp?.website_url || '#') : `https://unstop.com/competitions/${sId}`);
 
@@ -432,7 +432,7 @@ export function generateNotifications({
         if (!dismissedSet.has(notifId)) {
           const minsToStart = Math.ceil((startMs - now) / 60000);
           const startTitle = `⏳ Starts in ${minsToStart}m · ${compactComp}`;
-          const startSubtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} begins today at ${startTime}. Be ready on the portal.`;
+          const startSubtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} begins at ${startTime}. Be ready on the portal.`;
 
           notifs.push({
             id: notifId,
@@ -461,14 +461,14 @@ export function generateNotifications({
 
           dispatchBrowserNotification({
             title: startTitle,
-            body: `${compHost ? `${compHost} · ` : ''}${roundTitle} starts today at ${startTime}.`,
+            body: `${compHost ? `${compHost} · ` : ''}${roundTitle} starts at ${startTime}.`,
             tag: `push_rnd_start_${roundId}`,
             url: targetPortalUrl
           });
         }
       }
 
-      // B. Round is LIVE NOW! (Transitions to critical cutoff alert when within final 1 hour)
+      // B. Round is LIVE NOW! (Transitions to critical deadline alert when within final 1 hour)
       const isLiveNow = (startMs > 0 && startMs <= now && endMs > now) || round.status === 'live';
       const isCriticalEndingSoon = endMs > now && (endMs - now <= 60 * 60 * 1000);
 
@@ -476,7 +476,7 @@ export function generateNotifications({
         const notifId = `rnd_live_${sId}_${roundId}`;
         if (!dismissedSet.has(notifId)) {
           const liveTitle = `🚀 Live Now · ${compactComp}`;
-          const liveSubtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} is live. Portal is open until ${cutoffTime}.`;
+          const liveSubtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} is live. Portal is open until ${roundDeadlineTime}.`;
 
           notifs.push({
             id: notifId,
@@ -495,7 +495,7 @@ export function generateNotifications({
               roundId,
               round,
               roundTitle,
-              deadlineTime: cutoffTime,
+              deadlineTime: roundDeadlineTime,
               url: targetPortalUrl
             },
             actions: [
@@ -506,7 +506,7 @@ export function generateNotifications({
           // Dispatch native desktop notification for live round
           dispatchBrowserNotification({
             title: liveTitle,
-            body: `${compHost ? `${compHost} · ` : ''}${roundTitle} portal is open until ${cutoffTime}. Enter portal now.`,
+            body: `${compHost ? `${compHost} · ` : ''}${roundTitle} portal is open until ${roundDeadlineTime}. Enter portal now.`,
             tag: `push_rnd_live_${roundId}`,
             url: targetPortalUrl
           });
@@ -529,23 +529,23 @@ export function generateNotifications({
         let pushTag = null;
 
         if (endDiffMs <= 15 * 60 * 1000) {
-          // Emergency 15 mins (Cutoff Alert)
+          // Emergency 15 mins (Deadline Alert)
           shouldEmit = true;
           urgency = 'critical';
           title = `🚨 Final 15m · ${compactComp}`;
-          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} deadline at ${cutoffTime} (${totalMinutes}m left). Submit files before portal lock.`;
+          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} deadline: ${roundDeadlineTime} (${totalMinutes}m left). Submit files before portal lock.`;
           pushTitle = `🚨 Final 15m · ${compactComp}`;
-          pushBody = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes at ${cutoffTime}! Upload submission before portal lock.`;
+          pushBody = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes at ${roundDeadlineTime}! Upload submission before portal lock.`;
           badgeText = `${totalMinutes}m left`;
           pushTag = `push_rnd_15m_${roundId}`;
         } else if (endDiffMs <= 30 * 60 * 1000) {
-          // Hard Cutoff 30 mins
+          // Hard Deadline 30 mins
           shouldEmit = true;
           urgency = 'critical';
-          title = `⚠️ 30m Cutoff · ${compactComp}`;
-          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes at ${cutoffTime}. Upload and verify your files.`;
-          pushTitle = `⚠️ 30m Cutoff · ${compactComp}`;
-          pushBody = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes in 30m (${cutoffTime}). Upload files on portal.`;
+          title = `⚠️ 30m Deadline · ${compactComp}`;
+          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes at ${roundDeadlineTime}. Upload and verify your files.`;
+          pushTitle = `⚠️ 30m Deadline · ${compactComp}`;
+          pushBody = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes in 30m (${roundDeadlineTime}). Upload files on portal.`;
           badgeText = `${totalMinutes}m left`;
           pushTag = `push_rnd_30m_${roundId}`;
         } else if (endDiffMs <= 60 * 60 * 1000) {
@@ -553,9 +553,9 @@ export function generateNotifications({
           shouldEmit = true;
           urgency = 'critical';
           title = `⏳ 1h Left · ${compactComp}`;
-          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} cutoff today at ${cutoffTime}. Finalize and upload submission.`;
+          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} deadline: ${roundDeadlineTime}. Finalize and upload submission.`;
           pushTitle = `⏳ 1h Left · ${compactComp}`;
-          pushBody = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes in 1 hour (${cutoffTime}).`;
+          pushBody = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes in 1 hour (${roundDeadlineTime}).`;
           badgeText = '1h left';
           pushTag = `push_rnd_1h_${roundId}`;
         } else if (!isLiveNow && endDiffMs <= 6 * 60 * 60 * 1000) {
@@ -563,14 +563,14 @@ export function generateNotifications({
           shouldEmit = true;
           urgency = 'warning';
           title = `⚠️ 6h Left · ${compactComp}`;
-          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes today at ${cutoffTime}.`;
+          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} closes at ${roundDeadlineTime}.`;
           badgeText = `${totalHours}h left`;
         } else if (!isLiveNow && endDiffMs <= 24 * 60 * 60 * 1000) {
           // 24 Hours Left (only when not live)
           shouldEmit = true;
           urgency = 'info';
           title = `📅 Closes Tomorrow · ${compactComp}`;
-          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} submission due tomorrow at ${cutoffTime}.`;
+          subtitle = `${compHost ? `${compHost} · ` : ''}${roundTitle} submission deadline: ${roundDeadlineTime}.`;
           badgeText = 'Tomorrow';
         }
 
@@ -594,7 +594,7 @@ export function generateNotifications({
                 roundId,
                 round,
                 roundTitle,
-                deadlineTime: cutoffTime,
+                deadlineTime: roundDeadlineTime,
                 url: targetPortalUrl
               },
               actions: [

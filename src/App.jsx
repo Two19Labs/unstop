@@ -209,11 +209,6 @@ function OneStopInner() {
     trackScreenView(screen);
   }, [screen]);
 
-  // Live Online Presence tracking for all active sessions & devices
-  useEffect(() => {
-    initGlobalPresence(user, authProfile, screen);
-  }, [user, authProfile, screen]);
-
   // Toast System (Declared early so all callbacks can access flash safely)
   const [toastMessage, setToastMessage] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -418,6 +413,11 @@ function OneStopInner() {
       }));
     }
   }, [authProfile, user]);
+
+  // Live Online Presence tracking for all active sessions & devices
+  useEffect(() => {
+    initGlobalPresence(user, authProfile || profile, screen);
+  }, [user, authProfile, profile, screen]);
 
   const handleSaveProfile = useCallback(async (updatedData) => {
     if (!user) {
@@ -1143,6 +1143,7 @@ function OneStopInner() {
         <AdminConsolePage
           onBack={() => handleNavigate('home')}
           user={user}
+          profile={authProfile || profile}
         />
       ) : isBrowseMode ? (
         <CompetitionsPage
