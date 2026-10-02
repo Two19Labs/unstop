@@ -78,7 +78,7 @@ function buildPresencePayload() {
 
   const userCollege = globalCurrentProfile?.college || (isAuth ? 'College Setup Pending' : 'Visiting OneStop');
   const userCourse = globalCurrentProfile?.course || '';
-  const userYear = globalCurrentProfile?.year || globalCurrentProfile?.batch || 'UG 2nd Year';
+  const userYear = globalCurrentProfile?.year || globalCurrentProfile?.batch || '';
   const userPhone = globalCurrentProfile?.phone || '';
 
   return {

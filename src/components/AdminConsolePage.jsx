@@ -195,7 +195,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
   const standingStats = useMemo(() => {
     const counts = {};
     students.forEach((s) => {
-      const yr = (s.year || s.batch || 'UG 2nd Year').trim();
+      const yr = (s.year || s.batch || 'Not Set').trim();
       counts[yr] = (counts[yr] || 0) + 1;
     });
 
@@ -246,7 +246,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
       `"${(s.email || '').replace(/"/g, '""')}"`,
       `"${(s.college || 'Pending Setup').replace(/"/g, '""')}"`,
       `"${(s.course || '').replace(/"/g, '""')}"`,
-      `"${(s.year || 'UG 2nd Year').replace(/"/g, '""')}"`,
+      `"${(s.year || 'Not Set').replace(/"/g, '""')}"`,
       `"${s.phone || ''}"`,
       `"${Array.isArray(s.skills) ? s.skills.join(', ') : ''}"`,
       `"${s.created_at || ''}"`
@@ -425,7 +425,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                         : (matchedProfile?.college || item.college || 'Setup Pending');
                       const displayStanding = isGuest
                         ? 'Guest Session'
-                        : (matchedProfile?.year || item.year || 'UG 2nd Year');
+                        : (matchedProfile?.year || item.year || 'Setup Pending');
 
                       return (
                         <tr
@@ -701,7 +701,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                           </td>
                           <td>
                             <span className="course-sem-chip">
-                              {student.year || 'UG 2nd Year'}
+                              {student.year || 'Setup Pending'}
                             </span>
                           </td>
                           <td>
@@ -779,7 +779,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                       <div style={{ fontSize: '0.84rem' }}>
                         <div><strong>College:</strong> {student.college || 'Setup Pending'}</div>
                         {student.course && <div><strong>Course:</strong> {student.course}</div>}
-                        <div><strong>Standing:</strong> {student.year || 'UG 2nd Year'}</div>
+                        <div><strong>Standing:</strong> {student.year || 'Setup Pending'}</div>
                       </div>
 
                       <div className="student-card-meta">
@@ -931,7 +931,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                         <div className="drawer-info-item">
                           <span className="drawer-info-label">Academic Standing</span>
                           <span className="drawer-info-value">
-                            {isSelectedGuest ? 'Guest Visitor' : (selectedStudentForInspect.year || 'UG 2nd Year')}
+                            {isSelectedGuest ? 'Guest Visitor' : (selectedStudentForInspect.year || 'Setup Pending')}
                           </span>
                         </div>
                         <div className="drawer-info-item">

@@ -155,24 +155,28 @@ export function AuthProvider({ children }) {
       const meta = activeUser?.user_metadata || {};
       const localLastUpdated = localStorage.getItem(`onestop_profile_last_updated_${userId}`);
       const lastUpdatedAt = data?.profile_last_updated_at || meta?.profile_last_updated_at || localLastUpdated || null;
-      const educationLevel = data?.education_level || meta?.education_level || 'undergraduate';
+      const educationLevel = data?.education_level || meta?.education_level || '';
       const resolvedProfile = data ? {
         ...data,
         education_level: educationLevel,
+        college: data.college || meta.college || '',
+        phone: data.phone || meta.phone || '',
         course: data.course || meta.course || '',
-        year: data.year || meta.year || 'UG 2nd Year',
+        year: data.year || meta.year || '',
         bio: data.bio || meta.bio || '',
+        skills: Array.isArray(data.skills) ? data.skills : (Array.isArray(meta.skills) ? meta.skills : []),
         profile_last_updated_at: lastUpdatedAt,
-      } : (meta.full_name ? {
+      } : (meta.full_name || activeUser?.email ? {
         id: userId,
         email: activeUser?.email,
-        full_name: meta.full_name,
+        full_name: meta.full_name || (activeUser?.email ? activeUser.email.split('@')[0] : ''),
         education_level: educationLevel,
         college: meta.college || '',
         phone: meta.phone || '',
         course: meta.course || '',
-        year: meta.year || 'UG 2nd Year',
+        year: meta.year || '',
         bio: meta.bio || '',
+        skills: Array.isArray(meta.skills) ? meta.skills : [],
         profile_last_updated_at: lastUpdatedAt,
       } : null);
 
@@ -295,7 +299,7 @@ export function AuthProvider({ children }) {
                   meta: a.applicant_college,
                   applicant_name: a.applicant_name,
                   applicant_college: a.applicant_college,
-                  applicant_year: a.applicant_year || 'UG 2nd Year',
+                  applicant_year: a.applicant_year || '',
                   applicant_course: a.applicant_course || '',
                   skills: a.highlighted_skills || [],
                   highlighted_skills: a.highlighted_skills || [],
@@ -648,6 +652,7 @@ export function AuthProvider({ children }) {
         console.warn('Sign out error:', err);
       }
     }
+    const oldUserId = userRef.current?.id || user?.id;
     userRef.current = null;
     setUser(null);
     setSession(null);
@@ -657,6 +662,12 @@ export function AuthProvider({ children }) {
     try {
       localStorage.removeItem('onestop_applications');
       localStorage.removeItem('onestop_bookmarks');
+      localStorage.removeItem('onestop_user_profile');
+      if (oldUserId) {
+        localStorage.removeItem(`onestop_profile_last_updated_${oldUserId}`);
+        localStorage.removeItem(`onestop_user_notification_states_${oldUserId}`);
+      }
+      localStorage.removeItem('onestop_user_notification_states');
     } catch (e) {}
   };
 
@@ -1096,7 +1107,7 @@ export function AuthProvider({ children }) {
       applicant_phone: appData.applicant_phone || profile?.phone || '',
       applicant_college: appData.applicant_college || profile?.college || '',
       applicant_course: appData.applicant_course || profile?.course || 'General',
-      applicant_year: normalizeYear(appData.applicant_year || profile?.year || profile?.batch || 'UG 2nd Year'),
+      applicant_year: normalizeYear(appData.applicant_year || profile?.year || profile?.batch || ''),
       pitch_note: appData.pitch_note || '',
       highlighted_skills: appData.highlighted_skills || [],
       comm_method: appData.comm_method || 'whatsapp',
@@ -1123,7 +1134,7 @@ export function AuthProvider({ children }) {
         meta: data.applicant_college,
         applicant_name: data.applicant_name,
         applicant_college: data.applicant_college,
-        applicant_year: data.applicant_year || 'UG 2nd Year',
+        applicant_year: data.applicant_year || '',
         applicant_course: data.applicant_course || '',
         skills: data.highlighted_skills || [],
         highlighted_skills: data.highlighted_skills || [],

@@ -38,11 +38,25 @@ function parseAcademicStanding(profile) {
     }
   }
 
+  const simpleMatch = candidate.match(/^(\d+(?:st|nd|rd|th))\s+Year$/i);
+  if (simpleMatch) {
+    const yr = simpleMatch[1];
+    const isPost = (profile?.education_level || '').toLowerCase().includes('post');
+    const lvl = isPost ? 'PG' : 'UG';
+    if (YEARS[lvl]?.includes(yr)) {
+      return { level: lvl, yearNum: yr };
+    }
+  }
+
+  if (!candidate) {
+    return { level: '', yearNum: '' };
+  }
+
   const isPost = (profile?.education_level || '').toLowerCase().includes('post') || candidate.startsWith('PG');
   if (isPost) {
-    return { level: 'PG', yearNum: '1st' };
+    return { level: 'PG', yearNum: '' };
   }
-  return { level: 'UG', yearNum: '2nd' };
+  return { level: 'UG', yearNum: '' };
 }
 
 function ProfileScreenContent({
@@ -63,20 +77,20 @@ function ProfileScreenContent({
 
   const [name, setName] = useState(profile?.name || '');
   const [college, setCollege] = useState(profile?.college || '');
-  const [level, setLevel] = useState(initialAcademic.level);
-  const [yearNum, setYearNum] = useState(initialAcademic.yearNum);
+  const [level, setLevel] = useState(initialAcademic.level || '');
+  const [yearNum, setYearNum] = useState(initialAcademic.yearNum || '');
   const [phone, setPhone] = useState(profile?.phone || '');
-  const [skills, setSkills] = useState(profile?.skills || []);
+  const [skills, setSkills] = useState(Array.isArray(profile?.skills) ? profile.skills : []);
 
 
   // Snapshot of last saved values to determine dirty state and allow Discard
   const [savedSnapshot, setSavedSnapshot] = useState({
     name: profile?.name || '',
     college: profile?.college || '',
-    level: initialAcademic.level,
-    yearNum: initialAcademic.yearNum,
+    level: initialAcademic.level || '',
+    yearNum: initialAcademic.yearNum || '',
     phone: profile?.phone || '',
-    skills: profile?.skills || []
+    skills: Array.isArray(profile?.skills) ? profile.skills : []
   });
 
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -137,8 +151,8 @@ function ProfileScreenContent({
       const nextSaved = {
         name: profile.name || '',
         college: profile.college || '',
-        level: parsed.level,
-        yearNum: parsed.yearNum,
+        level: parsed.level || '',
+        yearNum: parsed.yearNum || '',
         phone: profile.phone || '',
         skills: Array.isArray(profile.skills) ? profile.skills : []
       };
@@ -202,7 +216,7 @@ function ProfileScreenContent({
     const newLevel = typeof valOrEvent === 'string' ? valOrEvent : valOrEvent?.target?.value;
     if (!newLevel || !YEARS[newLevel]) return;
     setLevel(newLevel);
-    if (!YEARS[newLevel].includes(yearNum)) {
+    if (yearNum && !YEARS[newLevel].includes(yearNum)) {
       setYearNum('1st');
     }
   };
@@ -238,7 +252,7 @@ function ProfileScreenContent({
     }
 
     const isPost = level === 'PG';
-    const computedYear = `${level} ${yearNum} Year`;
+    const computedYear = level && yearNum ? `${level} ${yearNum} Year` : (yearNum ? `${yearNum} Year` : '');
 
     const cleanPhone = phone.trim().replace(/\D/g, '');
     if (cleanPhone.length < 10) {
@@ -250,11 +264,11 @@ function ProfileScreenContent({
 
     const updatedData = {
       name: name.trim() || 'Student',
-      college: college.trim() || 'College',
+      college: college.trim() || '',
       course: '',
       year: computedYear,
       batch: computedYear,
-      education_level: isPost ? 'postgraduate' : 'undergraduate',
+      education_level: isPost ? 'postgraduate' : (level === 'UG' ? 'undergraduate' : ''),
       phone: phone.trim(),
       skills
     };
@@ -283,8 +297,8 @@ function ProfileScreenContent({
   // Preview derivations
   const previewInitials = initialsOf(name.trim() || (user?.email ? user.email.split('@')[0] : 'Student'));
   const isPostgraduate = level === 'PG';
-  const computedYear = `${level} ${yearNum} Year`;
-  const standingText = `${computedYear} ${isPostgraduate ? '· MBA / PG' : '· Undergraduate'}`;
+  const computedYear = level && yearNum ? `${level} ${yearNum} Year` : (yearNum ? `${yearNum} Year` : '');
+  const standingText = computedYear ? `${computedYear} ${isPostgraduate ? '· MBA / PG' : '· Undergraduate'}` : '';
   const isPhoneMissing = !phone.trim();
 
   return (
@@ -329,9 +343,11 @@ function ProfileScreenContent({
                     {college.trim() || 'Select your college'}
                   </div>
                 </div>
-                <span className={`profile-preview-standing-pill ${isPostgraduate ? 'pg' : 'ug'}`}>
-                  {standingText}
-                </span>
+                {standingText && (
+                  <span className={`profile-preview-standing-pill ${isPostgraduate ? 'pg' : 'ug'}`}>
+                    {standingText}
+                  </span>
+                )}
               </div>
 
               {/* Highlighted Skills block */}
@@ -525,9 +541,18 @@ function ProfileScreenContent({
                       id="profile-year-select"
                       className="profile-select profile-select-compact"
                       value={yearNum}
-                      onChange={(e) => setYearNum(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setYearNum(val);
+                        if (val && !level) {
+                          setLevel('UG');
+                        }
+                      }}
                     >
-                      {YEARS[level].map((y) => (
+                      <option value="">
+                        Select Year
+                      </option>
+                      {(YEARS[level] || YEARS.UG).map((y) => (
                         <option key={y} value={y}>
                           {y} Year
                         </option>
@@ -537,10 +562,12 @@ function ProfileScreenContent({
                   </div>
                 </div>
                 <span className="profile-field-help">
-                  {isPostgraduate ? (
+                  {level === 'PG' ? (
                     <span>shows mba, pg, and open challenges</span>
-                  ) : (
+                  ) : level === 'UG' ? (
                     <span>shows undergrad tracks only · mba challenges hidden</span>
+                  ) : (
+                    <span>select degree level and year to personalize competition feed</span>
                   )}
                 </span>
               </div>

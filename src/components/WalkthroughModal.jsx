@@ -35,7 +35,7 @@ const SLIDES = [
   {
     id: 'reminders',
     badge: 'reminders',
-    title: 'a heads-up before every deadline',
+    title: 'a heads-up before every cutoff',
     description: 'extensions, closing deadlines and squad requests, all in the bell. turn on alerts and we ping you in intervals before.'
   },
   {
@@ -481,20 +481,23 @@ export default function WalkthroughModal({
 }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [t, setT] = useState(0);
+  const [manualOpen, setManualOpen] = useState(null);
+  const [manualTab, setManualTab] = useState(null);
 
   const paneRef = useRef(null);
   const gridRef = useRef(null);
   const winRef = useRef(null);
   const lastPosRef = useRef({});
-  const isHoveredRef = useRef(false);
   const touchStartX = useRef(null);
   const startTimestampRef = useRef(Date.now());
 
-  // Reset clock and position cache when slide changes
+  // Reset clock, manual interaction state, and position cache when slide changes
   const goToSlide = useCallback((newStep) => {
     const target = Math.max(0, Math.min(SLIDES.length - 1, newStep));
     setCurrentStep(target);
     setT(0);
+    setManualOpen(null);
+    setManualTab(null);
     lastPosRef.current = {};
   }, []);
 
@@ -536,13 +539,15 @@ export default function WalkthroughModal({
       const dt = Math.min(100, now - lastTime);
       lastTime = now;
 
-      if (!document.hidden && !isHoveredRef.current) {
+      if (!document.hidden) {
         setT((prevT) => {
           const sc = SCRIPTS[currentStep];
           const nextT = prevT + dt;
           if (nextT >= sc.len) {
             if (autoAdvance && currentStep < SLIDES.length - 1) {
               setCurrentStep((s) => s + 1);
+              setManualOpen(null);
+              setManualTab(null);
               lastPosRef.current = {};
               return 0;
             } else {
@@ -692,14 +697,14 @@ export default function WalkthroughModal({
   }));
 
   // Slide 3: Reminders State
-  const nOpen = currentStep === 3 && t >= 1000;
-  const nDl = currentStep === 3 && t >= 7500;
+  const nOpen = currentStep === 3 && (manualOpen !== null ? manualOpen : t >= 1000);
+  const nDl = currentStep === 3 && (manualTab !== null ? manualTab === 1 : t >= 7500);
   const nTabs = [
     { label: 'All', count: 3, cue: 'taball' },
     { label: 'Deadlines & Rounds', count: 2, cue: 'tabdl' },
     { label: 'Squads', count: 1, cue: 'tabsq' }
   ].map((tab, idx) => {
-    const act = nDl ? idx === 1 : idx === 0;
+    const act = manualTab !== null ? manualTab === idx : (nDl ? idx === 1 : idx === 0);
     return {
       ...tab,
       bd: act ? '#E7E6E2' : 'transparent',
@@ -712,9 +717,17 @@ export default function WalkthroughModal({
     };
   });
   const nItems = NOTIFS.map((x, i) => ({ x, i }))
-    .filter((o) => !nDl || o.x.cat === 'deadlines')
+    .filter((o) => {
+      if (manualTab === 1 || (manualTab === null && nDl)) {
+        return o.x.cat === 'deadlines';
+      }
+      if (manualTab === 2) {
+        return o.x.cat === 'squads';
+      }
+      return true;
+    })
     .map(({ x, i }) => {
-      const itemOn = nOpen && t >= 1000 + 400 + i * 450;
+      const itemOn = nOpen && (manualOpen !== null || t >= 1000 + 400 + i * 450);
       return {
         ...x,
         ...NU[x.u],
@@ -755,12 +768,6 @@ export default function WalkthroughModal({
         className="walkthrough-modal"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onMouseEnter={() => {
-          isHoveredRef.current = true;
-        }}
-        onMouseLeave={() => {
-          isHoveredRef.current = false;
-        }}
       >
         {/* Header Bar */}
         <div className="walkthrough-header">
@@ -2352,9 +2359,12 @@ export default function WalkthroughModal({
               {/* Slide 3: Reminders & Radar (Bell Panel) */}
               {currentStep === 3 && (
                 <div className="walkthrough-reminders-stage">
-                  <span
+                  <button
+                    type="button"
                     data-cue="bell"
                     className="walkthrough-reminders-bell"
+                    onClick={() => setManualOpen((prev) => (prev === null ? !nOpen : !prev))}
+                    aria-label="Toggle Reminders & Radar"
                     style={{
                       transform: press.bell,
                       background: nOpen ? '#F2F1ED' : '#FFFFFF',
@@ -2365,7 +2375,7 @@ export default function WalkthroughModal({
                     <span className="walkthrough-reminders-badge">
                       3
                     </span>
-                  </span>
+                  </button>
 
                   <div
                     className="walkthrough-reminders-panel"
@@ -2396,7 +2406,7 @@ export default function WalkthroughModal({
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          Reminders
+                          Reminders &amp; Radar
                         </span>
                         <span
                           style={{
@@ -2482,10 +2492,12 @@ export default function WalkthroughModal({
                       }}
                     >
                       {nTabs.map((tb, idx) => (
-                        <span
+                        <button
                           key={idx}
+                          type="button"
                           data-cue={tb.cue}
                           className="walkthrough-reminders-tab"
+                          onClick={() => setManualTab(idx)}
                           style={{
                             border: `1px solid ${tb.bd}`,
                             padding: '5px 11px',
@@ -2500,7 +2512,8 @@ export default function WalkthroughModal({
                             alignItems: 'center',
                             gap: '5px',
                             transform: press[tb.cue] || 'scale(1)',
-                            transition: 'all .12s ease'
+                            transition: 'all .12s ease',
+                            cursor: 'pointer'
                           }}
                         >
                           <span>{tb.label}</span>
@@ -2515,7 +2528,7 @@ export default function WalkthroughModal({
                           >
                             {tb.count}
                           </span>
-                        </span>
+                        </button>
                       ))}
                     </div>
 

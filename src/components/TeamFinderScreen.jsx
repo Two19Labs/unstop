@@ -214,10 +214,10 @@ export default function TeamFinderScreen({
   const [applyTargetPost, setApplyTargetPost] = useState(null);
   const [chatModalApp, setChatModalApp] = useState(null);
 
-  const profileSkills = useMemo(() => (profile?.skills?.length ? profile.skills : ['Market Research', 'Pitch Deck Design', 'Business Strategy']), [profile]);
-  const userCollege = (profile?.college || user?.user_metadata?.college || 'SRCC').trim();
+  const profileSkills = useMemo(() => (Array.isArray(profile?.skills) ? profile.skills : []), [profile]);
+  const userCollege = (profile?.college || user?.user_metadata?.college || '').trim();
   const userName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
-  const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
+  const userYear = normalizeYear(profile?.year || profile?.batch || '');
   const isViewerPostgraduate = useMemo(() => {
     return checkIsPostgraduate(profile);
   }, [profile]);

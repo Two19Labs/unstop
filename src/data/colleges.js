@@ -12,8 +12,9 @@ export const YEAR_OPTIONS = [
 ];
 
 export function normalizeYear(val) {
-  if (!val) return 'UG 2nd Year';
+  if (!val) return '';
   const str = String(val).trim();
+  if (!str) return '';
   if (str.includes('UG') || str.includes('PG')) return str;
   const lower = str.toLowerCase();
   const isPg = lower.includes('pg') || lower.includes('mba') || lower.includes('master') || lower.includes('postgraduate') || lower.includes('phd');
@@ -24,7 +25,7 @@ export function normalizeYear(val) {
   if (lower.includes('3rd') || lower.includes('3')) return isPg ? 'PG 2nd Year' : 'UG 3rd Year';
   if (lower.includes('4th') || lower.includes('4')) return isPg ? 'PG 2nd Year' : 'UG 4th Year';
   if (isPg) return 'PG 1st Year';
-  return 'UG 2nd Year';
+  return '';
 }
 
 export const COLLEGES_DATABASE = [

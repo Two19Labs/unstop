@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT,
   college TEXT,
   course TEXT,
-  year TEXT DEFAULT '2nd Year',
+  year TEXT DEFAULT '',
   phone TEXT,
   bio TEXT,
   avatar_url TEXT,
@@ -21,9 +21,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 -- Ensure columns exist if table was already created earlier:
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS course TEXT;
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS year TEXT DEFAULT '2nd Year';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS year TEXT DEFAULT '';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bio TEXT;
-ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS education_level TEXT DEFAULT 'undergraduate';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS education_level TEXT DEFAULT '';
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS profile_last_updated_at TIMESTAMPTZ;
 
 -- Enable RLS on profiles
@@ -184,7 +184,7 @@ BEGIN
     COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture', ''),
     COALESCE(NEW.raw_user_meta_data->>'college', ''),
     COALESCE(NEW.raw_user_meta_data->>'course', ''),
-    COALESCE(NEW.raw_user_meta_data->>'year', '2nd Year'),
+    COALESCE(NEW.raw_user_meta_data->>'year', ''),
     COALESCE(NEW.raw_user_meta_data->>'phone', ''),
     COALESCE(NEW.raw_user_meta_data->>'bio', '')
   )

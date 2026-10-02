@@ -41,10 +41,11 @@ const EMPTY_PROFILE = {
   name: '',
   college: '',
   batch: '',
+  year: '',
   course: '',
   phone: '',
   skills: [],
-  education_level: 'undergraduate'
+  education_level: ''
 };
 
 const DEFAULT_FILTERS = {
@@ -381,36 +382,59 @@ function OneStopInner() {
   const [profile, setProfile] = useState(() => {
     try {
       const saved = localStorage.getItem('onestop_user_profile');
-      return saved ? JSON.parse(saved) : EMPTY_PROFILE;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (
+          parsed.phone === '7007679485' ||
+          (parsed.college && (parsed.college.includes('SSCBS') || parsed.college.includes('Shaheed Sukhdev')))
+        ) {
+          localStorage.removeItem('onestop_user_profile');
+          return EMPTY_PROFILE;
+        }
+        return parsed;
+      }
+      return EMPTY_PROFILE;
     } catch {
       return EMPTY_PROFILE;
     }
   });
 
-  // Sync profile when Supabase profile loads
+  // Sync profile when Supabase profile loads or when user signs in / out
   useEffect(() => {
-    if (authProfile && (authProfile.full_name || authProfile.name)) {
-      setProfile(prev => {
-        const yr = authProfile.year || prev.year || prev.batch || 'UG 2nd Year';
-        const isPg = yr.startsWith('PG') || (authProfile.education_level || '').toLowerCase().includes('post');
-        return {
-          ...prev,
-          name: authProfile.full_name || authProfile.name || '',
-          college: authProfile.college || prev.college || '',
-          course: authProfile.course || prev.course || '',
-          year: yr,
-          batch: yr,
-          phone: authProfile.phone || prev.phone || '',
-          skills: authProfile.skills || prev.skills || [],
-          education_level: isPg ? 'postgraduate' : 'undergraduate',
-        };
-      });
-    } else if (user && user.email && !profile.name) {
-      setProfile(prev => ({
-        ...prev,
+    if (!user) {
+      setProfile(EMPTY_PROFILE);
+      try {
+        localStorage.removeItem('onestop_user_profile');
+      } catch (e) {}
+      return;
+    }
+
+    if (authProfile) {
+      const yr = authProfile.year || '';
+      const isPg = yr.startsWith('PG') || (authProfile.education_level || '').toLowerCase().includes('post');
+      const resolved = {
+        id: user.id,
+        name: authProfile.full_name || authProfile.name || (user.email ? user.email.split('@')[0] : ''),
+        college: authProfile.college || '',
+        course: authProfile.course || '',
+        year: yr,
+        batch: yr,
+        phone: authProfile.phone || '',
+        skills: Array.isArray(authProfile.skills) ? authProfile.skills : [],
+        education_level: isPg ? 'postgraduate' : (yr ? 'undergraduate' : ''),
+        profile_last_updated_at: authProfile.profile_last_updated_at || null,
+      };
+      setProfile(resolved);
+      try {
+        localStorage.setItem('onestop_user_profile', JSON.stringify(resolved));
+      } catch (e) {}
+    } else if (user && user.email) {
+      const initial = {
+        ...EMPTY_PROFILE,
+        id: user.id,
         name: user.email.split('@')[0],
-        education_level: prev.education_level || 'undergraduate',
-      }));
+      };
+      setProfile(initial);
     }
   }, [authProfile, user]);
 
@@ -425,11 +449,13 @@ function OneStopInner() {
       return;
     }
     setProfile(updatedData);
-    localStorage.setItem('onestop_user_profile', JSON.stringify(updatedData));
+    try {
+      localStorage.setItem('onestop_user_profile', JSON.stringify(updatedData));
+    } catch (e) {}
 
     if (authUpdateProfile) {
       try {
-        const yr = updatedData.year || updatedData.batch || 'UG 2nd Year';
+        const yr = updatedData.year || updatedData.batch || '';
         const isPg = yr.startsWith('PG') || (updatedData.education_level || '').toLowerCase().includes('post');
         await authUpdateProfile({
           fullName: updatedData.name,
@@ -438,7 +464,7 @@ function OneStopInner() {
           year: yr,
           phone: updatedData.phone,
           skills: updatedData.skills || [],
-          education_level: isPg ? 'postgraduate' : 'undergraduate',
+          education_level: isPg ? 'postgraduate' : (yr ? 'undergraduate' : ''),
         });
         flash('Profile updated');
       } catch (err) {
@@ -805,7 +831,7 @@ function OneStopInner() {
       phone_number: draft.phone_number || profile.phone || '',
       comm_method: draft.comm_method || draft.commMethod || 'whatsapp',
       college: draft.college || profile.college || '',
-      year: draft.year || profile.batch || 'UG 2nd Year',
+      year: draft.year || profile.batch || profile.year || '',
       mine: true,
       is_open: true,
       state: 'own'
@@ -836,7 +862,7 @@ function OneStopInner() {
           phone_number: draft.phone_number || profile.phone || '',
           comm_method: draft.comm_method || draft.commMethod || 'whatsapp',
           college: draft.college || profile.college || '',
-          year: draft.year || profile.batch || 'UG 2nd Year'
+          year: draft.year || profile.batch || profile.year || ''
         });
         if (refreshSquadData) refreshSquadData();
       } catch (err) {
@@ -917,7 +943,7 @@ function OneStopInner() {
       phone: applicantPhone,
       applicant_phone: applicantPhone,
       applicant_college: profile.college || '',
-      applicant_year: profile.batch || 'UG 2nd Year',
+      applicant_year: profile.batch || profile.year || '',
       skills: highlightedSkills.length > 0 ? highlightedSkills : (profile.skills || []),
       highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : (profile.skills || []),
       pitch: pitchText,
@@ -941,7 +967,7 @@ function OneStopInner() {
           applicant_name: applicantName,
           applicant_phone: applicantPhone,
           applicant_college: profile.college || '',
-          applicant_year: profile.batch || profile.year || 'UG 2nd Year',
+          applicant_year: profile.batch || profile.year || '',
           applicant_course: profile.course || 'General',
           pitch_note: pitchText,
           highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : profile.skills,

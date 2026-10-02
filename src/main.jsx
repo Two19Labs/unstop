@@ -100,9 +100,17 @@ try {
     }
   }
 
-  // Purge mock user profile
+  // Purge mock or stale user profile containing test phone or SSCBS
   const rawProfile = localStorage.getItem('onestop_user_profile');
-  if (rawProfile && (rawProfile.includes('Arjun') || rawProfile.includes('98111 00210') || rawProfile.includes('demo_'))) {
+  if (
+    rawProfile &&
+    (rawProfile.includes('Arjun') ||
+      rawProfile.includes('98111 00210') ||
+      rawProfile.includes('demo_') ||
+      rawProfile.includes('7007679485') ||
+      rawProfile.includes('Shaheed Sukhdev') ||
+      rawProfile.includes('SSCBS'))
+  ) {
     localStorage.removeItem('onestop_user_profile');
   }
 

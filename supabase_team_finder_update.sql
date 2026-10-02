@@ -8,7 +8,7 @@
 -- 1. Ensure squad_applications has collegiate course & year columns
 ALTER TABLE public.squad_applications 
 ADD COLUMN IF NOT EXISTS applicant_course TEXT DEFAULT 'General',
-ADD COLUMN IF NOT EXISTS applicant_year TEXT DEFAULT '2nd Year';
+ADD COLUMN IF NOT EXISTS applicant_year TEXT DEFAULT '';
 
 -- 2. Update squad_applications status check constraint to support 'declined' and 'removed'
 ALTER TABLE public.squad_applications 

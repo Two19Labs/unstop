@@ -539,7 +539,7 @@ export default function HomeScreen({
 
   const hasUserCollege = Boolean(user && profile?.college?.trim());
   const collegeName = profile?.college?.trim() || '';
-  const batchStatus = profile?.batch?.trim() || profile?.year?.trim() || (isPostgraduate ? 'Postgraduate Track' : 'UG 2nd Year');
+  const batchStatus = profile?.batch?.trim() || profile?.year?.trim() || (isPostgraduate ? 'Postgraduate Track' : '');
 
   const [isHomeLoading, setIsHomeLoading] = useState(true);
 
@@ -980,10 +980,12 @@ export default function HomeScreen({
             <span className="home-header-college">
               {hasUserCollege ? collegeName : (user ? 'Choose your college' : 'Sign up to choose your college')}
             </span>
-            <span className="home-header-dot">·</span>
-            <span className="home-header-batch">
-              {hasUserCollege ? batchStatus : ''}
-            </span>
+            {batchStatus ? (
+              <>
+                <span className="home-header-dot">·</span>
+                <span className="home-header-batch">{batchStatus}</span>
+              </>
+            ) : null}
           </div>
         </div>
 

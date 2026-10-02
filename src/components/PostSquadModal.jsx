@@ -250,9 +250,9 @@ export default function PostSquadModal({
     }
     const expiryTimestamp = new Date(expiryMs).toISOString();
 
-    const creatorName = profile?.name || 'Aarav Mehta';
-    const creatorCollege = profile?.college || 'SRCC';
-    const creatorYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
+    const creatorName = profile?.name || 'You';
+    const creatorCollege = profile?.college || '';
+    const creatorYear = normalizeYear(profile?.year || profile?.batch || '');
 
     onSubmitPost({
       isEdit: Boolean(editingPost),
@@ -293,8 +293,8 @@ export default function PostSquadModal({
 
   const userInitial = (profile?.name || 'U').charAt(0).toUpperCase();
   const userName = profile?.name || 'Collegiate Lead';
-  const userCollege = profile?.college || 'SRCC';
-  const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
+  const userCollege = profile?.college || '';
+  const userYear = normalizeYear(profile?.year || profile?.batch || '');
 
   return (
     <div

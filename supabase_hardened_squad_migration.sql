@@ -10,7 +10,7 @@ ALTER TABLE public.squad_applications
   ADD COLUMN IF NOT EXISTS lead_phone TEXT,
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS applicant_course TEXT DEFAULT 'General',
-  ADD COLUMN IF NOT EXISTS applicant_year TEXT DEFAULT 'UG 2nd Year';
+  ADD COLUMN IF NOT EXISTS applicant_year TEXT DEFAULT '';
 
 -- Ensure status constraint supports all valid states
 ALTER TABLE public.squad_applications 
