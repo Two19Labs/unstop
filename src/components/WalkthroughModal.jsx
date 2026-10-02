@@ -2691,6 +2691,7 @@ export default function WalkthroughModal({
                     </div>
 
                     <div
+                      className="walkthrough-reminders-footer"
                       style={{
                         padding: '10px 16px',
                         borderTop: '1px solid #F0EFEB',

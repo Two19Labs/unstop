@@ -114,6 +114,7 @@
   font-family: inherit;
   flex-shrink: 0;
   box-sizing: border-box;
+  max-width: 160px;
 }
 
 .mobile-what-is-btn:hover {
@@ -145,6 +146,7 @@
     padding: 0 9px;
     font-size: 11.5px;
     gap: 4px;
+    max-width: 140px;
   }
 }
 
@@ -152,6 +154,7 @@
   .mobile-what-is-btn {
     padding: 0 7px;
     font-size: 11px;
+    max-width: 125px;
   }
 }
 
