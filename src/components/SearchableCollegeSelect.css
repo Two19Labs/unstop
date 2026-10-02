@@ -227,56 +227,6 @@
   font-size: 0.8rem;
 }
 
-/* Dark Mode Adjustments */
-[data-theme='dark'] .t19-college-input {
-  background-color: #18181B;
-  border-color: #27272A;
-  color: #F4F4F5;
-}
-
-[data-theme='dark'] .t19-college-dropdown-menu {
-  background-color: #18181B;
-  border-color: #27272A;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-}
-
-[data-theme='dark'] .t19-college-option-row:hover,
-[data-theme='dark'] .t19-college-option-row.highlighted {
-  background-color: #27272A;
-}
-
-[data-theme='dark'] .t19-college-option-name {
-  color: #F4F4F5;
-}
-
-[data-theme='dark'] .t19-college-request-card {
-  background: rgba(37, 211, 102, 0.08);
-  border-top-color: #27272A;
-}
-
-[data-theme='dark'] .t19-college-request-label {
-  color: #A1A1AA;
-}
-
-[data-theme='dark'] .t19-college-request-action {
-  background-color: rgba(37, 211, 102, 0.15);
-  color: #4ADE80;
-  border-color: rgba(37, 211, 102, 0.25);
-}
-
-[data-theme='dark'] .t19-college-request-action:hover {
-  background-color: #25D366;
-  color: #FFFFFF;
-}
-
-[data-theme='dark'] .t19-college-not-found-title {
-  color: #F4F4F5;
-}
-
-[data-theme='dark'] .t19-college-not-found-sub {
-  color: #A1A1AA;
-}
-
 /* Disabled State */
 .t19-college-disabled .t19-college-input {
   opacity: 0.65;
@@ -284,11 +234,5 @@
   background-color: var(--surface-hover, #ECE8E0);
   border-color: var(--border, #D9D5CD);
   color: var(--text-secondary, #4A4844);
-}
-
-[data-theme='dark'] .t19-college-disabled .t19-college-input {
-  background-color: #27272A;
-  border-color: #3F3F46;
-  color: #A1A1AA;
 }
 

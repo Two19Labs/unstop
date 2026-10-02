@@ -13,7 +13,6 @@ import RequestsScreen from './components/RequestsScreen';
 import ProfileScreen from './components/ProfileScreen';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
-import ThemeToggle from './components/ThemeToggle';
 import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -350,7 +349,9 @@ function OneStopInner() {
   });
 
   const posts = useMemo(() => {
-    return (authSquadPosts && authSquadPosts.length > 0 ? authSquadPosts : localPosts).filter(p => !isMockPost(p));
+    const remote = Array.isArray(authSquadPosts) ? authSquadPosts : [];
+    const localOnly = localPosts.filter(lp => !remote.some(rp => String(rp.id) === String(lp.id)));
+    return [...localOnly, ...remote].filter(p => !isMockPost(p));
   }, [authSquadPosts, localPosts]);
 
   useEffect(() => {
@@ -370,7 +371,9 @@ function OneStopInner() {
   });
 
   const applications = useMemo(() => {
-    return (user ? (authSquadApps || []) : localApplications).filter(a => !isMockApp(a));
+    const remote = Array.isArray(authSquadApps) ? authSquadApps : [];
+    const localOnly = localApplications.filter(la => !remote.some(ra => String(ra.id) === String(la.id)));
+    return (user ? [...localOnly, ...remote] : localApplications).filter(a => !isMockApp(a));
   }, [user, authSquadApps, localApplications]);
 
   useEffect(() => {
@@ -552,6 +555,7 @@ function OneStopInner() {
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [applyTargetPost, setApplyTargetPost] = useState(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [teamFinderTab, setTeamFinderTab] = useState('other');
 
   // Track competition detail drawer views
   useEffect(() => {
@@ -811,6 +815,7 @@ function OneStopInner() {
     setPostModalOpen(false);
     setEditingPost(null);
     setScreen('teams');
+    setTeamFinderTab('mine');
     flash('Squad posted successfully!');
 
     if (user && authCreatePost) {
@@ -1092,7 +1097,16 @@ function OneStopInner() {
       <div className="mobile-topbar">
         <OneStopLogo height={24} style={{ cursor: 'pointer' }} onClick={() => handleNavigate('home')} />
         <div className="mobile-topbar-actions">
-          <ThemeToggle variant="compact" />
+          <button
+            type="button"
+            className="mobile-what-is-btn"
+            onClick={() => setShowWalkthrough(true)}
+            title="What is OneStop?"
+            aria-label="What is OneStop?"
+          >
+            <span className="mobile-what-is-sparkle">✨</span>
+            <span>What is OneStop?</span>
+          </button>
           <NotificationCenter
             applications={applications}
             competitions={visibleCompetitions}
@@ -1148,7 +1162,6 @@ function OneStopInner() {
           onFilterPrefsChange={handleFilterPrefsChange}
           headerAction={
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ThemeToggle variant="compact" />
               <NotificationCenter
                 applications={applications}
                 competitions={visibleCompetitions}
@@ -1187,9 +1200,10 @@ function OneStopInner() {
           onWithdrawApp={handleWithdrawApp}
           showToast={flash}
           onSubmitPost={handleSubmitPost}
+          tab={teamFinderTab}
+          onTabChange={setTeamFinderTab}
           headerAction={
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ThemeToggle variant="compact" />
               <NotificationCenter
                 applications={applications}
                 competitions={visibleCompetitions}
@@ -1207,10 +1221,9 @@ function OneStopInner() {
         />
       ) : (
         <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
-          {/* Top-Right Theme Toggle & Notification Center (for screens that don't embed it in their header) */}
+          {/* Top-Right Notification Center (for screens that don't embed it in their header) */}
           {screen !== 'teams' && screen !== 'home' && (
             <div className="onestop-top-actions">
-              <ThemeToggle variant="compact" />
               <NotificationCenter
                 applications={applications}
                 competitions={visibleCompetitions}
@@ -1249,7 +1262,6 @@ function OneStopInner() {
                 onOpenWhatsApp={handleOpenWhatsApp}
                 headerAction={
                   <div className="home-header-actions">
-                    <ThemeToggle variant="compact" />
                     <NotificationCenter
                       applications={applications}
                       competitions={visibleCompetitions}

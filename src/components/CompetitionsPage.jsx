@@ -1839,7 +1839,7 @@ export default function CompetitionsPage({
       ) : bookmarkedOnly && savedViewMode === 'tracker' ? (
         <CompetitionRoundsTracker
           competitions={filteredCompetitions}
-          onToggleBookmark={onToggleBookmark}
+          onToggleBookmark={toggleBookmark}
           onFindTeammates={onFindTeammates}
           onOpenDetail={onOpenDetail}
           showToast={showToast}

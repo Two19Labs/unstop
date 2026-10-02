@@ -311,10 +311,6 @@
   background: var(--surface-subtle, #FAFAF9);
 }
 
-[data-theme='dark'] .comp-chat-body {
-  background: #111418;
-}
-
 .comp-chat-thread-intro {
   text-align: center;
   padding: 8px 12px 14px;

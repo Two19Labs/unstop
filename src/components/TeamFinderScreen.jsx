@@ -136,10 +136,17 @@ export default function TeamFinderScreen({
   onNavigate,
   showToast,
   headerAction,
-  onSubmitPost
+  onSubmitPost,
+  tab: propTab,
+  onTabChange: propOnTabChange
 }) {
   const { applyToSquad, openAuthModal } = useAuth();
-  const [tab, setTab] = useState('other'); // 'other' | 'mine'
+  const [internalTab, setInternalTab] = useState('other'); // 'other' | 'mine'
+  const tab = propTab !== undefined ? propTab : internalTab;
+  const setTab = (nextTab) => {
+    setInternalTab(nextTab);
+    if (propOnTabChange) propOnTabChange(nextTab);
+  };
   const [showSquadLoader, setShowSquadLoader] = useState(false);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('newest'); // 'newest' | 'closing' | 'spots'
@@ -349,6 +356,8 @@ export default function TeamFinderScreen({
           return null;
         }
       }
+
+      const safePhone = comm_method === 'chat' ? '' : (p.phone_number || p.phone || p.leadPhone || '');
 
       return {
         id: p.id,

@@ -22,6 +22,7 @@ try {
     'arena_bookmarks',
     'arena_saved_alerts',
     'arena_theme',
+    'onestop_theme',
     'onestop_demo_seen',
     'onestop_mock_seeded'
   ];

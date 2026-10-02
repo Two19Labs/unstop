@@ -49,22 +49,6 @@
   padding: 0 3px;
 }
 
-[data-theme='dark'] .onestop-footer-text {
-  color: var(--ink-secondary, #9DA3AE);
-}
-
-[data-theme='dark'] .onestop-footer-heart {
-  color: var(--urgency-red, #F87171);
-}
-
-[data-theme='dark'] .onestop-footer-link {
-  color: var(--primary, #3B6BFF);
-}
-
-[data-theme='dark'] .onestop-footer-link:hover {
-  color: var(--primary-hover, #5982FF);
-}
-
 @media (max-width: 640px) {
   .onestop-site-footer {
     padding: 32px 14px 20px;

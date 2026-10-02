@@ -240,10 +240,6 @@
   justify-content: center;
 }
 
-[data-theme='dark'] .requests-btn-remove {
-  color: #F87171;
-}
-
 /* Empty State */
 .requests-empty-state {
   padding: 44px 20px;

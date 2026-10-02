@@ -333,62 +333,6 @@
   opacity: 0.95;
 }
 
-/* Dark Mode Overrides */
-[data-theme='dark'] .br-card {
-  background: #17181D;
-  border-color: #2D3039;
-}
-
-[data-theme='dark'] .br-card--due-soon {
-  background: #221416;
-  border-color: rgba(239, 68, 68, 0.45);
-}
-
-[data-theme='dark'] .br-card--closing-soon {
-  background: #231C11;
-  border-color: rgba(245, 158, 11, 0.45);
-}
-
-[data-theme='dark'] .br-card--live-now {
-  background: #102118;
-  border-color: rgba(16, 185, 129, 0.45);
-}
-
-[data-theme='dark'] .br-hero-box--due-soon {
-  background: #2C181B;
-  border-color: rgba(239, 68, 68, 0.35);
-}
-
-[data-theme='dark'] .br-hero-box--closing-soon {
-  background: #2D2214;
-  border-color: rgba(245, 158, 11, 0.35);
-}
-
-[data-theme='dark'] .br-hero-box--live-now {
-  background: #132B1E;
-  border-color: rgba(16, 185, 129, 0.35);
-}
-
-[data-theme='dark'] .br-hero-box--normal {
-  background: #1F2128;
-  border-color: #2D3039;
-}
-
-[data-theme='dark'] .br-remove-btn {
-  background: #23252E;
-  border-color: #333644;
-  color: #9CA3AF;
-}
-
-[data-theme='dark'] .br-remove-btn:hover {
-  background: #2F3340;
-  color: #EF4444;
-}
-
-[data-theme='dark'] .br-next-name {
-  color: #F3F4F6;
-}
-
 @media (max-width: 768px) {
   .br-card {
     flex: 0 0 270px;

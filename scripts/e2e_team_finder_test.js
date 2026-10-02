@@ -2,6 +2,7 @@
 // Automated End-to-End Test Suite for OneStop Team Finder Feature
 
 import { normalizeYear } from '../src/data/colleges.js';
+import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN } from '../src/utils/eligibilityUtils.js';
 
 export function sanitizeIndianPhone(raw) {
   if (!raw) return '';
@@ -405,6 +406,205 @@ console.log('\n--- TEST SUITE 9: Member Removal & Spot Reclaim Lifecycle ---');
   assert(removedApp.lead_phone === null, 'Lead phone locked upon removal');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST SUITE 10: TeamFinderScreen allPosts Normalization & safePhone Integrity
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\n--- TEST SUITE 10: TeamFinderScreen allPosts Normalization & safePhone ---');
+{
+  const currentUser = { id: 'u_101', email: 'aarav@srcc.du.ac.in' };
+  const userProfile = { name: 'Aarav Mehta', college: 'SRCC', year: 'UG 2nd Year', skills: ['Deck design'] };
+  const isViewerPostgraduate = checkIsPostgraduate(userProfile);
+
+  const rawPosts = [
+    {
+      id: 'post_wa_1',
+      user_id: 'u_other',
+      created_by_name: 'Rohan Sharma',
+      created_by_email: 'rohan@stephens.du.ac.in',
+      competition_name: 'SRCC National Case Challenge',
+      organizer: 'SRCC',
+      total_members: 4,
+      spots_left: 2,
+      comm_method: 'whatsapp',
+      phone_number: '9876543210',
+      skills_looking_for: ['Financial Modeling', 'Deck design'],
+      skills_have: ['Strategy'],
+      description: 'Looking for PPT and FM rockstars',
+      is_open: true,
+      college: "St. Stephen's College"
+    },
+    {
+      id: 'post_chat_2',
+      user_id: 'u_other_2',
+      created_by_name: 'Ananya Gupta',
+      created_by_email: 'ananya@iitd.ac.in',
+      competition_name: 'IITD HackSprint',
+      organizer: 'IIT Delhi',
+      total_members: 3,
+      spots_left: 1,
+      comm_method: 'chat',
+      phone_number: '9988776655', // Should be masked because comm_method is 'chat'
+      skills_looking_for: ['React', 'Python'],
+      skills_have: ['UI/UX'],
+      description: 'Building AI prototype',
+      is_open: true,
+      college: 'IIT Delhi'
+    },
+    {
+      id: 'post_pg_only',
+      user_id: 'u_mba_lead',
+      created_by_name: 'Vikram Malhotra',
+      created_by_email: 'vikram@iima.ac.in',
+      competition_name: 'IIM Ahmedabad MBA Only Leadership Summit',
+      organizer: 'IIM Ahmedabad',
+      total_members: 3,
+      spots_left: 1,
+      comm_method: 'whatsapp',
+      phone_number: '9123456789',
+      skills_looking_for: ['Consulting'],
+      skills_have: ['Operations'],
+      is_open: true,
+      college: 'IIM Ahmedabad'
+    },
+    {
+      id: 'post_own_3',
+      user_id: currentUser.id,
+      created_by_name: userProfile.name,
+      created_by_email: currentUser.email,
+      competition_name: 'DU Circuit Case Open',
+      organizer: 'Hindu College',
+      total_members: 4,
+      spots_left: 2,
+      comm_method: 'whatsapp',
+      phone_number: '9811122233',
+      skills_looking_for: ['Copywriting'],
+      skills_have: ['Deck design'],
+      is_open: true,
+      college: 'SRCC'
+    }
+  ];
+
+  const applications = [
+    {
+      id: 'app_acc_1',
+      post_id: 'post_wa_1',
+      applicant_id: 'u_member_1',
+      applicant_name: 'Accepted Member',
+      status: 'accepted'
+    }
+  ];
+
+  // Emulate allPosts logic in TeamFinderScreen.jsx
+  function transformPosts(postsList, isPostgrad, user) {
+    return postsList.map((p, i) => {
+      const isMine = Boolean(
+        p.mine ||
+        (user && p.user_id && p.user_id === user.id) ||
+        (user && p.created_by_email && p.created_by_email.toLowerCase() === (user.email || '').toLowerCase())
+      );
+
+      const want = Array.isArray(p.skills_looking_for) ? p.skills_looking_for : (Array.isArray(p.want) ? p.want : []);
+      const total = Number(p.total_members || p.size || 4);
+      const postApps = applications.filter(a => String(a.post_id || a.postId) === String(p.id));
+      const acceptedApps = postApps.filter(a => a.status === 'accepted');
+      const filled = 1 + acceptedApps.length;
+      const openN = Math.max(0, total - filled);
+
+      const comm_method = p.comm_method || p.commMethod || (p.phone || p.phone_number || p.leadPhone ? 'whatsapp' : 'chat');
+
+      // PG/MBA filter
+      if (!isPostgrad && !isMine) {
+        const postCompTitle = p.competition_name || p.title || '';
+        const postOrg = p.organizer || p.host || '';
+        if (MBA_EXCLUSION_PATTERN.test(postCompTitle) || MBA_EXCLUSION_PATTERN.test(postOrg)) {
+          return null;
+        }
+      }
+
+      // safePhone
+      const safePhone = comm_method === 'chat' ? '' : (p.phone_number || p.phone || p.leadPhone || '');
+
+      return {
+        id: p.id,
+        rawPost: p,
+        lead: isMine ? 'You' : (p.created_by_name || 'Student Lead'),
+        total,
+        filled,
+        openN,
+        want,
+        phone: safePhone,
+        comm_method,
+        isOwn: isMine,
+        state: isMine ? 'own' : (openN <= 0 ? 'full' : 'open'),
+      };
+    }).filter(Boolean);
+  }
+
+  // 1. Evaluate for Undergraduate Viewer
+  const ugNormalized = transformPosts(rawPosts, false, currentUser);
+
+  // safePhone checks
+  const postWa = ugNormalized.find(p => p.id === 'post_wa_1');
+  assert(postWa && postWa.phone === '9876543210', 'WhatsApp squad provides lead phone number');
+  assert(postWa && postWa.openN === 2, 'Open spots calculation accurately reflects accepted applications (4 - 2 = 2)');
+
+  const postChat = ugNormalized.find(p => p.id === 'post_chat_2');
+  assert(postChat && postChat.phone === '', 'In-Platform Chat squad masks phone number as empty string for privacy');
+
+  // MBA Exclusion check
+  const postPgOnly = ugNormalized.find(p => p.id === 'post_pg_only');
+  assert(postPgOnly === undefined, 'Undergraduate viewer cannot see MBA/PG only competition squads');
+
+  // Ownership check
+  const ownPost = ugNormalized.find(p => p.id === 'post_own_3');
+  assert(ownPost && ownPost.isOwn === true && ownPost.lead === 'You', 'Own post correctly identified as lead "You"');
+
+  // 2. Evaluate for Postgraduate Viewer
+  const pgNormalized = transformPosts(rawPosts, true, currentUser);
+  const pgCanSeePgOnly = pgNormalized.find(p => p.id === 'post_pg_only');
+  assert(pgCanSeePgOnly !== undefined, 'Postgraduate viewer CAN see MBA/PG competition squads');
+
+  // 3. Pool segregation verification
+  const otherPool = ugNormalized.filter(p => !p.isOwn && (p.state === 'open' || p.state === 'full'));
+  const ownPool = ugNormalized.filter(p => p.isOwn);
+  assert(otherPool.length === 2 && !otherPool.some(p => p.isOwn), 'otherPool strictly excludes user own squads');
+  assert(ownPool.length === 1 && ownPool[0].id === 'post_own_3', 'ownPool accurately contains user posted squad');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST SUITE 11: Squad Creation & Expiry Fallback Reliability
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\n--- TEST SUITE 11: Squad Creation & Expiry Fallback Reliability ---');
+{
+  function computeExpiry(custom, compDeadline) {
+    let expiryMs = compDeadline ? new Date(compDeadline).getTime() : NaN;
+    if (isNaN(expiryMs) || expiryMs <= Date.now() || custom) {
+      expiryMs = Date.now() + 15 * 24 * 60 * 60 * 1000;
+    }
+    return new Date(expiryMs).toISOString();
+  }
+
+  // 1. Future competition deadline
+  const futureDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+  const futureExpiry = computeExpiry(false, futureDate);
+  assert(new Date(futureExpiry).getTime() > Date.now(), 'Future deadline correctly retained for expiry');
+
+  // 2. Stale or past competition deadline
+  const pastDate = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+  const pastFallback = computeExpiry(false, pastDate);
+  assert(new Date(pastFallback).getTime() > Date.now(), 'Past/closed deadline safely falls back to future expiry so post does not disappear');
+
+  // 3. Custom competition without deadline
+  const customExpiry = computeExpiry(true, null);
+  assert(new Date(customExpiry).getTime() > Date.now(), 'Custom competition safely given 15-day future expiry');
+
+  // 4. State merge test for optimistic local posts and remote posts
+  const localPosts = [{ id: 'local_1', competition_name: 'Comp A' }];
+  const authSquadPosts = [{ id: 'remote_1', competition_name: 'Comp B' }];
+  const mergedPosts = [...localPosts.filter(lp => !authSquadPosts.some(rp => rp.id === lp.id)), ...authSquadPosts];
+  assert(mergedPosts.length === 2, 'Local optimistic posts and remote posts merge without losing either');
+}
+
 console.log('\n====================================================');
 console.log(`SUMMARY: ${passed} PASSED, ${failed} FAILED`);
 console.log('====================================================\n');
@@ -412,3 +612,4 @@ console.log('====================================================\n');
 if (failed > 0) {
   process.exit(1);
 }
+

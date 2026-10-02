@@ -88,8 +88,7 @@ export default function CompetitionRoundsTracker({
   // And filter by user selected filter (All Active, Registration Open, Rounds In-Flight, Due in 48h)
   const filteredComps = useMemo(() => {
     const now = Date.now();
-
-    return competitions.filter(comp => {
+    const list = competitions.filter(comp => {
       const compData = getRoundsForComp(comp.id);
 
       // Check if registration has closed

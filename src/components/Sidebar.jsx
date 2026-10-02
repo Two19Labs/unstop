@@ -1,7 +1,6 @@
 // src/components/Sidebar.jsx
 import React from 'react';
 import OneStopLogo from './OneStopLogo';
-import ThemeToggle from './ThemeToggle';
 import { isAdminEmail } from '../lib/admin';
 
 export default function Sidebar({
@@ -177,9 +176,6 @@ export default function Sidebar({
         </nav>
 
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* Quick Theme Toggle in Sidebar */}
-          <ThemeToggle variant="sidebar" />
-
           {/* Admin Console (Strictly for aditya.25015@sscbs.du.ac.in, located above profile settings) */}
           {user && isAdminEmail(user.email) && (
             <button

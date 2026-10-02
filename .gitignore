@@ -34,4 +34,5 @@ coverage/
 *.zip
 
 # Design Handoffs
-design_handoff_home_v2/
+design_handoff_*/
+What is OneStop redesign/

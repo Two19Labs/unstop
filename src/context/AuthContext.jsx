@@ -84,18 +84,6 @@ export function AuthProvider({ children }) {
   const openProfileModal = () => setProfileModalOpen(true);
   const closeProfileModal = () => setProfileModalOpen(false);
 
-  // UI / Theme State
-  const [theme, setTheme] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_theme');
-      if (saved) return saved;
-      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
-      }
-    } catch (e) {}
-    return 'light';
-  });
-
   // Bookmarks State (100% real, zero mock data)
   const [bookmarks, setBookmarks] = useState(() => {
     try {
@@ -136,15 +124,13 @@ export function AuthProvider({ children }) {
     }
   });
 
-  // 1. Sync Theme
+  // Enforce Light Theme & purge legacy dark mode state
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('onestop_theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
-  };
+    try {
+      localStorage.removeItem('onestop_theme');
+      document.documentElement.setAttribute('data-theme', 'light');
+    } catch (e) {}
+  }, []);
 
   // Column projections to minimize Supabase egress
   const SQUAD_POSTS_SELECT = 'id, user_id, created_by_name, created_by_email, competition_name, competition_id, is_custom, expires_at, organizer, competition_link, phone_number, comm_method, title, description, skills_have, skills_looking_for, total_members, spots_left, initial_open_spots, is_open, college, course, year, accepted_emails, created_at, updated_at';
@@ -1485,8 +1471,8 @@ export function AuthProvider({ children }) {
         resetPassword,
         changePassword,
         deleteAccount,
-        theme,
-        toggleTheme,
+        theme: 'light',
+        toggleTheme: () => {},
         bookmarks,
         toggleBookmark,
         isBookmarked,

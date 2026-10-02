@@ -1,5 +1,5 @@
 /* src/components/WalkthroughModal.css */
-/* What is OneStop v3 Walkthrough Tour Redesign */
+/* What is OneStop v4 Walkthrough Tour Redesign (Desktop + Mobile) */
 
 .walkthrough-overlay {
   position: fixed;
@@ -261,38 +261,123 @@
   border-color: var(--primary-hover, #0C33CC);
 }
 
-/* Dark mode adjustments */
-[data-theme='dark'] .walkthrough-modal {
-  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--line);
+/* Cursor indicators: desktop arrow vs mobile touch */
+.walkthrough-cursor-arrow {
+  display: block;
 }
 
-[data-theme='dark'] .walkthrough-dot-fill {
-  background-color: var(--primary, #3B6BFF);
+.walkthrough-cursor-touch {
+  display: none;
 }
 
-/* Responsive adjustments */
+/* Mobile Layout Spec (<= 600px): Bottom Sheet over dimmed Home */
 @media (max-width: 600px) {
+  .walkthrough-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
   .walkthrough-modal {
+    width: 100%;
     max-width: 100%;
-    border-radius: 12px;
+    max-height: 88vh;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -12px 32px -12px rgba(0, 0, 0, 0.25);
+    animation: wtMobileSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes wtMobileSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .walkthrough-header {
+    padding: 10px 18px;
   }
 
   .walkthrough-body {
-    grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 16px 14px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 18px 16px 10px;
+    align-items: start;
     min-height: auto;
+  }
+
+  .walkthrough-text-pane {
+    min-height: 112px;
+    gap: 6px;
   }
 
   .walkthrough-title {
     font-size: 21px;
+    line-height: 1.2;
   }
 
-  .walkthrough-footer {
-    padding: 10px 14px;
+  .walkthrough-description {
+    font-size: 14px;
+    max-width: 100%;
+    line-height: 1.5;
+  }
+
+  .walkthrough-visual-pane {
+    height: 410px;
+    min-height: 410px;
   }
 
   .walkthrough-zoom-wrapper {
-    zoom: 0.72;
+    zoom: 0.94;
+  }
+
+  .walkthrough-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px calc(26px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .walkthrough-dots {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .walkthrough-actions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .walkthrough-next-btn {
+    flex: 1;
+    justify-content: center;
+    padding: 11px 18px;
+    min-height: 44px;
+  }
+
+  /* Swap arrow cursor for touch indicator */
+  .walkthrough-cursor-arrow {
+    display: none !important;
+  }
+
+  .walkthrough-cursor-touch {
+    display: block !important;
+  }
+}
+
+/* Touch indicator on coarse pointer devices */
+@media (pointer: coarse) and (max-width: 900px) {
+  .walkthrough-cursor-arrow {
+    display: none;
+  }
+  .walkthrough-cursor-touch {
+    display: block;
   }
 }

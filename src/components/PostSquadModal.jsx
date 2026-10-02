@@ -226,9 +226,11 @@ export default function PostSquadModal({
       cleanPhone = cleanPhone || '';
     }
 
-    const expiryTimestamp = custom
-      ? new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString()
-      : (compDeadline ? new Date(compDeadline).toISOString() : new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString());
+    let expiryMs = compDeadline ? new Date(compDeadline).getTime() : NaN;
+    if (isNaN(expiryMs) || expiryMs <= Date.now() || custom) {
+      expiryMs = Date.now() + 15 * 24 * 60 * 60 * 1000;
+    }
+    const expiryTimestamp = new Date(expiryMs).toISOString();
 
     const creatorName = profile?.name || 'Aarav Mehta';
     const creatorCollege = profile?.college || 'SRCC';

@@ -2,7 +2,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ArrowRightIcon,
-  CloseIcon
+  CloseIcon,
+  BellIcon,
+  ClockIcon,
+  AlertCircleIcon,
+  UsersIcon,
+  WhatsAppIcon
 } from './icons';
 import OneStopLogo from './OneStopLogo';
 import { trackEvent } from '../lib/posthog';
@@ -26,6 +31,12 @@ const SLIDES = [
     badge: 'bookmarks',
     title: 'every round, counted down',
     description: 'bookmark a competition and we track each round’s deadline, not just registration.'
+  },
+  {
+    id: 'reminders',
+    badge: 'reminders',
+    title: 'a heads-up before every cutoff',
+    description: 'extensions, closing deadlines and squad requests, all in the bell. turn on alerts and we ping you in intervals before.'
   },
   {
     id: 'team-finder',
@@ -58,7 +69,15 @@ const SCRIPTS = [
     ]
   },
   { len: 8000, steps: [] },
-  { len: 5000, steps: [{ at: 2400, cue: 'open' }] },
+  { len: 8000, steps: [] },
+  {
+    len: 13000,
+    steps: [
+      { at: 1000, cue: 'bell' },
+      { at: 7500, cue: 'tabdl' },
+      { at: 10000, cue: 'portal', hover: true }
+    ]
+  },
   { len: 5000, steps: [{ at: 2000, cue: 'join' }] },
   {
     len: 6800,
@@ -223,6 +242,187 @@ const CARDS = [
     urgency: 'blue'
   }
 ];
+
+const BM_TH = {
+  due: {
+    cardBg: '#FFF8F7',
+    cardBd: 'rgba(239,68,68,0.38)',
+    heroBg: '#FEF2F2',
+    heroBd: 'rgba(239,68,68,0.24)',
+    ink: '#DC2626',
+    bdgBg: '#DC2626',
+    bdgBd: 'none',
+    bdgInk: '#FFFFFF',
+    badge: 'Due soon',
+    dot: false
+  },
+  closing: {
+    cardBg: '#FFFDF5',
+    cardBd: 'rgba(245,158,11,0.40)',
+    heroBg: '#FFFBEB',
+    heroBd: 'rgba(245,158,11,0.28)',
+    ink: '#D97706',
+    bdgBg: '#FFFBEB',
+    bdgBd: '1px solid #FCD34D',
+    bdgInk: '#D97706',
+    badge: 'Closing soon',
+    dot: false
+  },
+  live: {
+    cardBg: '#F4FDF7',
+    cardBd: 'rgba(16,185,129,0.45)',
+    heroBg: '#F0FDF4',
+    heroBd: 'rgba(16,185,129,0.26)',
+    ink: '#059669',
+    bdgBg: '#059669',
+    bdgBd: 'none',
+    bdgInk: '#FFFFFF',
+    badge: 'Live now',
+    dot: true
+  },
+  normal: {
+    cardBg: '#F8FAFC',
+    cardBd: '#E2E8F0',
+    heroBg: '#F8FAFC',
+    heroBd: '#E2E8F0',
+    ink: '#64748B',
+    bdgBg: '#FFFFFF',
+    bdgBd: '1px solid #E2E8F0',
+    bdgInk: '#475569',
+    badge: 'Active',
+    dot: false
+  }
+};
+
+const BM = [
+  {
+    ini: 'KM',
+    host: 'Kirori Mal College',
+    title: 'KMC Finance Case Showdown',
+    stage: 'Round 2 of 2',
+    round: 'Valuation Deck Submission',
+    due: 'Due 2 Oct, 6:00 PM',
+    secs: 1 * 3600 + 52 * 60 + 10,
+    next: '',
+    nextDate: '',
+    th: 'due'
+  },
+  {
+    ini: 'SR',
+    host: 'Shri Ram College of Commerce (SRCC)',
+    title: 'SRCC Business Conclave Case Challenge 2026',
+    stage: 'Round 2 of 3',
+    round: 'Executive Case Deck & Pitch',
+    due: 'Due 12 Oct, 11:59 PM',
+    secs: 14 * 3600 + 22 * 60 + 9,
+    next: 'National Grand Finale',
+    nextDate: '20 Oct',
+    th: 'closing'
+  },
+  {
+    ini: 'HC',
+    host: 'Hindu College',
+    title: 'Hindu Case Clash 2026',
+    stage: 'Round 1 of 3',
+    round: 'Online Business Quiz',
+    due: 'Due 5 Oct, 8:00 PM',
+    secs: 3 * 86400 + 4 * 3600 + 12 * 60,
+    next: 'Case Deck Submission',
+    nextDate: '9 Oct',
+    th: 'live'
+  },
+  {
+    ini: 'HR',
+    host: 'Hansraj College',
+    title: 'Hansraj Strategy Summit Case Comp',
+    stage: 'Round 1 of 2',
+    round: 'Problem Statement Abstract',
+    due: 'Due 14 Oct, 11:59 PM',
+    secs: 12 * 86400 + 6 * 3600 + 40 * 60,
+    next: 'Final Pitch',
+    nextDate: '22 Oct',
+    th: 'normal'
+  }
+];
+
+const NOTIFS = [
+  {
+    cat: 'deadlines',
+    title: '⏳ Online Business Quiz Extended +2d · Hindu Case Clash 2026',
+    sub: 'Hindu College · Online Business Quiz deadline extended: 5 Oct, 8:00 PM → 7 Oct, 8:00 PM.',
+    time: '35m ago',
+    tag: 'Extended +2d',
+    host: 'Hindu College',
+    u: 'live',
+    icon: 'clock',
+    actions: [{ label: 'Open Round Portal ↗', cue: 'portal', k: 'portal' }]
+  },
+  {
+    cat: 'deadlines',
+    title: '🚨 Final 1h · KMC Finance Case Showdown',
+    sub: 'Kirori Mal College · Valuation Deck Submission closes at 6:00 PM (58m left). Submit files before portal lock.',
+    time: 'in 58m',
+    tag: '58m left',
+    host: 'Kirori Mal College',
+    u: 'critical',
+    icon: 'alert',
+    actions: [{ label: 'Enter Submission Portal ↗', cue: 'portal2', k: 'portal' }]
+  },
+  {
+    cat: 'squads',
+    title: '👤 Kabir S. wants to join your squad',
+    sub: 'Shri Ram College of Commerce (SRCC) · SRCC Business Conclave Case Challenge 2026. Skills: Financial Modeling, Excel.',
+    time: '1h ago',
+    tag: '',
+    host: 'Shri Ram College of Commerce (SRCC)',
+    u: 'info',
+    icon: 'users',
+    actions: [{ label: 'Review Request', cue: 'rev', k: 'primary' }]
+  }
+];
+
+const NU = {
+  critical: {
+    accent: '#DC2626',
+    bg: '#FFFFFF',
+    iconBg: 'rgba(220,38,38,0.12)',
+    iconInk: '#DC2626',
+    tagBg: 'rgba(220,38,38,0.14)',
+    tagInk: '#DC2626',
+    tagBd: 'none'
+  },
+  live: {
+    accent: '#6366F1',
+    bg: 'rgba(99,102,241,0.03)',
+    iconBg: 'rgba(99,102,241,0.14)',
+    iconInk: '#4F46E5',
+    tagBg: 'rgba(99,102,241,0.14)',
+    tagInk: '#4F46E5',
+    tagBd: '1px solid rgba(99,102,241,0.25)'
+  },
+  info: {
+    accent: '#0F3FFE',
+    bg: '#FFFFFF',
+    iconBg: '#F2F1ED',
+    iconInk: '#55534D',
+    tagBg: '#F2F1ED',
+    tagInk: '#75736C',
+    tagBd: 'none'
+  }
+};
+
+const NA = {
+  portal: { bg: '#4F46E5', bd: '#4F46E5', ink: '#FFFFFF' },
+  primary: { bg: '#0F3FFE', bd: '#0F3FFE', ink: '#FFFFFF' }
+};
+
+const fmtT = (s) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  const d = Math.floor(s / 86400);
+  return d > 0
+    ? `${d}d ${pad(Math.floor((s % 86400) / 3600))}h ${pad(Math.floor((s % 3600) / 60))}m`
+    : `${Math.floor(s / 3600)}h ${pad(Math.floor((s % 3600) / 60))}m ${pad(s % 60)}s`;
+};
 
 const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 const CLICK = 240;
@@ -442,7 +642,23 @@ export default function WalkthroughModal({
 
   // Press transform map
   const press = {};
-  ['squadup', 'du', 'case', 'fin', 'free', 'open', 'join', 'accept'].forEach((key) => {
+  [
+    'squadup',
+    'du',
+    'case',
+    'fin',
+    'free',
+    'open',
+    'join',
+    'accept',
+    'bell',
+    'tabdl',
+    'taball',
+    'tabsq',
+    'portal',
+    'portal2',
+    'rev'
+  ].forEach((key) => {
     press[key] = cur.clickCue === key ? 'scale(0.94)' : 'scale(1)';
   });
 
@@ -463,31 +679,70 @@ export default function WalkthroughModal({
   const after = (at) => t >= at;
   const fade = (at) => (after(at) ? 1 : 0);
 
-  // Slide 2: Bookmarks countdown
+  // Slide 2: Bookmarks Carousel
   const elapsedSecs = Math.floor((Date.now() - startTimestampRef.current) / 1000);
-  const countdownSecs = Math.max(0, 14 * 3600 + 22 * 60 + 9 - elapsedSecs);
-  const p = (n) => String(n).padStart(2, '0');
-  const timerText = `${Math.floor(countdownSecs / 3600)}h ${p(
-    Math.floor((countdownSecs % 3600) / 60)
-  )}m ${p(countdownSecs % 60)}s`;
-  const openBg =
-    currentStep === 2 && t > 1700 && t < 2900 ? '#0E4ED3' : '#155EEF';
+  const per = 2000, hold = 1300, cw = 308;
+  const bi = Math.floor(t / per), bf = t % per;
+  const bk = bf < hold ? 0 : ease((bf - hold) / (per - hold));
+  const bmX = currentStep === 2 ? -((bi + bk) % BM.length) * cw : 0;
+  const bmCards = BM.concat(BM).map((b) => ({
+    ...b,
+    ...BM_TH[b.th],
+    timer: fmtT(Math.max(0, b.secs - elapsedSecs))
+  }));
 
-  // Slide 3: Team finder state
-  const requested = currentStep === 3 && t >= 2000;
+  // Slide 3: Reminders State
+  const nOpen = currentStep === 3 && t >= 1000;
+  const nDl = currentStep === 3 && t >= 7500;
+  const nTabs = [
+    { label: 'All', count: 3, cue: 'taball' },
+    { label: 'Deadlines & Rounds', count: 2, cue: 'tabdl' },
+    { label: 'Squads', count: 1, cue: 'tabsq' }
+  ].map((tab, idx) => {
+    const act = nDl ? idx === 1 : idx === 0;
+    return {
+      ...tab,
+      bd: act ? '#E7E6E2' : 'transparent',
+      bg: act ? '#FFFFFF' : 'transparent',
+      ink: act ? '#1A1A19' : '#55534D',
+      fw: act ? 600 : 500,
+      sh: act ? '0 1px 3px rgba(0,0,0,0.04)' : 'none',
+      cBg: act ? 'rgba(15,63,254,0.08)' : '#F2F1ED',
+      cInk: act ? '#0F3FFE' : '#75736C'
+    };
+  });
+  const nItems = NOTIFS.map((x, i) => ({ x, i }))
+    .filter((o) => !nDl || o.x.cat === 'deadlines')
+    .map(({ x, i }) => {
+      const itemOn = nOpen && t >= 1000 + 400 + i * 450;
+      return {
+        ...x,
+        ...NU[x.u],
+        live: x.u === 'live',
+        op: itemOn ? 1 : 0,
+        y: itemOn ? '0px' : '-6px',
+        actions: x.actions.map((act) => ({
+          ...act,
+          ...NA[act.k]
+        }))
+      };
+    });
 
-  // Slide 4: Requests state
-  const accepted = currentStep === 4 && t >= 1900;
-  const chatBg = currentStep === 4 && t > 4400 ? '#0F3FFE' : 'rgba(15, 63, 254, 0.08)';
-  const chatInk = currentStep === 4 && t > 4400 ? '#FFFFFF' : '#0F3FFE';
+  // Slide 4: Team finder state
+  const requested = currentStep === 4 && t >= 2000;
+
+  // Slide 5: Requests state
+  const accepted = currentStep === 5 && t >= 1900;
+  const chatBg = currentStep === 5 && t > 4400 ? '#0F3FFE' : 'rgba(15, 63, 254, 0.08)';
+  const chatInk = currentStep === 5 && t > 4400 ? '#FFFFFF' : '#0F3FFE';
   const capOp = accepted ? 1 : 0.35;
 
-  // Slide 5: Profile KPIs counting up
+  // Slide 6: Profile KPIs counting up
   const cnt = (n, d) => String(Math.round(n * Math.min(1, Math.max(0, (t - d) / 1100))));
-  const k1 = currentStep === 5 ? cnt(12, 300) : '0';
-  const k2 = currentStep === 5 ? cnt(4, 450) : '0';
-  const k3 = currentStep === 5 ? cnt(2, 600) : '0';
-  const reqOp = currentStep === 5 && t > 2300 && t < 3800 ? 0.75 : 1;
+  const k1 = currentStep === 6 ? cnt(12, 300) : '0';
+  const k2 = currentStep === 6 ? cnt(4, 450) : '0';
+  const k3 = currentStep === 6 ? cnt(2, 600) : '0';
+  const reqOp = currentStep === 6 && t > 2300 && t < 3800 ? 0.75 : 1;
 
   return (
     <div
@@ -767,7 +1022,7 @@ export default function WalkthroughModal({
                           }}
                         />
                         <span style={{ flex: 1, lineHeight: 1.25, fontWeight: 500 }}>
-                          IIMs, IITs & Premier
+                          IIMs, IITs &amp; Premier
                         </span>
                         <span
                           style={{
@@ -801,7 +1056,7 @@ export default function WalkthroughModal({
                           }}
                         />
                         <span style={{ flex: 1, lineHeight: 1.25, fontWeight: 500 }}>
-                          Corporate & Global
+                          Corporate &amp; Global
                         </span>
                         <span
                           style={{
@@ -834,7 +1089,9 @@ export default function WalkthroughModal({
                             flexShrink: 0
                           }}
                         />
-                        <span style={{ flex: 1, lineHeight: 1.25, fontWeight: 500 }}>Others</span>
+                        <span style={{ flex: 1, lineHeight: 1.25, fontWeight: 500 }}>
+                          Others
+                        </span>
                         <span
                           style={{
                             fontSize: '11.2px',
@@ -993,14 +1250,7 @@ export default function WalkthroughModal({
                       </div>
 
                       {cs && (
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '4px',
-                            padding: '4px 6px 8px 24px'
-                          }}
-                        >
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', padding: '4px 6px 8px 24px' }}>
                           <span
                             data-cue="fin"
                             style={{
@@ -1019,7 +1269,7 @@ export default function WalkthroughModal({
                               transform: press.fin
                             }}
                           >
-                            <span>Finance & Valuation</span>
+                            <span>Finance &amp; Valuation</span>
                             {fin && <span>✓</span>}
                           </span>
                           <span
@@ -1036,7 +1286,7 @@ export default function WalkthroughModal({
                               lineHeight: 1.3
                             }}
                           >
-                            Strategy & Consulting
+                            Strategy &amp; Consulting
                           </span>
                           <span
                             style={{
@@ -1052,7 +1302,7 @@ export default function WalkthroughModal({
                               lineHeight: 1.3
                             }}
                           >
-                            Marketing & Brand
+                            Marketing &amp; Brand
                           </span>
                           <span
                             style={{
@@ -1068,7 +1318,7 @@ export default function WalkthroughModal({
                               lineHeight: 1.3
                             }}
                           >
-                            B-Plan & Pitch
+                            B-Plan &amp; Pitch
                           </span>
                         </div>
                       )}
@@ -1803,284 +2053,728 @@ export default function WalkthroughModal({
                 </div>
               )}
 
-              {/* Slide 2: Bookmarks */}
+              {/* Slide 2: Bookmarks (Horizontal Carousel) */}
               {currentStep === 2 && (
-                <div
-                  style={{
-                    width: '296px',
-                    flex: 'none',
-                    minHeight: '274px',
-                    background: '#FFFDF5',
-                    border: '1.5px solid rgba(245,158,11,0.40)',
-                    borderRadius: '16px',
-                    padding: '14px 15px 15px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px',
-                    boxShadow: '0 8px 22px rgba(0,0,0,0.06)'
-                  }}
-                >
+                <div style={{ width: '100%', overflow: 'hidden', padding: '6px 0 10px' }}>
                   <div
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px'
+                      gap: '12px',
+                      paddingLeft: '4px',
+                      transform: `translateX(${bmX}px)`,
+                      width: 'max-content'
                     }}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        minWidth: 0,
-                        flex: 1
-                      }}
-                    >
+                    {bmCards.map((b, idx) => (
                       <div
+                        key={idx}
                         style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '7px',
-                          border: '1px solid #E7E6E2',
-                          background: '#F2F1ED',
-                          color: '#55534D',
-                          fontSize: '10.5px',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          overflow: 'hidden',
+                          width: '296px',
                           flex: 'none',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                          userSelect: 'none',
-                          position: 'relative'
+                          minHeight: '274px',
+                          background: b.cardBg,
+                          border: `1.5px solid ${b.cardBd}`,
+                          borderRadius: '16px',
+                          padding: '14px 15px 15px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px'
                         }}
                       >
-                        SR
-                        <span
+                        <div
                           style={{
-                            position: 'absolute',
-                            inset: '2px',
-                            backgroundImage: `url("${LOGOS.SR}")`,
-                            backgroundPosition: 'center',
-                            backgroundSize: 'contain',
-                            backgroundRepeat: 'no-repeat'
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '8px'
                           }}
-                        />
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              minWidth: 0,
+                              flex: 1
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '30px',
+                                height: '30px',
+                                borderRadius: '7px',
+                                border: '1px solid #E7E6E2',
+                                background: '#F2F1ED',
+                                color: '#55534D',
+                                fontSize: '10.5px',
+                                fontWeight: 700,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden',
+                                flex: 'none',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+                                position: 'relative'
+                              }}
+                            >
+                              {b.ini}
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  inset: '2px',
+                                  backgroundImage: `url("${LOGOS[b.ini]}")`,
+                                  backgroundPosition: 'center',
+                                  backgroundSize: 'contain',
+                                  backgroundRepeat: 'no-repeat'
+                                }}
+                              />
+                            </div>
+                            <span
+                              style={{
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                color: '#55534D',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {b.host}
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              width: '24px',
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              border: '1px solid #E7E6E2',
+                              background: '#F2F1ED',
+                              color: '#75736C',
+                              fontSize: '14px',
+                              fontWeight: 500,
+                              borderRadius: '7px',
+                              lineHeight: 1,
+                              flexShrink: 0
+                            }}
+                          >
+                            ×
+                          </span>
+                        </div>
+
+                        <h3
+                          style={{
+                            fontSize: '15px',
+                            fontWeight: 700,
+                            color: '#1A1A19',
+                            lineHeight: 1.25,
+                            margin: 0,
+                            minHeight: '38px'
+                          }}
+                        >
+                          {b.title}
+                        </h3>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            padding: '10px 12px',
+                            borderRadius: '11px',
+                            background: b.heroBg,
+                            border: `1px solid ${b.heroBd}`
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '6px'
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                color: b.ink,
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {b.stage}
+                            </span>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '2px 8px',
+                                borderRadius: '9999px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                lineHeight: 1.2,
+                                whiteSpace: 'nowrap',
+                                background: b.bdgBg,
+                                border: b.bdgBd,
+                                color: b.bdgInk
+                              }}
+                            >
+                              {b.dot && (
+                                <span
+                                  style={{
+                                    width: '5px',
+                                    height: '5px',
+                                    borderRadius: '50%',
+                                    background: '#FFFFFF',
+                                    display: 'inline-block'
+                                  }}
+                                />
+                              )}
+                              {b.badge}
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: '13.5px',
+                              fontWeight: 700,
+                              color: '#1A1A19',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              lineHeight: 1.3,
+                              marginTop: '1px'
+                            }}
+                          >
+                            {b.round}
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '6px',
+                              fontSize: '11.5px',
+                              fontWeight: 500,
+                              marginTop: '1px'
+                            }}
+                          >
+                            <span style={{ color: '#55534D', whiteSpace: 'nowrap' }}>{b.due}</span>
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                fontVariantNumeric: 'tabular-nums',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                color: b.ink,
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              <span style={{ fontSize: '12px' }}>⏱</span>
+                              <span>{b.timer}</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            gap: '4px',
+                            fontSize: '11.5px',
+                            color: '#75736C',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            padding: '1px 2px',
+                            minHeight: '18px',
+                            visibility: b.next ? 'visible' : 'hidden'
+                          }}
+                        >
+                          <span style={{ fontSize: '12px' }}>→</span>
+                          <span>Next: </span>
+                          <span
+                            style={{
+                              color: '#1A1A19',
+                              fontWeight: 600,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
+                          >
+                            {b.next}
+                          </span>
+                          <span style={{ color: '#55534D', fontWeight: 500 }}> · {b.nextDate}</span>
+                        </div>
+
+                        <div
+                          style={{
+                            marginTop: 'auto',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            width: '100%',
+                            height: '38px',
+                            borderRadius: '10px',
+                            background: '#155EEF',
+                            color: '#FFFFFF',
+                            fontSize: '13.5px',
+                            fontWeight: 600
+                          }}
+                        >
+                          <span>Open Portal</span>
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#FFFFFF"
+                            strokeWidth="2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </div>
                       </div>
-                      <span
-                        style={{
-                          fontSize: '12px',
-                          fontWeight: 500,
-                          color: '#55534D',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        Shri Ram College of Commerce (SRCC)
-                      </span>
-                    </div>
-                    <span
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px solid #E7E6E2',
-                        background: '#F2F1ED',
-                        color: '#75736C',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        borderRadius: '7px',
-                        lineHeight: 1,
-                        flexShrink: 0
-                      }}
-                    >
-                      ×
-                    </span>
-                  </div>
-
-                  <h3
-                    style={{
-                      fontSize: '15px',
-                      fontWeight: 700,
-                      color: '#1A1A19',
-                      lineHeight: 1.25,
-                      margin: 0,
-                      minHeight: '38px'
-                    }}
-                  >
-                    SRCC Business Conclave Case Challenge 2026
-                  </h3>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '6px',
-                      padding: '10px 12px',
-                      borderRadius: '11px',
-                      background: '#FFFBEB',
-                      border: '1px solid rgba(245,158,11,0.28)'
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '6px'
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '11px',
-                          fontWeight: 800,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px',
-                          color: '#D97706',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        Round 2 of 3
-                      </span>
-                      <span
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '2px 8px',
-                          borderRadius: '9999px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          lineHeight: 1.2,
-                          whiteSpace: 'nowrap',
-                          background: '#FFFBEB',
-                          border: '1px solid #FCD34D',
-                          color: '#D97706'
-                        }}
-                      >
-                        Closing soon
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: '13.5px',
-                        fontWeight: 700,
-                        color: '#1A1A19',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        lineHeight: 1.3,
-                        marginTop: '1px'
-                      }}
-                    >
-                      Executive Case Deck &amp; Pitch
-                    </div>
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        gap: '6px',
-                        fontSize: '11.5px',
-                        fontWeight: 500,
-                        marginTop: '1px'
-                      }}
-                    >
-                      <span style={{ color: '#55534D', whiteSpace: 'nowrap' }}>
-                        Due 12 Oct, 11:59 PM
-                      </span>
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          fontVariantNumeric: 'tabular-nums',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          color: '#D97706',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        <span style={{ fontSize: '12px' }}>⏱</span>
-                        <span>{timerText}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'baseline',
-                      gap: '4px',
-                      fontSize: '11.5px',
-                      color: '#75736C',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      padding: '1px 2px',
-                      minHeight: '18px'
-                    }}
-                  >
-                    <span style={{ fontSize: '12px' }}>→</span>
-                    <span>Next: </span>
-                    <span
-                      style={{
-                        color: '#1A1A19',
-                        fontWeight: 600,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      National Grand Finale
-                    </span>
-                    <span style={{ color: '#55534D', fontWeight: 500 }}> · 20 Oct</span>
-                  </div>
-
-                  <div
-                    data-cue="open"
-                    style={{
-                      transform: press.open,
-                      transition: 'transform .12s ease, background .12s ease',
-                      marginTop: 'auto',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      width: '100%',
-                      height: '38px',
-                      borderRadius: '10px',
-                      background: openBg,
-                      color: '#FFFFFF',
-                      fontSize: '13.5px',
-                      fontWeight: 600
-                    }}
-                  >
-                    <span>Open Portal</span>
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#FFFFFF"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                      <polyline points="15 3 21 3 21 9" />
-                      <line x1="10" y1="14" x2="21" y2="3" />
-                    </svg>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {/* Slide 3: Team finder */}
+              {/* Slide 3: Reminders & Radar (Bell Panel) */}
               {currentStep === 3 && (
+                <div
+                  style={{
+                    width: '400px',
+                    zoom: 0.95,
+                    flex: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    gap: '8px'
+                  }}
+                >
+                  <span
+                    data-cue="bell"
+                    style={{
+                      position: 'relative',
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '9px',
+                      background: nOpen ? '#F2F1ED' : '#FFFFFF',
+                      border: `1px solid ${nOpen ? '#1A1A19' : '#E7E6E2'}`,
+                      color: '#1A1A19',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transform: press.bell,
+                      transition: 'all .15s ease'
+                    }}
+                  >
+                    <BellIcon size={18} />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        background: '#E11D48',
+                        color: '#FFFFFF',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        height: '18px',
+                        minWidth: '18px',
+                        padding: '0 5px',
+                        borderRadius: '999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1,
+                        border: '2px solid #FFFFFF',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                      }}
+                    >
+                      3
+                    </span>
+                  </span>
+
+                  <div
+                    style={{
+                      width: '400px',
+                      opacity: nOpen ? 1 : 0,
+                      transform: nOpen ? 'translateY(0px) scale(1)' : 'translateY(-8px) scale(0.97)',
+                      transformOrigin: 'top right',
+                      transition:
+                        'opacity .18s cubic-bezier(0.16,1,0.3,1), transform .18s cubic-bezier(0.16,1,0.3,1)',
+                      background: '#FFFFFF',
+                      border: '1px solid #E7E6E2',
+                      borderRadius: '12px',
+                      boxShadow: '0 12px 32px -4px rgba(0,0,0,0.16), 0 4px 12px rgba(0,0,0,0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '14px 16px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        borderBottom: '1px solid #F0EFEB',
+                        gap: '12px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span
+                          style={{
+                            fontSize: '15px',
+                            fontWeight: 700,
+                            color: '#1A1A19',
+                            letterSpacing: '-0.01em',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Reminders &amp; Radar
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            padding: '2px 7px',
+                            borderRadius: '20px',
+                            background: 'rgba(15,63,254,0.08)',
+                            color: '#0F3FFE',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          3 new
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#0F3FFE',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Mark all as read
+                        </span>
+                        <span
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            color: '#75736C',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Clear all
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 14px',
+                        background: 'rgba(99,102,241,0.08)',
+                        borderBottom: '1px solid rgba(99,102,241,0.15)',
+                        fontSize: '11px',
+                        color: '#1A1A19',
+                        gap: '10px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}>
+                        <span>🔔</span>
+                        <span>Get 1h &amp; 30m deadline phone alerts</span>
+                      </div>
+                      <span
+                        style={{
+                          background: '#4F46E5',
+                          color: '#FFFFFF',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        Enable
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: 'flex',
+                        padding: '8px 12px',
+                        background: '#F9F9F7',
+                        borderBottom: '1px solid #F0EFEB',
+                        gap: '6px'
+                      }}
+                    >
+                      {nTabs.map((tb, idx) => (
+                        <span
+                          key={idx}
+                          data-cue={tb.cue}
+                          style={{
+                            border: `1px solid ${tb.bd}`,
+                            padding: '5px 11px',
+                            borderRadius: '20px',
+                            fontSize: '12px',
+                            fontWeight: tb.fw,
+                            color: tb.ink,
+                            background: tb.bg,
+                            boxShadow: tb.sh,
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            transform: press[tb.cue] || 'scale(1)',
+                            transition: 'all .12s ease'
+                          }}
+                        >
+                          <span>{tb.label}</span>
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              background: tb.cBg,
+                              color: tb.cInk,
+                              borderRadius: '999px',
+                              padding: '0 5px'
+                            }}
+                          >
+                            {tb.count}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+
+                    <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                      {nItems.map((it, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            padding: '12px 14px',
+                            borderBottom: '1px solid #F0EFEB',
+                            display: 'flex',
+                            gap: '12px',
+                            borderLeft: `3px solid ${it.accent}`,
+                            background: it.bg,
+                            opacity: it.op,
+                            transform: `translateY(${it.y})`,
+                            transition: 'opacity .25s ease, transform .25s ease',
+                            flex: 'none'
+                          }}
+                        >
+                          <div
+                            style={{
+                              flexShrink: 0,
+                              width: '34px',
+                              height: '34px',
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: it.iconBg,
+                              color: it.iconInk
+                            }}
+                          >
+                            {it.icon === 'alert' && <AlertCircleIcon size={16} />}
+                            {it.icon === 'clock' && <ClockIcon size={16} />}
+                            {it.icon === 'users' && <UsersIcon size={16} />}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                justifyContent: 'space-between',
+                                gap: '8px',
+                                marginBottom: '3px'
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  color: '#1A1A19',
+                                  lineHeight: 1.35
+                                }}
+                              >
+                                {it.title}
+                              </span>
+                              <span
+                                style={{
+                                  padding: '2px',
+                                  color: '#75736C',
+                                  opacity: 0.6,
+                                  display: 'flex',
+                                  flexShrink: 0
+                                }}
+                              >
+                                <CloseIcon size={14} />
+                              </span>
+                            </div>
+
+                            <p style={{ fontSize: '12px', color: '#55534D', lineHeight: 1.4, margin: '0 0 8px 0' }}>
+                              {it.sub}
+                            </p>
+
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '8px',
+                                flexWrap: 'wrap'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                                <span
+                                  style={{
+                                    fontSize: '11px',
+                                    color: '#75736C',
+                                    fontWeight: 500,
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  {it.time}
+                                </span>
+                                {it.tag && (
+                                  <span
+                                    style={{
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      padding: '2px 7px',
+                                      borderRadius: '20px',
+                                      background: it.tagBg,
+                                      color: it.tagInk,
+                                      border: it.tagBd,
+                                      letterSpacing: '0.02em',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      whiteSpace: 'nowrap'
+                                    }}
+                                  >
+                                    {it.live && (
+                                      <span
+                                        style={{
+                                          width: '6px',
+                                          height: '6px',
+                                          borderRadius: '50%',
+                                          background: '#4F46E5'
+                                        }}
+                                      />
+                                    )}
+                                    {it.tag}
+                                  </span>
+                                )}
+                                <span
+                                  style={{
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    padding: '1.5px 6px',
+                                    borderRadius: '4px',
+                                    background: '#F2F1ED',
+                                    color: '#55534D',
+                                    border: '1px solid #E7E6E2',
+                                    maxWidth: '140px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  {it.host}
+                                </span>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {it.actions.map((ac, j) => (
+                                  <span
+                                    key={j}
+                                    data-cue={ac.cue}
+                                    style={{
+                                      padding: '4px 10px',
+                                      borderRadius: '6px',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                      border: `1px solid ${ac.bd}`,
+                                      background: ac.bg,
+                                      color: ac.ink,
+                                      whiteSpace: 'nowrap'
+                                    }}
+                                  >
+                                    {ac.label}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div
+                      style={{
+                        padding: '10px 16px',
+                        borderTop: '1px solid #F0EFEB',
+                        background: '#F9F9F7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#0F3FFE',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        View squad requests &amp; handshakes
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Slide 4: Team finder */}
+              {currentStep === 4 && (
                 <div
                   style={{
                     background: '#FFFFFF',
@@ -2095,34 +2789,6 @@ export default function WalkthroughModal({
                     boxShadow: '0 4px 18px rgba(0,0,0,0.06)'
                   }}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px'
-                    }}
-                  >
-                    <span
-                      style={{
-                        background: 'rgba(15,63,254,0.08)',
-                        color: '#0F3FFE',
-                        border: '1px solid rgba(15,63,254,0.35)',
-                        borderRadius: '20px',
-                        padding: '2px 9px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        letterSpacing: '0.02em',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      1 spot left
-                    </span>
-                    <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
-                      2h ago
-                    </span>
-                  </div>
-
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span
                       style={{
@@ -2179,16 +2845,28 @@ export default function WalkthroughModal({
                   </div>
 
                   <div style={{ borderTop: '1px solid #E7E6E2', paddingTop: '10px' }}>
-                    <span
+                    <div
                       style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#75736C',
-                        textTransform: 'uppercase'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px'
                       }}
                     >
-                      Competing in
-                    </span>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#75736C',
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        Competing in
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#75736C', whiteSpace: 'nowrap' }}>
+                        2h ago
+                      </span>
+                    </div>
                     <h3
                       style={{
                         margin: '3px 0 0',
@@ -2255,6 +2933,50 @@ export default function WalkthroughModal({
                     </div>
                   </div>
 
+                  {/* Spots row with filled and hollow spot dots */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#0F3FFE'
+                          }}
+                        />
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#0F3FFE'
+                          }}
+                        />
+                        <span
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#FFFFFF',
+                            border: '1.5px solid #CFCDC7',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+                      <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#1A1A19' }}>
+                        1 of 3 open
+                      </span>
+                    </div>
+                  </div>
+
                   <div style={{ paddingTop: '10px', borderTop: '1px solid #E7E6E2' }}>
                     {!requested ? (
                       <div
@@ -2296,8 +3018,8 @@ export default function WalkthroughModal({
                 </div>
               )}
 
-              {/* Slide 4: Requests */}
-              {currentStep === 4 && (
+              {/* Slide 5: Requests */}
+              {currentStep === 5 && (
                 <div
                   style={{
                     display: 'flex',
@@ -2455,6 +3177,7 @@ export default function WalkthroughModal({
                           </svg>
                           <span>Chat</span>
                         </span>
+
                         {!accepted ? (
                           <>
                             <span
@@ -2516,13 +3239,15 @@ export default function WalkthroughModal({
                               gap: '6px'
                             }}
                           >
-                            WhatsApp
+                            <WhatsAppIcon size={16} />
+                            <span>WhatsApp</span>
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
 
+                  {/* Caption info lines */}
                   <div
                     style={{
                       opacity: capOp,
@@ -2571,8 +3296,8 @@ export default function WalkthroughModal({
                 </div>
               )}
 
-              {/* Slide 5: Profile */}
-              {currentStep === 5 && (
+              {/* Slide 6: Profile */}
+              {currentStep === 6 && (
                 <div
                   style={{
                     width: '100%',
@@ -2601,15 +3326,7 @@ export default function WalkthroughModal({
                     >
                       Good evening, Aarav
                     </h1>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '12.5px',
-                        color: '#75736C'
-                      }}
-                    >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#75736C' }}>
                       <svg
                         width="13"
                         height="13"
@@ -2764,8 +3481,9 @@ export default function WalkthroughModal({
               }}
             />
 
-            {/* Animated Fake Cursor */}
+            {/* Desktop Animated Arrow Cursor */}
             <div
+              className="walkthrough-cursor-arrow"
               style={{
                 position: 'absolute',
                 left: `${cur.x}px`,
@@ -2788,6 +3506,35 @@ export default function WalkthroughModal({
                   strokeLinejoin="round"
                 />
               </svg>
+            </div>
+
+            {/* Mobile Animated Touch Indicator */}
+            <div
+              className="walkthrough-cursor-touch"
+              style={{
+                position: 'absolute',
+                left: `${cur.x}px`,
+                top: `${cur.y}px`,
+                opacity: cur.op,
+                transform: `scale(${cur.clickCue ? 0.85 : 1})`,
+                transformOrigin: '0 0',
+                transition: 'transform .1s ease',
+                pointerEvents: 'none',
+                zIndex: 5,
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+              }}
+            >
+              <div
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  margin: '-15px 0 0 -15px',
+                  borderRadius: '50%',
+                  background: 'rgba(26,26,25,0.28)',
+                  border: '2px solid rgba(255,255,255,0.9)',
+                  boxSizing: 'border-box'
+                }}
+              />
             </div>
           </div>
         </div>
