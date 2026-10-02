@@ -17,6 +17,7 @@ import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import InstallShortcutPopup from './components/InstallShortcutPopup';
+import ThemeToggle from './components/ThemeToggle';
 import WalkthroughModal from './components/WalkthroughModal';
 import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
 import AdminConsolePage from './components/AdminConsolePage';
@@ -1107,6 +1108,7 @@ function OneStopInner() {
             <span className="mobile-what-is-sparkle">✨</span>
             <span>What is OneStop?</span>
           </button>
+          <ThemeToggle variant="compact" />
           <NotificationCenter
             applications={applications}
             competitions={visibleCompetitions}
