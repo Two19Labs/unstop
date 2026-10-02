@@ -11,52 +11,9 @@ import {
 } from './icons';
 import OneStopLogo from './OneStopLogo';
 import { trackEvent } from '../lib/posthog';
+import { TOUR_SLIDES } from '../data/tourSlides';
 import './WalkthroughModal.css';
 
-const SLIDES = [
-  {
-    id: 'filters',
-    badge: 'filters',
-    title: 'tell us what you’re into',
-    description: 'pick circuits, categories, sub-tracks and fee. counts update as you go.'
-  },
-  {
-    id: 'browse',
-    badge: 'browse',
-    title: 'every competition that fits, in one place',
-    description: 'pulled from every major platform and campus portal. nothing expired, filter however you want.'
-  },
-  {
-    id: 'bookmarks',
-    badge: 'bookmarks',
-    title: 'every round, counted down',
-    description: 'bookmark a competition and we track each round’s deadline, not just registration.'
-  },
-  {
-    id: 'reminders',
-    badge: 'reminders',
-    title: 'a heads-up before every deadline',
-    description: 'extensions, closing deadlines and squad requests, all in the bell. turn on alerts and we ping you in intervals before.'
-  },
-  {
-    id: 'team-finder',
-    badge: 'team finder',
-    title: 'find teammates from any college',
-    description: 'post a squad or request to join one. see the skills each squad needs upfront.'
-  },
-  {
-    id: 'requests',
-    badge: 'requests',
-    title: 'accepted? whatsapp them, or chat here',
-    description: 'open whatsapp in one tap, or keep it on onestop chat if you’d rather not share your number.'
-  },
-  {
-    id: 'profile',
-    badge: 'profile',
-    title: 'add your college, get your feed',
-    description: 'set your college, year and skills. we hide what you can’t enter and show squads that need you.'
-  }
-];
 
 const SCRIPTS = [
   {
@@ -493,7 +450,7 @@ export default function WalkthroughModal({
 
   // Reset clock, manual interaction state, and position cache when slide changes
   const goToSlide = useCallback((newStep) => {
-    const target = Math.max(0, Math.min(SLIDES.length - 1, newStep));
+    const target = Math.max(0, Math.min(TOUR_SLIDES.length - 1, newStep));
     setCurrentStep(target);
     setT(0);
     setManualOpen(null);
@@ -512,8 +469,8 @@ export default function WalkthroughModal({
     if (isOpen) {
       trackEvent('walkthrough_step_viewed', {
         step_index: currentStep,
-        step_id: SLIDES[currentStep]?.id,
-        step_title: SLIDES[currentStep]?.title
+        step_id: TOUR_SLIDES[currentStep]?.id,
+        step_title: TOUR_SLIDES[currentStep]?.title
       });
     }
   }, [currentStep, isOpen]);
@@ -544,7 +501,7 @@ export default function WalkthroughModal({
           const sc = SCRIPTS[currentStep];
           const nextT = prevT + dt;
           if (nextT >= sc.len) {
-            if (autoAdvance && currentStep < SLIDES.length - 1) {
+            if (autoAdvance && currentStep < TOUR_SLIDES.length - 1) {
               setCurrentStep((s) => s + 1);
               setManualOpen(null);
               setManualTab(null);
@@ -577,7 +534,7 @@ export default function WalkthroughModal({
   }, [currentStep, onComplete, onClose]);
 
   const handleComplete = useCallback(() => {
-    trackEvent('walkthrough_completed', { total_steps: SLIDES.length });
+    trackEvent('walkthrough_completed', { total_steps: TOUR_SLIDES.length });
     if (typeof onComplete === 'function') {
       onComplete();
     } else if (typeof onClose === 'function') {
@@ -586,7 +543,7 @@ export default function WalkthroughModal({
   }, [onComplete, onClose]);
 
   const handleNext = useCallback(() => {
-    if (currentStep === SLIDES.length - 1) {
+    if (currentStep === TOUR_SLIDES.length - 1) {
       handleComplete();
     } else {
       goToSlide(currentStep + 1);
@@ -636,10 +593,10 @@ export default function WalkthroughModal({
 
   if (!isOpen) return null;
 
-  const slide = SLIDES[currentStep];
+  const slide = TOUR_SLIDES[currentStep];
   const sc = SCRIPTS[currentStep];
   const isFirst = currentStep === 0;
-  const isLast = currentStep === SLIDES.length - 1;
+  const isLast = currentStep === TOUR_SLIDES.length - 1;
 
   // Derive interactive cursor & ripple positions
   const cur = getCursorAt(sc, t, paneRef.current, lastPosRef.current);
@@ -777,7 +734,7 @@ export default function WalkthroughModal({
 
           <div className="walkthrough-header-actions">
             <span className="walkthrough-step-counter">
-              {currentStep + 1} of {SLIDES.length}
+              {currentStep + 1} of {TOUR_SLIDES.length}
             </span>
             <button
               type="button"
@@ -3515,7 +3472,7 @@ export default function WalkthroughModal({
         <div className="walkthrough-footer">
           {/* Step Indicator Dots */}
           <div className="walkthrough-dots" role="tablist" aria-label="Walkthrough progress">
-            {SLIDES.map((s, idx) => {
+            {TOUR_SLIDES.map((s, idx) => {
               const isPast = idx < currentStep;
               const isActive = idx === currentStep;
               const width = isActive ? '24px' : '8px';

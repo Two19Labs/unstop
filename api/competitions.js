@@ -658,21 +658,29 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
           signal: AbortSignal.timeout(4500)
         })
           .then(res => (res.ok ? res.json() : null))
-          .then(json => (json?.data?.data || []))
+          // null marks a failed request (distinct from a page that is legitimately empty)
+          .then(json => (Array.isArray(json?.data?.data) ? json.data.data : null))
           .catch(err => {
             console.warn(`Error querying Unstop for [${q}]:`, err.message);
-            return [];
+            return null;
           })
       )
     );
     batches.push(...chunkResults);
   }
 
+  // If Unstop is down or mostly failing, don't replace a good list with a degraded one:
+  // throwing lets the handler serve the last good copy (or the Supabase fallback, briefly cached).
+  const failedRequests = batches.filter(list => list === null).length;
+  if (failedRequests > queryEndpoints.length / 2) {
+    throw new Error(`Unstop unavailable (${failedRequests}/${queryEndpoints.length} requests failed)`);
+  }
+
   const now = Date.now();
   const map = new Map();
 
   for (const list of batches) {
-    for (const item of list) {
+    for (const item of list || []) {
       if (!item || !item.id) continue;
       if (map.has(item.id)) continue;
 
@@ -921,7 +929,8 @@ export default async function handler(req, res) {
       const fallback = await fetchInstitutionalCompetitionsFromSupabase();
       if (Array.isArray(fallback) && fallback.length > 0) {
         console.warn('Serving from Supabase institutional fallback');
-        res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+        // Degraded list: keep it at the edge only briefly so recovery shows up within a minute
+        res.setHeader('Cache-Control', 's-maxage=60');
         return res.status(200).json({
           success: true,
           count: fallback.length,
@@ -932,6 +941,7 @@ export default async function handler(req, res) {
       }
     } catch (e) {}
 
+    res.setHeader('Cache-Control', 'no-store');
     return res.status(500).json({
       success: false,
       error: error.message || 'Failed to fetch competitions from Unstop',

@@ -55,6 +55,7 @@ export default function NotificationCenter({
   const authMarkAllRead = auth?.markAllNotificationsRead;
   const authDismiss = auth?.dismissNotification;
   const authDismissAll = auth?.dismissAllNotifications;
+  const messageNotifications = auth?.messageNotifications || [];
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'deadlines' | 'squads'
@@ -127,9 +128,10 @@ export default function NotificationCenter({
       bookmarks,
       posts,
       profile,
-      roundsMap
+      roundsMap,
+      messageNotifications
     }).filter(n => !activeDismissedIds.includes(n.id));
-  }, [applications, competitions, bookmarks, posts, profile, roundsMap, activeDismissedIds]);
+  }, [applications, competitions, bookmarks, posts, profile, roundsMap, messageNotifications, activeDismissedIds]);
 
   // Helper to check if a specific notification is unread (Supabase priority, localStorage fallback)
   const checkIsUnread = useCallback((notifId) => {

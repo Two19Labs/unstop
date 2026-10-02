@@ -57,35 +57,16 @@ export default function CompetitionChatModal({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Local storage cache key
-  const storageKey = appId ? `onestop_squad_chat_${appId}` : null;
-
-  // Load messages from Supabase or LocalStorage
+  // Load messages from Supabase (never cached in the browser) + live updates
   useEffect(() => {
     if (!isOpen || !appId) return;
 
     let isMounted = true;
+    setMessages([]);
     setLoading(true);
 
-    const loadLocal = () => {
-      try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) return parsed;
-        }
-      } catch (e) {}
-      return [];
-    };
-
-    const initialLocal = loadLocal();
-    if (initialLocal.length > 0) {
-      setMessages(initialLocal);
-      setLoading(false);
-    }
-
     async function fetchRemote() {
-      if (supabase && appId) {
+      if (supabase) {
         try {
           const { data, error } = await supabase
             .from('squad_messages')
@@ -94,13 +75,7 @@ export default function CompetitionChatModal({
             .order('created_at', { ascending: true });
 
           if (!error && Array.isArray(data) && isMounted) {
-            // Merge with local if needed
-            if (data.length > 0) {
-              setMessages(data);
-              try {
-                localStorage.setItem(storageKey, JSON.stringify(data));
-              } catch (e) {}
-            }
+            setMessages(data);
           }
         } catch (err) {
           console.warn('Could not load squad messages from Supabase:', err.message);
@@ -111,9 +86,8 @@ export default function CompetitionChatModal({
 
     fetchRemote();
 
-    // Subscribe to real-time messages if Supabase connected
     let subscription = null;
-    if (supabase && appId) {
+    if (supabase) {
       try {
         subscription = supabase
           .channel(`squad_chat_${appId}`)
@@ -126,16 +100,21 @@ export default function CompetitionChatModal({
               filter: `application_id=eq.${appId}`,
             },
             (payload) => {
-              if (payload?.new && isMounted) {
-                setMessages((prev) => {
-                  if (prev.some((m) => m.id === payload.new.id)) return prev;
-                  const next = [...prev, payload.new];
-                  try {
-                    localStorage.setItem(storageKey, JSON.stringify(next));
-                  } catch (e) {}
+              const incoming = payload?.new;
+              if (!incoming || !isMounted) return;
+              setMessages((prev) => {
+                if (prev.some((m) => m.id === incoming.id)) return prev;
+                // Our own message arrives here too: swap the pending copy instead of duplicating it
+                const pendingIdx = prev.findIndex(
+                  (m) => m.localStatus === 'sending' && m.sender_id === incoming.sender_id && m.content === incoming.content
+                );
+                if (pendingIdx !== -1) {
+                  const next = [...prev];
+                  next[pendingIdx] = incoming;
                   return next;
-                });
-              }
+                }
+                return [...prev, incoming];
+              });
             }
           )
           .subscribe();
@@ -148,7 +127,7 @@ export default function CompetitionChatModal({
         supabase.removeChannel(subscription);
       }
     };
-  }, [isOpen, appId, storageKey]);
+  }, [isOpen, appId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -156,89 +135,84 @@ export default function CompetitionChatModal({
     }
   }, [messages, isOpen]);
 
-  // Turn-based vetting check for PENDING status
-  // Lead asks 1 question, applicant answers with 1 reply, strictly 1 turn at a time
-  const mySenderId = currentUser?.id || 'local_user';
+  // Turn-based vetting while PENDING: lead and applicant alternate, one message each.
+  // The database enforces the same rule (guard_squad_message).
+  const mySenderId = currentUser?.id || null;
   const myRole = isLead ? 'lead' : 'applicant';
 
-  const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-  const isMyTurn = !lastMessage || (lastMessage.sender_role !== myRole && lastMessage.sender_id !== mySenderId);
+  const deliveredMessages = messages.filter((m) => m.localStatus !== 'failed');
+  const lastMessage = deliveredMessages.length > 0 ? deliveredMessages[deliveredMessages.length - 1] : null;
+  const isMyTurn = !lastMessage || lastMessage.sender_id !== mySenderId;
 
   // Can user send?
-  const canSend = !isExpired && (isAccepted || (isPending && isMyTurn));
+  const canSend = Boolean(currentUser) && !isExpired && (isAccepted || (isPending && isMyTurn));
+
+  const deliverMessage = async (tempId, content) => {
+    const { data, error } = await supabase
+      .from('squad_messages')
+      .insert([
+        {
+          application_id: appId,
+          post_id: post?.id || application?.post_id,
+          competition_id: String(competition?.id || post?.compId || ''),
+          sender_id: currentUser.id,
+          sender_name: senderName,
+          sender_role: myRole,
+          content,
+        },
+      ])
+      .select()
+      .single();
+
+    setMessages((prev) => {
+      if (error || !data) {
+        return prev.map((m) => (m.id === tempId ? { ...m, localStatus: 'failed', errorText: error?.message || 'Not sent' } : m));
+      }
+      // Realtime may have delivered it already
+      if (prev.some((m) => m.id === data.id)) return prev.filter((m) => m.id !== tempId);
+      return prev.map((m) => (m.id === tempId ? data : m));
+    });
+  };
+
+  const senderName = profile?.full_name || profile?.name || currentUser?.email?.split('@')[0] || (isLead ? 'Squad Lead' : 'Applicant');
 
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     const clean = inputText.trim();
-    if (!clean || !canSend || sending) return;
+    if (!clean || !canSend || sending || !supabase) return;
 
     setSending(true);
-
-    const senderName = profile?.full_name || profile?.name || currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || (isLead ? 'Squad Lead' : 'Applicant');
-
-    const newMsg = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      application_id: appId,
-      post_id: post?.id || application?.post_id,
-      competition_id: String(competition?.id || post?.compId || ''),
-      sender_id: currentUser?.id || 'local_user',
-      sender_name: senderName,
-      sender_role: myRole,
-      content: clean,
-      created_at: new Date().toISOString(),
-    };
-
-    const nextMessages = [...messages, newMsg];
-    setMessages(nextMessages);
+    const tempId = `pending_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: tempId,
+        application_id: appId,
+        sender_id: currentUser.id,
+        sender_name: senderName,
+        sender_role: myRole,
+        content: clean,
+        created_at: new Date().toISOString(),
+        localStatus: 'sending',
+      },
+    ]);
     setInputText('');
 
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(nextMessages));
-    } catch (err) {}
-
-    // Persist to Supabase if connected
-    if (supabase && currentUser) {
-      try {
-        await supabase.from('squad_messages').insert([
-          {
-            application_id: appId,
-            post_id: post?.id || application?.post_id,
-            competition_id: String(competition?.id || post?.compId || ''),
-            sender_id: currentUser.id,
-            sender_name: senderName,
-            sender_role: myRole,
-            content: clean,
-          },
-        ]);
-
-        const recipientId = isLead ? (application?.applicant_id || application?.userId) : (post?.user_id || post?.userId);
-        if (recipientId && recipientId !== currentUser.id) {
-          try {
-            await supabase.from('user_notifications').insert([
-              {
-                user_id: recipientId,
-                type: 'new_message',
-                title: `New message from ${senderName}`,
-                message: clean.length > 60 ? `${clean.slice(0, 60)}…` : clean,
-                link: `/teams?chat=${post?.id || application?.post_id}`,
-                read: false,
-                created_at: new Date().toISOString()
-              }
-            ]);
-          } catch (notifErr) {
-            // Silently ignore if table not ready
-          }
-        }
-      } catch (err) {
-        console.warn('Could not save squad message to Supabase:', err.message);
-      }
-    }
+    await deliverMessage(tempId, clean);
 
     setSending(false);
     setTimeout(() => {
       scrollToBottom();
       inputRef.current?.focus();
     }, 50);
+  };
+
+  const handleRetry = async (msg) => {
+    if (sending) return;
+    setSending(true);
+    setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, localStatus: 'sending', errorText: '' } : m)));
+    await deliverMessage(msg.id, msg.content);
+    setSending(false);
   };
 
   if (!isOpen || !application) return null;
@@ -404,7 +378,7 @@ export default function CompetitionChatModal({
 
           {/* Messages */}
           {messages.map((msg) => {
-            const isMe = msg.sender_role === myRole || msg.sender_id === mySenderId;
+            const isMe = Boolean(mySenderId) && msg.sender_id === mySenderId;
             const timeStr = msg.created_at
               ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               : '';
@@ -419,7 +393,19 @@ export default function CompetitionChatModal({
                     {isMe ? 'You' : msg.sender_name}
                   </div>
                   <div className="comp-chat-msg-text">{msg.content}</div>
-                  {timeStr && <div className="comp-chat-msg-time">{timeStr}</div>}
+                  {msg.localStatus === 'sending' && <div className="comp-chat-msg-time">Sending…</div>}
+                  {msg.localStatus === 'failed' ? (
+                    <button
+                      type="button"
+                      className="comp-chat-msg-time comp-chat-msg-retry"
+                      onClick={() => handleRetry(msg)}
+                      title={msg.errorText || 'Not sent'}
+                    >
+                      Not sent · Tap to retry
+                    </button>
+                  ) : (
+                    !msg.localStatus && timeStr && <div className="comp-chat-msg-time">{timeStr}</div>
+                  )}
                 </div>
               </div>
             );

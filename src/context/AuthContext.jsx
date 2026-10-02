@@ -3,24 +3,15 @@ import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import { normalizeYear } from '../data/colleges';
 import { isMockPost, isMockApp, isMockBookmark } from '../data/initialData';
 import { identifyUser, setPersonProperties, resetUser, trackEvent } from '../lib/posthog';
+import { purgeUserStorage } from '../lib/storage';
 
 const AuthContext = createContext(null);
 
 export const PROFILE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-const profileCooldownKey = (userId) => `onestop_profile_last_updated_${userId}`;
-
 // The database owns profile_last_updated_at (see PROFILE_COOLDOWN_AND_PRIVACY_MIGRATION.sql).
-// localStorage is only a hint used before the profile has loaded from the server.
 export function getProfileCooldown(profile, user) {
-  let lastUpdated = null;
-  if (profile && Object.prototype.hasOwnProperty.call(profile, 'profile_last_updated_at')) {
-    lastUpdated = profile.profile_last_updated_at;
-  } else if (user?.id) {
-    try {
-      lastUpdated = localStorage.getItem(profileCooldownKey(user.id));
-    } catch (e) {}
-  }
+  const lastUpdated = profile?.profile_last_updated_at || null;
 
   if (!lastUpdated) {
     return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
@@ -54,17 +45,6 @@ export function getProfileCooldown(profile, user) {
   };
 }
 
-function rememberProfileCooldown(userId, lastUpdatedAt) {
-  if (!userId) return;
-  try {
-    if (lastUpdatedAt) {
-      localStorage.setItem(profileCooldownKey(userId), lastUpdatedAt);
-    } else {
-      localStorage.removeItem(profileCooldownKey(userId));
-    }
-  } catch (e) {}
-}
-
 export function isProfileCooldownError(err) {
   return err?.code === 'PROFILE_COOLDOWN';
 }
@@ -82,6 +62,49 @@ export function formatWhatsAppUrl(phone, textMessage = '') {
   const cleanPhone = sanitizeIndianPhone(phone);
   if (!cleanPhone || cleanPhone.length !== 10) return '#';
   return `https://wa.me/91${cleanPhone}${textMessage ? `?text=${encodeURIComponent(textMessage)}` : ''}`;
+}
+
+// Active squads shown on the board (expired ones are kept in the DB but hidden)
+const SQUAD_POSTS_LIMIT = 500;
+const SQUAD_APPS_LIMIT = 1000;
+
+export function normalizeSquadApp(a, userId) {
+  const isApplicant = a.applicant_id === userId;
+  return {
+    ...a,
+    dir: isApplicant ? 'out' : 'in',
+    postId: a.post_id,
+    who: a.applicant_name,
+    meta: a.applicant_college,
+    applicant_name: a.applicant_name,
+    applicant_college: a.applicant_college,
+    applicant_year: a.applicant_year || '',
+    applicant_course: a.applicant_course || '',
+    skills: a.highlighted_skills || [],
+    highlighted_skills: a.highlighted_skills || [],
+    pitch: a.pitch_note,
+    pitch_note: a.pitch_note,
+    phone: a.applicant_phone,
+    applicant_phone: a.applicant_phone,
+    leadPhone: a.lead_phone || '',
+    lead_phone: a.lead_phone || '',
+    comm_method: a.comm_method || 'whatsapp'
+  };
+}
+
+// Contact details live in the private squad_post_contacts table: the lead sees their
+// own (contacts map), accepted members get the lead phone from their application.
+function normalizeSquadPost(p, contacts, leadPhones) {
+  const contact = contacts.get(String(p.id));
+  const acceptedCount = p.accepted_count ?? (Array.isArray(p.accepted_emails) ? p.accepted_emails.length : 0);
+  return {
+    ...p,
+    compId: p.competition_id || p.compId,
+    accepted_count: Number(acceptedCount) || 0,
+    phone_number: contact ? (contact.phone_number || '') : (p.phone_number || ''),
+    created_by_email: contact ? (contact.created_by_email || '') : (p.created_by_email || ''),
+    leadPhone: leadPhones.get(String(p.id)) || '',
+  };
 }
 
 export function AuthProvider({ children }) {
@@ -113,44 +136,22 @@ export function AuthProvider({ children }) {
   const closeRecoveryModal = () => setRecoveryModalOpen(false);
 
   // Bookmarks State (100% real, zero mock data)
-  const [bookmarks, setBookmarks] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_bookmarks');
-      return saved ? JSON.parse(saved).filter(b => !isMockBookmark(b)) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [bookmarks, setBookmarks] = useState([]);
 
   // Squad Posts State (100% real, zero mock data)
-  const [squadPosts, setSquadPosts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_posts');
-      return saved ? JSON.parse(saved).filter(p => !isMockPost(p)) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [squadPosts, setSquadPosts] = useState([]);
 
   // Squad Applications State (100% real, zero mock data)
-  const [squadApps, setSquadApps] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_applications');
-      return saved ? JSON.parse(saved).filter(a => !isMockApp(a)) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [squadApps, setSquadApps] = useState([]);
 
   // Notification States (Cloud-synced across devices via Supabase user_notification_states)
-  const [notificationStates, setNotificationStates] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_user_notification_states');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [notificationStates, setNotificationStates] = useState({});
+
+  // Chat message notifications created by the database (user_notifications)
+  const [messageNotifications, setMessageNotifications] = useState([]);
+
+  // Admin access is decided by the database (app_admins / is_admin())
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Enforce Light Theme & purge legacy dark mode state
   useEffect(() => {
@@ -161,7 +162,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   // Column projections to minimize Supabase egress
-  const SQUAD_POSTS_SELECT = 'id, user_id, created_by_name, created_by_email, competition_name, competition_id, is_custom, expires_at, organizer, competition_link, phone_number, comm_method, title, description, skills_have, skills_looking_for, total_members, spots_left, initial_open_spots, is_open, college, course, year, accepted_emails, created_at, updated_at';
+  // Private squad details used to merge realtime post updates
+  const postContactsRef = useRef(new Map());
+  const leadPhonesRef = useRef(new Map());
   const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_course, applicant_year, pitch_note, highlighted_skills, status, lead_phone, comm_method, created_at, updated_at';
   const PROFILE_SELECT = 'id, email, full_name, college, course, year, phone, bio, education_level, skills, profile_last_updated_at';
 
@@ -185,7 +188,6 @@ export function AuthProvider({ children }) {
 
       // Once a profiles row exists it is the single source of truth (auth metadata is
       // user-writable and not covered by the 24-hour cooldown).
-      if (data) rememberProfileCooldown(userId, data.profile_last_updated_at);
       const resolvedProfile = data ? {
         ...data,
         full_name: data.full_name || '',
@@ -237,9 +239,6 @@ export function AuthProvider({ children }) {
       if (!error && Array.isArray(data)) {
         const ids = data.map(b => String(b.comp_id)).filter(id => !isMockBookmark(id));
         setBookmarks(ids);
-        try {
-          localStorage.setItem('onestop_bookmarks', JSON.stringify(ids));
-        } catch (e) {}
       }
     } catch (err) {
       console.warn('Bookmarks fetch warning:', err.message);
@@ -263,13 +262,37 @@ export function AuthProvider({ children }) {
           };
         });
         setNotificationStates(map);
-        try {
-          localStorage.setItem(`onestop_user_notification_states_${userId}`, JSON.stringify(map));
-          localStorage.setItem('onestop_user_notification_states', JSON.stringify(map));
-        } catch (e) {}
       }
     } catch (err) {
       console.warn('Notification states fetch error:', err.message);
+    }
+  }, []);
+
+  const fetchMessageNotifications = useCallback(async (userId) => {
+    if (!supabase || !userId) return;
+    try {
+      const { data, error } = await supabase
+        .from('user_notifications')
+        .select('id, type, title, message, link, data, created_at')
+        .eq('type', 'new_message')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (!error && Array.isArray(data)) setMessageNotifications(data);
+    } catch (err) {
+      console.warn('Message notifications fetch error:', err.message);
+    }
+  }, []);
+
+  const fetchIsAdmin = useCallback(async (userId) => {
+    if (!supabase || !userId) {
+      setIsAdmin(false);
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc('is_admin');
+      setIsAdmin(!error && data === true);
+    } catch (e) {
+      setIsAdmin(false);
     }
   }, []);
 
@@ -288,68 +311,55 @@ export function AuthProvider({ children }) {
     const fetchPromise = (async () => {
       try {
         lastSquadDataFetchRef.current = Date.now();
-
-        // Fetch squad posts with column projection and row limit (optimized to 40 rows for low egress)
-        const { data: posts, error: postErr } = await supabase
-          .from('squad_posts')
-          .select(SQUAD_POSTS_SELECT)
-          .order('created_at', { ascending: false })
-          .limit(40);
-
-        if (!postErr && Array.isArray(posts)) {
-          const cleanPosts = posts.filter(p => !isMockPost(p)).map(p => ({
-            ...p,
-            compId: p.competition_id || p.compId,
-          }));
-          setSquadPosts(cleanPosts);
-          try {
-            localStorage.setItem('onestop_posts', JSON.stringify(cleanPosts));
-          } catch (e) {}
-        }
-
-        // Fetch applications if user is signed in
         const activeUser = targetUser || userRef.current;
-        if (activeUser?.id) {
-          const { data: apps, error: appErr } = await supabase
-            .from('squad_applications')
-            .select(SQUAD_APPS_SELECT)
-            .order('created_at', { ascending: false })
-            .limit(30);
+        const userId = activeUser?.id || null;
 
-          if (!appErr && Array.isArray(apps)) {
-            const cleanApps = apps
-              .filter(a => !isMockApp(a))
-              .map(a => {
-                const isApplicant = a.applicant_id === activeUser.id;
-                return {
-                  ...a,
-                  dir: isApplicant ? 'out' : 'in',
-                  postId: a.post_id,
-                  who: a.applicant_name,
-                  meta: a.applicant_college,
-                  applicant_name: a.applicant_name,
-                  applicant_college: a.applicant_college,
-                  applicant_year: a.applicant_year || '',
-                  applicant_course: a.applicant_course || '',
-                  skills: a.highlighted_skills || [],
-                  highlighted_skills: a.highlighted_skills || [],
-                  pitch: a.pitch_note,
-                  pitch_note: a.pitch_note,
-                  phone: a.applicant_phone,
-                  applicant_phone: a.applicant_phone,
-                  leadPhone: a.lead_phone || '',
-                  lead_phone: a.lead_phone || '',
-                  comm_method: a.comm_method || 'whatsapp'
-                };
-              });
-            setSquadApps(cleanApps);
-            try {
-              localStorage.setItem('onestop_applications', JSON.stringify(cleanApps));
-            } catch (e) {}
-          }
-        } else {
-          setSquadApps([]);
+        const [publicRes, mineRes, contactsRes, appsRes] = await Promise.all([
+          supabase
+            .from('squad_posts')
+            .select('*')
+            .or(`expires_at.is.null,expires_at.gt."${new Date().toISOString()}"`)
+            .order('created_at', { ascending: false })
+            .limit(SQUAD_POSTS_LIMIT),
+          userId ? supabase.from('squad_posts').select('*').eq('user_id', userId) : null,
+          userId ? supabase.from('squad_post_contacts').select('post_id, phone_number, created_by_email').eq('user_id', userId) : null,
+          userId
+            ? supabase.from('squad_applications').select(SQUAD_APPS_SELECT).order('created_at', { ascending: false }).limit(SQUAD_APPS_LIMIT)
+            : null,
+        ]);
+
+        if (publicRes.error) throw publicRes.error;
+
+        const apps = userId && !appsRes?.error && Array.isArray(appsRes?.data)
+          ? appsRes.data.filter(a => !isMockApp(a)).map(a => normalizeSquadApp(a, userId))
+          : [];
+
+        const contacts = new Map((contactsRes?.data || []).map(c => [String(c.post_id), c]));
+        const leadPhones = new Map(
+          apps
+            .filter(a => a.dir === 'out' && a.status === 'accepted' && a.lead_phone)
+            .map(a => [String(a.post_id), a.lead_phone])
+        );
+        postContactsRef.current = contacts;
+        leadPhonesRef.current = leadPhones;
+
+        const byId = new Map();
+        [...(publicRes.data || []), ...(mineRes?.data || [])].forEach(post => byId.set(post.id, post));
+
+        // Squads the user applied to stay visible to them even after they expire
+        const missingIds = [...new Set(apps.map(a => a.post_id))].filter(id => id && !byId.has(id));
+        if (missingIds.length > 0) {
+          const { data: extra } = await supabase.from('squad_posts').select('*').in('id', missingIds);
+          (extra || []).forEach(post => byId.set(post.id, post));
         }
+
+        const cleanPosts = [...byId.values()]
+          .filter(post => !isMockPost(post))
+          .sort((x, y) => new Date(y.created_at) - new Date(x.created_at))
+          .map(post => normalizeSquadPost(post, contacts, leadPhones));
+
+        setSquadPosts(cleanPosts);
+        setSquadApps(userId ? apps : []);
       } catch (e) {
         console.warn('Could not sync squad data from Supabase:', e.message);
       } finally {
@@ -382,6 +392,8 @@ export function AuthProvider({ children }) {
         fetchUserProfile(currentUser.id, currentUser);
         fetchUserBookmarks(currentUser.id);
         fetchNotificationStates(currentUser.id);
+        fetchMessageNotifications(currentUser.id);
+        fetchIsAdmin(currentUser.id);
         refreshSquadData(currentUser);
         try {
           const pendingId = sessionStorage.getItem('onestop_pending_bookmark_after_auth');
@@ -392,9 +404,6 @@ export function AuthProvider({ children }) {
         } catch (e) {}
       } else {
         setBookmarks([]);
-        try {
-          localStorage.removeItem('onestop_bookmarks');
-        } catch (e) {}
       }
       if (
         typeof window !== 'undefined' &&
@@ -431,6 +440,8 @@ export function AuthProvider({ children }) {
           await fetchUserProfile(currentUser.id, currentUser);
           await fetchUserBookmarks(currentUser.id);
           await fetchNotificationStates(currentUser.id);
+          fetchMessageNotifications(currentUser.id);
+          fetchIsAdmin(currentUser.id);
           refreshSquadData(currentUser, true);
           try {
             const pendingId = sessionStorage.getItem('onestop_pending_bookmark_after_auth');
@@ -445,9 +456,9 @@ export function AuthProvider({ children }) {
           setBookmarks([]);
           setSquadApps([]);
           setNotificationStates({});
-          try {
-            localStorage.removeItem('onestop_bookmarks');
-          } catch (e) {}
+          setMessageNotifications([]);
+          setIsAdmin(false);
+          if (event === 'SIGNED_OUT') purgeUserStorage();
         }
         setAuthLoading(false);
       }
@@ -457,7 +468,7 @@ export function AuthProvider({ children }) {
       isMounted = false;
       subscription?.unsubscribe();
     };
-  }, [fetchUserProfile, fetchUserBookmarks, fetchNotificationStates, refreshSquadData]);
+  }, [fetchUserProfile, fetchUserBookmarks, fetchNotificationStates, fetchMessageNotifications, fetchIsAdmin, refreshSquadData]);
 
   // 5. Initial Squad Data Fetch + Realtime Subscription & Background Sync Across Devices
   useEffect(() => {
@@ -479,12 +490,32 @@ export function AuthProvider({ children }) {
     // Realtime Postgres changes subscription across devices with user-scoped filters to prevent cross-user egress amplification
     let realtimeBuilder = supabase.channel(`public:app_realtime_sync_${activeUserId || 'guest'}`);
 
-    // All clients listen to squad_posts changes
+    // All clients listen to squad_posts changes and patch the one row that changed
     realtimeBuilder = realtimeBuilder.on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'squad_posts' },
-      () => {
-        scheduleDebouncedSync();
+      (payload) => {
+        if (payload.eventType === 'DELETE') {
+          const deletedId = payload.old?.id;
+          if (deletedId) setSquadPosts(prev => prev.filter(p => p.id !== deletedId));
+          return;
+        }
+        const row = payload.new;
+        if (!row?.id || isMockPost(row)) return;
+        const next = normalizeSquadPost(row, postContactsRef.current, leadPhonesRef.current);
+        setSquadPosts(prev => {
+          const idx = prev.findIndex(p => p.id === row.id);
+          if (idx === -1) return [next, ...prev];
+          const copy = [...prev];
+          copy[idx] = {
+            ...prev[idx],
+            ...next,
+            phone_number: next.phone_number || prev[idx].phone_number || '',
+            created_by_email: next.created_by_email || prev[idx].created_by_email || '',
+            leadPhone: next.leadPhone || prev[idx].leadPhone || '',
+          };
+          return copy;
+        });
       }
     );
 
@@ -520,6 +551,18 @@ export function AuthProvider({ children }) {
           },
           () => {
             fetchNotificationStates(activeUserId);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_notifications',
+            filter: `user_id=eq.${activeUserId}`
+          },
+          () => {
+            fetchMessageNotifications(activeUserId);
           }
         )
         .on(
@@ -589,24 +632,7 @@ export function AuthProvider({ children }) {
       }
       supabase.removeChannel(channel);
     };
-  }, [user, refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchUserProfile]);
-
-  // 6. Local Storage Sync Fallback
-  useEffect(() => {
-    if (user || userRef.current) {
-      localStorage.setItem('onestop_bookmarks', JSON.stringify(bookmarks.filter(b => !isMockBookmark(b))));
-    } else {
-      localStorage.removeItem('onestop_bookmarks');
-    }
-  }, [bookmarks, user]);
-
-  useEffect(() => {
-    localStorage.setItem('onestop_posts', JSON.stringify(squadPosts.filter(p => !isMockPost(p))));
-  }, [squadPosts]);
-
-  useEffect(() => {
-    localStorage.setItem('onestop_applications', JSON.stringify(squadApps.filter(a => !isMockApp(a))));
-  }, [squadApps]);
+  }, [user, refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchMessageNotifications, fetchUserProfile]);
 
   // Modal Open/Close Controls
   const openAuthModal = (options = {}) => {
@@ -694,23 +720,16 @@ export function AuthProvider({ children }) {
         console.warn('Sign out error:', err);
       }
     }
-    const oldUserId = userRef.current?.id || user?.id;
     userRef.current = null;
     setUser(null);
     setSession(null);
     setProfile(null);
     setBookmarks([]);
     setSquadApps([]);
-    try {
-      localStorage.removeItem('onestop_applications');
-      localStorage.removeItem('onestop_bookmarks');
-      localStorage.removeItem('onestop_user_profile');
-      if (oldUserId) {
-        localStorage.removeItem(`onestop_profile_last_updated_${oldUserId}`);
-        localStorage.removeItem(`onestop_user_notification_states_${oldUserId}`);
-      }
-      localStorage.removeItem('onestop_user_notification_states');
-    } catch (e) {}
+    setNotificationStates({});
+    setMessageNotifications([]);
+    setIsAdmin(false);
+    purgeUserStorage();
   };
 
   const resetPassword = async (email) => {
@@ -809,38 +828,13 @@ export function AuthProvider({ children }) {
       throw new Error(authErr.message || 'Incorrect password. Verification failed.');
     }
 
-    const userId = user.id;
-
     // 2. Perform account deletion via RPC
     const { error: rpcErr } = await supabase.rpc('delete_user_account');
     if (rpcErr) {
+      // Never report success unless the login itself was deleted server-side
       console.warn('Account deletion RPC issue:', rpcErr);
-      // If RPC is missing or fails due to missing function, attempt best-effort fallback on public tables
-      if (rpcErr.code === 'PGRST202' || rpcErr.message?.includes('does not exist')) {
-        try {
-          await supabase.from('bookmarks').delete().eq('user_id', userId);
-        } catch (e) {}
-        try {
-          await supabase.from('squad_applications').delete().eq('applicant_id', userId);
-        } catch (e) {}
-        try {
-          await supabase.from('squad_posts').delete().eq('user_id', userId);
-        } catch (e) {}
-        try {
-          await supabase.from('user_notification_states').delete().eq('user_id', userId);
-        } catch (e) {}
-        try {
-          await supabase.from('user_notifications').delete().eq('user_id', userId);
-        } catch (e) {}
-        try {
-          await supabase.from('squad_messages').delete().eq('sender_id', userId);
-        } catch (e) {}
-        try {
-          await supabase.from('profiles').delete().eq('id', userId);
-        } catch (e) {}
-      } else {
-        throw new Error(rpcErr.message || 'Failed to delete account. Please try again.');
-      }
+      trackEvent('auth_account_deletion_failed', { error: rpcErr.message });
+      throw new Error('We could not delete your account right now. Nothing was removed. Please try again later.');
     }
 
     trackEvent('auth_account_deletion_success');
@@ -935,7 +929,6 @@ export function AuthProvider({ children }) {
       if (saveErr.hint === 'PROFILE_COOLDOWN') {
         // Another tab/device saved first: adopt the server's timestamp so the lock UI shows
         const serverLastUpdated = saveErr.details || new Date().toISOString();
-        rememberProfileCooldown(user.id, serverLastUpdated);
         setProfile((prev) => (prev ? { ...prev, profile_last_updated_at: serverLastUpdated } : prev));
         const cd = getProfileCooldown({ profile_last_updated_at: serverLastUpdated }, user);
         const err = new Error(`Profile details can only be updated once every 24 hours. Cooldown remaining: ${cd.remainingFormatted}.`);
@@ -947,7 +940,6 @@ export function AuthProvider({ children }) {
     }
 
     const serverLastUpdated = saved?.profile_last_updated_at || null;
-    rememberProfileCooldown(user.id, serverLastUpdated);
 
     // 3. Mirror display fields into auth metadata (best effort, never authoritative)
     supabase.auth.updateUser({ data: { full_name: trimmedName, college: trimmedCollege } })
@@ -976,9 +968,6 @@ export function AuthProvider({ children }) {
       hasBio: Boolean(trimmedBio),
       hasPhone: Boolean(cleanPhone),
     });
-    try {
-      localStorage.setItem('onestop_user_profile', JSON.stringify(merged));
-    } catch (e) {}
     return merged;
   };
 
@@ -1012,7 +1001,6 @@ export function AuthProvider({ children }) {
 
     // Optimistic UI update
     setBookmarks(nextBookmarks);
-    localStorage.setItem('onestop_bookmarks', JSON.stringify(nextBookmarks));
 
     // Persist to Supabase if authenticated
     if (supabase && activeUser) {
@@ -1077,7 +1065,6 @@ export function AuthProvider({ children }) {
       college: (profile?.college || user?.user_metadata?.college || postData.college || '').trim(),
       course: postData.course || profile?.course || user?.user_metadata?.course || '',
       year: normalizeYear(profile?.year || user?.user_metadata?.year || postData.year),
-      accepted_emails: [],
     };
 
     if (supabase) {
@@ -1092,8 +1079,10 @@ export function AuthProvider({ children }) {
         throw error;
       }
 
-      setSquadPosts(prev => [data, ...prev].filter(p => !isMockPost(p)));
-      localStorage.setItem('onestop_posts', JSON.stringify([data, ...squadPosts].filter(p => !isMockPost(p))));
+      const contact = { phone_number: payload.comm_method === 'chat' ? '' : payload.phone_number, created_by_email: creatorEmail };
+      postContactsRef.current.set(String(data.id), contact);
+      const created = normalizeSquadPost(data, postContactsRef.current, leadPhonesRef.current);
+      setSquadPosts(prev => [created, ...prev.filter(p => p.id !== created.id)].filter(p => !isMockPost(p)));
       trackEvent('squad_post_created', {
         post_id: data.id,
         competition_name: postData.competition_name,
@@ -1102,7 +1091,7 @@ export function AuthProvider({ children }) {
         skills_looking_for: postData.skills_looking_for || [],
         college: payload.college,
       });
-      return data;
+      return created;
     }
 
     throw new Error('Backend database not connected.');
@@ -1117,7 +1106,7 @@ export function AuthProvider({ children }) {
     const currentPost = squadPosts.find(p => p.id === postId);
     if (!currentPost) throw new Error('Squad post not found.');
 
-    const acceptedEmails = Array.isArray(currentPost.accepted_emails) ? currentPost.accepted_emails : [];
+    const acceptedCount = Number(currentPost.accepted_count) || 0;
     const spotsLeft = Number(updatedData.spots_left !== undefined ? updatedData.spots_left : (currentPost.spots_left || 1));
     const totalMembers = Number(updatedData.total_members !== undefined ? updatedData.total_members : (currentPost.total_members || 4));
 
@@ -1136,7 +1125,7 @@ export function AuthProvider({ children }) {
       skills_looking_for: updatedData.skills_looking_for !== undefined ? updatedData.skills_looking_for : (currentPost.skills_looking_for || []),
       total_members: totalMembers,
       spots_left: spotsLeft,
-      initial_open_spots: spotsLeft + acceptedEmails.length,
+      initial_open_spots: spotsLeft + acceptedCount,
       is_open: spotsLeft > 0,
       updated_at: new Date().toISOString()
     };
@@ -1161,8 +1150,14 @@ export function AuthProvider({ children }) {
         total_members: updatePayload.total_members,
       });
 
-      setSquadPosts(prev => prev.map(p => p.id === postId ? data : p));
-      return data;
+      const nextComm = updatePayload.comm_method;
+      postContactsRef.current.set(String(postId), {
+        ...(postContactsRef.current.get(String(postId)) || {}),
+        phone_number: nextComm === 'chat' ? '' : (updatePayload.phone_number || ''),
+      });
+      const edited = normalizeSquadPost(data, postContactsRef.current, leadPhonesRef.current);
+      setSquadPosts(prev => prev.map(p => p.id === postId ? edited : p));
+      return edited;
     }
 
     throw new Error('Backend database not connected.');
@@ -1197,6 +1192,18 @@ export function AuthProvider({ children }) {
       status: 'pending',
     };
 
+    // One application per squad: a declined/removed one is re-opened instead of duplicated
+    const existingApp = squadApps.find(a => a.post_id === appData.post_id && a.applicant_id === user.id);
+    if (existingApp) {
+      if (existingApp.status === 'pending' || existingApp.status === 'accepted') {
+        throw new Error("You've already applied to this squad.");
+      }
+      const lockedFields = ['post_id', 'applicant_id', 'applicant_email', 'status'];
+      const editable = Object.fromEntries(Object.entries(payload).filter(([k]) => !lockedFields.includes(k)));
+      await reapplyToSquad(existingApp.id, editable);
+      return { ...existingApp, ...normalizeSquadApp({ ...existingApp, ...editable, status: 'pending' }, user.id) };
+    }
+
     if (supabase) {
       const { data, error } = await supabase
         .from('squad_applications')
@@ -1206,7 +1213,8 @@ export function AuthProvider({ children }) {
 
       if (error) {
         console.error('Error submitting application to Supabase:', error);
-        throw error;
+        if (error.code === '23505') throw new Error("You've already applied to this squad.");
+        throw new Error(error.message || 'Could not submit your application.');
       }
 
       const normalizedApp = {
@@ -1229,7 +1237,6 @@ export function AuthProvider({ children }) {
       };
 
       setSquadApps(prev => [normalizedApp, ...prev].filter(a => !isMockApp(a)));
-      localStorage.setItem('onestop_applications', JSON.stringify([normalizedApp, ...squadApps].filter(a => !isMockApp(a))));
       trackEvent('squad_apply_submitted', {
         post_id: appData.post_id,
         applicant_name: applicantName,
@@ -1247,7 +1254,6 @@ export function AuthProvider({ children }) {
     const prevApps = squadApps;
     const prevPosts = squadPosts;
 
-    const applicantEmail = targetApp?.applicant_email;
     const targetPostId = targetApp?.post_id;
     const targetPost = squadPosts.find(p => p.id === targetPostId);
 
@@ -1256,39 +1262,31 @@ export function AuthProvider({ children }) {
       prev.map(app => (app.id === appId ? { ...app, status: newStatus } : app))
     );
 
-    // Optimistically update squad_posts if accepting or removing a member
-    if (newStatus === 'accepted' && targetPost && applicantEmail) {
+    // Optimistically update the squad's spots / member count
+    const wasAccepted = targetApp?.status === 'accepted';
+    if (newStatus === 'accepted' && targetPost && !wasAccepted) {
       setSquadPosts(prev =>
         prev.map(post => {
-          if (post.id === targetPostId) {
-            const currentAccepted = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
-            const nextAccepted = currentAccepted.includes(applicantEmail) ? currentAccepted : [...currentAccepted, applicantEmail];
-            const nextSpots = Math.max(0, (post.spots_left !== undefined ? post.spots_left : 1) - 1);
-            return {
-              ...post,
-              spots_left: nextSpots,
-              is_open: nextSpots > 0,
-              accepted_emails: nextAccepted,
-            };
-          }
-          return post;
+          if (post.id !== targetPostId) return post;
+          const nextSpots = Math.max(0, (post.spots_left !== undefined ? post.spots_left : 1) - 1);
+          return {
+            ...post,
+            spots_left: nextSpots,
+            is_open: nextSpots > 0,
+            accepted_count: (Number(post.accepted_count) || 0) + 1,
+          };
         })
       );
-    } else if (newStatus === 'removed' && targetPost && applicantEmail) {
+    } else if (newStatus !== 'accepted' && targetPost && wasAccepted) {
       setSquadPosts(prev =>
         prev.map(post => {
-          if (post.id === targetPostId) {
-            const currentAccepted = Array.isArray(post.accepted_emails) ? post.accepted_emails : [];
-            const nextAccepted = currentAccepted.filter(e => e !== applicantEmail);
-            const nextSpots = Math.min(post.total_members || 4, (post.spots_left || 0) + 1);
-            return {
-              ...post,
-              spots_left: nextSpots,
-              is_open: true,
-              accepted_emails: nextAccepted,
-            };
-          }
-          return post;
+          if (post.id !== targetPostId) return post;
+          return {
+            ...post,
+            spots_left: Math.min(post.total_members || 4, (post.spots_left || 0) + 1),
+            is_open: true,
+            accepted_count: Math.max(0, (Number(post.accepted_count) || 0) - 1),
+          };
         })
       );
     }
@@ -1431,7 +1429,6 @@ export function AuthProvider({ children }) {
     const sId = String(notifId);
     setNotificationStates(prev => {
       const next = { ...prev, [sId]: { ...(prev[sId] || {}), is_read: true } };
-      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
       return next;
     });
 
@@ -1461,7 +1458,6 @@ export function AuthProvider({ children }) {
         const sId = String(id);
         next[sId] = { ...(next[sId] || {}), is_read: true };
       });
-      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
       return next;
     });
 
@@ -1488,7 +1484,6 @@ export function AuthProvider({ children }) {
     const sId = String(notifId);
     setNotificationStates(prev => {
       const next = { ...prev, [sId]: { ...(prev[sId] || {}), is_dismissed: true, is_read: true } };
-      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
       return next;
     });
 
@@ -1518,7 +1513,6 @@ export function AuthProvider({ children }) {
         const sId = String(id);
         next[sId] = { ...(next[sId] || {}), is_dismissed: true, is_read: true };
       });
-      localStorage.setItem('onestop_user_notification_states', JSON.stringify(next));
       return next;
     });
 
@@ -1586,6 +1580,8 @@ export function AuthProvider({ children }) {
         deleteSquadPost,
         refreshSquadData,
         notificationStates,
+        messageNotifications,
+        isAdmin,
         markNotificationRead,
         markAllNotificationsRead,
         dismissNotification,

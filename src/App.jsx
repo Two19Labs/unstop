@@ -1,16 +1,13 @@
 // src/App.jsx
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth, formatWhatsAppUrl, sanitizeIndianPhone } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
 import CompetitionsPage from './components/CompetitionsPage';
 import NotificationCenter from './components/NotificationCenter';
 import DetailDrawer from './components/DetailDrawer';
-import TeamFinderScreen from './components/TeamFinderScreen';
 import PostSquadModal from './components/PostSquadModal';
 import ApplyModal from './components/ApplyModal';
-import RequestsScreen from './components/RequestsScreen';
-import ProfileScreen from './components/ProfileScreen';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
 import SetNewPasswordModal from './components/SetNewPasswordModal';
@@ -18,10 +15,7 @@ import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
 import InstallShortcutPopup from './components/InstallShortcutPopup';
-import WalkthroughModal from './components/WalkthroughModal';
 import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
-import AdminConsolePage from './components/AdminConsolePage';
-import { isAdminEmail } from './lib/admin';
 import { sendPresencePing, initGlobalPresence } from './lib/presenceService';
 import { useCompetitionRounds } from './hooks/useCompetitionRounds';
 import { isEligibleForUndergrad, checkIsPostgraduate } from './utils/eligibilityUtils';
@@ -37,6 +31,13 @@ import {
 import { trackScreenView, trackEvent } from './lib/posthog';
 
 import './App.css';
+
+// Heavy screens load on first use to keep the initial bundle small
+const AdminConsolePage = lazy(() => import('./components/AdminConsolePage'));
+const TeamFinderScreen = lazy(() => import('./components/TeamFinderScreen'));
+const RequestsScreen = lazy(() => import('./components/RequestsScreen'));
+const ProfileScreen = lazy(() => import('./components/ProfileScreen'));
+const WalkthroughModal = lazy(() => import('./components/WalkthroughModal'));
 
 const EMPTY_PROFILE = {
   name: '',
@@ -369,14 +370,8 @@ function OneStopInner() {
   }, [user, authToggleBookmark, openAuthModal, flash]);
 
   // Squad Posts State (100% real Supabase squad posts)
-  const [localPosts, setLocalPosts] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_posts');
-      return saved ? JSON.parse(saved).filter(p => !isMockPost(p)) : [];
-    } catch {
-      return [];
-    }
-  });
+  // In-memory only: optimistic copies while a save is in flight (never persisted)
+  const [localPosts, setLocalPosts] = useState([]);
 
   const posts = useMemo(() => {
     const remote = Array.isArray(authSquadPosts) ? authSquadPosts : [];
@@ -384,21 +379,8 @@ function OneStopInner() {
     return [...localOnly, ...remote].filter(p => !isMockPost(p));
   }, [authSquadPosts, localPosts]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('onestop_posts', JSON.stringify(posts.filter(p => !isMockPost(p))));
-    } catch (e) {}
-  }, [posts]);
-
   // Squad Applications State (100% real Supabase squad applications)
-  const [localApplications, setLocalApplications] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_applications');
-      return saved ? JSON.parse(saved).filter(a => !isMockApp(a)) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [localApplications, setLocalApplications] = useState([]);
 
   const applications = useMemo(() => {
     const remote = Array.isArray(authSquadApps) ? authSquadApps : [];
@@ -406,40 +388,13 @@ function OneStopInner() {
     return (user ? [...localOnly, ...remote] : localApplications).filter(a => !isMockApp(a));
   }, [user, authSquadApps, localApplications]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('onestop_applications', JSON.stringify(applications.filter(a => !isMockApp(a))));
-    } catch (e) {}
-  }, [applications]);
-
   // Profile State (zero mock data)
-  const [profile, setProfile] = useState(() => {
-    try {
-      const saved = localStorage.getItem('onestop_user_profile');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (
-          parsed.phone === '7007679485' ||
-          (parsed.college && (parsed.college.includes('SSCBS') || parsed.college.includes('Shaheed Sukhdev')))
-        ) {
-          localStorage.removeItem('onestop_user_profile');
-          return EMPTY_PROFILE;
-        }
-        return parsed;
-      }
-      return EMPTY_PROFILE;
-    } catch {
-      return EMPTY_PROFILE;
-    }
-  });
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
 
   // Sync profile when Supabase profile loads or when user signs in / out
   useEffect(() => {
     if (!user) {
       setProfile(EMPTY_PROFILE);
-      try {
-        localStorage.removeItem('onestop_user_profile');
-      } catch (e) {}
       return;
     }
 
@@ -459,9 +414,6 @@ function OneStopInner() {
         profile_last_updated_at: authProfile.profile_last_updated_at || null,
       };
       setProfile(resolved);
-      try {
-        localStorage.setItem('onestop_user_profile', JSON.stringify(resolved));
-      } catch (e) {}
     } else if (user && user.email) {
       const initial = {
         ...EMPTY_PROFILE,
@@ -486,12 +438,7 @@ function OneStopInner() {
       ...(profile || {}),
       ...updatedData,
     };
-    const applyLocally = (next) => {
-      setProfile(next);
-      try {
-        localStorage.setItem('onestop_user_profile', JSON.stringify(next));
-      } catch (e) {}
-    };
+    const applyLocally = (next) => setProfile(next);
 
     if (!authUpdateProfile) {
       applyLocally(resolvedUpdated);
@@ -505,7 +452,7 @@ function OneStopInner() {
       const saved = await authUpdateProfile({
         fullName: updatedData.name,
         college: updatedData.college,
-        course: '',
+        course: updatedData.course || '',
         year: yr,
         phone: updatedData.phone,
         skills: updatedData.skills || [],
@@ -1172,18 +1119,8 @@ function OneStopInner() {
   };
 
   // Derived Counts for Sidebar Badges
-  const totalNewAlerts = useMemo(() => {
-    try {
-      const stored = localStorage.getItem('onestop_saved_alerts');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          return parsed.reduce((acc, a) => acc + (a.fresh || 0), 0);
-        }
-      }
-    } catch (e) {}
-    return 0;
-  }, []);
+  // Legacy saved-alerts badge (feature removed; nothing is stored in the browser anymore)
+  const totalNewAlerts = 0;
   const pendingInboxCount = applications.filter(a => a.dir === 'in' && a.status === 'pending').length;
 
   // Detail Drawer Target Competition
@@ -1241,11 +1178,13 @@ function OneStopInner() {
 
       {/* Main Screen Content */}
       {screen === 'admin' ? (
-        <AdminConsolePage
-          onBack={() => handleNavigate('home')}
-          user={user}
-          profile={authProfile || profile}
-        />
+        <Suspense fallback={null}>
+          <AdminConsolePage
+            onBack={() => handleNavigate('home')}
+            user={user}
+            profile={authProfile || profile}
+          />
+        </Suspense>
       ) : isBrowseMode ? (
         <CompetitionsPage
           key={screen}
@@ -1280,48 +1219,50 @@ function OneStopInner() {
           }
         />
       ) : screen === 'teams' ? (
-        <TeamFinderScreen
-          key="teams"
-          onBack={() => handleNavigate('home')}
-          onNavigate={handleNavigate}
-          posts={posts}
-          competitions={visibleCompetitions}
-          profile={profile}
-          applications={applications}
-          user={user}
-          onOpenPostSquad={handleOpenCreateSquad}
-          onOpenEditSquad={handleOpenEditSquad}
-          onOpenApply={handleOpenApply}
-          onOpenWhatsApp={handleOpenWhatsApp}
-          onGoRequests={() => handleNavigate('requests')}
-          onTogglePostOpen={handleTogglePostOpen}
-          onDeleteSquadPost={handleDeleteSquadPost}
-          onAcceptApp={handleAcceptApp}
-          onDeclineApp={handleDeclineApp}
-          onUndoDeclineApp={handleUndoDeclineApp}
-          onRemoveApp={handleRemoveApp}
-          onWithdrawApp={handleWithdrawApp}
-          showToast={flash}
-          onSubmitPost={handleSubmitPost}
-          tab={teamFinderTab}
-          onTabChange={setTeamFinderTab}
-          headerAction={
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <NotificationCenter
-                applications={applications}
-                competitions={visibleCompetitions}
-                bookmarks={bookmarks}
-                posts={posts}
-                profile={profile}
-                roundsMap={roundsMap}
-                onOpenWhatsApp={handleOpenWhatsApp}
-                onOpenDetail={(id) => setDetailCompId(id)}
-                onNavigate={handleNavigate}
-                onToggleBookmark={handleToggleBookmark}
-              />
-            </div>
-          }
-        />
+        <Suspense fallback={null}>
+          <TeamFinderScreen
+            key="teams"
+            onBack={() => handleNavigate('home')}
+            onNavigate={handleNavigate}
+            posts={posts}
+            competitions={visibleCompetitions}
+            profile={profile}
+            applications={applications}
+            user={user}
+            onOpenPostSquad={handleOpenCreateSquad}
+            onOpenEditSquad={handleOpenEditSquad}
+            onOpenApply={handleOpenApply}
+            onOpenWhatsApp={handleOpenWhatsApp}
+            onGoRequests={() => handleNavigate('requests')}
+            onTogglePostOpen={handleTogglePostOpen}
+            onDeleteSquadPost={handleDeleteSquadPost}
+            onAcceptApp={handleAcceptApp}
+            onDeclineApp={handleDeclineApp}
+            onUndoDeclineApp={handleUndoDeclineApp}
+            onRemoveApp={handleRemoveApp}
+            onWithdrawApp={handleWithdrawApp}
+            showToast={flash}
+            onSubmitPost={handleSubmitPost}
+            tab={teamFinderTab}
+            onTabChange={setTeamFinderTab}
+            headerAction={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <NotificationCenter
+                  applications={applications}
+                  competitions={visibleCompetitions}
+                  bookmarks={bookmarks}
+                  posts={posts}
+                  profile={profile}
+                  roundsMap={roundsMap}
+                  onOpenWhatsApp={handleOpenWhatsApp}
+                  onOpenDetail={(id) => setDetailCompId(id)}
+                  onNavigate={handleNavigate}
+                  onToggleBookmark={handleToggleBookmark}
+                />
+              </div>
+            }
+          />
+        </Suspense>
       ) : (
         <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
           {/* Top-Right Notification Center (for screens that don't embed it in their header) */}
@@ -1383,35 +1324,39 @@ function OneStopInner() {
             )}
 
             {screen === 'requests' && (
-              <RequestsScreen
-                applications={applications}
-                posts={posts}
-                competitions={visibleCompetitions}
-                user={user}
-                profile={profile}
-                onAccept={handleAcceptApp}
-                onDecline={handleDeclineApp}
-                onRemove={handleRemoveApp}
-                onWithdraw={handleWithdrawApp}
-                onOpenWhatsApp={handleOpenWhatsApp}
-              />
+              <Suspense fallback={null}>
+                <RequestsScreen
+                  applications={applications}
+                  posts={posts}
+                  competitions={visibleCompetitions}
+                  user={user}
+                  profile={profile}
+                  onAccept={handleAcceptApp}
+                  onDecline={handleDeclineApp}
+                  onRemove={handleRemoveApp}
+                  onWithdraw={handleWithdrawApp}
+                  onOpenWhatsApp={handleOpenWhatsApp}
+                />
+              </Suspense>
             )}
 
             {screen === 'profile' && (
-              <ProfileScreen
-                profile={profile}
-                onSaveProfile={handleSaveProfile}
-                user={user}
-                onOpenAuthModal={() => openAuthModal && openAuthModal()}
-                onSignOut={signOut}
-                onChangePassword={changePassword}
-                onResetPassword={resetPassword}
-                onDeleteAccount={deleteAccount}
-                flashToast={flash}
-                onNavigate={handleNavigate}
-                isFromWalkthrough={fromWalkthrough}
-                onOpenWalkthrough={() => setShowWalkthrough(true)}
-              />
+              <Suspense fallback={null}>
+                <ProfileScreen
+                  profile={profile}
+                  onSaveProfile={handleSaveProfile}
+                  user={user}
+                  onOpenAuthModal={() => openAuthModal && openAuthModal()}
+                  onSignOut={signOut}
+                  onChangePassword={changePassword}
+                  onResetPassword={resetPassword}
+                  onDeleteAccount={deleteAccount}
+                  flashToast={flash}
+                  onNavigate={handleNavigate}
+                  isFromWalkthrough={fromWalkthrough}
+                  onOpenWalkthrough={() => setShowWalkthrough(true)}
+                />
+              </Suspense>
             )}
           </div>
 
@@ -1486,12 +1431,16 @@ function OneStopInner() {
       {/* Set New Password Modal (for password recovery email links) */}
       <SetNewPasswordModal />
 
-      {/* Walkthrough Tour Modal */}
-      <WalkthroughModal
-        isOpen={showWalkthrough}
-        onClose={handleCloseWalkthrough}
-        onComplete={handleCompleteWalkthrough}
-      />
+      {/* Walkthrough Tour Modal (downloaded only when opened) */}
+      {showWalkthrough && (
+        <Suspense fallback={null}>
+          <WalkthroughModal
+            isOpen={showWalkthrough}
+            onClose={handleCloseWalkthrough}
+            onComplete={handleCompleteWalkthrough}
+          />
+        </Suspense>
+      )}
 
       {/* Fun Collegiate Boot Screen with Circular Ring Animation & Quotes */}
       {showBootScreen && (

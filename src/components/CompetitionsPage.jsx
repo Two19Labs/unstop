@@ -8,7 +8,6 @@ import Footer from './Footer';
 import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 const trackCaseCompsEvent = () => {};
 
-const LOCAL_STORAGE_KEY = 'onestop_bookmarked_comps';
 const FILTER_PREFS_KEY = 'onestop_user_filter_prefs';
 
 function loadSavedFilterPrefs(userEmail) {
@@ -608,8 +607,6 @@ export default function CompetitionsPage({
     if (typeof isPostgraduate === 'boolean') return isPostgraduate;
     return checkIsPostgraduate(profile);
   }, [isPostgraduate, profile]);
-  const userKeySuffix = user?.email ? `_${user.email.toLowerCase()}` : '';
-  const bookmarksKey = `${LOCAL_STORAGE_KEY}${userKeySuffix}`;
 
   const initialPrefs = useMemo(() => loadSavedFilterPrefs(user?.email), []);
 
@@ -701,21 +698,8 @@ export default function CompetitionsPage({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Bookmarks state with user-scoped storage & fallback
-  const [internalBookmarkedIds, setInternalBookmarkedIds] = useState(() => {
-    try {
-      if (user?.email) {
-        const userKey = `${LOCAL_STORAGE_KEY}_${user.email.toLowerCase()}`;
-        const saved = localStorage.getItem(userKey);
-        if (saved !== null) return JSON.parse(saved).map(String);
-      }
-      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (saved !== null) return JSON.parse(saved).map(String);
-    } catch (err) {
-      console.error('Error reading saved case comp bookmarks:', err);
-    }
-    return [];
-  });
+  // Bookmarks fallback when no bookmarks prop is passed (in memory only; the DB is the source of truth)
+  const [internalBookmarkedIds, setInternalBookmarkedIds] = useState([]);
 
   const bookmarkedIds = useMemo(() => {
     if (!user) return [];
@@ -725,29 +709,14 @@ export default function CompetitionsPage({
     return internalBookmarkedIds;
   }, [user, propBookmarks, internalBookmarkedIds]);
 
-  // Sync bookmarks to localStorage whenever they change (only if user is authenticated)
-  useEffect(() => {
-    if (propBookmarks !== undefined || !user) return;
-    try {
-      localStorage.setItem(bookmarksKey, JSON.stringify(internalBookmarkedIds));
-    } catch (err) {
-      console.error('Error saving case comp bookmarks:', err);
-    }
-  }, [internalBookmarkedIds, bookmarksKey, propBookmarks, user]);
-
   // Hydrate from cloud metadata when user logs in
   useEffect(() => {
     if (!user || propBookmarks !== undefined) return;
     const cloudBookmarks = user.user_metadata?.case_comp_bookmarks;
     if (Array.isArray(cloudBookmarks)) {
       setInternalBookmarkedIds(cloudBookmarks.map(String));
-      try {
-        localStorage.setItem(bookmarksKey, JSON.stringify(cloudBookmarks));
-      } catch (e) {
-        console.error('Failed to cache bookmarks in local storage', e);
-      }
     }
-  }, [user, bookmarksKey, propBookmarks]);
+  }, [user, propBookmarks]);
 
   // Toggle bookmark handler
   const toggleBookmark = useCallback((id, e) => {

@@ -1,6 +1,5 @@
 import React from 'react';
 import OneStopLogo from './OneStopLogo';
-import { isAdminEmail } from '../lib/admin';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({
@@ -54,7 +53,7 @@ export default function Sidebar({
         : 'View & edit details')
     : 'Sign in to access profile';
 
-  const { openAuthModal } = useAuth();
+  const { openAuthModal, isAdmin } = useAuth();
 
   const handleNav = (id) => {
     if (!user && id === 'requests') {
@@ -249,7 +248,7 @@ export default function Sidebar({
           )}
 
           {/* Admin Console (Strictly for aditya.25015@sscbs.du.ac.in, located above profile tag) */}
-          {user && isAdminEmail(user.email) && (
+          {user && isAdmin && (
             <button
               onClick={() => handleNav('admin')}
               style={{

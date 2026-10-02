@@ -19,7 +19,6 @@ export const SCREEN_COLORS = {
   admin: { bg: 'rgba(220, 38, 38, 0.12)', color: '#DC2626', border: 'rgba(220, 38, 38, 0.3)' }
 };
 
-const LOCAL_STORAGE_KEY = 'onestop_active_sessions_v1';
 const PRESENCE_TTL_MS = 60000; // 60 seconds TTL before considering a session inactive
 const HEARTBEAT_INTERVAL_MS = 15000; // 15 seconds heartbeat for real-time responsiveness
 
@@ -67,63 +66,20 @@ let globalCurrentProfile = null;
 let globalCurrentScreen = 'home';
 let lastPresencePingAt = 0;
 
+// The presence channel is readable by anyone holding the public anon key, so the
+// payload carries no personal data. The admin console resolves userId -> profile
+// through the database (admin-only RLS).
 function buildPresencePayload() {
   const sid = getTabSessionId();
-  const isAuth = Boolean(globalCurrentUser && globalCurrentUser.email);
-  const userName =
-    globalCurrentProfile?.full_name ||
-    globalCurrentProfile?.name ||
-    globalCurrentUser?.user_metadata?.full_name ||
-    (globalCurrentUser?.email ? globalCurrentUser.email.split('@')[0] : 'Guest Visitor');
-
-  const userCollege = globalCurrentProfile?.college || (isAuth ? 'College Setup Pending' : 'Visiting OneStop');
-  const userCourse = globalCurrentProfile?.course || '';
-  const userYear = globalCurrentProfile?.year || globalCurrentProfile?.batch || '';
-  const userPhone = globalCurrentProfile?.phone || '';
-
+  const isAuth = Boolean(globalCurrentUser && globalCurrentUser.id);
   return {
     sessionId: sid,
-    userId: globalCurrentUser?.id || sid,
-    email: isAuth ? globalCurrentUser.email : `guest_${sid}@onestop.internal`,
-    name: userName,
-    college: userCollege,
-    course: userCourse,
-    year: userYear,
-    phone: userPhone,
+    userId: isAuth ? globalCurrentUser.id : sid,
     currentScreen: (globalCurrentScreen || 'home').toLowerCase(),
     device: getDeviceType(),
     lastPing: Date.now(),
     isRegistered: isAuth,
-    skills: Array.isArray(globalCurrentProfile?.skills) ? globalCurrentProfile.skills : []
   };
-}
-
-function updateLocalSessions(payload) {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return {};
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    let map = raw ? JSON.parse(raw) : {};
-    if (typeof map !== 'object' || !map) map = {};
-
-    const now = Date.now();
-    if (payload && payload.sessionId) {
-      map[payload.sessionId] = payload;
-    }
-
-    // Retain only sessions active within PRESENCE_TTL_MS
-    const cleanMap = {};
-    Object.keys(map).forEach((k) => {
-      const item = map[k];
-      if (item && Math.abs(now - (Number(item.lastPing) || 0)) <= PRESENCE_TTL_MS) {
-        cleanMap[k] = item;
-      }
-    });
-
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(cleanMap));
-    return cleanMap;
-  } catch {
-    return {};
-  }
 }
 
 export function computeConsolidatedPresence() {
@@ -131,7 +87,6 @@ export function computeConsolidatedPresence() {
   const merged = {};
 
   // 1. Realtime WebSocket channel presence
-  let hasRealtimePresences = false;
   if (activeChannel && typeof activeChannel.presenceState === 'function') {
     try {
       const state = activeChannel.presenceState();
@@ -150,7 +105,6 @@ export function computeConsolidatedPresence() {
                     sessionId: sid,
                     lastPing: pingTime
                   };
-                  hasRealtimePresences = true;
                 }
               }
             });
@@ -168,26 +122,11 @@ export function computeConsolidatedPresence() {
     merged[currentTabPayload.sessionId] = currentTabPayload;
   }
 
-  // 3. Fallback to localStorage active sessions (useful across local tabs or if Realtime is connecting)
-  const localMap = updateLocalSessions(currentTabPayload);
-  if (!hasRealtimePresences) {
-    Object.values(localMap).forEach((p) => {
-      if (p && p.sessionId && Math.abs(now - (Number(p.lastPing) || 0)) <= PRESENCE_TTL_MS) {
-        if (!merged[p.sessionId]) {
-          merged[p.sessionId] = p;
-        }
-      }
-    });
-  }
-
-  // 4. Deduplicate: one card per registered student (by email) or per unique guest session
+  // 3. Deduplicate: one card per registered student (by user id) or per guest session
   const uniqueUsers = {};
   Object.values(merged).forEach((p) => {
     if (!p) return;
-    const isGuest = !p.isRegistered || (p.email && p.email.endsWith('@onestop.internal'));
-    const dedupeKey = isGuest
-      ? (p.sessionId || p.userId)
-      : (p.email || p.userId || p.sessionId).toLowerCase();
+    const dedupeKey = p.isRegistered ? (p.userId || p.sessionId) : (p.sessionId || p.userId);
 
     const existing = uniqueUsers[dedupeKey];
     if (!existing || (Number(p.lastPing) || 0) >= (Number(existing.lastPing) || 0)) {
@@ -234,7 +173,6 @@ export function sendPresencePing(user = globalCurrentUser, profile = globalCurre
   lastPresencePingAt = now;
 
   const payload = buildPresencePayload();
-  updateLocalSessions(payload);
 
   if (activeChannel && typeof activeChannel.track === 'function') {
     try {
@@ -248,12 +186,10 @@ export function sendPresencePing(user = globalCurrentUser, profile = globalCurre
 }
 
 export function initGlobalPresence(user, profile, screen) {
-  if (user) globalCurrentUser = user;
+  // A signed-out tab must stop reporting the previous user's id
+  globalCurrentUser = user || null;
   if (profile) globalCurrentProfile = profile;
   if (screen) globalCurrentScreen = screen;
-
-  const initialPayload = buildPresencePayload();
-  updateLocalSessions(initialPayload);
 
   if (!hasValidCredentials || !supabase) {
     computeConsolidatedPresence();
@@ -328,12 +264,6 @@ export function initGlobalPresence(user, profile, screen) {
         try {
           if (activeChannel && typeof activeChannel.untrack === 'function') {
             activeChannel.untrack();
-          }
-          const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-          if (raw) {
-            const map = JSON.parse(raw);
-            delete map[sid];
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(map));
           }
         } catch (e) {}
       });

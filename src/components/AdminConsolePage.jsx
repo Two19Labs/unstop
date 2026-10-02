@@ -1,6 +1,5 @@
 // src/components/AdminConsolePage.jsx
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { isAdminEmail } from '../lib/admin';
 import { supabase, hasValidCredentials } from '../lib/supabaseClient';
 import {
   subscribeToPresence,
@@ -8,11 +7,12 @@ import {
   SCREEN_LABELS,
   SCREEN_COLORS
 } from '../lib/presenceService';
-import { formatWhatsAppUrl, sanitizeIndianPhone } from '../context/AuthContext';
+import { formatWhatsAppUrl, sanitizeIndianPhone, useAuth } from '../context/AuthContext';
 import './AdminConsolePage.css';
 
 export default function AdminConsolePage({ onBack, user, profile }) {
-  const isAuthorized = isAdminEmail(user?.email);
+  // Decided by the database (app_admins / is_admin()); RLS enforces it server-side too
+  const { isAdmin: isAuthorized } = useAuth();
 
   if (!isAuthorized) {
     return (
@@ -142,11 +142,11 @@ function AdminConsoleContent({ onBack, user, profile }) {
     };
   }, [fetchData]);
 
-  // Online Lookup Map
-  const onlineEmailSet = useMemo(() => {
+  // Online lookup by user id (presence carries no personal data; profiles come from the DB)
+  const onlineUserSet = useMemo(() => {
     const map = new Map();
     onlinePresence.forEach((p) => {
-      if (p.email) map.set(p.email.toLowerCase(), p);
+      if (p.isRegistered && p.userId) map.set(p.userId, p);
     });
     return map;
   }, [onlinePresence]);
@@ -230,12 +230,12 @@ function AdminConsoleContent({ onBack, user, profile }) {
       const colMatch = filterCollege === 'All' || (s.college || '') === filterCollege;
       const standingMatch = filterStanding === 'All' || (s.year || '').includes(filterStanding);
 
-      const isOnline = onlineEmailSet.has((s.email || '').toLowerCase());
+      const isOnline = onlineUserSet.has(s.id);
       const statusMatch = filterStatus === 'All' || (filterStatus === 'online' ? isOnline : !isOnline);
 
       return nameMatch && colMatch && standingMatch && statusMatch;
     });
-  }, [students, searchQuery, filterCollege, filterStanding, filterStatus, onlineEmailSet]);
+  }, [students, searchQuery, filterCollege, filterStanding, filterStatus, onlineUserSet]);
 
   // Export CSV Handler
   const handleExportCSV = () => {
@@ -414,22 +414,22 @@ function AdminConsoleContent({ onBack, user, profile }) {
                       const chipStyle = SCREEN_COLORS[scrKey] || SCREEN_COLORS.home;
 
                       // Find profile for this user if registered
-                      const matchedProfile = students.find(s => s.email && s.email.toLowerCase() === (item.email || '').toLowerCase());
-                      const isGuest = !item.isRegistered || (item.email && item.email.includes('@onestop.internal'));
+                      const matchedProfile = item.isRegistered ? students.find(s => s.id === item.userId) : null;
+                      const isGuest = !item.isRegistered;
                       const displayName = isGuest
                         ? `Guest Visitor (${item.device || 'Web'})`
-                        : (matchedProfile?.full_name || item.name || 'Anonymous Student');
-                      const displayEmail = isGuest ? 'Browsing OneStop · Unregistered' : item.email;
+                        : (matchedProfile?.full_name || 'Anonymous Student');
+                      const displayEmail = isGuest ? 'Browsing OneStop · Unregistered' : (matchedProfile?.email || '');
                       const displayCollege = isGuest
                         ? 'Visiting OneStop'
-                        : (matchedProfile?.college || item.college || 'Setup Pending');
+                        : (matchedProfile?.college || 'Setup Pending');
                       const displayStanding = isGuest
                         ? 'Guest Session'
-                        : (matchedProfile?.year || item.year || 'Setup Pending');
+                        : (matchedProfile?.year || 'Setup Pending');
 
                       return (
                         <tr
-                          key={item.sessionId || item.userId || item.email}
+                          key={item.sessionId || item.userId}
                           onClick={() => setSelectedStudentForInspect(matchedProfile || item)}
                         >
                           <td>
@@ -663,7 +663,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                   </thead>
                   <tbody>
                     {filteredStudents.map((student, idx) => {
-                      const isOnline = onlineEmailSet.has((student.email || '').toLowerCase());
+                      const isOnline = onlineUserSet.has(student.id);
                       const waLink = student.phone
                         ? formatWhatsAppUrl(student.phone, 'Hey! Connecting from OneStop Admin.')
                         : null;
@@ -752,7 +752,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
               {/* Mobile Cards View */}
               <div className="registry-cards-mobile">
                 {filteredStudents.map((student, idx) => {
-                  const isOnline = onlineEmailSet.has((student.email || '').toLowerCase());
+                  const isOnline = onlineUserSet.has(student.id);
                   const waLink = student.phone
                     ? formatWhatsAppUrl(student.phone, 'Hey! Connecting from OneStop Admin.')
                     : null;
@@ -839,8 +839,8 @@ function AdminConsoleContent({ onBack, user, profile }) {
             <div className="drawer-body">
               {(() => {
                 const isSelectedGuest = !selectedStudentForInspect.isRegistered && (!selectedStudentForInspect.id || String(selectedStudentForInspect.id).startsWith('tab_') || (selectedStudentForInspect.email && selectedStudentForInspect.email.includes('@onestop.internal')));
-                const isOnlineNow = onlineEmailSet.has((selectedStudentForInspect.email || '').toLowerCase()) ||
-                  onlinePresence.some(p => p.sessionId === selectedStudentForInspect.sessionId || (p.email && selectedStudentForInspect.email && p.email.toLowerCase() === selectedStudentForInspect.email.toLowerCase()));
+                const isOnlineNow = onlineUserSet.has(selectedStudentForInspect.id) ||
+                  onlinePresence.some(p => p.sessionId === selectedStudentForInspect.sessionId);
 
                 return (
                   <>

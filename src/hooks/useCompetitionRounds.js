@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const STORAGE_CACHE_KEY = 'onestop_comp_rounds_cache_v2';
+const ROUNDS_API_MAX_IDS = 20;
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute client cache
 
 function readStorageCache() {
@@ -81,17 +82,24 @@ export function useCompetitionRounds(competitionIds = []) {
       let combinedData = {};
 
       // 1. Try serverless /api/rounds first (fast and cached at Edge)
-      try {
-        const res = await fetch(`/api/rounds?ids=${missing.join(',')}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            combinedData = { ...json.data };
-          }
-        }
-      } catch (apiErr) {
-        // Fallback continues below
+      // The API accepts at most ROUNDS_API_MAX_IDS ids per request
+      const idChunks = [];
+      for (let i = 0; i < missing.length; i += ROUNDS_API_MAX_IDS) {
+        idChunks.push(missing.slice(i, i + ROUNDS_API_MAX_IDS));
       }
+      const chunkResults = await Promise.all(idChunks.map(async (chunk) => {
+        try {
+          const res = await fetch(`/api/rounds?ids=${chunk.map(encodeURIComponent).join(',')}`);
+          if (!res.ok) return null;
+          const json = await res.json();
+          return json.success && json.data ? json.data : null;
+        } catch (apiErr) {
+          return null; // Fallback continues below
+        }
+      }));
+      chunkResults.forEach((data) => {
+        if (data) combinedData = { ...combinedData, ...data };
+      });
 
       // 2. Direct Supabase fallback for any institutional competitions (inst_*) not returned by /api/rounds
       const instMissing = missing.filter(id => id.startsWith('inst_') && (!combinedData[id] || !combinedData[id].rounds?.length));

@@ -14,12 +14,12 @@ This guide walks you through connecting **Supabase** for the backend database & 
    VITE_SUPABASE_ANON_KEY=your-anon-public-key
    ```
 4. In the Supabase Dashboard, open the **SQL Editor** tab from the left sidebar.
-5. Click **New Query**, open [supabase_schema.sql](file:///c:/Users/adity/Downloads/unstop/supabase_schema.sql), copy its entire contents, paste into the query window, and click **Run**.
-6. This creates:
-   - `profiles`: Linked to `auth.users` with automated profile sync trigger.
-   - `squad_posts`: Teammate recruitment postings with RLS security.
-   - `squad_applications`: Teammate applications.
-   - `bookmarks`: Saved competitions.
+5. Click **New Query**, open `supabase_master_migration.sql`, copy its entire contents, paste into the query window, and click **Run**. It is safe to run again.
+6. This creates every table (profiles, bookmarks, squads, applications, chat, notifications, competitions), the triggers that enforce the profile cooldown, squad rules and chat access, and strict row-level security.
+7. For an **existing** project, run `PROFILE_COOLDOWN_AND_PRIVACY_MIGRATION.sql` and then `SECURITY_HARDENING_MIGRATION.sql` instead.
+8. Do not run anything in `sql_archive/`: those files are outdated and some reopen public access.
+9. The competition scraper (`npm run scan:institutional`) must use the **service_role** key (`SUPABASE_SERVICE_ROLE_KEY` in `.env`), because the competitions table is read-only for the public key.
+10. Admins are listed in the `app_admins` table: `insert into public.app_admins (email) values ('someone@college.edu');`
 
 ---
 

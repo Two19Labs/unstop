@@ -89,7 +89,8 @@ export function generateNotifications({
   bookmarks = [],
   posts = [],
   profile = {},
-  roundsMap = {}
+  roundsMap = {},
+  messageNotifications = []
 }) {
   const notifs = [];
   const dismissedSet = new Set(getDismissedNotificationIds());
@@ -633,6 +634,31 @@ export function generateNotifications({
     info: 1,
     neutral: 0
   };
+
+  // 4. NEW CHAT MESSAGES (created server-side in user_notifications; one row per thread)
+  messageNotifications.forEach((row) => {
+    // A newer message in the same thread gets a new id, so it shows as unread again
+    const notifId = `msg_${row.id}_${new Date(row.created_at).getTime()}`;
+    if (dismissedSet.has(notifId)) return;
+    const count = Number(row.data?.count) || 1;
+    const compName = row.data?.competition_name || 'your squad';
+    notifs.push({
+      id: notifId,
+      type: 'squad_message',
+      category: 'squads',
+      urgency: 'info',
+      title: `💬 ${row.title || 'New message'}${count > 1 ? ` (${count})` : ''}`,
+      subtitle: `${compName} · ${row.message || ''}`,
+      timestamp: row.created_at ? new Date(row.created_at).getTime() : now,
+      data: {
+        postId: row.data?.post_id || null,
+        appId: row.data?.application_id || null,
+      },
+      actions: [
+        { label: 'Open Chat', actionType: 'requests', isPrimary: true }
+      ]
+    });
+  });
 
   notifs.sort((a, b) => {
     const weightDiff = (urgencyWeight[b.urgency] || 0) - (urgencyWeight[a.urgency] || 0);

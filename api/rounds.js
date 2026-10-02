@@ -319,17 +319,33 @@ export async function fetchRoundsForMultipleCompetitions(compIds = []) {
   return results;
 }
 
+const MAX_IDS_PER_REQUEST = 20;
+const VALID_ID_PATTERN = /^[A-Za-z0-9_-]{1,80}$/;
+
 export default async function handler(req, res) {
   try {
     const url = new URL(req.url, 'http://localhost');
     const rawIds = url.searchParams.get('ids') || url.searchParams.get('id') || '';
-    const ids = rawIds.split(',').map(s => s.trim()).filter(Boolean);
+    const ids = [...new Set(rawIds.split(',').map(s => s.trim()).filter(Boolean))];
 
     if (ids.length === 0) {
       return res.status(400).json({
         success: false,
         error: 'Missing required "ids" query parameter (e.g. /api/rounds?ids=1760928,1760303)'
       });
+    }
+
+    // Each id can trigger an outbound Unstop request: cap the fan-out and reject junk ids
+    if (ids.length > MAX_IDS_PER_REQUEST) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(400).json({
+        success: false,
+        error: `Too many ids (max ${MAX_IDS_PER_REQUEST} per request)`
+      });
+    }
+    if (!ids.every(id => VALID_ID_PATTERN.test(id))) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(400).json({ success: false, error: 'Invalid competition id' });
     }
 
     const data = await fetchRoundsForMultipleCompetitions(ids);

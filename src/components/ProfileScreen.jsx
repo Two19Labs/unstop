@@ -81,6 +81,7 @@ function ProfileScreenContent({
 
   const [name, setName] = useState(profile?.name || '');
   const [college, setCollege] = useState(profile?.college || '');
+  const [course, setCourse] = useState(profile?.course || '');
   const [level, setLevel] = useState(initialAcademic.level || '');
   const [yearNum, setYearNum] = useState(initialAcademic.yearNum || '');
   const [phone, setPhone] = useState(profile?.phone || '');
@@ -91,6 +92,7 @@ function ProfileScreenContent({
   const [savedSnapshot, setSavedSnapshot] = useState({
     name: profile?.name || '',
     college: profile?.college || '',
+    course: profile?.course || '',
     level: initialAcademic.level || '',
     yearNum: initialAcademic.yearNum || '',
     phone: profile?.phone || '',
@@ -158,6 +160,7 @@ function ProfileScreenContent({
       const nextSaved = {
         name: profile.name || '',
         college: profile.college || '',
+        course: profile.course || '',
         level: parsed.level || '',
         yearNum: parsed.yearNum || '',
         phone: profile.phone || '',
@@ -165,6 +168,7 @@ function ProfileScreenContent({
       };
       setName(nextSaved.name);
       setCollege(nextSaved.college);
+      setCourse(nextSaved.course);
       setLevel(nextSaved.level);
       setYearNum(nextSaved.yearNum);
       setPhone(nextSaved.phone);
@@ -210,13 +214,14 @@ function ProfileScreenContent({
   const isDirty = useMemo(() => {
     if (name !== savedSnapshot.name) return true;
     if (college !== savedSnapshot.college) return true;
+    if (course !== savedSnapshot.course) return true;
     if (level !== savedSnapshot.level) return true;
     if (yearNum !== savedSnapshot.yearNum) return true;
     if (phone !== savedSnapshot.phone) return true;
     const currentSkillsStr = [...skills].sort().join('|');
     const savedSkillsStr = [...savedSnapshot.skills].sort().join('|');
     return currentSkillsStr !== savedSkillsStr;
-  }, [name, college, level, yearNum, phone, skills, savedSnapshot]);
+  }, [name, college, course, level, yearNum, phone, skills, savedSnapshot]);
 
   // Level switch: validate yearNum against valid options for new level
   const handleLevelChange = (valOrEvent) => {
@@ -237,6 +242,7 @@ function ProfileScreenContent({
   const handleDiscard = () => {
     setName(savedSnapshot.name);
     setCollege(savedSnapshot.college);
+    setCourse(savedSnapshot.course);
     setLevel(savedSnapshot.level);
     setYearNum(savedSnapshot.yearNum);
     setPhone(savedSnapshot.phone);
@@ -272,7 +278,7 @@ function ProfileScreenContent({
     const updatedData = {
       name: name.trim() || 'Student',
       college: college.trim() || '',
-      course: '',
+      course: course.trim(),
       year: computedYear,
       batch: computedYear,
       education_level: isPost ? 'postgraduate' : (level === 'UG' ? 'undergraduate' : ''),
@@ -288,6 +294,7 @@ function ProfileScreenContent({
       setSavedSnapshot({
         name: updatedData.name,
         college: updatedData.college,
+        course: updatedData.course,
         level,
         yearNum,
         phone: updatedData.phone,
@@ -506,6 +513,21 @@ function ProfileScreenContent({
                   value={college}
                   onChange={(val) => setCollege(val)}
                   placeholder="Search college (e.g. SRCC, SSCBS, IIT)..."
+                />
+              </div>
+            </div>
+
+            <div className="profile-fields-row">
+              <div className="profile-field-group">
+                <label className="profile-field-label" htmlFor="profile-course-input">Course</label>
+                <input
+                  id="profile-course-input"
+                  type="text"
+                  className="profile-input"
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                  placeholder="e.g. B.Com (Hons), BMS, B.Tech CSE"
+                  maxLength={80}
                 />
               </div>
             </div>
