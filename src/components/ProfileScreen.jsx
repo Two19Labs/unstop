@@ -10,7 +10,10 @@ import {
   LogOutIcon,
   AlertCircleIcon,
   CloseIcon,
-  BellIcon
+  BellIcon,
+  MailIcon,
+  EyeIcon,
+  EyeOffIcon
 } from './icons';
 import {
   getPushPermission,
@@ -67,6 +70,7 @@ function ProfileScreenContent({
   onSignOut,
   onChangePassword,
   onDeleteAccount,
+  onResetPassword,
   flashToast,
   onNavigate,
   onOpenWalkthrough,
@@ -658,8 +662,9 @@ function ProfileScreenContent({
       {/* Change Password Modal */}
       {isChangePasswordOpen && (
         <ChangePasswordModal
+          user={user}
           onClose={() => setIsChangePasswordOpen(false)}
-          onChangePassword={onChangePassword}
+          onResetPassword={onResetPassword}
           flashToast={flashToast}
         />
       )}
@@ -681,36 +686,72 @@ function ProfileScreenContent({
 // Interactive Modals
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ChangePasswordModal({ onClose, onChangePassword, flashToast }) {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+function ChangePasswordModal({ user, onClose, onResetPassword, flashToast }) {
+  const [email, setEmail] = useState(user?.email || '');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successEmail, setSuccessEmail] = useState(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((c) => c - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
-    if (newPassword.length < 6) {
-      setErrorMsg('Password must be at least 6 characters long.');
+    const targetEmail = (email || '').trim().toLowerCase();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setErrorMsg('Please enter a valid email address.');
       return;
     }
-    if (newPassword !== confirmPassword) {
-      setErrorMsg('Passwords do not match.');
+
+    if (user?.email && targetEmail !== user.email.toLowerCase()) {
+      setErrorMsg(`Please enter your registered OneStop account email (${user.email}).`);
       return;
     }
 
     setLoading(true);
     try {
-      if (onChangePassword) {
-        await onChangePassword(newPassword);
+      if (onResetPassword) {
+        await onResetPassword(targetEmail);
       }
+      setSuccessEmail(targetEmail);
+      setCooldown(60);
       if (flashToast) {
-        flashToast('Password updated successfully');
+        flashToast('Confirmation email sent! Check your inbox.');
       }
-      onClose();
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to update password.');
+      console.error('Password reset request error:', err);
+      let msg = err.message || 'Failed to send confirmation email. Please try again.';
+      if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('over_email_send_rate_limit')) {
+        msg = 'Email rate limit reached. Please wait a few minutes before trying again.';
+      }
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (cooldown > 0 || loading || !successEmail) return;
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      if (onResetPassword) {
+        await onResetPassword(successEmail);
+      }
+      setCooldown(60);
+      if (flashToast) {
+        flashToast('Reset link resent to ' + successEmail);
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to resend confirmation email.');
     } finally {
       setLoading(false);
     }
@@ -728,7 +769,9 @@ function ChangePasswordModal({ onClose, onChangePassword, flashToast }) {
         <div className="profile-modal-header">
           <div>
             <h3 id="change-pwd-title" className="profile-modal-title">Change Password</h3>
-            <p className="profile-modal-subtitle">Update your password to keep your OneStop account secure.</p>
+            <p className="profile-modal-subtitle">
+              Verify your email to securely set a new password for your account.
+            </p>
           </div>
           <button
             type="button"
@@ -740,90 +783,137 @@ function ChangePasswordModal({ onClose, onChangePassword, flashToast }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="profile-modal-form">
-          {errorMsg && (
-            <div className="profile-modal-error-box">
-              <AlertCircleIcon size={15} color="var(--urgency-red)" />
-              <span>{errorMsg}</span>
+        {successEmail ? (
+          <div className="profile-modal-form">
+            <div className="profile-modal-success-box">
+              <div className="profile-modal-success-icon-wrap">
+                <CheckIcon size={20} color="#10B981" />
+              </div>
+              <div className="profile-modal-success-content">
+                <strong>Confirmation email sent!</strong>
+                <p>
+                  We have sent a secure password reset link to <strong>{successEmail}</strong> via Supabase.
+                </p>
+                <p className="profile-modal-hint-text">
+                  Please click the link in that email. Once you click it, you will be redirected here to set your new password.
+                </p>
+              </div>
             </div>
-          )}
 
-          <div className="profile-field-group">
-            <label className="profile-field-label" htmlFor="new-password">New Password</label>
-            <input
-              id="new-password"
-              type="password"
-              required
-              minLength={6}
-              autoFocus
-              className="profile-input"
-              placeholder="Minimum 6 characters"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-          </div>
+            <div className="profile-modal-resend-row">
+              <span className="profile-modal-resend-label">Didn't receive the email?</span>
+              <button
+                type="button"
+                className="profile-modal-link-btn"
+                onClick={handleResend}
+                disabled={cooldown > 0 || loading}
+              >
+                {loading ? 'Resending...' : cooldown > 0 ? `Resend email in ${cooldown}s` : 'Resend confirmation email'}
+              </button>
+            </div>
 
-          <div className="profile-field-group">
-            <label className="profile-field-label" htmlFor="confirm-password">Confirm New Password</label>
-            <input
-              id="confirm-password"
-              type="password"
-              required
-              minLength={6}
-              className="profile-input"
-              placeholder="Re-enter new password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="profile-modal-actions">
+              <button
+                type="button"
+                className="profile-modal-primary-btn"
+                onClick={onClose}
+              >
+                Done
+              </button>
+            </div>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="profile-modal-form">
+            {errorMsg && (
+              <div className="profile-modal-error-box">
+                <AlertCircleIcon size={15} color="var(--urgency-red)" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
-          <div className="profile-modal-actions">
-            <button
-              type="button"
-              className="profile-modal-ghost-btn"
-              onClick={onClose}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="profile-modal-primary-btn"
-              disabled={loading}
-            >
-              {loading ? 'Updating...' : 'Update password'}
-            </button>
-          </div>
-        </form>
+            <div className="profile-modal-info-box">
+              <MailIcon size={16} color="var(--primary)" />
+              <span>
+                To change your password, enter your account email below. We'll send you a confirmation email with a link to choose a new password.
+              </span>
+            </div>
+
+            <div className="profile-field-group">
+              <label className="profile-field-label" htmlFor="change-password-email">
+                Account Email Address
+              </label>
+              <input
+                id="change-password-email"
+                type="email"
+                required
+                autoFocus
+                className="profile-input"
+                placeholder="you@college.edu or gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="profile-modal-actions">
+              <button
+                type="button"
+                className="profile-modal-ghost-btn"
+                onClick={onClose}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="profile-modal-primary-btn"
+                disabled={loading || !email.trim()}
+              >
+                {loading ? 'Sending link...' : 'Send Confirmation Email'}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
 }
 
 function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
-  const [typedEmail, setTypedEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const targetEmail = user?.email || '';
-  const isMatch = typedEmail.trim().toLowerCase() === targetEmail.toLowerCase();
 
   const handleDelete = async (e) => {
     e.preventDefault();
-    if (!isMatch) return;
+    if (!password || password.length < 6) {
+      setErrorMsg('Please enter your current password (min 6 characters).');
+      return;
+    }
 
     setLoading(true);
     setErrorMsg('');
     try {
       if (onDeleteAccount) {
-        await onDeleteAccount();
+        await onDeleteAccount(password);
       }
       if (flashToast) {
         flashToast('Your account has been deleted');
       }
       onClose();
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to delete account. Please try again.');
+      console.error('Account deletion error:', err);
+      let msg = err.message || 'Failed to delete account. Please verify your password.';
+      if (
+        msg.toLowerCase().includes('invalid login credentials') ||
+        msg.toLowerCase().includes('invalid credentials') ||
+        msg.toLowerCase().includes('incorrect password')
+      ) {
+        msg = 'Incorrect password. Please enter your valid current password to confirm account deletion.';
+      }
+      setErrorMsg(msg);
       setLoading(false);
     }
   };
@@ -866,19 +956,40 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
             </p>
           </div>
 
+          <div className="profile-modal-account-pill">
+            <span className="profile-modal-account-label">Deleting account:</span>
+            <strong className="profile-modal-account-value">{targetEmail}</strong>
+          </div>
+
           <div className="profile-field-group">
-            <label className="profile-field-label" htmlFor="delete-confirm-email">
-              To confirm, type your email <strong>{targetEmail}</strong>:
+            <label className="profile-field-label" htmlFor="delete-confirm-password">
+              Current Password <span style={{ color: 'var(--urgency-red)' }}>*</span>
             </label>
-            <input
-              id="delete-confirm-email"
-              type="email"
-              autoFocus
-              className="profile-input"
-              placeholder={targetEmail}
-              value={typedEmail}
-              onChange={(e) => setTypedEmail(e.target.value)}
-            />
+            <div className="profile-password-input-wrap">
+              <input
+                id="delete-confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                autoFocus
+                required
+                minLength={6}
+                className="profile-input profile-password-input"
+                placeholder="Enter your current password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="profile-password-toggle-btn"
+                onClick={() => setShowPassword((prev) => !prev)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOffIcon size={15} /> : <EyeIcon size={15} />}
+              </button>
+            </div>
+            <span className="profile-field-help">
+              You must enter your current password to authorize permanent deletion.
+            </span>
           </div>
 
           <div className="profile-modal-actions">
@@ -893,9 +1004,9 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
             <button
               type="submit"
               className="profile-modal-danger-btn"
-              disabled={!isMatch || loading}
+              disabled={!password || password.length < 6 || loading}
             >
-              {loading ? 'Deleting...' : 'Permanently Delete Account'}
+              {loading ? 'Verifying & deleting...' : 'Permanently Delete Account'}
             </button>
           </div>
         </form>

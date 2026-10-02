@@ -18,11 +18,20 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- Delete public table records (cascades exist, but explicit deletion is safe)
+  -- Delete public table records across all user interactions
   DELETE FROM public.bookmarks WHERE user_id = v_user_id;
   DELETE FROM public.squad_applications WHERE applicant_id = v_user_id;
   DELETE FROM public.squad_posts WHERE user_id = v_user_id;
   DELETE FROM public.user_notification_states WHERE user_id = v_user_id;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_notifications') THEN
+    DELETE FROM public.user_notifications WHERE user_id = v_user_id;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'squad_messages') THEN
+    DELETE FROM public.squad_messages WHERE sender_id = v_user_id;
+  END IF;
+
   DELETE FROM public.profiles WHERE id = v_user_id;
 
   -- Delete user from auth.users (cascading all auth tokens & identities)
@@ -30,5 +39,6 @@ BEGIN
 END;
 $$;
 
--- Grant execution permission to authenticated users
+-- Grant execution permission to authenticated users and service_role
 GRANT EXECUTE ON FUNCTION public.delete_user_account() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_user_account() TO service_role;

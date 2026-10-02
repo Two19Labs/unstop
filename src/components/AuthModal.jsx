@@ -178,7 +178,7 @@ export default function AuthModal() {
         }
       } else if (mode === 'forgot') {
         await resetPassword(email);
-        setSuccessMsg('Password reset link sent to your email! (via Brevo SMTP)');
+        setSuccessMsg(`Confirmation email sent to ${email.trim()}! Check your inbox (and spam folder) and click the link to change your password.`);
       }
     } catch (err) {
       console.error('Auth submit error:', err);

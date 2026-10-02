@@ -371,7 +371,12 @@ export function AuthProvider({ children }) {
           localStorage.removeItem('onestop_bookmarks');
         } catch (e) {}
       }
-      if (typeof window !== 'undefined' && (window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery'))) {
+      if (
+        typeof window !== 'undefined' &&
+        (window.location.hash.includes('type=recovery') ||
+          window.location.search.includes('type=recovery') ||
+          (window.location.hash.includes('access_token') && window.location.hash.includes('recovery')))
+      ) {
         setRecoveryModalOpen(true);
       }
       setAuthLoading(false);
@@ -687,8 +692,12 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
     }
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new Error('Please enter a valid email address.');
+    }
     trackEvent('auth_password_reset_requested');
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
       redirectTo: `${window.location.origin}`,
     });
     if (error) {
@@ -700,11 +709,15 @@ export function AuthProvider({ children }) {
   };
 
   const changePassword = async (newPassword) => {
-    if (!supabase || !user) {
-      throw new Error('You must be signed in to change your password.');
+    if (!supabase) {
+      throw new Error('Supabase credentials missing.');
     }
     if (!newPassword || newPassword.length < 6) {
       throw new Error('Password must be at least 6 characters.');
+    }
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    if (!currentUser && !user) {
+      throw new Error('You must be signed in or follow a valid password reset link to change your password.');
     }
     trackEvent('auth_password_change_attempted');
     const { data, error } = await supabase.auth.updateUser({
@@ -742,14 +755,38 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const deleteAccount = async () => {
+  const deleteAccount = async (currentPassword) => {
     if (!supabase || !user) {
       throw new Error('You must be signed in to delete your account.');
     }
+
+    const cleanPassword = (currentPassword || '').trim();
+    if (!cleanPassword) {
+      throw new Error('Please enter your current password to confirm account deletion.');
+    }
+
     trackEvent('auth_account_deletion_attempted');
+
+    // 1. Verify current password with Supabase Auth
+    const { error: authErr } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: cleanPassword,
+    });
+
+    if (authErr) {
+      console.warn('Password verification failed during account deletion:', authErr.message);
+      if (
+        authErr.message?.toLowerCase().includes('invalid login credentials') ||
+        authErr.message?.toLowerCase().includes('invalid credentials')
+      ) {
+        throw new Error('Incorrect password. Please enter your valid current password to confirm account deletion.');
+      }
+      throw new Error(authErr.message || 'Incorrect password. Verification failed.');
+    }
+
     const userId = user.id;
 
-    // 1. Try deleting via RPC
+    // 2. Perform account deletion via RPC
     const { error: rpcErr } = await supabase.rpc('delete_user_account');
     if (rpcErr) {
       console.warn('Account deletion RPC issue:', rpcErr);
@@ -766,6 +803,12 @@ export function AuthProvider({ children }) {
         } catch (e) {}
         try {
           await supabase.from('user_notification_states').delete().eq('user_id', userId);
+        } catch (e) {}
+        try {
+          await supabase.from('user_notifications').delete().eq('user_id', userId);
+        } catch (e) {}
+        try {
+          await supabase.from('squad_messages').delete().eq('sender_id', userId);
         } catch (e) {}
         try {
           await supabase.from('profiles').delete().eq('id', userId);

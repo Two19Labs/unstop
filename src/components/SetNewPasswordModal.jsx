@@ -60,8 +60,13 @@ export default function SetNewPasswordModal() {
       trackEvent('auth_password_recovery_success');
       setTimeout(() => {
         closeRecoveryModal();
-        // Clean up recovery hash from URL if still present
-        if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+        // Clean up recovery hash and params from URL if still present
+        if (typeof window !== 'undefined' && (
+          window.location.hash.includes('type=recovery') ||
+          window.location.hash.includes('access_token') ||
+          window.location.search.includes('type=recovery') ||
+          window.location.search.includes('code=')
+        )) {
           window.history.replaceState(null, '', window.location.pathname);
         }
       }, 1500);

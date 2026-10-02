@@ -652,6 +652,15 @@ BEGIN
   DELETE FROM public.squad_applications WHERE applicant_id = v_user_id;
   DELETE FROM public.squad_posts WHERE user_id = v_user_id;
   DELETE FROM public.user_notification_states WHERE user_id = v_user_id;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_notifications') THEN
+    DELETE FROM public.user_notifications WHERE user_id = v_user_id;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'squad_messages') THEN
+    DELETE FROM public.squad_messages WHERE sender_id = v_user_id;
+  END IF;
+
   DELETE FROM public.profiles WHERE id = v_user_id;
 
   -- Delete from auth.users (cascades sessions, identities)

@@ -63,6 +63,18 @@ const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile', 'admin'
 function getInitialScreen() {
   try {
     if (typeof window !== 'undefined') {
+      const rawHash = window.location.hash || '';
+      const rawSearch = window.location.search || '';
+      // If user arrives via password recovery or auth callback, stay on home screen so modal displays cleanly
+      if (
+        rawHash.includes('type=recovery') ||
+        rawSearch.includes('type=recovery') ||
+        rawSearch.includes('code=') ||
+        (rawHash.includes('access_token') && rawHash.includes('recovery'))
+      ) {
+        return 'home';
+      }
+
       // 1. Check URL hash (e.g. #browse, #/browse, #teams, #/teams, #requests, #profile)
       if (window.location.hash) {
         const hash = window.location.hash.replace(/^#\/?/, '').split('?')[0].toLowerCase();
@@ -149,6 +161,7 @@ function OneStopInner() {
     openAuthModal,
     signOut,
     changePassword,
+    resetPassword,
     deleteAccount
   } = useAuth();
 
@@ -175,7 +188,10 @@ function OneStopInner() {
         }
       }
     } else if (currentHash !== screen) {
-      window.history.replaceState({ screen }, '', targetHash);
+      const rawHash = window.location.hash;
+      if (!rawHash.includes('access_token') && !rawHash.includes('type=') && !rawHash.includes('error=')) {
+        window.history.replaceState({ screen }, '', targetHash);
+      }
     }
   }, [screen]);
 
@@ -1372,6 +1388,7 @@ function OneStopInner() {
                 onOpenAuthModal={() => openAuthModal && openAuthModal()}
                 onSignOut={signOut}
                 onChangePassword={changePassword}
+                onResetPassword={resetPassword}
                 onDeleteAccount={deleteAccount}
                 flashToast={flash}
                 onNavigate={handleNavigate}
