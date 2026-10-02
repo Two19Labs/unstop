@@ -1392,7 +1392,7 @@ function OneStopInner() {
           isReady={!competitionsLoading}
           minDurationMs={1500}
           maxDurationMs={3000}
-          headline="Fetching live opportunities from Unstop..."
+          headline="Fetching live opportunities..."
           customPuns={GENERAL_PUNS}
           onComplete={handleBootComplete}
         />

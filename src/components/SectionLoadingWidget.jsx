@@ -8,7 +8,7 @@ import './SectionLoadingWidget.css';
 let lastPickedQuote = '';
 
 export default function SectionLoadingWidget({
-  headline = 'Fetching live competitions from Unstop...',
+  headline = 'Fetching live competitions...',
   subtitle = 'Pulling direct listings across DU, IIMs, IITs & premier colleges',
   customPuns = null,
   showPuns = true,

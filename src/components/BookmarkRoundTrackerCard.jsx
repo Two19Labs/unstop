@@ -1,6 +1,6 @@
 // src/components/BookmarkRoundTrackerCard.jsx
 // Pixel-accurate round deadline tracker card for the bookmarks rail
-// Matches the reference design with status-themed pastel backgrounds, clean inner box, and vibrant Unstop blue button
+// Matches the reference design with status-themed pastel backgrounds, clean inner box, and primary action button
 
 import React from 'react';
 import InstitutionLogo from './InstitutionLogo';
@@ -204,7 +204,7 @@ export default function BookmarkRoundTrackerCard({
         <div className="br-next-row br-next-row--empty" aria-hidden="true" />
       )}
 
-      {/* Action Button: Full-width vibrant Unstop royal blue button */}
+      {/* Action Button: Full-width primary action button */}
       <a
         href={portalUrl}
         target="_blank"

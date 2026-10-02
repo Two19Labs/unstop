@@ -2351,78 +2351,32 @@ export default function WalkthroughModal({
 
               {/* Slide 3: Reminders & Radar (Bell Panel) */}
               {currentStep === 3 && (
-                <div
-                  style={{
-                    width: '400px',
-                    zoom: 0.95,
-                    flex: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    gap: '8px'
-                  }}
-                >
+                <div className="walkthrough-reminders-stage">
                   <span
                     data-cue="bell"
+                    className="walkthrough-reminders-bell"
                     style={{
-                      position: 'relative',
-                      width: '38px',
-                      height: '38px',
-                      borderRadius: '9px',
-                      background: nOpen ? '#F2F1ED' : '#FFFFFF',
-                      border: `1px solid ${nOpen ? '#1A1A19' : '#E7E6E2'}`,
-                      color: '#1A1A19',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
                       transform: press.bell,
-                      transition: 'all .15s ease'
+                      background: nOpen ? '#F2F1ED' : '#FFFFFF',
+                      borderColor: nOpen ? '#1A1A19' : '#E7E6E2'
                     }}
                   >
                     <BellIcon size={18} />
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '-5px',
-                        right: '-5px',
-                        background: '#E11D48',
-                        color: '#FFFFFF',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        height: '18px',
-                        minWidth: '18px',
-                        padding: '0 5px',
-                        borderRadius: '999px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        lineHeight: 1,
-                        border: '2px solid #FFFFFF',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-                      }}
-                    >
+                    <span className="walkthrough-reminders-badge">
                       3
                     </span>
                   </span>
 
                   <div
+                    className="walkthrough-reminders-panel"
                     style={{
-                      width: '400px',
                       opacity: nOpen ? 1 : 0,
                       transform: nOpen ? 'translateY(0px) scale(1)' : 'translateY(-8px) scale(0.97)',
-                      transformOrigin: 'top right',
-                      transition:
-                        'opacity .18s cubic-bezier(0.16,1,0.3,1), transform .18s cubic-bezier(0.16,1,0.3,1)',
-                      background: '#FFFFFF',
-                      border: '1px solid #E7E6E2',
-                      borderRadius: '12px',
-                      boxShadow: '0 12px 32px -4px rgba(0,0,0,0.16), 0 4px 12px rgba(0,0,0,0.08)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      overflow: 'hidden'
+                      pointerEvents: nOpen ? 'auto' : 'none'
                     }}
                   >
                     <div
+                      className="walkthrough-reminders-header"
                       style={{
                         padding: '14px 16px 10px',
                         display: 'flex',
@@ -2485,6 +2439,7 @@ export default function WalkthroughModal({
                     </div>
 
                     <div
+                      className="walkthrough-reminders-banner"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -2517,6 +2472,7 @@ export default function WalkthroughModal({
                     </div>
 
                     <div
+                      className="walkthrough-reminders-tabs"
                       style={{
                         display: 'flex',
                         padding: '8px 12px',
@@ -2529,6 +2485,7 @@ export default function WalkthroughModal({
                         <span
                           key={idx}
                           data-cue={tb.cue}
+                          className="walkthrough-reminders-tab"
                           style={{
                             border: `1px solid ${tb.bd}`,
                             padding: '5px 11px',
@@ -2562,10 +2519,11 @@ export default function WalkthroughModal({
                       ))}
                     </div>
 
-                    <div style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                    <div className="walkthrough-reminders-list" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                       {nItems.map((it, idx) => (
                         <div
                           key={idx}
+                          className="walkthrough-reminders-item"
                           style={{
                             padding: '12px 14px',
                             borderBottom: '1px solid #F0EFEB',
