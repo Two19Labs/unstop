@@ -48,7 +48,7 @@ Redesign of `src/components/WalkthroughModal.jsx` (opened from the sidebar "What
 | # | badge | title | description |
 |---|---|---|---|
 | 1 | filters | tell us what you're into | pick circuits, categories, sub-tracks and fee. counts update as you go. |
-| 2 | browse | every competition that fits, in one place | pulled from every major platform and campus portal. undergrad-only, nothing expired, soonest deadlines first. |
+| 2 | browse | every competition that fits, in one place | pulled from every major platform and campus portal. nothing expired, filter however you want. |
 | 3 | bookmarks | every round, counted down | bookmark a competition and we track each round's deadline, not just registration. |
 | 4 | team finder | find teammates from any college | post a squad or request to join one. see the skills each squad needs upfront. |
 | 5 | requests | accepted? whatsapp them, or chat here | open whatsapp in one tap, or keep it on onestop chat if you'd rather not share your number. |

@@ -24,7 +24,7 @@ const SLIDES = [
     id: 'browse',
     badge: 'browse',
     title: 'every competition that fits, in one place',
-    description: 'pulled from every major platform and campus portal. undergrad-only, nothing expired, soonest deadlines first.'
+    description: 'pulled from every major platform and campus portal. nothing expired, filter however you want.'
   },
   {
     id: 'bookmarks',
