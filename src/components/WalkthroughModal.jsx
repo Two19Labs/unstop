@@ -3576,7 +3576,7 @@ export default function WalkthroughModal({
               className="walkthrough-next-btn"
               onClick={handleNext}
             >
-              <span>{isLast ? 'Set up profile' : 'Next'}</span>
+              <span>{isLast ? 'Get started' : 'Next'}</span>
               <ArrowRightIcon size={16} />
             </button>
           </div>

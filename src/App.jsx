@@ -727,12 +727,11 @@ function OneStopInner() {
   const handleCompleteWalkthrough = useCallback(() => {
     try {
       localStorage.setItem('onestop_walkthrough_seen', 'true');
-      sessionStorage.setItem('onestop_from_walkthrough', 'true');
     } catch (e) {}
     setShowWalkthrough(false);
-    setFromWalkthrough(true);
-    handleNavigate('profile');
-    flash('✨ Welcome to OneStop! Complete your profile to unlock catered opportunities.');
+    setFromWalkthrough(false);
+    handleNavigate('home');
+    flash('Welcome to OneStop!');
   }, [flash]);
 
   const handleCloseWalkthrough = useCallback(() => {
@@ -740,6 +739,7 @@ function OneStopInner() {
       localStorage.setItem('onestop_walkthrough_seen', 'true');
     } catch (e) {}
     setShowWalkthrough(false);
+    handleNavigate('home');
   }, []);
 
   // Find Teammates Button from Competition Card
@@ -1173,7 +1173,6 @@ function OneStopInner() {
             title="What is OneStop?"
             aria-label="What is OneStop?"
           >
-            <span className="mobile-what-is-sparkle">✨</span>
             <span>What is OneStop?</span>
           </button>
           <NotificationCenter
