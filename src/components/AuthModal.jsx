@@ -1,8 +1,9 @@
 // src/components/AuthModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { CloseIcon, UsersIcon, CheckIcon, AlertCircleIcon } from './icons';
+import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
+import WhatIsOneStopTour from './WhatIsOneStopTour';
 import { trackEvent } from '../lib/posthog';
 import './AuthModal.css';
 
@@ -42,9 +43,10 @@ export default function AuthModal() {
     resendVerificationEmail
   } = useAuth();
 
-  const [mode, setMode] = useState('signin'); // 'signin' | 'signup' | 'forgot'
+  const [mode, setMode] = useState('signup'); // Default to 'signup' matching redesign
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [college, setCollege] = useState('');
   const [phone, setPhone] = useState('');
@@ -55,6 +57,23 @@ export default function AuthModal() {
   const [successMsg, setSuccessMsg] = useState(null);
   const timerRef = useRef(null);
 
+  // Sync mode with modal config when opened
+  useEffect(() => {
+    if (authModalConfig?.initialTab) {
+      setMode(authModalConfig.initialTab);
+    } else {
+      setMode('signup');
+    }
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    if (authModalOpen) {
+      trackEvent('auth_modal_opened', {
+        title: authModalConfig?.title || 'Create Account',
+        initialTab: authModalConfig?.initialTab || 'signup'
+      });
+    }
+  }, [authModalConfig, authModalOpen]);
+
   // Cooldown countdown for resending verification email
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -63,6 +82,27 @@ export default function AuthModal() {
     }, 1000);
     return () => clearInterval(interval);
   }, [resendCooldown]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!authModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        closeAuthModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [authModalOpen, closeAuthModal]);
+
+  // Clean up timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  if (!authModalOpen) return null;
 
   const handleResendVerification = async () => {
     if (!email || resendCooldown > 0 || resending) return;
@@ -79,49 +119,12 @@ export default function AuthModal() {
     }
   };
 
-  // Sync mode with modal config when opened
-  useEffect(() => {
-    if (authModalConfig?.initialTab) {
-      setMode(authModalConfig.initialTab);
-    }
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    if (authModalOpen) {
-      trackEvent('auth_modal_opened', {
-        title: authModalConfig?.title || 'Sign In',
-        initialTab: authModalConfig?.initialTab || 'signin',
-      });
-    }
-  }, [authModalConfig, authModalOpen]);
-
-  // Clean up timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
-  // Close on Escape key
-  useEffect(() => {
-    if (!authModalOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        closeAuthModal();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [authModalOpen, closeAuthModal]);
-
-  if (!authModalOpen) return null;
-
   const handleGoogleSignIn = async () => {
     setErrorMsg(null);
     setSuccessMsg(null);
     setSubmitting(true);
     try {
       await signInWithGoogle();
-      // Google OAuth will redirect the page
     } catch (err) {
       console.error('Google Auth Error:', err);
       let gMsg = err.message || 'Failed to initiate Google sign in.';
@@ -161,7 +164,7 @@ export default function AuthModal() {
           password,
           fullName,
           college,
-          phone,
+          phone
         });
 
         if (res?.user && res?.session) {
@@ -178,7 +181,7 @@ export default function AuthModal() {
         }
       } else if (mode === 'forgot') {
         await resetPassword(email);
-        setSuccessMsg(`Confirmation email sent to ${email.trim()}! Check your inbox (and spam folder) and click the link to change your password.`);
+        setSuccessMsg('Password reset link sent to your email! (via Brevo SMTP)');
       }
     } catch (err) {
       console.error('Auth submit error:', err);
@@ -197,253 +200,264 @@ export default function AuthModal() {
   };
 
   return (
-    <div className="arena-auth-backdrop" onClick={closeAuthModal}>
+    <div className="onestop-auth-backdrop" onClick={closeAuthModal}>
       <div
-        className="arena-auth-card"
+        className="onestop-auth-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
       >
-        {/* Top Bar with Brand Pill & Close Button */}
-        <div className="arena-auth-top-bar">
-          <div className="arena-auth-brand-pill">
-            <span className="arena-auth-t19">Two19 Labs</span>
-            <span className="arena-auth-divider">/</span>
-            <span className="arena-auth-badge">ONESTOP AUTH</span>
-          </div>
-
-          <button
-            className="arena-auth-close"
-            onClick={closeAuthModal}
-            aria-label="Close modal"
-            type="button"
-          >
-            <CloseIcon size={16} />
-          </button>
+        {/* Left Column: Product Tour Self-Playing */}
+        <div className="onestop-auth-tour-pane">
+          <WhatIsOneStopTour initialStep={6} />
         </div>
 
-        {/* Brand Header */}
-        <div className="arena-auth-header">
-          <div className="arena-auth-logo-wrap">
-            <OneStopLogo height={28} />
-          </div>
-          <h2 id="auth-modal-title" className="arena-auth-title">
-            {mode === 'forgot'
-              ? 'Reset Password'
-              : mode === 'signup'
-              ? (authModalConfig?.title || 'Create Account')
-              : (authModalConfig?.title
-                  ? authModalConfig.title.replace(/^Sign Up to\s+/i, 'Sign In to ')
-                  : 'Sign In to OneStop')}
-          </h2>
-
-          <p className="arena-auth-subtitle">
-            {mode === 'forgot'
-              ? 'Enter your email address to receive a secure recovery link.'
-              : (mode === 'signin' && authModalConfig?.subtitle && /^Create your\s+/i.test(authModalConfig.subtitle))
-              ? authModalConfig.subtitle.replace(/^Create your\s+/i, 'Sign in to your ')
-              : (authModalConfig?.subtitle || 'Access teammate matching, squad recruitment, and WhatsApp coordination.')}
-          </p>
-        </div>
-
-
-        {/* Error / Success Notifications */}
-        {errorMsg && (
-          <div className="arena-auth-alert arena-auth-alert-error">
-            <AlertCircleIcon size={16} />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="arena-auth-alert arena-auth-alert-success">
-            <CheckIcon size={16} />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* Resend verification button when email confirmation is pending or required */}
-        {((errorMsg && errorMsg.toLowerCase().includes('not confirmed')) || (successMsg && successMsg.toLowerCase().includes('verification link'))) && email && (
-          <div style={{ textAlign: 'center', marginTop: '-0.3rem', marginBottom: '0.65rem' }}>
+        {/* Right Column: Sign In / Create Account Form */}
+        <div className="onestop-auth-form-pane">
+          {/* Top Bar: Brand Logo & Close Button */}
+          <div className="onestop-auth-top-row">
+            <OneStopLogo height={24} />
             <button
               type="button"
-              onClick={handleResendVerification}
-              disabled={resending || resendCooldown > 0}
-              className="arena-auth-forgot-btn"
-              style={{ fontSize: '0.82rem', textDecoration: 'underline', color: 'var(--primary)', cursor: 'pointer' }}
+              className="onestop-auth-close-btn"
+              onClick={closeAuthModal}
+              aria-label="Close modal"
+              title="Close modal"
             >
-              {resending ? 'Resending verification...' : resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend verification email'}
+              <CloseIcon size={16} />
             </button>
           </div>
-        )}
 
-        {/* Mode Switcher Tabs (Sign In vs Sign Up) */}
-        {mode !== 'forgot' && (
-          <div className="arena-auth-tabs">
-            <button
-              type="button"
-              className={`arena-auth-tab ${mode === 'signin' ? 'active' : ''}`}
-              onClick={() => {
-                setMode('signin');
-                setErrorMsg(null);
-                setSuccessMsg(null);
-              }}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              className={`arena-auth-tab ${mode === 'signup' ? 'active' : ''}`}
-              onClick={() => {
-                setMode('signup');
-                setErrorMsg(null);
-                setSuccessMsg(null);
-              }}
-            >
-              Create Account
-            </button>
+          {/* Heading & Subtitle */}
+          <div className="onestop-auth-headings">
+            <h2 id="auth-modal-title" className="onestop-auth-title">
+              {mode === 'forgot'
+                ? 'Reset your password'
+                : mode === 'signup'
+                ? (authModalConfig?.title || 'Create your account')
+                : (authModalConfig?.title
+                    ? authModalConfig.title.replace(/^Sign Up to\s+/i, 'Sign in to ')
+                    : 'Sign in to your account')}
+            </h2>
+            <p className="onestop-auth-subtitle">
+              {mode === 'forgot'
+                ? 'Enter your collegiate or personal email to receive a recovery link.'
+                : (authModalConfig?.subtitle || 'Bookmark competitions, track every round, and find a squad.')}
+            </p>
           </div>
-        )}
 
-        {/* 1-Click Google OAuth */}
-        {mode !== 'forgot' && (
-          <div className="arena-auth-social">
-            <button
-              type="button"
-              className="arena-auth-google-btn"
-              onClick={handleGoogleSignIn}
-              disabled={submitting}
-            >
-              <GoogleIcon size={18} />
-              <span>Continue with Google</span>
-            </button>
-
-            <div className="arena-auth-divider-line">
-              <span>or continue with email</span>
+          {/* Segmented Control (Sign in vs Create account) */}
+          {mode !== 'forgot' && (
+            <div className="onestop-auth-segmented">
+              <button
+                type="button"
+                className={`onestop-auth-seg-btn ${mode === 'signin' ? 'active' : ''}`}
+                onClick={() => {
+                  setMode('signin');
+                  setErrorMsg(null);
+                  setSuccessMsg(null);
+                }}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                className={`onestop-auth-seg-btn ${mode === 'signup' ? 'active' : ''}`}
+                onClick={() => {
+                  setMode('signup');
+                  setErrorMsg(null);
+                  setSuccessMsg(null);
+                }}
+              >
+                Create account
+              </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Email & Password Form */}
-        <form onSubmit={handleSubmit} className="arena-auth-form">
-          {mode === 'signup' && (
-            <>
-              <div className="arena-auth-field">
-                <label htmlFor="auth-fullname">Full Name</label>
-                <input
-                  id="auth-fullname"
-                  type="text"
-                  placeholder="e.g. Aditya Sharma"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
+          {/* 1-Click Google OAuth */}
+          {mode !== 'forgot' && (
+            <div>
+              <button
+                type="button"
+                className="onestop-auth-google-btn"
+                onClick={handleGoogleSignIn}
+                disabled={submitting}
+              >
+                <GoogleIcon size={18} />
+                <span>Continue with Google</span>
+              </button>
+
+              <div className="onestop-auth-divider">
+                <span>or with email</span>
               </div>
+            </div>
+          )}
 
-              <div className="arena-auth-row">
-                <div className="arena-auth-field">
-                  <label htmlFor="auth-college">College / University</label>
+          {/* Error / Success Notifications */}
+          {errorMsg && (
+            <div className="onestop-auth-alert onestop-auth-alert-error">
+              <AlertCircleIcon size={16} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="onestop-auth-alert onestop-auth-alert-success">
+              <CheckIcon size={16} />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {/* Resend verification button when email confirmation is pending or required */}
+          {((errorMsg && errorMsg.toLowerCase().includes('not confirmed')) || (successMsg && successMsg.toLowerCase().includes('verification link'))) && email && (
+            <div style={{ textAlign: 'center', marginTop: '-0.2rem', marginBottom: '0.6rem' }}>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resending || resendCooldown > 0}
+                className="onestop-auth-forgot-link"
+                style={{ fontSize: '0.8rem' }}
+              >
+                {resending ? 'Resending verification...' : resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend verification email'}
+              </button>
+            </div>
+          )}
+
+          {/* Email & Password Form */}
+          <form onSubmit={handleSubmit} className="onestop-auth-form">
+            {mode === 'signup' && (
+              <>
+                <div className="onestop-auth-field">
+                  <label htmlFor="auth-fullname">Full name</label>
                   <input
-                    id="auth-college"
+                    id="auth-fullname"
                     type="text"
-                    placeholder="e.g. SRCC, IIT Delhi, SSCBS"
-                    value={college}
-                    onChange={(e) => setCollege(e.target.value)}
-                  />
-                </div>
-
-                <div className="arena-auth-field">
-                  <label htmlFor="auth-phone">WhatsApp Number *</label>
-                  <input
-                    id="auth-phone"
-                    type="tel"
-                    placeholder="10-digit mobile"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    className="onestop-auth-input"
+                    placeholder="e.g. Aditya Sharma"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                     required
                   />
                 </div>
-              </div>
-            </>
-          )}
 
-          <div className="arena-auth-field">
-            <label htmlFor="auth-email">Collegiate / Personal Email</label>
-            <input
-              id="auth-email"
-              type="email"
-              placeholder="you@college.edu or gmail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+                <div className="onestop-auth-grid-2">
+                  <div className="onestop-auth-field">
+                    <label htmlFor="auth-college">College</label>
+                    <input
+                      id="auth-college"
+                      type="text"
+                      className="onestop-auth-input"
+                      placeholder="SRCC, IIT Delhi..."
+                      value={college}
+                      onChange={(e) => setCollege(e.target.value)}
+                    />
+                  </div>
 
-          {mode !== 'forgot' && (
-            <div className="arena-auth-field">
-              <div className="arena-auth-field-header">
-                <label htmlFor="auth-password">Password</label>
-                {mode === 'signin' && (
-                  <button
-                    type="button"
-                    className="arena-auth-forgot-btn"
-                    onClick={() => {
-                      setMode('forgot');
-                      setErrorMsg(null);
-                      setSuccessMsg(null);
-                    }}
-                  >
-                    Forgot password?
-                  </button>
-                )}
-              </div>
+                  <div className="onestop-auth-field">
+                    <label htmlFor="auth-phone">WhatsApp number</label>
+                    <input
+                      id="auth-phone"
+                      type="tel"
+                      className="onestop-auth-input"
+                      placeholder="10-digit mobile"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="onestop-auth-field">
+              <label htmlFor="auth-email">Email</label>
               <input
-                id="auth-password"
-                type="password"
-                placeholder="••••••••"
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="auth-email"
+                type="email"
+                className="onestop-auth-input"
+                placeholder="you@college.edu or gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
-          )}
 
-          <button
-            type="submit"
-            className="arena-auth-submit-btn"
-            disabled={submitting}
-          >
-            {submitting ? (
-              <span className="arena-auth-spinner">Processing...</span>
-            ) : mode === 'signin' ? (
-              'Sign In'
-            ) : mode === 'signup' ? (
-              'Create Account'
-            ) : (
-              'Send Reset Link'
+            {mode !== 'forgot' && (
+              <div className="onestop-auth-field">
+                <div className="onestop-auth-field-header">
+                  <label htmlFor="auth-password">Password</label>
+                  {mode === 'signin' && (
+                    <button
+                      type="button"
+                      className="onestop-auth-forgot-link"
+                      onClick={() => {
+                        setMode('forgot');
+                        setErrorMsg(null);
+                        setSuccessMsg(null);
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+
+                <div className="onestop-auth-password-wrap">
+                  <input
+                    id="auth-password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="onestop-auth-input"
+                    placeholder={mode === 'signup' ? 'At least 6 characters' : 'Enter your password'}
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="onestop-auth-show-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
             )}
-          </button>
-        </form>
 
-        {/* Footer info & toggle back */}
-        <div className="arena-auth-footer">
+            <button
+              type="submit"
+              className="onestop-auth-submit-btn"
+              disabled={submitting}
+            >
+              {submitting ? (
+                'Processing...'
+              ) : mode === 'signin' ? (
+                'Sign in'
+              ) : mode === 'signup' ? (
+                'Create account'
+              ) : (
+                'Send reset link'
+              )}
+            </button>
+          </form>
+
+          {/* Footer note & back button */}
           {mode === 'forgot' ? (
             <button
               type="button"
-              className="arena-auth-back-btn"
+              className="onestop-auth-back-btn"
               onClick={() => {
                 setMode('signin');
                 setErrorMsg(null);
                 setSuccessMsg(null);
               }}
             >
-              ← Back to Sign In
+              ← Back to Sign in
             </button>
           ) : (
-            <p className="arena-auth-terms">
-              By continuing, you agree to Two19 Labs' platform terms. Teammate WhatsApp links are shared strictly for collegiate collaboration.
+            <p className="onestop-auth-terms">
+              By continuing, you agree to Two19 Labs' platform terms. WhatsApp numbers are shared only with teammates you accept.
             </p>
           )}
         </div>

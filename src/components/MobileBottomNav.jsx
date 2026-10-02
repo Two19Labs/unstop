@@ -1,5 +1,5 @@
-// src/components/MobileBottomNav.jsx
 import React from 'react';
+import { useAuth } from '../context/AuthContext';
 import './MobileBottomNav.css';
 
 export default function MobileBottomNav({
@@ -10,6 +10,7 @@ export default function MobileBottomNav({
   profile,
   user = null
 }) {
+  const { openAuthModal } = useAuth();
   const initials = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/).filter(Boolean).map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase() || 'UG'
     : 'UG';
@@ -76,7 +77,19 @@ export default function MobileBottomNav({
       <button
         type="button"
         className={`mobile-nav-item ${isRequests ? 'active' : ''}`}
-        onClick={() => onNavigate('requests')}
+        onClick={() => {
+          if (!user) {
+            if (openAuthModal) {
+              openAuthModal({
+                title: 'Sign In to View Requests',
+                subtitle: 'Bookmark competitions, track every round, and find a squad.',
+                initialTab: 'signin'
+              });
+            }
+            return;
+          }
+          onNavigate('requests');
+        }}
         aria-label="Inbox"
       >
         <div className="mobile-nav-icon-wrap">
@@ -95,7 +108,20 @@ export default function MobileBottomNav({
       <button
         type="button"
         className={`mobile-nav-item ${isProfile ? 'active' : ''}`}
-        onClick={() => onNavigate('profile')}
+        onClick={() => {
+          if (!user) {
+            if (openAuthModal) {
+              openAuthModal({
+                title: 'Create your account',
+                subtitle: 'Bookmark competitions, track every round, and find a squad.',
+                initialTab: 'signup'
+              });
+            }
+            onNavigate('profile');
+            return;
+          }
+          onNavigate('profile');
+        }}
         aria-label="Your Profile"
       >
         <div className="mobile-nav-icon-wrap">

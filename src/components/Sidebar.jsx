@@ -1,7 +1,7 @@
-// src/components/Sidebar.jsx
 import React from 'react';
 import OneStopLogo from './OneStopLogo';
 import { isAdminEmail } from '../lib/admin';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({
   screen,
@@ -54,7 +54,32 @@ export default function Sidebar({
         : 'View & edit details')
     : 'Sign in to access profile';
 
+  const { openAuthModal } = useAuth();
+
   const handleNav = (id) => {
+    if (!user && id === 'requests') {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign In to View Requests',
+          subtitle: 'Bookmark competitions, track every round, and find a squad.',
+          initialTab: 'signin'
+        });
+      }
+      onCloseMobile();
+      return;
+    }
+    if (!user && id === 'profile') {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Create your account',
+          subtitle: 'Bookmark competitions, track every round, and find a squad.',
+          initialTab: 'signup'
+        });
+      }
+      onNavigate('profile');
+      onCloseMobile();
+      return;
+    }
     onNavigate(id);
     onCloseMobile();
   };

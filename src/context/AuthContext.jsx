@@ -586,9 +586,9 @@ export function AuthProvider({ children }) {
   // Modal Open/Close Controls
   const openAuthModal = (options = {}) => {
     setAuthModalConfig({
-      title: options.title || 'Sign in to OneStop',
-      subtitle: options.subtitle || 'Access teammate matching, squad recruitment, and WhatsApp coordination.',
-      initialTab: options.initialTab || 'signin',
+      title: options.title || 'Create your account',
+      subtitle: options.subtitle || 'Bookmark competitions, track every round, and find a squad.',
+      initialTab: options.initialTab || 'signup',
       postLoginAction: options.postLoginAction || null,
     });
     setAuthModalOpen(true);

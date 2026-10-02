@@ -241,7 +241,7 @@ function ProfileScreenContent({
     setShowCooldownNotice(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // 24-hour edit cooldown check: only displayed when someone attempts to update within 24 hours
@@ -277,25 +277,36 @@ function ProfileScreenContent({
       skills
     };
 
-    onSaveProfile(updatedData);
+    try {
+      if (onSaveProfile) {
+        await onSaveProfile(updatedData);
+      }
 
-    setSavedSnapshot({
-      name: updatedData.name,
-      college: updatedData.college,
-      level,
-      yearNum,
-      phone: updatedData.phone,
-      skills: [...skills]
-    });
+      setSavedSnapshot({
+        name: updatedData.name,
+        college: updatedData.college,
+        level,
+        yearNum,
+        phone: updatedData.phone,
+        skills: [...skills]
+      });
 
-    setSavedSuccess(true);
-    setShowCooldownNotice(false);
-    if (successTimerRef.current) {
-      clearTimeout(successTimerRef.current);
+      setSavedSuccess(true);
+      setShowCooldownNotice(false);
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+      successTimerRef.current = setTimeout(() => {
+        setSavedSuccess(false);
+      }, 2400);
+    } catch (err) {
+      console.warn('Profile save rejected:', err.message);
+      const cd = getProfileCooldown(profile, user);
+      if (cd.isLocked) {
+        setCooldown(cd);
+        setShowCooldownNotice(true);
+      }
     }
-    successTimerRef.current = setTimeout(() => {
-      setSavedSuccess(false);
-    }, 2400);
   };
 
   // Preview derivations

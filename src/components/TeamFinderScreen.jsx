@@ -588,6 +588,23 @@ export default function TeamFinderScreen({
 
   const handleRequestJoin = (e, post) => {
     e.stopPropagation();
+    if (!user) {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Create your account',
+          subtitle: 'Bookmark competitions, track every round, and find a squad.',
+          initialTab: 'signup',
+          postLoginAction: () => {
+            if (onOpenApply) onOpenApply(post.rawPost || post);
+            else {
+              setApplyTargetPost(post.rawPost || post);
+              setApplyModalOpen(true);
+            }
+          }
+        });
+      }
+      return;
+    }
     if (onOpenApply) {
       onOpenApply(post.rawPost || post);
     } else {
@@ -708,6 +725,16 @@ export default function TeamFinderScreen({
             <button
               type="button"
               onClick={() => {
+                if (!user) {
+                  if (openAuthModal) {
+                    openAuthModal({
+                      title: 'Create your account',
+                      subtitle: 'Bookmark competitions, track every round, and find a squad.',
+                      initialTab: 'signup'
+                    });
+                  }
+                  return;
+                }
                 if (onOpenPostSquad) onOpenPostSquad(null);
                 else {
                   setEditingPostData(null);
@@ -1187,6 +1214,16 @@ export default function TeamFinderScreen({
                   <button
                     type="button"
                     onClick={() => {
+                      if (!user) {
+                        if (openAuthModal) {
+                          openAuthModal({
+                            title: 'Create your account',
+                            subtitle: 'Bookmark competitions, track every round, and find a squad.',
+                            initialTab: 'signup'
+                          });
+                        }
+                        return;
+                      }
                       if (onOpenPostSquad) onOpenPostSquad(null);
                       else {
                         setEditingPostData(null);
@@ -1503,6 +1540,16 @@ export default function TeamFinderScreen({
           type="button"
           className="tf-floating-post-btn"
           onClick={() => {
+            if (!user) {
+              if (openAuthModal) {
+                openAuthModal({
+                  title: 'Create your account',
+                  subtitle: 'Bookmark competitions, track every round, and find a squad.',
+                  initialTab: 'signup'
+                });
+              }
+              return;
+            }
             if (onOpenPostSquad) onOpenPostSquad(null);
             else {
               setEditingPostData(null);

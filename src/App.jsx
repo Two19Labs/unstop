@@ -480,18 +480,22 @@ function OneStopInner() {
   const handleSaveProfile = useCallback(async (updatedData) => {
     if (!user) {
       flash('Please sign in or create an account to save your profile.');
-      return;
+      return false;
     }
-    setProfile(updatedData);
+    const resolvedUpdated = {
+      ...(profile || {}),
+      ...updatedData,
+    };
+    setProfile(resolvedUpdated);
     try {
-      localStorage.setItem('onestop_user_profile', JSON.stringify(updatedData));
+      localStorage.setItem('onestop_user_profile', JSON.stringify(resolvedUpdated));
     } catch (e) {}
 
     if (authUpdateProfile) {
       try {
         const yr = updatedData.year || updatedData.batch || '';
         const isPg = yr.startsWith('PG') || (updatedData.education_level || '').toLowerCase().includes('post');
-        await authUpdateProfile({
+        const saved = await authUpdateProfile({
           fullName: updatedData.name,
           college: updatedData.college,
           course: '',
@@ -500,14 +504,28 @@ function OneStopInner() {
           skills: updatedData.skills || [],
           education_level: isPg ? 'postgraduate' : (yr ? 'undergraduate' : ''),
         });
+        if (saved) {
+          const finalResolved = {
+            ...resolvedUpdated,
+            ...saved,
+            name: saved.full_name || saved.name || updatedData.name,
+            profile_last_updated_at: saved.profile_last_updated_at,
+          };
+          setProfile(finalResolved);
+          try {
+            localStorage.setItem('onestop_user_profile', JSON.stringify(finalResolved));
+          } catch (e) {}
+        }
         flash('Profile updated');
+        return true;
       } catch (err) {
         console.warn('Supabase profile sync error:', err.message);
         flash(err.message || 'Could not update profile');
-        return;
+        throw err;
       }
     }
-  }, [user, authUpdateProfile, flash]);
+    return true;
+  }, [user, authUpdateProfile, flash, profile]);
 
   // Browse Filters State (Synchronized with CompetitionsPage / onestop_user_filter_prefs)
   const [browseFilters, setBrowseFilters] = useState(() => {

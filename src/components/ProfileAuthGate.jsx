@@ -1,11 +1,12 @@
 // src/components/ProfileAuthGate.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { CheckIcon, AlertCircleIcon, SparklesIcon } from './icons';
-import SearchableCollegeSelect from './SearchableCollegeSelect';
+import { CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
+import WhatIsOneStopTour from './WhatIsOneStopTour';
 import { trackEvent } from '../lib/posthog';
 import './ProfileAuthGate.css';
+import './AuthModal.css';
 
 function GoogleIcon({ size = 18 }) {
   return (
@@ -30,14 +31,7 @@ function GoogleIcon({ size = 18 }) {
   );
 }
 
-export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthrough = false }) {
-  const isPostWalkthrough = isFromWalkthrough || (() => {
-    try {
-      return sessionStorage.getItem('onestop_from_walkthrough') === 'true';
-    } catch (e) {
-      return false;
-    }
-  })();
+export default function ProfileAuthGate({ initialMode = 'signup' }) {
   const {
     signInWithGoogle,
     signInWithPassword,
@@ -49,6 +43,7 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
   const [mode, setMode] = useState(initialMode); // 'signup' | 'signin' | 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [college, setCollege] = useState('');
   const [phone, setPhone] = useState('');
@@ -98,7 +93,11 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
       await signInWithGoogle();
     } catch (err) {
       console.error('Google Auth Error:', err);
-      setErrorMsg(err.message || 'Failed to initiate Google sign in.');
+      let gMsg = err.message || 'Failed to initiate Google sign in.';
+      if (gMsg.toLowerCase().includes('provider is not enabled') || gMsg.toLowerCase().includes('unsupported provider')) {
+        gMsg = 'Google sign-in is currently being configured in Supabase. Please sign in or register with email and password below.';
+      }
+      setErrorMsg(gMsg);
       setSubmitting(false);
     }
   };
@@ -124,7 +123,7 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
           password,
           fullName,
           college,
-          phone,
+          phone
         });
 
         if (res?.user && res?.session) {
@@ -143,6 +142,8 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
         msg = 'Your email is not confirmed yet. Please check your inbox (and spam folder) for the verification link.';
       } else if (msg.toLowerCase().includes('invalid login credentials')) {
         msg = 'Invalid email or password. Please try again or click "Forgot password?".';
+      } else if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('rate_limit') || msg.toLowerCase().includes('over_email_send_rate_limit')) {
+        msg = 'Email rate limit reached for signup verification. Please wait a few minutes or sign in with Google.';
       }
       setErrorMsg(msg);
     } finally {
@@ -153,260 +154,38 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
   return (
     <div className="profile-auth-gate-container">
       <div className="profile-auth-gate-card">
-        {/* Top Brand Pill */}
-        <div className="profile-auth-top-bar">
-          <div className="profile-auth-brand-pill">
-            <span className="profile-auth-t19">Two19 Labs</span>
-            <span className="profile-auth-divider">/</span>
-            <span className="profile-auth-badge">ONESTOP AUTH</span>
-          </div>
+        {/* Left Column: Product Tour Self-Playing */}
+        <div className="profile-auth-tour-pane">
+          <WhatIsOneStopTour initialStep={6} />
         </div>
 
-        {/* Brand Header */}
-        <div className="profile-auth-header">
-          <div className="profile-auth-logo-wrap">
-            <OneStopLogo height={26} />
+        {/* Right Column: Sign In / Create Account Form */}
+        <div className="profile-auth-form-pane">
+          <div className="onestop-auth-top-row">
+            <OneStopLogo height={24} />
           </div>
-          <h1 className="profile-auth-title">
-            {mode === 'forgot'
-              ? 'Reset Password'
-              : mode === 'signup'
-              ? 'Create Your OneStop Profile'
-              : 'Sign In to OneStop'}
-          </h1>
-          <p className="profile-auth-subtitle">
-            {mode === 'forgot'
-              ? 'Enter your email address to receive a secure recovery link.'
-              : mode === 'signup'
-              ? 'Create your account to unlock your collegiate profile, join squads, and recruit teammates.'
-              : 'Sign in with your credentials to access your profile, applications, and saved competitions.'}
-          </p>
-        </div>
 
-        {/* Post-Walkthrough Onboarding Callout Banner */}
-        {isPostWalkthrough && mode === 'signup' && (
-          <div className="profile-auth-walkthrough-banner">
-            <div className="profile-auth-wt-badge">
-              <SparklesIcon size={13} />
-              <span>STEP 2: BUILD YOUR PROFILE</span>
-            </div>
-            <h2 className="profile-auth-wt-title">
-              Unlock Catered Opportunities & Teammates
+          <div className="onestop-auth-headings">
+            <h2 className="onestop-auth-title">
+              {mode === 'forgot'
+                ? 'Reset your password'
+                : mode === 'signup'
+                ? 'Create your account'
+                : 'Sign in to your account'}
             </h2>
-            <p className="profile-auth-wt-desc">
-              Take 30 seconds to set up your account. We’ll tailor competition eligibility to your college & degree, and let squad leads find you based on your superpowers.
+            <p className="onestop-auth-subtitle">
+              {mode === 'forgot'
+                ? 'Enter your collegiate or personal email to receive a recovery link.'
+                : 'Bookmark competitions, track every round, and find a squad.'}
             </p>
-            <div className="profile-auth-wt-perks">
-              <div className="profile-auth-wt-perk">
-                <span className="profile-auth-wt-emoji">🎯</span>
-                <div className="profile-auth-wt-perk-text">
-                  <strong>Catered Feed</strong>
-                  <span>Filtered for your degree eligibility</span>
-                </div>
-              </div>
-              <div className="profile-auth-wt-perk">
-                <span className="profile-auth-wt-emoji">🤝</span>
-                <div className="profile-auth-wt-perk-text">
-                  <strong>Squad Discovery</strong>
-                  <span>Get recruited across top colleges</span>
-                </div>
-              </div>
-              <div className="profile-auth-wt-perk">
-                <span className="profile-auth-wt-emoji">💬</span>
-                <div className="profile-auth-wt-perk-text">
-                  <strong>WhatsApp Connect</strong>
-                  <span>1-tap instant squad coordination</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error / Success Notifications */}
-        {errorMsg && (
-          <div className="profile-auth-alert profile-auth-alert-error" role="alert">
-            <AlertCircleIcon size={16} />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="profile-auth-alert profile-auth-alert-success" role="status">
-            <CheckIcon size={16} />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* Resend verification button when email confirmation is pending or required */}
-        {((errorMsg && errorMsg.toLowerCase().includes('not confirmed')) || (successMsg && successMsg.toLowerCase().includes('verification link'))) && email && (
-          <div style={{ textAlign: 'center', marginTop: '-0.3rem', marginBottom: '0.65rem' }}>
-            <button
-              type="button"
-              onClick={handleResendVerification}
-              disabled={resending || resendCooldown > 0}
-              className="profile-auth-link"
-              style={{ fontSize: '0.82rem', textDecoration: 'underline', color: 'var(--primary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
-            >
-              {resending ? 'Resending verification...' : resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend verification email'}
-            </button>
-          </div>
-        )}
-
-        {/* Mode Switcher Tabs (Sign Up vs Sign In) */}
-        {mode !== 'forgot' && (
-          <div className="profile-auth-tabs">
-            <button
-              type="button"
-              className={`profile-auth-tab ${mode === 'signup' ? 'active' : ''}`}
-              onClick={() => {
-                setMode('signup');
-                setErrorMsg(null);
-                setSuccessMsg(null);
-              }}
-            >
-              Sign Up
-            </button>
-            <button
-              type="button"
-              className={`profile-auth-tab ${mode === 'signin' ? 'active' : ''}`}
-              onClick={() => {
-                setMode('signin');
-                setErrorMsg(null);
-                setSuccessMsg(null);
-              }}
-            >
-              Sign In
-            </button>
-          </div>
-        )}
-
-        {/* 1-Click Google OAuth */}
-        {mode !== 'forgot' && (
-          <div className="profile-auth-social">
-            <button
-              type="button"
-              className="profile-auth-google-btn"
-              onClick={handleGoogleSignIn}
-              disabled={submitting}
-            >
-              <GoogleIcon size={18} />
-              <span>Continue with Google</span>
-            </button>
-
-            <div className="profile-auth-divider-line">
-              <span>{mode === 'signup' ? 'or sign up with email and password' : 'or sign in with email and password'}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Email & Password Form */}
-        <form onSubmit={handleSubmit} className="profile-auth-form">
-          {mode === 'signup' && (
-            <>
-              <div className="profile-auth-field">
-                <label htmlFor="gate-fullname">Full Name</label>
-                <input
-                  id="gate-fullname"
-                  type="text"
-                  placeholder="e.g. Aditya Sharma"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="profile-auth-field">
-                <label htmlFor="gate-college">College / University</label>
-                <SearchableCollegeSelect
-                  id="gate-college"
-                  value={college}
-                  onChange={(val) => setCollege(val)}
-                  placeholder="Search college (e.g. SRCC, SSCBS, IIT)..."
-                />
-              </div>
-
-              <div className="profile-auth-field">
-                <label htmlFor="gate-phone">WhatsApp Number *</label>
-                <input
-                  id="gate-phone"
-                  type="tel"
-                  placeholder="+91 98••• ••210"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
-                <span className="profile-auth-field-hint">
-                  Used by squad leads to coordinate with you on WhatsApp after accepting your application.
-                </span>
-              </div>
-            </>
-          )}
-
-          <div className="profile-auth-field">
-            <label htmlFor="gate-email">Collegiate / Personal Email</label>
-            <input
-              id="gate-email"
-              type="email"
-              placeholder="e.g. aditya@collegename.edu.in"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
           </div>
 
-          <div className="profile-auth-field">
-            <div className="profile-auth-field-header">
-              <label htmlFor="gate-password">Password</label>
-              {mode === 'signin' && (
-                <button
-                  type="button"
-                  className="profile-auth-link"
-                  onClick={() => {
-                    setMode('forgot');
-                    setErrorMsg(null);
-                    setSuccessMsg(null);
-                  }}
-                >
-                  Forgot password?
-                </button>
-              )}
-            </div>
-            <input
-              id="gate-password"
-              type="password"
-              placeholder={mode === 'signup' ? 'Min 6 characters' : 'Enter your password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="profile-auth-submit-btn"
-            disabled={submitting}
-          >
-            {submitting ? (
-              <span className="profile-auth-spinner" />
-            ) : mode === 'signup' ? (
-              'Create Account & Profile'
-            ) : mode === 'signin' ? (
-              'Sign In'
-            ) : (
-              'Send Recovery Link'
-            )}
-          </button>
-        </form>
-
-        {/* Footer Mode Switcher / Links */}
-        <div className="profile-auth-footer">
-          {mode === 'signup' && (
-            <p>
-              Already have an account?{' '}
+          {/* Segmented Control (Sign in vs Create account) */}
+          {mode !== 'forgot' && (
+            <div className="onestop-auth-segmented">
               <button
                 type="button"
-                className="profile-auth-link"
+                className={`onestop-auth-seg-btn ${mode === 'signin' ? 'active' : ''}`}
                 onClick={() => {
                   setMode('signin');
                   setErrorMsg(null);
@@ -415,40 +194,202 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
               >
                 Sign in
               </button>
-            </p>
-          )}
-
-          {mode === 'signin' && (
-            <p>
-              Don't have an account yet?{' '}
               <button
                 type="button"
-                className="profile-auth-link"
+                className={`onestop-auth-seg-btn ${mode === 'signup' ? 'active' : ''}`}
                 onClick={() => {
                   setMode('signup');
                   setErrorMsg(null);
                   setSuccessMsg(null);
                 }}
               >
-                Create one now
+                Create account
               </button>
-            </p>
+            </div>
           )}
 
-          {mode === 'forgot' && (
-            <p>
-              Remembered your password?{' '}
+          {/* 1-Click Google OAuth */}
+          {mode !== 'forgot' && (
+            <div>
               <button
                 type="button"
-                className="profile-auth-link"
-                onClick={() => {
-                  setMode('signin');
-                  setErrorMsg(null);
-                  setSuccessMsg(null);
-                }}
+                className="onestop-auth-google-btn"
+                onClick={handleGoogleSignIn}
+                disabled={submitting}
               >
-                Back to sign in
+                <GoogleIcon size={18} />
+                <span>Continue with Google</span>
               </button>
+
+              <div className="onestop-auth-divider">
+                <span>or with email</span>
+              </div>
+            </div>
+          )}
+
+          {/* Error / Success Notifications */}
+          {errorMsg && (
+            <div className="onestop-auth-alert onestop-auth-alert-error">
+              <AlertCircleIcon size={16} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="onestop-auth-alert onestop-auth-alert-success">
+              <CheckIcon size={16} />
+              <span>{successMsg}</span>
+            </div>
+          )}
+
+          {/* Resend verification button */}
+          {((errorMsg && errorMsg.toLowerCase().includes('not confirmed')) || (successMsg && successMsg.toLowerCase().includes('verification link'))) && email && (
+            <div style={{ textAlign: 'center', marginTop: '-0.2rem', marginBottom: '0.6rem' }}>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resending || resendCooldown > 0}
+                className="onestop-auth-forgot-link"
+                style={{ fontSize: '0.8rem' }}
+              >
+                {resending ? 'Resending verification...' : resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend verification email'}
+              </button>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="onestop-auth-form">
+            {mode === 'signup' && (
+              <>
+                <div className="onestop-auth-field">
+                  <label htmlFor="gate-fullname">Full name</label>
+                  <input
+                    id="gate-fullname"
+                    type="text"
+                    className="onestop-auth-input"
+                    placeholder="e.g. Aditya Sharma"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="onestop-auth-grid-2">
+                  <div className="onestop-auth-field">
+                    <label htmlFor="gate-college">College</label>
+                    <input
+                      id="gate-college"
+                      type="text"
+                      className="onestop-auth-input"
+                      placeholder="SRCC, IIT Delhi..."
+                      value={college}
+                      onChange={(e) => setCollege(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="onestop-auth-field">
+                    <label htmlFor="gate-phone">WhatsApp number</label>
+                    <input
+                      id="gate-phone"
+                      type="tel"
+                      className="onestop-auth-input"
+                      placeholder="10-digit mobile"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="onestop-auth-field">
+              <label htmlFor="gate-email">Email</label>
+              <input
+                id="gate-email"
+                type="email"
+                className="onestop-auth-input"
+                placeholder="you@college.edu or gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            {mode !== 'forgot' && (
+              <div className="onestop-auth-field">
+                <div className="onestop-auth-field-header">
+                  <label htmlFor="gate-password">Password</label>
+                  {mode === 'signin' && (
+                    <button
+                      type="button"
+                      className="onestop-auth-forgot-link"
+                      onClick={() => {
+                        setMode('forgot');
+                        setErrorMsg(null);
+                        setSuccessMsg(null);
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+
+                <div className="onestop-auth-password-wrap">
+                  <input
+                    id="gate-password"
+                    type={showPassword ? 'text' : 'password'}
+                    className="onestop-auth-input"
+                    placeholder={mode === 'signup' ? 'At least 6 characters' : 'Enter your password'}
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="onestop-auth-show-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="onestop-auth-submit-btn"
+              disabled={submitting}
+            >
+              {submitting ? (
+                'Processing...'
+              ) : mode === 'signin' ? (
+                'Sign in'
+              ) : mode === 'signup' ? (
+                'Create account'
+              ) : (
+                'Send reset link'
+              )}
+            </button>
+          </form>
+
+          {mode === 'forgot' ? (
+            <button
+              type="button"
+              className="onestop-auth-back-btn"
+              onClick={() => {
+                setMode('signin');
+                setErrorMsg(null);
+                setSuccessMsg(null);
+              }}
+            >
+              ← Back to Sign in
+            </button>
+          ) : (
+            <p className="onestop-auth-terms">
+              By continuing, you agree to Two19 Labs' platform terms. WhatsApp numbers are shared only with teammates you accept.
             </p>
           )}
         </div>

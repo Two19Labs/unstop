@@ -1,6 +1,6 @@
-// src/components/RequestsScreen.jsx
 import React, { useState } from 'react';
 import { isMockApp, isMockPost } from '../data/initialData';
+import { useAuth } from '../context/AuthContext';
 import CompetitionChatModal from './CompetitionChatModal';
 import './RequestsScreen.css';
 
@@ -70,6 +70,45 @@ export default function RequestsScreen({
         (activePost?.compId && String(c.id) === String(activePost.compId))
       ) || null)
     : null;
+
+  const { openAuthModal } = useAuth();
+
+  if (!user) {
+    return (
+      <div className="requests-screen-container">
+        <div className="requests-desktop-header">
+          <h1 className="requests-header-title">Inbox</h1>
+          <p className="requests-header-sub">
+            Applications to your squads, and the ones you have sent out.
+          </p>
+        </div>
+        <div className="requests-empty-state" style={{ padding: '64px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <p className="requests-empty-title" style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 8px 0', color: '#0F172A' }}>
+            Sign in to view your applications
+          </p>
+          <p className="requests-empty-desc" style={{ maxWidth: '380px', margin: '0 0 20px 0', color: '#64748B', fontSize: '13.5px', lineHeight: 1.45 }}>
+            Track incoming requests for your squads and follow up on squads you've requested to join.
+          </p>
+          <button
+            type="button"
+            className="onestop-auth-submit-btn"
+            style={{ width: 'auto', padding: '10px 24px' }}
+            onClick={() => {
+              if (openAuthModal) {
+                openAuthModal({
+                  title: 'Sign In to View Requests',
+                  subtitle: 'Bookmark competitions, track every round, and find a squad.',
+                  initialTab: 'signin'
+                });
+              }
+            }}
+          >
+            Sign in / Sign up
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="requests-screen-container">
