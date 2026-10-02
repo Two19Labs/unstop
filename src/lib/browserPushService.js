@@ -82,6 +82,9 @@ export function isPushEnabled() {
 export function setPushEnabled(enabled) {
   try {
     localStorage.setItem(PUSH_ENABLED_KEY, enabled ? 'true' : 'false');
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('onestop:push-enabled-changed', { detail: { enabled } }));
+    }
   } catch (e) {
     console.warn('[PushService] Could not save push preference:', e);
   }
@@ -98,6 +101,11 @@ export async function requestPushPermission() {
       setPushEnabled(true);
       // Ensure Service Worker is registered and active
       await registerServiceWorker();
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('onestop:push-enabled-changed', {
+        detail: { enabled: result === 'granted', permission: result }
+      }));
     }
     return result;
   } catch (err) {

@@ -226,23 +226,6 @@
   border-radius: var(--radius-full);
 }
 
-.t19-theme-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  color: var(--ink-dim);
-  background-color: var(--surface);
-  transition: all var(--transition-fast);
-}
-
-.t19-theme-btn:hover {
-  color: var(--ink);
-  border-color: var(--ink);
-}
 
 .t19-studio-link {
   display: inline-flex;
@@ -502,11 +485,6 @@
   .t19-saved-btn {
     padding: 0.4rem 0.65rem;
     min-height: 34px;
-  }
-
-  .t19-theme-btn {
-    width: 34px;
-    height: 34px;
   }
 
   /* Row 2: Full-width Segmented Tabs */

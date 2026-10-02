@@ -46,7 +46,6 @@ export default function PostSquadModal({
 
   // Skill toggles
   const [want, setWant] = useState([]);
-  const [have, setHave] = useState([]);
 
   // Note to applicants
   const [note, setNote] = useState('');
@@ -84,12 +83,7 @@ export default function PostSquadModal({
       const looking = Array.isArray(editingPost.skills_looking_for)
         ? editingPost.skills_looking_for
         : (Array.isArray(editingPost.want) ? editingPost.want : []);
-      const brings = Array.isArray(editingPost.skills_have)
-        ? editingPost.skills_have
-        : (Array.isArray(editingPost.have) ? editingPost.have : []);
-
-      setWant(looking);
-      setHave(brings);
+      
       setNote(editingPost.description || editingPost.desc || '');
       setCommMethod(editingPost.comm_method || editingPost.commMethod || 'whatsapp');
       setPhone(sanitizeIndianPhone(editingPost.phone_number || editingPost.phone || editingPost.leadPhone || profile?.phone || ''));
@@ -110,7 +104,6 @@ export default function PostSquadModal({
       setTotal(4);
       setOpen(2);
       setWant([]);
-      setHave([]);
       setNote('');
       setCommMethod('whatsapp');
       setPhone(sanitizeIndianPhone(profile?.phone || ''));
@@ -171,14 +164,7 @@ export default function PostSquadModal({
     }
   };
 
-  const toggleHave = (skill) => {
-    if (have.includes(skill)) {
-      setHave(have.filter(s => s !== skill));
-    } else {
-      setHave([...have, skill]);
-    }
-  };
-
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError('');
@@ -259,8 +245,8 @@ export default function PostSquadModal({
       want,
       skills: want.length > 0 ? want : ['All skills welcome'],
       skills_looking_for: want.length > 0 ? want : ['All skills welcome'],
-      have,
-      skills_have: have,
+      have: [],
+      skills_have: [],
       desc: note.trim() || `Squad for ${compTitle}. ${commMethod === 'whatsapp' ? 'Message me on WhatsApp if you want to team up!' : 'Apply via OneStop to team up!'}`,
       description: note.trim() || `Squad for ${compTitle}. ${commMethod === 'whatsapp' ? 'Message me on WhatsApp if you want to team up!' : 'Apply via OneStop to team up!'}`,
       college: creatorCollege,
@@ -666,14 +652,14 @@ export default function PostSquadModal({
             </div>
           </div>
 
-          {/* 3. Skill Pill Groups */}
+          {/* 3. Skills needed in the team */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
-                Looking for
+                Skills needed in the team
               </span>
               <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
-                Pick up to 3 {want.length > 0 ? `(${want.length}/3)` : ''}
+                {want.length > 0 ? `${want.length} selected` : 'Select skills needed'}
               </span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -684,42 +670,6 @@ export default function PostSquadModal({
                     key={sk}
                     type="button"
                     onClick={() => toggleWant(sk)}
-                    style={{
-                      border: on ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
-                      borderRadius: '20px',
-                      background: on ? 'var(--primary, #0F3FFE)' : 'var(--surface, #FFFFFF)',
-                      color: on ? '#FFFFFF' : 'var(--ink, #1A1A19)',
-                      padding: '5px 12px',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {sk}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
-                You bring
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>
-                Helps people decide
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {SKILLS.map((sk) => {
-                const on = have.includes(sk);
-                return (
-                  <button
-                    key={sk}
-                    type="button"
-                    onClick={() => toggleHave(sk)}
                     style={{
                       border: on ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
                       borderRadius: '20px',

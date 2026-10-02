@@ -1,17 +1,45 @@
 // src/data/initialData.js -> Constants & Utilities for OneStop (Zero mock/fake data)
 
 export const SKILLS = [
-  "Finance modelling",
-  "Deck design",
-  "Market research",
-  "Frontend",
-  "Backend",
-  "ML / Data",
-  "Copywriting",
-  "Public speaking",
-  "Valuation",
-  "Design"
+  "Business Strategy",
+  "Market Research",
+  "Pitch Deck Design",
+  "Public Speaking & Pitching",
+  "Financial Modeling & Valuation",
+  "Data Analytics & Visualization",
+  "Equity Research",
+  "Frontend Development",
+  "Backend Development",
+  "Mobile App Development",
+  "AI / Machine Learning",
+  "Cloud & DevOps",
+  "UI/UX Design",
+  "Graphic Design",
+  "Product Management",
+  "Content Writing & Copywriting",
+  "Policy & Academic Research",
+  "Debate & MUN",
+  "Quizzing & Trivia"
 ];
+
+export const SKILL_ALIASES = {
+  "finance modelling": "Financial Modeling & Valuation",
+  "financial modeling": "Financial Modeling & Valuation",
+  "valuation": "Financial Modeling & Valuation",
+  "deck design": "Pitch Deck Design",
+  "frontend": "Frontend Development",
+  "backend": "Backend Development",
+  "ml / data": "AI / Machine Learning",
+  "copywriting": "Content Writing & Copywriting",
+  "public speaking": "Public Speaking & Pitching",
+  "design": "UI/UX Design"
+};
+
+export function normalizeSkill(skill) {
+  if (!skill) return '';
+  const lower = String(skill).trim().toLowerCase();
+  return SKILL_ALIASES[lower] || String(skill).trim();
+}
 
 export const DISCIPLINES = [
   "Case",

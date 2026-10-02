@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext';
 import {
   BellIcon,
+  BellOffIcon,
   CloseIcon,
   UsersIcon,
   ClockIcon,
@@ -26,6 +27,7 @@ import {
   isPushSupported,
   getPushPermission,
   isPushEnabled,
+  setPushEnabled,
   requestPushPermission,
   isIOS,
   isStandalone,
@@ -59,10 +61,28 @@ export default function NotificationCenter({
   const [localReadIds, setLocalReadIds] = useState(getReadNotificationIds);
   const [localDismissedIds, setLocalDismissedIds] = useState(getDismissedNotificationIds);
 
-  // Browser Push State
+  // Browser Push State with cross-component sync
   const [pushPermission, setPushPermission] = useState(getPushPermission);
   const pushSupported = useMemo(() => isPushSupported(), []);
-  const pushActive = useMemo(() => isPushEnabled(), [pushPermission]);
+  const [pushEnabledState, setPushEnabledState] = useState(isPushEnabled);
+  const [showDeniedTip, setShowDeniedTip] = useState(false);
+
+  useEffect(() => {
+    const handlePushSync = () => {
+      setPushPermission(getPushPermission());
+      setPushEnabledState(isPushEnabled());
+    };
+    window.addEventListener('onestop:push-enabled-changed', handlePushSync);
+    window.addEventListener('storage', handlePushSync);
+    return () => {
+      window.removeEventListener('onestop:push-enabled-changed', handlePushSync);
+      window.removeEventListener('storage', handlePushSync);
+    };
+  }, []);
+
+  const isDeviceAlertsActive = useMemo(() => {
+    return pushSupported && pushPermission === 'granted' && pushEnabledState;
+  }, [pushSupported, pushPermission, pushEnabledState]);
 
   const wrapperRef = useRef(null);
 
@@ -208,9 +228,36 @@ export default function NotificationCenter({
     }
   }, [user, authMarkRead, onOpenWhatsApp, onOpenDetail, onNavigate]);
 
-  const handleEnablePush = async () => {
-    const res = await requestPushPermission();
-    setPushPermission(res);
+  const handleToggleDeviceAlerts = async () => {
+    if (!pushSupported) return;
+
+    if (pushPermission === 'denied') {
+      setShowDeniedTip(prev => !prev);
+      return;
+    }
+
+    if (pushPermission === 'default') {
+      setShowDeniedTip(false);
+      const res = await requestPushPermission();
+      setPushPermission(res);
+      if (res === 'granted') {
+        setPushEnabled(true);
+        setPushEnabledState(true);
+      } else {
+        setPushEnabledState(false);
+        if (res === 'denied') {
+          setShowDeniedTip(true);
+        }
+      }
+      return;
+    }
+
+    if (pushPermission === 'granted') {
+      const next = !pushEnabledState;
+      setPushEnabled(next);
+      setPushEnabledState(next);
+      setShowDeniedTip(false);
+    }
   };
 
   const getNotificationIcon = (notif) => {
@@ -251,8 +298,8 @@ export default function NotificationCenter({
         type="button"
         className={`onestop-notif-trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(prev => !prev)}
-        title="Deadlines, Rounds & Squad Reminders"
-        aria-label={`Notifications, ${unreadCount} unread`}
+        title="Reminders"
+        aria-label={`Reminders, ${unreadCount} unread`}
         aria-expanded={isOpen}
       >
         <BellIcon size={18} />
@@ -265,11 +312,11 @@ export default function NotificationCenter({
 
       {/* Dropdown Popover */}
       {isOpen && (
-        <div className="onestop-notif-dropdown" role="dialog" aria-label="Notifications Panel">
+        <div className="onestop-notif-dropdown" role="dialog" aria-label="Reminders Panel">
           {/* Header */}
           <div className="onestop-notif-header">
             <div className="onestop-notif-title-row">
-              <h3 className="onestop-notif-title">Reminders & Radar</h3>
+              <h3 className="onestop-notif-title">Reminders</h3>
               {unreadCount > 0 && (
                 <span className="onestop-notif-count-pill">{unreadCount} new</span>
               )}
@@ -280,6 +327,7 @@ export default function NotificationCenter({
                   type="button"
                   className="onestop-notif-mark-read-btn"
                   onClick={handleMarkAllRead}
+                  title="Mark all notifications as read"
                 >
                   Mark all as read
                 </button>
@@ -289,7 +337,7 @@ export default function NotificationCenter({
                   type="button"
                   className="onestop-notif-clear-all-btn"
                   onClick={handleDismissAll}
-                  title="Clear all notifications"
+                  title="Clear all reminders"
                 >
                   Clear all
                 </button>
@@ -297,29 +345,60 @@ export default function NotificationCenter({
             </div>
           </div>
 
-          {/* Browser & Phone Push Notification Prompt */}
-          {pushSupported && pushPermission === 'default' && (
-            <div className="onestop-notif-push-banner">
-              <div className="onestop-notif-push-banner-left">
-                <span>🔔</span>
-                <span>Get 1h &amp; 30m deadline phone alerts</span>
+          {/* Device Notifications Toggle Row */}
+          {pushSupported && (
+            <div className={`onestop-notif-device-toggle-row ${isDeviceAlertsActive ? 'active' : 'inactive'}`}>
+              <div className="onestop-notif-device-info">
+                <div className="onestop-notif-device-title-line">
+                  <span className="onestop-notif-device-icon">
+                    {isDeviceAlertsActive ? (
+                      <CheckIcon size={13} color="#059669" />
+                    ) : pushPermission === 'denied' ? (
+                      <AlertCircleIcon size={13} color="#DC2626" />
+                    ) : (
+                      <BellOffIcon size={13} color="var(--ink-muted)" />
+                    )}
+                  </span>
+                  <span className="onestop-notif-device-title">Device notifications</span>
+                  <span className={`onestop-notif-device-pill ${isDeviceAlertsActive ? 'pill-active' : pushPermission === 'denied' ? 'pill-denied' : 'pill-off'}`}>
+                    {pushPermission === 'denied' ? 'Blocked' : isDeviceAlertsActive ? 'On' : 'Off'}
+                  </span>
+                </div>
+                <p className="onestop-notif-device-desc">
+                  {pushPermission === 'denied'
+                    ? 'Blocked by browser. Allow notifications in site settings.'
+                    : isDeviceAlertsActive
+                    ? 'Phone & desktop alerts active for bookmarked deadlines'
+                    : 'Get 1h & 30m deadline alerts on this device'}
+                </p>
               </div>
-              <button
-                type="button"
-                className="onestop-notif-push-enable-btn"
-                onClick={handleEnablePush}
-              >
-                Enable
-              </button>
+
+              <div className="onestop-notif-device-action">
+                <button
+                  type="button"
+                  className={`onestop-notif-toggle-switch ${isDeviceAlertsActive ? 'enabled' : ''} ${pushPermission === 'denied' ? 'is-denied' : ''}`}
+                  onClick={handleToggleDeviceAlerts}
+                  role="switch"
+                  aria-checked={isDeviceAlertsActive}
+                  aria-label="Toggle device notifications on or off"
+                  title={
+                    pushPermission === 'denied'
+                      ? 'Notifications blocked by browser. Click to see instructions.'
+                      : isDeviceAlertsActive
+                      ? 'Turn off phone & desktop alerts'
+                      : 'Turn on phone & desktop alerts'
+                  }
+                >
+                  <span className="onestop-notif-toggle-knob" />
+                </button>
+              </div>
             </div>
           )}
 
-          {pushSupported && pushPermission === 'granted' && pushActive && (
-            <div className="onestop-notif-push-banner" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-              <div className="onestop-notif-push-active-tag">
-                <CheckIcon size={12} />
-                <span>Phone &amp; desktop alerts active for bookmarked deadlines</span>
-              </div>
+          {/* Browser Permission Denied Tip */}
+          {showDeniedTip && pushPermission === 'denied' && (
+            <div className="onestop-notif-denied-tip">
+              <span>⚠️ <strong>Notifications blocked:</strong> Click the lock or tune icon in your browser address bar next to the URL and set Notifications to <strong>Allow</strong>.</span>
             </div>
           )}
 
@@ -371,7 +450,7 @@ export default function NotificationCenter({
                 <div className="onestop-notif-empty-icon">
                   <BellIcon size={22} />
                 </div>
-                <h4 className="onestop-notif-empty-title">All quiet on your radar</h4>
+                <h4 className="onestop-notif-empty-title">No reminders right now</h4>
                 <p className="onestop-notif-empty-desc">
                   {activeTab === 'squads'
                     ? 'No pending squad applications or accepted handshakes right now.'

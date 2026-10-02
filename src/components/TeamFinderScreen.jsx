@@ -1,7 +1,7 @@
 // src/components/TeamFinderScreen.jsx
 // OneStop Team Finder Standalone Page - Full High-Fidelity Implementation
 import React, { useState, useEffect, useMemo } from 'react';
-import { SKILLS, initialsOf, isMockPost, isMockApp } from '../data/initialData';
+import { SKILLS, initialsOf, isMockPost, isMockApp, normalizeSkill } from '../data/initialData';
 import { formatWhatsAppUrl, sanitizeIndianPhone, useAuth } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
 import PostSquadModal from './PostSquadModal';
@@ -214,7 +214,7 @@ export default function TeamFinderScreen({
   const [applyTargetPost, setApplyTargetPost] = useState(null);
   const [chatModalApp, setChatModalApp] = useState(null);
 
-  const profileSkills = useMemo(() => (profile?.skills?.length ? profile.skills : ['Market research', 'Deck design', 'Copywriting']), [profile]);
+  const profileSkills = useMemo(() => (profile?.skills?.length ? profile.skills : ['Market Research', 'Pitch Deck Design', 'Business Strategy']), [profile]);
   const userCollege = (profile?.college || user?.user_metadata?.college || 'SRCC').trim();
   const userName = profile?.name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || '';
   const userYear = normalizeYear(profile?.year || profile?.batch || 'UG 2nd Year');
@@ -343,7 +343,8 @@ export default function TeamFinderScreen({
         state = 'full';
       }
 
-      const match = want.filter(w => profileSkills.includes(w)).length;
+      const normUserSkills = profileSkills.map(normalizeSkill);
+      const match = want.filter(w => normUserSkills.includes(normalizeSkill(w))).length;
       const comm_method = p.comm_method || p.commMethod || (p.phone || p.phone_number || p.leadPhone ? 'whatsapp' : 'chat');
       // Filter out squads for PG/MBA only competitions if viewer is Undergraduate (unless it's user's own post)
       if (!isViewerPostgraduate && !isMine) {
@@ -419,7 +420,7 @@ export default function TeamFinderScreen({
     if (skip !== 'myCollege' && fMyCollege && !collegeMatches(p.college, userCollege)) return false;
     if (skip !== 'cats' && fCats.length > 0 && !fCats.includes(p.comp.cat)) return false;
     if (skip !== 'circuits' && fCircuits.length > 0 && !fCircuits.includes(p.comp.circuit)) return false;
-    if (skip !== 'skills' && fSkills.length > 0 && !p.want.some(w => fSkills.includes(w))) return false;
+    if (skip !== 'skills' && fSkills.length > 0 && !p.want.some(w => fSkills.includes(w) || fSkills.includes(normalizeSkill(w)))) return false;
     if (fSpots === '1' && p.openN !== 1) return false;
     if (fSpots === '2' && p.openN < 2) return false;
     if (fCloses === 'week' && p.comp.days > 7) return false;
@@ -476,7 +477,7 @@ export default function TeamFinderScreen({
   // Active filter chips
   const activeChips = useMemo(() => {
     const chips = [];
-    if (fMatch) chips.push({ label: 'Matches my skills', remove: () => setFMatch(false) });
+    if (fMatch) chips.push({ label: 'Teams that need my skills', remove: () => setFMatch(false) });
     if (fMyCollege) chips.push({ label: 'Teams From My College', remove: () => setFMyCollege(false) });
     fCats.forEach(c => chips.push({ label: c, remove: () => setFCats(fCats.filter(x => x !== c)) }));
     fCircuits.forEach(c => chips.push({ label: c, remove: () => setFCircuits(fCircuits.filter(x => x !== c)) }));
@@ -776,7 +777,7 @@ export default function TeamFinderScreen({
                     <span className="cc-custom-checkbox">
                       {fMatch && <CheckIcon size={10} />}
                     </span>
-                    <span className="cc-checkbox-label-text">Matches my skills</span>
+                    <span className="cc-checkbox-label-text">Teams that need my skills</span>
                     <span className="cc-filter-num">({countIn(p => p.match > 0, 'match')})</span>
                   </label>
 
@@ -1257,7 +1258,7 @@ export default function TeamFinderScreen({
                             {post.want && post.want.length > 0 ? (
                               <>
                                 {post.want.slice(0, 2).map((w, idx) => {
-                                  const isUserSkill = profileSkills.includes(w);
+                                  const isUserSkill = profileSkills.map(normalizeSkill).includes(normalizeSkill(w));
                                   return isUserSkill ? (
                                     <span key={idx} className="tf-skill-pill tf-skill-pill-fit">
                                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -1633,7 +1634,7 @@ export default function TeamFinderScreen({
               {/* Looking for */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span className="tf-section-label-caps">Looking for</span>
+                  <span className="tf-section-label-caps">Skills needed in the team</span>
                   {detailTarget.match > 0 && (
                     <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--success-text, #15803D)' }}>
                       {detailTarget.match === detailTarget.want.length ? 'You have all of these' : `You have ${detailTarget.match} of ${detailTarget.want.length}`}
@@ -1642,11 +1643,23 @@ export default function TeamFinderScreen({
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {detailTarget.want.length > 0 ? (
-                    detailTarget.want.map((w, idx) => (
-                      <span key={idx} className="tf-skill-pill-needed" style={{ padding: '4px 9px' }}>
-                        {w}
-                      </span>
-                    ))
+                    detailTarget.want.map((w, idx) => {
+                      const isMatch = profileSkills.map(normalizeSkill).includes(normalizeSkill(w));
+                      return (
+                        <span
+                          key={idx}
+                          className={isMatch ? "tf-skill-pill-fit" : "tf-skill-pill-needed"}
+                          style={{ padding: '4px 9px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          {isMatch && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          )}
+                          {w}
+                        </span>
+                      );
+                    })
                   ) : (
                     <span className="tf-skill-pill-welcome" style={{ padding: '4px 9px' }}>
                       All skills welcome
@@ -1655,19 +1668,7 @@ export default function TeamFinderScreen({
                 </div>
               </div>
 
-              {/* Lead brings */}
-              {detailTarget.have && detailTarget.have.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <span className="tf-section-label-caps">{detailTarget.lead.split(' ')[0]} brings</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {detailTarget.have.map((h, idx) => (
-                      <span key={idx} style={{ background: 'var(--surface, #FFFFFF)', color: 'var(--ink-secondary, #55534D)', border: '1px solid var(--line, #E7E6E2)', borderRadius: '6px', padding: '4px 9px', fontSize: '12px', fontWeight: 500 }}>
-                        {h}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              
             </div>
 
             {/* Bottom sticky action bar */}

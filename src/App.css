@@ -95,25 +95,6 @@
   height: 18px !important;
 }
 
-.mobile-topbar-actions .theme-toggle-btn.compact {
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 10px !important;
-  border: 1px solid var(--line) !important;
-  background: var(--surface) !important;
-  color: var(--ink) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: none !important;
-  flex-shrink: 0;
-  padding: 0 !important;
-}
-
-.mobile-topbar-actions .theme-toggle-btn.compact:hover {
-  background: var(--surface-muted) !important;
-  transform: translateY(-1px);
-}
 
 .mobile-what-is-btn {
   height: 40px;

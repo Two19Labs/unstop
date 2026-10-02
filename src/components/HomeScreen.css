@@ -611,22 +611,10 @@
   font-weight: 700;
 }
 
-[data-theme='dark'] .home-applied-sort-badge {
-  background: rgba(255, 255, 255, 0.08);
-  color: #F3F4F6;
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
 .home-applied-filter-badge {
   background: rgba(15, 63, 254, 0.07);
   color: #0F3FFE;
   border: 1px solid rgba(15, 63, 254, 0.20);
-}
-
-[data-theme='dark'] .home-applied-filter-badge {
-  background: rgba(59, 130, 246, 0.14);
-  color: #93C5FD;
-  border-color: rgba(59, 130, 246, 0.30);
 }
 
 .home-sort-pills-bar {
@@ -658,12 +646,6 @@
   background: var(--ink, #111827);
   color: var(--surface, #FFFFFF);
   border-color: var(--ink, #111827);
-}
-
-[data-theme='dark'] .home-sort-pill.active {
-  background: var(--primary, #3B6BFF);
-  color: #FFFFFF;
-  border-color: var(--primary, #3B6BFF);
 }
 
 
@@ -751,83 +733,6 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-[data-theme='dark'] .home-rail-card.card-urgency-red {
-  background: linear-gradient(180deg, rgba(239, 68, 68, 0.18) 0%, var(--surface) 45%);
-}
-
-[data-theme='dark'] .home-rail-card.card-urgency-yellow {
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, var(--surface) 45%);
-}
-
-[data-theme='dark'] .home-rail-card--compact {
-  background: #17181D;
-  border-color: #2D3039;
-}
-
-[data-theme='dark'] .home-rail-card--compact.card-urgency-blue,
-[data-theme='dark'] .home-rail-card--compact.card-urgency-green {
-  background: #102118;
-  border-color: rgba(16, 185, 129, 0.45);
-}
-
-[data-theme='dark'] .home-rail-card--compact.card-urgency-yellow {
-  background: #231C11;
-  border-color: rgba(245, 158, 11, 0.45);
-}
-
-[data-theme='dark'] .home-rail-card--compact.card-urgency-red {
-  background: #221416;
-  border-color: rgba(239, 68, 68, 0.45);
-}
-
-[data-theme='dark'] .home-compact-remove-btn {
-  background: #23252E;
-  border-color: #333644;
-  color: #9CA3AF;
-}
-
-[data-theme='dark'] .home-compact-remove-btn:hover {
-  background: #2F3340;
-  color: #EF4444;
-}
-
-[data-theme='dark'] .home-compact-prize-pill {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #34D399;
-}
-
-[data-theme='dark'] .home-compact-fee-pill.free {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #34D399;
-}
-
-[data-theme='dark'] .home-compact-fee-pill.paid {
-  background: #23252E;
-  border-color: #333644;
-  color: #9CA3AF;
-}
-
-[data-theme='dark'] .home-compact-countdown-pill.pill-yellow {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.35);
-  color: #FBBF24;
-}
-
-[data-theme='dark'] .home-compact-countdown-pill.pill-red {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #F87171;
-}
-
-[data-theme='dark'] .home-compact-countdown-pill.pill-blue,
-[data-theme='dark'] .home-compact-countdown-pill.pill-green {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #34D399;
-}
-
 /* "More" Card at the end of rails */
 .home-more-card {
   transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
@@ -882,11 +787,6 @@
   100% {
     background-position: -200% 0;
   }
-}
-
-[data-theme='dark'] .skeleton-box {
-  background: linear-gradient(90deg, #202228 25%, #2B2E37 50%, #202228 75%);
-  background-size: 200% 100%;
 }
 
 .home-rail-card-skeleton {

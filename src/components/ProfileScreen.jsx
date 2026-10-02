@@ -74,18 +74,6 @@ function ProfileScreenContent({
   const [phone, setPhone] = useState(profile?.phone || '');
   const [skills, setSkills] = useState(profile?.skills || []);
 
-  const completionStats = useMemo(() => {
-    let score = 0;
-    const missing = [];
-    if (name.trim()) score += 20; else missing.push('Full Name');
-    if (college.trim()) score += 25; else missing.push('College');
-    if (level && yearNum) score += 15; else missing.push('Academic Standing');
-    if (phone.trim().replace(/\D/g, '').length >= 10) score += 20; else missing.push('WhatsApp Number');
-    if (skills && skills.length >= 3) score += 20;
-    else if (skills && skills.length > 0) { score += 10; missing.push('Add 2+ more skills'); }
-    else missing.push('Select 3+ skills');
-    return { score, missing };
-  }, [name, college, level, yearNum, phone, skills]);
 
   // Snapshot of last saved values to determine dirty state and allow Discard
   const [savedSnapshot, setSavedSnapshot] = useState({
@@ -112,6 +100,19 @@ function ProfileScreenContent({
   // Desktop Push Notifications State
   const [pushPermission, setPushPermission] = useState(getPushPermission);
   const [pushEnabled, setPushEnabledState] = useState(isPushEnabled);
+
+  useEffect(() => {
+    const handlePushSync = () => {
+      setPushPermission(getPushPermission());
+      setPushEnabledState(isPushEnabled());
+    };
+    window.addEventListener('onestop:push-enabled-changed', handlePushSync);
+    window.addEventListener('storage', handlePushSync);
+    return () => {
+      window.removeEventListener('onestop:push-enabled-changed', handlePushSync);
+      window.removeEventListener('storage', handlePushSync);
+    };
+  }, []);
 
   const handleRequestPush = async () => {
     const res = await requestPushPermission();
@@ -324,32 +325,6 @@ function ProfileScreenContent({
         )}
       </header>
 
-      {/* Completion Nudge Banner */}
-      {completionStats.score < 100 && (
-        <div className="profile-completion-nudge-card">
-          <div className="profile-completion-nudge-top">
-            <div className="profile-completion-nudge-left">
-              <span className="profile-completion-badge">
-                {completionStats.score}% SETUP COMPLETE
-              </span>
-              <strong className="profile-completion-title">
-                Complete your profile to unlock catered opportunities & get recruited
-              </strong>
-            </div>
-            {completionStats.missing.length > 0 && (
-              <span className="profile-completion-hint">
-                Remaining: {completionStats.missing.slice(0, 2).join(' · ')}
-              </span>
-            )}
-          </div>
-          <div className="profile-completion-progress-track">
-            <div
-              className="profile-completion-progress-bar"
-              style={{ width: `${completionStats.score}%` }}
-            />
-          </div>
-        </div>
-      )}
 
       {/* 2. Main Grid: Left sticky rail + Right form */}
       <div className="profile-main-grid">

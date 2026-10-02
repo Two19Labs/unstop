@@ -5,8 +5,6 @@ import {
   TrophyIcon,
   UsersIcon,
   BookmarkIcon,
-  SunIcon,
-  MoonIcon,
   ExternalLinkIcon,
   UserIcon,
   LogOutIcon,
@@ -23,8 +21,6 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
     signOut,
     openAuthModal,
     openProfileModal,
-    theme,
-    toggleTheme,
     bookmarks
   } = useAuth();
 
@@ -126,7 +122,7 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
           </button>
         </nav>
 
-        {/* Right: Actions, Auth & Theme Toggle */}
+        {/* Right: Actions & Auth */}
         <div className="t19-actions">
           {/* Saved Bookmarks Button */}
           <button
@@ -140,16 +136,6 @@ export default function Navbar({ activeTab, setActiveTab, liveCount, bookmarkedO
             <BookmarkIcon size={15} filled={bookmarks.length > 0} color={bookmarks.length > 0 ? "var(--color-lab-blue)" : "currentColor"} />
             <span className="t19-action-text">Saved</span>
             {bookmarks.length > 0 && <span className="t19-saved-count">{bookmarks.length}</span>}
-          </button>
-
-          {/* Theme Toggle Button */}
-          <button
-            className="t19-theme-btn"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-          >
-            {theme === 'light' ? <MoonIcon size={16} /> : <SunIcon size={16} />}
           </button>
 
           {/* Authentication State Button */}

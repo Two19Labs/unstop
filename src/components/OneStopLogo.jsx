@@ -49,14 +49,7 @@ export default function OneStopLogo({
       <img
         src="/onestop-logo.png"
         alt={alt}
-        className="onestop-logo-img onestop-logo-light"
-        loading="eager"
-        decoding="async"
-      />
-      <img
-        src="/onestop-logo-white.png"
-        alt={alt}
-        className="onestop-logo-img onestop-logo-dark"
+        className="onestop-logo-img"
         loading="eager"
         decoding="async"
       />

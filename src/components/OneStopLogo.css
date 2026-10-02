@@ -17,22 +17,6 @@
   transition: transform var(--transition-fast, 0.15s ease);
 }
 
-.onestop-logo-img.onestop-logo-light {
-  display: block;
-}
-
-.onestop-logo-img.onestop-logo-dark {
-  display: none;
-}
-
-[data-theme='dark'] .onestop-logo-img.onestop-logo-light {
-  display: none;
-}
-
-[data-theme='dark'] .onestop-logo-img.onestop-logo-dark {
-  display: block;
-}
-
 .onestop-icon-img {
   display: block;
   height: 100%;
