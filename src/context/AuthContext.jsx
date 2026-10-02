@@ -84,6 +84,11 @@ export function AuthProvider({ children }) {
   const openProfileModal = () => setProfileModalOpen(true);
   const closeProfileModal = () => setProfileModalOpen(false);
 
+  // Password Recovery Modal State (triggered on PASSWORD_RECOVERY event)
+  const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
+  const openRecoveryModal = () => setRecoveryModalOpen(true);
+  const closeRecoveryModal = () => setRecoveryModalOpen(false);
+
   // Bookmarks State (100% real, zero mock data)
   const [bookmarks, setBookmarks] = useState(() => {
     try {
@@ -366,6 +371,9 @@ export function AuthProvider({ children }) {
           localStorage.removeItem('onestop_bookmarks');
         } catch (e) {}
       }
+      if (typeof window !== 'undefined' && (window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery'))) {
+        setRecoveryModalOpen(true);
+      }
       setAuthLoading(false);
     }).catch((err) => {
       console.error('Session retrieval error:', err);
@@ -375,7 +383,7 @@ export function AuthProvider({ children }) {
       }
     });
 
-    // Listen for auth state changes (login, logout, oauth callback)
+    // Listen for auth state changes (login, logout, oauth callback, password recovery)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
         if (!isMounted) return;
@@ -383,6 +391,10 @@ export function AuthProvider({ children }) {
         const currentUser = newSession?.user || null;
         setUser(currentUser);
         userRef.current = currentUser;
+
+        if (event === 'PASSWORD_RECOVERY') {
+          setRecoveryModalOpen(true);
+        }
 
         if (currentUser) {
           identifyUser(currentUser.id, { email: currentUser.email });
@@ -706,6 +718,30 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const resendVerificationEmail = async (email) => {
+    if (!supabase) {
+      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+    }
+    const cleanEmail = (email || '').trim();
+    if (!cleanEmail) {
+      throw new Error('Please enter your email to resend the verification link.');
+    }
+    trackEvent('auth_resend_verification_attempted');
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email: cleanEmail,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    if (error) {
+      trackEvent('auth_resend_verification_failed', { error: error.message });
+      throw error;
+    }
+    trackEvent('auth_resend_verification_success');
+    return data;
+  };
+
   const deleteAccount = async () => {
     if (!supabase || !user) {
       throw new Error('You must be signed in to delete your account.');
@@ -713,32 +749,30 @@ export function AuthProvider({ children }) {
     trackEvent('auth_account_deletion_attempted');
     const userId = user.id;
 
-    // 1. Try deleting via RPC if available
-    let rpcSuccess = false;
-    try {
-      const { error: rpcErr } = await supabase.rpc('delete_user_account');
-      if (!rpcErr) {
-        rpcSuccess = true;
+    // 1. Try deleting via RPC
+    const { error: rpcErr } = await supabase.rpc('delete_user_account');
+    if (rpcErr) {
+      console.warn('Account deletion RPC issue:', rpcErr);
+      // If RPC is missing or fails due to missing function, attempt best-effort fallback on public tables
+      if (rpcErr.code === 'PGRST202' || rpcErr.message?.includes('does not exist')) {
+        try {
+          await supabase.from('bookmarks').delete().eq('user_id', userId);
+        } catch (e) {}
+        try {
+          await supabase.from('squad_applications').delete().eq('applicant_id', userId);
+        } catch (e) {}
+        try {
+          await supabase.from('squad_posts').delete().eq('user_id', userId);
+        } catch (e) {}
+        try {
+          await supabase.from('user_notification_states').delete().eq('user_id', userId);
+        } catch (e) {}
+        try {
+          await supabase.from('profiles').delete().eq('id', userId);
+        } catch (e) {}
+      } else {
+        throw new Error(rpcErr.message || 'Failed to delete account. Please try again.');
       }
-    } catch (e) {}
-
-    // 2. Cascade delete from user-owned public tables
-    if (!rpcSuccess) {
-      try {
-        await supabase.from('bookmarks').delete().eq('user_id', userId);
-      } catch (e) {}
-      try {
-        await supabase.from('squad_applications').delete().eq('applicant_id', userId);
-      } catch (e) {}
-      try {
-        await supabase.from('squad_posts').delete().eq('user_id', userId);
-      } catch (e) {}
-      try {
-        await supabase.from('user_notification_states').delete().eq('user_id', userId);
-      } catch (e) {}
-      try {
-        await supabase.from('profiles').delete().eq('id', userId);
-      } catch (e) {}
     }
 
     trackEvent('auth_account_deletion_success');
@@ -1472,6 +1506,9 @@ export function AuthProvider({ children }) {
         profileModalOpen,
         openProfileModal,
         closeProfileModal,
+        recoveryModalOpen,
+        openRecoveryModal,
+        closeRecoveryModal,
         updateProfile,
         getProfileCooldown,
         PROFILE_COOLDOWN_MS,
@@ -1480,6 +1517,7 @@ export function AuthProvider({ children }) {
         signUpWithPassword,
         signOut,
         resetPassword,
+        resendVerificationEmail,
         changePassword,
         deleteAccount,
         theme: 'light',

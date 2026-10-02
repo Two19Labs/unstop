@@ -35,7 +35,7 @@ const SLIDES = [
   {
     id: 'reminders',
     badge: 'reminders',
-    title: 'a heads-up before every cutoff',
+    title: 'a heads-up before every deadline',
     description: 'extensions, closing deadlines and squad requests, all in the bell. turn on alerts and we ping you in intervals before.'
   },
   {

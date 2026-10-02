@@ -38,7 +38,8 @@ export default function AuthModal() {
     signInWithGoogle,
     signInWithPassword,
     signUpWithPassword,
-    resetPassword
+    resetPassword,
+    resendVerificationEmail
   } = useAuth();
 
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup' | 'forgot'
@@ -48,9 +49,35 @@ export default function AuthModal() {
   const [college, setCollege] = useState('');
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const timerRef = useRef(null);
+
+  // Cooldown countdown for resending verification email
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    if (!email || resendCooldown > 0 || resending) return;
+    setResending(true);
+    try {
+      await resendVerificationEmail(email);
+      setSuccessMsg(`Verification email resent to ${email}! Please check your inbox and spam folder.`);
+      setErrorMsg(null);
+      setResendCooldown(60);
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to resend verification email.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   // Sync mode with modal config when opened
   useEffect(() => {
@@ -233,6 +260,21 @@ export default function AuthModal() {
           <div className="arena-auth-alert arena-auth-alert-success">
             <CheckIcon size={16} />
             <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Resend verification button when email confirmation is pending or required */}
+        {((errorMsg && errorMsg.toLowerCase().includes('not confirmed')) || (successMsg && successMsg.toLowerCase().includes('verification link'))) && email && (
+          <div style={{ textAlign: 'center', marginTop: '-0.3rem', marginBottom: '0.65rem' }}>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resending || resendCooldown > 0}
+              className="arena-auth-forgot-btn"
+              style={{ fontSize: '0.82rem', textDecoration: 'underline', color: 'var(--primary)', cursor: 'pointer' }}
+            >
+              {resending ? 'Resending verification...' : resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend verification email'}
+            </button>
           </div>
         )}
 

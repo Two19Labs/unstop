@@ -13,6 +13,7 @@ import RequestsScreen from './components/RequestsScreen';
 import ProfileScreen from './components/ProfileScreen';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
+import SetNewPasswordModal from './components/SetNewPasswordModal';
 import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -166,7 +167,11 @@ function OneStopInner() {
 
     if (screen === 'home') {
       if (window.location.hash && window.location.hash !== '#') {
-        window.history.replaceState({ screen: 'home' }, '', window.location.pathname + window.location.search);
+        const rawHash = window.location.hash;
+        // Do not wipe OAuth callback tokens or password recovery hashes
+        if (!rawHash.includes('access_token') && !rawHash.includes('type=') && !rawHash.includes('error=')) {
+          window.history.replaceState({ screen: 'home' }, '', window.location.pathname + window.location.search);
+        }
       }
     } else if (currentHash !== screen) {
       window.history.replaceState({ screen }, '', targetHash);
@@ -1405,6 +1410,9 @@ function OneStopInner() {
 
       {/* Supabase Auth Modal */}
       <AuthModal />
+
+      {/* Set New Password Modal (for password recovery email links) */}
+      <SetNewPasswordModal />
 
       {/* Walkthrough Tour Modal */}
       <WalkthroughModal

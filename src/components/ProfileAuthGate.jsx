@@ -42,7 +42,8 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
     signInWithGoogle,
     signInWithPassword,
     signUpWithPassword,
-    resetPassword
+    resetPassword,
+    resendVerificationEmail
   } = useAuth();
 
   const [mode, setMode] = useState(initialMode); // 'signup' | 'signin' | 'forgot'
@@ -52,9 +53,35 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
   const [college, setCollege] = useState('');
   const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [errorMsg, setErrorMsg] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
   const timerRef = useRef(null);
+
+  // Cooldown countdown for resending verification email
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    if (!email || resendCooldown > 0 || resending) return;
+    setResending(true);
+    try {
+      await resendVerificationEmail(email);
+      setSuccessMsg(`Verification email resent to ${email}! Please check your inbox and spam folder.`);
+      setErrorMsg(null);
+      setResendCooldown(60);
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to resend verification email.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   useEffect(() => {
     trackEvent('profile_auth_gate_viewed', { initialMode: mode });
@@ -87,6 +114,11 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
         await signInWithPassword({ email, password });
         setSuccessMsg('Successfully signed in! Loading your profile...');
       } else if (mode === 'signup') {
+        const cleanPhone = (phone || '').replace(/\D/g, '');
+        if (cleanPhone.length < 10) {
+          throw new Error('Please enter a valid 10-digit WhatsApp number to create your account.');
+        }
+
         const res = await signUpWithPassword({
           email,
           password,
@@ -205,6 +237,21 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
           </div>
         )}
 
+        {/* Resend verification button when email confirmation is pending or required */}
+        {((errorMsg && errorMsg.toLowerCase().includes('not confirmed')) || (successMsg && successMsg.toLowerCase().includes('verification link'))) && email && (
+          <div style={{ textAlign: 'center', marginTop: '-0.3rem', marginBottom: '0.65rem' }}>
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              disabled={resending || resendCooldown > 0}
+              className="profile-auth-link"
+              style={{ fontSize: '0.82rem', textDecoration: 'underline', color: 'var(--primary)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+            >
+              {resending ? 'Resending verification...' : resendCooldown > 0 ? `Resend email in ${resendCooldown}s` : 'Resend verification email'}
+            </button>
+          </div>
+        )}
+
         {/* Mode Switcher Tabs (Sign Up vs Sign In) */}
         {mode !== 'forgot' && (
           <div className="profile-auth-tabs">
@@ -279,13 +326,14 @@ export default function ProfileAuthGate({ initialMode = 'signup', isFromWalkthro
               </div>
 
               <div className="profile-auth-field">
-                <label htmlFor="gate-phone">WhatsApp Number</label>
+                <label htmlFor="gate-phone">WhatsApp Number *</label>
                 <input
                   id="gate-phone"
                   type="tel"
                   placeholder="+91 98••• ••210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  required
                 />
                 <span className="profile-auth-field-hint">
                   Used by squad leads to coordinate with you on WhatsApp after accepting your application.
