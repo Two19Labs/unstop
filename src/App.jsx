@@ -486,45 +486,44 @@ function OneStopInner() {
       ...(profile || {}),
       ...updatedData,
     };
-    setProfile(resolvedUpdated);
-    try {
-      localStorage.setItem('onestop_user_profile', JSON.stringify(resolvedUpdated));
-    } catch (e) {}
-
-    if (authUpdateProfile) {
+    const applyLocally = (next) => {
+      setProfile(next);
       try {
-        const yr = updatedData.year || updatedData.batch || '';
-        const isPg = yr.startsWith('PG') || (updatedData.education_level || '').toLowerCase().includes('post');
-        const saved = await authUpdateProfile({
-          fullName: updatedData.name,
-          college: updatedData.college,
-          course: '',
-          year: yr,
-          phone: updatedData.phone,
-          skills: updatedData.skills || [],
-          education_level: isPg ? 'postgraduate' : (yr ? 'undergraduate' : ''),
-        });
-        if (saved) {
-          const finalResolved = {
-            ...resolvedUpdated,
-            ...saved,
-            name: saved.full_name || saved.name || updatedData.name,
-            profile_last_updated_at: saved.profile_last_updated_at,
-          };
-          setProfile(finalResolved);
-          try {
-            localStorage.setItem('onestop_user_profile', JSON.stringify(finalResolved));
-          } catch (e) {}
-        }
-        flash('Profile updated');
-        return true;
-      } catch (err) {
-        console.warn('Supabase profile sync error:', err.message);
-        flash(err.message || 'Could not update profile');
-        throw err;
-      }
+        localStorage.setItem('onestop_user_profile', JSON.stringify(next));
+      } catch (e) {}
+    };
+
+    if (!authUpdateProfile) {
+      applyLocally(resolvedUpdated);
+      return true;
     }
-    return true;
+
+    // Only reflect changes after the server accepts them (it may reject inside the 24h cooldown)
+    try {
+      const yr = updatedData.year || updatedData.batch || '';
+      const isPg = yr.startsWith('PG') || (updatedData.education_level || '').toLowerCase().includes('post');
+      const saved = await authUpdateProfile({
+        fullName: updatedData.name,
+        college: updatedData.college,
+        course: '',
+        year: yr,
+        phone: updatedData.phone,
+        skills: updatedData.skills || [],
+        education_level: isPg ? 'postgraduate' : (yr ? 'undergraduate' : ''),
+      });
+      applyLocally({
+        ...resolvedUpdated,
+        ...(saved || {}),
+        name: saved?.full_name || saved?.name || updatedData.name,
+        profile_last_updated_at: saved?.profile_last_updated_at ?? null,
+      });
+      flash('Profile updated');
+      return true;
+    } catch (err) {
+      console.warn('Supabase profile sync error:', err.message);
+      flash(err.message || 'Could not update profile');
+      throw err;
+    }
   }, [user, authUpdateProfile, flash, profile]);
 
   // Browse Filters State (Synchronized with CompetitionsPage / onestop_user_filter_prefs)

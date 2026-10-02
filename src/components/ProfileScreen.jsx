@@ -21,7 +21,7 @@ import {
   setPushEnabled,
   requestPushPermission
 } from '../lib/browserPushService';
-import { getProfileCooldown } from '../context/AuthContext';
+import { getProfileCooldown, isProfileCooldownError } from '../context/AuthContext';
 import ProfileAuthGate from './ProfileAuthGate';
 import './ProfileScreen.css';
 
@@ -104,6 +104,9 @@ function ProfileScreenContent({
   const [cooldown, setCooldown] = useState(null);
   const [showCooldownNotice, setShowCooldownNotice] = useState(false);
   const cooldownIntervalRef = useRef(null);
+  // Server-reported last edit time (e.g. another tab/device saved first); wins until it expires
+  const [serverLockedAt, setServerLockedAt] = useState(null);
+  const currentCooldownSource = serverLockedAt ? { profile_last_updated_at: serverLockedAt } : profile;
 
   // Modals for Account features
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
@@ -174,7 +177,7 @@ function ProfileScreenContent({
   useEffect(() => {
     if (showCooldownNotice) {
       const updateTimer = () => {
-        const cd = getProfileCooldown(profile, user);
+        const cd = getProfileCooldown(currentCooldownSource, user);
         if (!cd.isLocked) {
           setShowCooldownNotice(false);
           setCooldown(null);
@@ -190,7 +193,7 @@ function ProfileScreenContent({
     } else {
       if (cooldownIntervalRef.current) clearInterval(cooldownIntervalRef.current);
     }
-  }, [showCooldownNotice, profile, user]);
+  }, [showCooldownNotice, profile, serverLockedAt, user]);
 
   useEffect(() => {
     return () => {
@@ -245,7 +248,7 @@ function ProfileScreenContent({
     e.preventDefault();
 
     // 24-hour edit cooldown check: only displayed when someone attempts to update within 24 hours
-    const currentCooldown = getProfileCooldown(profile, user);
+    const currentCooldown = getProfileCooldown(currentCooldownSource, user);
     if (currentCooldown.isLocked) {
       setCooldown(currentCooldown);
       setShowCooldownNotice(true);
@@ -301,7 +304,10 @@ function ProfileScreenContent({
       }, 2400);
     } catch (err) {
       console.warn('Profile save rejected:', err.message);
-      const cd = getProfileCooldown(profile, user);
+      if (isProfileCooldownError(err) && err.lastUpdatedAt) {
+        setServerLockedAt(err.lastUpdatedAt);
+      }
+      const cd = getProfileCooldown(err.lastUpdatedAt ? { profile_last_updated_at: err.lastUpdatedAt } : profile, user);
       if (cd.isLocked) {
         setCooldown(cd);
         setShowCooldownNotice(true);

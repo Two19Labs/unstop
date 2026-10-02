@@ -8,11 +8,19 @@ const AuthContext = createContext(null);
 
 export const PROFILE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+const profileCooldownKey = (userId) => `onestop_profile_last_updated_${userId}`;
+
+// The database owns profile_last_updated_at (see PROFILE_COOLDOWN_AND_PRIVACY_MIGRATION.sql).
+// localStorage is only a hint used before the profile has loaded from the server.
 export function getProfileCooldown(profile, user) {
-  const lastUpdated =
-    profile?.profile_last_updated_at ||
-    user?.user_metadata?.profile_last_updated_at ||
-    (user?.id ? localStorage.getItem(`onestop_profile_last_updated_${user.id}`) : null);
+  let lastUpdated = null;
+  if (profile && Object.prototype.hasOwnProperty.call(profile, 'profile_last_updated_at')) {
+    lastUpdated = profile.profile_last_updated_at;
+  } else if (user?.id) {
+    try {
+      lastUpdated = localStorage.getItem(profileCooldownKey(user.id));
+    } catch (e) {}
+  }
 
   if (!lastUpdated) {
     return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
@@ -44,6 +52,21 @@ export function getProfileCooldown(profile, user) {
     remainingFormatted,
     unlockDate: new Date(lastTime + PROFILE_COOLDOWN_MS),
   };
+}
+
+function rememberProfileCooldown(userId, lastUpdatedAt) {
+  if (!userId) return;
+  try {
+    if (lastUpdatedAt) {
+      localStorage.setItem(profileCooldownKey(userId), lastUpdatedAt);
+    } else {
+      localStorage.removeItem(profileCooldownKey(userId));
+    }
+  } catch (e) {}
+}
+
+export function isProfileCooldownError(err) {
+  return err?.code === 'PROFILE_COOLDOWN';
 }
 
 export function sanitizeIndianPhone(raw) {
@@ -140,7 +163,7 @@ export function AuthProvider({ children }) {
   // Column projections to minimize Supabase egress
   const SQUAD_POSTS_SELECT = 'id, user_id, created_by_name, created_by_email, competition_name, competition_id, is_custom, expires_at, organizer, competition_link, phone_number, comm_method, title, description, skills_have, skills_looking_for, total_members, spots_left, initial_open_spots, is_open, college, course, year, accepted_emails, created_at, updated_at';
   const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_course, applicant_year, pitch_note, highlighted_skills, status, lead_phone, comm_method, created_at, updated_at';
-  const PROFILE_SELECT = 'id, email, full_name, college, course, year, phone, bio, education_level, profile_last_updated_at';
+  const PROFILE_SELECT = 'id, email, full_name, college, course, year, phone, bio, education_level, skills, profile_last_updated_at';
 
   // In-flight request caching & deduplication to eliminate duplicate parallel calls
   const squadDataInFlightRef = useRef(null);
@@ -158,31 +181,33 @@ export function AuthProvider({ children }) {
 
       const activeUser = passedUser || userRef.current;
       const meta = activeUser?.user_metadata || {};
-      const localLastUpdated = localStorage.getItem(`onestop_profile_last_updated_${userId}`);
-      const lastUpdatedAt = data?.profile_last_updated_at || meta?.profile_last_updated_at || localLastUpdated || null;
-      const educationLevel = data?.education_level || meta?.education_level || '';
+      if (error) throw error;
+
+      // Once a profiles row exists it is the single source of truth (auth metadata is
+      // user-writable and not covered by the 24-hour cooldown).
+      if (data) rememberProfileCooldown(userId, data.profile_last_updated_at);
       const resolvedProfile = data ? {
         ...data,
-        education_level: educationLevel,
-        college: data.college || meta.college || '',
-        phone: data.phone || meta.phone || '',
-        course: data.course || meta.course || '',
-        year: data.year || meta.year || '',
-        bio: data.bio || meta.bio || '',
-        skills: Array.isArray(data.skills) ? data.skills : (Array.isArray(meta.skills) ? meta.skills : []),
-        profile_last_updated_at: lastUpdatedAt,
+        full_name: data.full_name || '',
+        education_level: data.education_level || '',
+        college: data.college || '',
+        phone: data.phone || '',
+        course: data.course || '',
+        year: data.year || '',
+        bio: data.bio || '',
+        skills: Array.isArray(data.skills) ? data.skills : [],
+        profile_last_updated_at: data.profile_last_updated_at || null,
       } : (meta.full_name || activeUser?.email ? {
         id: userId,
         email: activeUser?.email,
         full_name: meta.full_name || (activeUser?.email ? activeUser.email.split('@')[0] : ''),
-        education_level: educationLevel,
+        education_level: meta.education_level || '',
         college: meta.college || '',
         phone: meta.phone || '',
         course: meta.course || '',
         year: meta.year || '',
         bio: meta.bio || '',
         skills: Array.isArray(meta.skills) ? meta.skills : [],
-        profile_last_updated_at: lastUpdatedAt,
       } : null);
 
       if (resolvedProfile) {
@@ -828,10 +853,12 @@ export function AuthProvider({ children }) {
       throw new Error('You must be signed in to update your profile.');
     }
 
-    // 1. Enforce 24-Hour Cooldown
+    // 1. Fast client-side check (the database trigger is the real enforcement)
     const cooldown = getProfileCooldown(profile, user);
     if (cooldown.isLocked) {
-      throw new Error(`Profile details can only be updated once every 24 hours. Cooldown remaining: ${cooldown.remainingFormatted}.`);
+      const err = new Error(`Profile details can only be updated once every 24 hours. Cooldown remaining: ${cooldown.remainingFormatted}.`);
+      err.code = 'PROFILE_COOLDOWN';
+      throw err;
     }
 
     const cleanPhone = sanitizeIndianPhone(phone);
@@ -839,24 +866,26 @@ export function AuthProvider({ children }) {
     const trimmedCollege = (college || '').trim();
     const trimmedCourse = (course || '').trim();
     const selectedYear = normalizeYear(year);
-    const trimmedBio = (bio || '').trim();
-    const selectedEducationLevel = selectedYear.startsWith('PG') || (education_level || profile?.education_level || user?.user_metadata?.education_level || 'undergraduate').toLowerCase().includes('post')
+    // The profile screen doesn't edit bio: keep the stored one instead of wiping it
+    const trimmedBio = (bio === undefined ? (profile?.bio || '') : (bio || '')).trim();
+    const selectedEducationLevel = selectedYear.startsWith('PG') || (education_level || profile?.education_level || 'undergraduate').toLowerCase().includes('post')
       ? 'postgraduate'
       : 'undergraduate';
-    const cleanSkills = Array.isArray(skills) ? skills : (profile?.skills || []);
+    // Sorted so a reorder alone never counts as a change (and never burns the cooldown)
+    const cleanSkills = (Array.isArray(skills) ? skills : (profile?.skills || [])).slice().sort();
 
     // Check if any field has actually changed
-    const prevName = (profile?.full_name || user?.user_metadata?.full_name || '').trim();
-    const prevCollege = (profile?.college || user?.user_metadata?.college || '').trim();
-    const prevCourse = (profile?.course || user?.user_metadata?.course || '').trim();
-    const prevYear = normalizeYear(profile?.year || user?.user_metadata?.year);
-    const prevPhone = sanitizeIndianPhone(profile?.phone || user?.user_metadata?.phone || '');
-    const prevBio = (profile?.bio || user?.user_metadata?.bio || '').trim();
-    const prevEducationLevel = prevYear.startsWith('PG') || (profile?.education_level || user?.user_metadata?.education_level || 'undergraduate').toLowerCase().includes('post')
+    const prevName = (profile?.full_name || '').trim();
+    const prevCollege = (profile?.college || '').trim();
+    const prevCourse = (profile?.course || '').trim();
+    const prevYear = normalizeYear(profile?.year);
+    const prevPhone = sanitizeIndianPhone(profile?.phone || '');
+    const prevBio = (profile?.bio || '').trim();
+    const prevEducationLevel = prevYear.startsWith('PG') || (profile?.education_level || 'undergraduate').toLowerCase().includes('post')
       ? 'postgraduate'
       : 'undergraduate';
-    const prevSkills = Array.isArray(profile?.skills) ? profile.skills : (Array.isArray(user?.user_metadata?.skills) ? user.user_metadata.skills : []);
-    const skillsChanged = JSON.stringify(prevSkills.slice().sort()) !== JSON.stringify(cleanSkills.slice().sort());
+    const prevSkills = Array.isArray(profile?.skills) ? profile.skills : [];
+    const skillsChanged = JSON.stringify(prevSkills.slice().sort()) !== JSON.stringify(cleanSkills);
 
     const hasChanged =
       trimmedName !== prevName ||
@@ -869,38 +898,13 @@ export function AuthProvider({ children }) {
       skillsChanged;
 
     // If nothing has changed, do not start/reset cooldown
-    if (!hasChanged && (profile?.profile_last_updated_at || user?.user_metadata?.profile_last_updated_at)) {
+    if (!hasChanged && profile) {
       return profile;
     }
 
-    const nowIso = new Date().toISOString();
-
-    // 2. Update Supabase Auth user metadata
-    const { error: authErr } = await supabase.auth.updateUser({
-      data: {
-        full_name: trimmedName,
-        college: trimmedCollege,
-        course: trimmedCourse,
-        year: selectedYear,
-        education_level: selectedEducationLevel,
-        phone: cleanPhone,
-        bio: trimmedBio,
-        skills: cleanSkills,
-        profile_last_updated_at: nowIso,
-      },
-    });
-
-    if (authErr) throw authErr;
-
-    // 3. Persist timestamp to localStorage for immediate resilience
-    try {
-      localStorage.setItem(`onestop_profile_last_updated_${user.id}`, nowIso);
-    } catch (e) {}
-
-    // 4. Update PostgreSQL profiles table (upsert to create if missing)
-    const profileRecord = {
-      id: user.id,
-      email: user.email,
+    // 2. Persist to PostgreSQL first. The cooldown trigger sets profile_last_updated_at
+    //    server-side and rejects edits inside the 24-hour window.
+    const fields = {
       full_name: trimmedName,
       college: trimmedCollege,
       course: trimmedCourse,
@@ -909,51 +913,53 @@ export function AuthProvider({ children }) {
       phone: cleanPhone,
       bio: trimmedBio,
       skills: cleanSkills,
-      profile_last_updated_at: nowIso,
-      updated_at: nowIso,
     };
 
-    try {
-      const { error: upsertErr } = await supabase
-        .from('profiles')
-        .upsert(profileRecord, { onConflict: 'id' });
+    let { data: saved, error: saveErr } = await supabase
+      .from('profiles')
+      .update(fields)
+      .eq('id', user.id)
+      .select(PROFILE_SELECT)
+      .maybeSingle();
 
-      if (upsertErr) {
-        console.warn('Full profile upsert error, attempting standard fields:', upsertErr.message);
-        // Fallback omitting education_level if the column does not yet exist in PostgreSQL table
-        await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            email: user.email,
-            full_name: trimmedName,
-            college: trimmedCollege,
-            course: trimmedCourse,
-            year: selectedYear,
-            phone: cleanPhone,
-            bio: trimmedBio,
-            skills: cleanSkills,
-            profile_last_updated_at: nowIso,
-            updated_at: nowIso,
-          }, { onConflict: 'id' });
-      }
-    } catch (err) {
-      console.warn('Profile DB save caught error:', err.message);
+    if (!saveErr && !saved) {
+      // No row yet (signup trigger missed it): create it
+      ({ data: saved, error: saveErr } = await supabase
+        .from('profiles')
+        .insert({ id: user.id, email: user.email, ...fields })
+        .select(PROFILE_SELECT)
+        .single());
     }
+
+    if (saveErr) {
+      if (saveErr.hint === 'PROFILE_COOLDOWN') {
+        // Another tab/device saved first: adopt the server's timestamp so the lock UI shows
+        const serverLastUpdated = saveErr.details || new Date().toISOString();
+        rememberProfileCooldown(user.id, serverLastUpdated);
+        setProfile((prev) => (prev ? { ...prev, profile_last_updated_at: serverLastUpdated } : prev));
+        const cd = getProfileCooldown({ profile_last_updated_at: serverLastUpdated }, user);
+        const err = new Error(`Profile details can only be updated once every 24 hours. Cooldown remaining: ${cd.remainingFormatted}.`);
+        err.code = 'PROFILE_COOLDOWN';
+        err.lastUpdatedAt = serverLastUpdated;
+        throw err;
+      }
+      throw new Error(saveErr.message || 'Could not save your profile. Please try again.');
+    }
+
+    const serverLastUpdated = saved?.profile_last_updated_at || null;
+    rememberProfileCooldown(user.id, serverLastUpdated);
+
+    // 3. Mirror display fields into auth metadata (best effort, never authoritative)
+    supabase.auth.updateUser({ data: { full_name: trimmedName, college: trimmedCollege } })
+      .catch((e) => console.warn('Auth metadata mirror failed:', e.message));
 
     const merged = {
       ...(profile || {}),
+      ...(saved || {}),
       id: user.id,
-      email: user.email,
-      full_name: trimmedName,
-      college: trimmedCollege,
-      course: trimmedCourse,
-      year: selectedYear,
-      education_level: selectedEducationLevel,
-      phone: cleanPhone,
-      bio: trimmedBio,
-      profile_last_updated_at: nowIso,
-      updated_at: nowIso,
+      email: saved?.email || user.email,
+      ...fields,
+      profile_last_updated_at: serverLastUpdated,
     };
     setProfile(merged);
     setPersonProperties({
