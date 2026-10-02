@@ -107,7 +107,7 @@
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
@@ -125,13 +125,6 @@
 
 .mobile-what-is-btn:active {
   transform: scale(0.96);
-}
-
-.mobile-what-is-sparkle {
-  font-size: 13px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
 }
 
 @media (max-width: 440px) {

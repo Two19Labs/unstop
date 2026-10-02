@@ -316,7 +316,6 @@ function ProfileScreenContent({
             onClick={onOpenWalkthrough}
             title="What is OneStop?"
           >
-            <span>✨</span>
             <span>What is OneStop?</span>
           </button>
         )}

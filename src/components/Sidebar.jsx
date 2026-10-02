@@ -211,17 +211,6 @@ export default function Sidebar({
             >
               <span
                 style={{
-                  fontSize: '14px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}
-              >
-                ✨
-              </span>
-              <span
-                style={{
                   fontSize: '13px',
                   fontWeight: 500,
                   overflow: 'hidden',
