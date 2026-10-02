@@ -138,7 +138,7 @@ DECLARE
   v_post       public.squad_posts;
   v_lead_phone TEXT;
 BEGIN
-  IF p_status NOT IN ('accepted', 'declined', 'rejected', 'removed') THEN
+  IF p_status NOT IN ('accepted', 'declined', 'rejected', 'removed', 'pending') THEN
     RAISE EXCEPTION 'Invalid status: %', p_status;
   END IF;
 
@@ -194,7 +194,7 @@ BEGIN
     WHERE id = v_app.id
     RETURNING * INTO v_app;
 
-  ELSIF p_status IN ('declined', 'rejected', 'removed') THEN
+  ELSIF p_status IN ('declined', 'rejected', 'removed', 'pending') THEN
     -- If previously accepted, reclaim the spot
     IF v_app.status = 'accepted' THEN
       UPDATE public.squad_posts

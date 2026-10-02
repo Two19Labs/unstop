@@ -204,13 +204,16 @@ export function generateNotifications({
       const notifId = `squad_acc_${rawId}`;
       if (!dismissedSet.has(notifId)) {
         const leadName = targetPost?.created_by_name || targetPost?.lead || 'Squad Lead';
+        const isChatMethod = targetPost?.comm_method === 'chat' || app.comm_method === 'chat';
         notifs.push({
           id: notifId,
           type: 'squad_accepted',
           category: 'squads',
           urgency: 'success',
           title: `🎉 Accepted into Squad · ${compTitle}`,
-          subtitle: `${compHost ? `${compHost} · ` : ''}${leadName} accepted your squad request. Tap to connect on WhatsApp.`,
+          subtitle: isChatMethod
+            ? `${compHost ? `${compHost} · ` : ''}${leadName} accepted your squad request. Tap to open in-platform chat.`
+            : `${compHost ? `${compHost} · ` : ''}${leadName} accepted your squad request. Tap to connect on WhatsApp.`,
           timestamp: app.updated_at ? new Date(app.updated_at).getTime() : now,
           data: {
             appId: app.id,
@@ -221,13 +224,17 @@ export function generateNotifications({
             host: compHost
           },
           actions: [
-            { label: 'Chat on WhatsApp', actionType: 'whatsapp', isPrimary: true }
+            isChatMethod
+              ? { label: 'Open In-Platform Chat', actionType: 'chat', isPrimary: true }
+              : { label: 'Chat on WhatsApp', actionType: 'whatsapp', isPrimary: true }
           ]
         });
 
         dispatchBrowserNotification({
           title: `🎉 Squad Request Accepted!`,
-          body: `You joined ${leadName}'s squad for ${compTitle}${compHost ? ` (${compHost})` : ''}. Connect on WhatsApp.`,
+          body: isChatMethod
+            ? `You joined ${leadName}'s squad for ${compTitle}${compHost ? ` (${compHost})` : ''}. Chat inside OneStop.`
+            : `You joined ${leadName}'s squad for ${compTitle}${compHost ? ` (${compHost})` : ''}. Connect on WhatsApp.`,
           tag: `push_squad_acc_${rawId}`
         });
       }

@@ -143,6 +143,7 @@ function OneStopInner() {
     applyToSquad: authApplySquad,
     updateApplicationStatus: authUpdateAppStatus,
     withdrawApplication: authWithdrawApp,
+    reapplyToSquad: authReapplySquad,
     updateProfile: authUpdateProfile,
     refreshSquadData,
     openAuthModal,
@@ -237,6 +238,18 @@ function OneStopInner() {
       }
     };
   }, []);
+
+  // Detect email confirmation callback and flash welcome toast
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('type=signup')) {
+      flash('🎉 Email confirmed! Welcome to OneStop.');
+      setTimeout(() => {
+        if (window.location.hash.includes('type=signup')) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      }, 1200);
+    }
+  }, [flash]);
 
   // Competitions State (Instant Session Cache with background revalidation)
   const [competitions, setCompetitions] = useState(() => {
@@ -832,8 +845,8 @@ function OneStopInner() {
       skills_have: draft.skills_have || [],
       lead: creatorName,
       created_by_name: creatorName,
-      leadPhone: draft.phone_number || profile.phone || '',
-      phone_number: draft.phone_number || profile.phone || '',
+      leadPhone: (draft.comm_method === 'chat' || draft.commMethod === 'chat') ? '' : (draft.phone_number || profile.phone || ''),
+      phone_number: (draft.comm_method === 'chat' || draft.commMethod === 'chat') ? '' : (draft.phone_number || profile.phone || ''),
       comm_method: draft.comm_method || draft.commMethod || 'whatsapp',
       college: draft.college || profile.college || '',
       year: draft.year || profile.batch || profile.year || '',
@@ -851,7 +864,9 @@ function OneStopInner() {
 
     if (user && authCreatePost) {
       try {
-        await authCreatePost({
+        const commMethod = draft.comm_method || draft.commMethod || 'whatsapp';
+        const postPhone = commMethod === 'chat' ? '' : (draft.phone_number || profile.phone || '');
+        const createdPost = await authCreatePost({
           competition_name: compTitle,
           competition_id: draft.competition_id || draft.compId || null,
           is_custom: Boolean(draft.is_custom),
@@ -864,11 +879,14 @@ function OneStopInner() {
           skills_have: draft.skills_have || [],
           spots_left: draft.spots,
           total_members: draft.total_members || Math.max(2, draft.spots + 1),
-          phone_number: draft.phone_number || profile.phone || '',
-          comm_method: draft.comm_method || draft.commMethod || 'whatsapp',
+          phone_number: postPhone,
+          comm_method: commMethod,
           college: draft.college || profile.college || '',
           year: draft.year || profile.batch || profile.year || ''
         });
+        if (createdPost && createdPost.id) {
+          setLocalPosts(prev => prev.map(p => p.id === newPost.id ? createdPost : p));
+        }
         if (refreshSquadData) refreshSquadData();
       } catch (err) {
         console.warn('Supabase post creation error:', err.message);
@@ -967,7 +985,7 @@ function OneStopInner() {
 
     if (user && authApplySquad) {
       try {
-        await authApplySquad({
+        const createdApp = await authApplySquad({
           post_id: targetPost.id,
           applicant_name: applicantName,
           applicant_phone: applicantPhone,
@@ -978,6 +996,9 @@ function OneStopInner() {
           highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : profile.skills,
           comm_method: targetPost.comm_method || targetPost.commMethod || 'whatsapp'
         });
+        if (createdApp && createdApp.id) {
+          setLocalApplications(prev => prev.map(a => a.id === newApp.id ? createdApp : a));
+        }
         if (refreshSquadData) refreshSquadData();
       } catch (err) {
         console.warn('Supabase apply error:', err.message);
@@ -1026,6 +1047,23 @@ function OneStopInner() {
         if (refreshSquadData) refreshSquadData();
       } catch (err) {
         console.warn('Supabase decline error:', err.message);
+      }
+    }
+  };
+
+  const handleUndoDeclineApp = async (appId) => {
+    setLocalApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'pending' } : a));
+    flash('Moved back to pending');
+    if (user) {
+      try {
+        if (authUpdateAppStatus) {
+          await authUpdateAppStatus(appId, 'pending');
+        } else if (authReapplySquad) {
+          await authReapplySquad(appId);
+        }
+        if (refreshSquadData) refreshSquadData();
+      } catch (err) {
+        console.warn('Supabase reset to pending error:', err.message);
       }
     }
   };
@@ -1228,6 +1266,7 @@ function OneStopInner() {
           onDeleteSquadPost={handleDeleteSquadPost}
           onAcceptApp={handleAcceptApp}
           onDeclineApp={handleDeclineApp}
+          onUndoDeclineApp={handleUndoDeclineApp}
           onRemoveApp={handleRemoveApp}
           onWithdrawApp={handleWithdrawApp}
           showToast={flash}

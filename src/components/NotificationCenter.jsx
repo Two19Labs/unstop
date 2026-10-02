@@ -219,7 +219,7 @@ export default function NotificationCenter({
     } else if (action.actionType === 'requests') {
       onNavigate('requests');
       setIsOpen(false);
-    } else if (action.actionType === 'teams') {
+    } else if (action.actionType === 'teams' || action.actionType === 'chat') {
       onNavigate('teams');
       setIsOpen(false);
     } else if (action.actionType === 'browse') {

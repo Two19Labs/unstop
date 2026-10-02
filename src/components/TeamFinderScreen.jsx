@@ -132,6 +132,7 @@ export default function TeamFinderScreen({
   onDeclineApp,
   onRemoveApp,
   onWithdrawApp,
+  onUndoDeclineApp,
   onBack,
   onNavigate,
   showToast,
@@ -275,13 +276,27 @@ export default function TeamFinderScreen({
 
 
     const dueInfo = formatDue(7);
+    const titleLower = (fallbackTitle || '').toLowerCase();
+    const hostLower = (fallbackHost || '').toLowerCase();
+    let cat = 'Case Comps';
+    if (titleLower.includes('hack') || titleLower.includes('code') || titleLower.includes('tech')) cat = 'Hackathons';
+    else if (titleLower.includes('writ') || titleLower.includes('research') || titleLower.includes('paper')) cat = 'Writing & Research';
+    else if (titleLower.includes('quiz') || titleLower.includes('trivia')) cat = 'Quizzes';
+    else if (titleLower.includes('simul')) cat = 'Simulations';
+    else if (titleLower.includes('debat') || titleLower.includes('mun')) cat = 'Debates';
+
+    let circ = 'Others';
+    if (/sscbs|srcc|hindu|hansraj|lsr|kmc|ramjas|stephen|miranda|du/i.test(hostLower) || /\bdu\b/i.test(titleLower)) circ = 'DU Circuit';
+    else if (/iim|iit|bits|fms|xlri/i.test(hostLower) || /iim|iit|bits/i.test(titleLower)) circ = 'IIMs, IITs & Premier';
+    else if (/bain|l'oreal|mckinsey|tata|google|boston|bcg/i.test(hostLower) || /corporate/i.test(titleLower)) circ = 'Corporate & Global';
+
     return {
       id: compId || 'custom',
       title: fallbackTitle || 'Collegiate Challenge',
       host: fallbackHost || 'University Host',
       logo: null,
-      cat: 'Case Comps',
-      circuit: 'DU Circuit',
+      cat,
+      circuit: circ,
       url: 'https://unstop.com',
       dueText: dueInfo.text,
       dueColor: dueInfo.color,
@@ -653,8 +668,8 @@ export default function TeamFinderScreen({
   };
 
   const handleUndoDecline = (appId) => {
-    if (onAcceptApp) {
-      onAcceptApp(appId);
+    if (onUndoDeclineApp) {
+      onUndoDeclineApp(appId);
     }
   };
 
@@ -937,7 +952,7 @@ export default function TeamFinderScreen({
                     <div className="cc-checkbox-list">
                       {(skillsOpen ? SKILLS : SKILLS.slice(0, 5)).map((sk) => {
                         const isChecked = fSkills.includes(sk);
-                        const count = countIn(p => p.want.includes(sk), 'skills');
+                        const count = countIn(p => p.want.some(w => normalizeSkill(w) === normalizeSkill(sk)), 'skills');
                         return (
                           <label key={sk} className="cc-filter-checkbox-row">
                             <input
@@ -1839,7 +1854,7 @@ export default function TeamFinderScreen({
                   ['accepted', 'Accepted'],
                   ['declined', 'Declined']
                 ].map(([id, label]) => {
-                  const count = reviewTarget.apps.filter(a => a.status === id).length;
+                  const count = reviewTarget.apps.filter(a => id === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === id).length;
                   return (
                     <button
                       key={id}
@@ -1859,7 +1874,7 @@ export default function TeamFinderScreen({
 
             {/* Body */}
             <div className="tf-review-body">
-              {reviewTarget.apps.filter(a => a.status === reviewTab).length === 0 ? (
+              {reviewTarget.apps.filter(a => reviewTab === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === reviewTab).length === 0 ? (
                 <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
                     {reviewTab === 'pending'
@@ -1878,9 +1893,9 @@ export default function TeamFinderScreen({
                 </div>
               ) : (
                 reviewTarget.apps
-                  .filter(a => a.status === reviewTab)
+                  .filter(a => reviewTab === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === reviewTab)
                   .map((app) => {
-                    const matchCount = app.skills.filter(s => reviewTarget.want.includes(s)).length;
+                    const matchCount = app.skills.filter(s => reviewTarget.want.some(w => normalizeSkill(w) === normalizeSkill(s))).length;
                     return (
                       <div key={app.id} className="tf-applicant-card">
                         {/* Info row */}
@@ -1911,7 +1926,7 @@ export default function TeamFinderScreen({
                         {/* Skills chips */}
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                           {app.skills.map((sk, idx) => {
-                            const isHit = reviewTarget.want.includes(sk);
+                            const isHit = reviewTarget.want.some(w => normalizeSkill(w) === normalizeSkill(sk));
                             return (
                               <span
                                 key={idx}
@@ -2047,7 +2062,7 @@ export default function TeamFinderScreen({
                             </>
                           )}
 
-                          {app.status === 'declined' && (
+                          {(app.status === 'declined' || app.status === 'rejected') && (
                             <button
                               type="button"
                               onClick={() => handleUndoDecline(app.id)}
