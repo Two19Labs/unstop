@@ -315,14 +315,6 @@ function ProfileScreenContent({
         <aside className="profile-left-rail">
           {/* Card A: Squad Lead Live Preview Card */}
           <div className="profile-preview-card">
-            <div className="profile-preview-strip">
-              <span className="profile-preview-strip-label">Squad Lead View</span>
-              <span className="profile-preview-live-badge">
-                <span className="profile-pulse-dot" />
-                Live Preview
-              </span>
-            </div>
-
             <div className="profile-preview-body">
               {/* Identity block */}
               <div className="profile-preview-identity">
