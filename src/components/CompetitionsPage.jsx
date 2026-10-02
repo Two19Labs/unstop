@@ -803,7 +803,7 @@ export default function CompetitionsPage({
 
     try {
       const res = await fetch('/api/competitions');
-      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to reach Unstop`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch live competitions`);
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         let sanitized = data.data.map((c) => ({
@@ -821,11 +821,11 @@ export default function CompetitionsPage({
         if (onCountUpdate) onCountUpdate(sanitized.length);
         setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
       } else {
-        throw new Error(data.error || 'Empty response received from Unstop');
+        throw new Error(data.error || 'Empty response received');
       }
     } catch (err) {
-      console.error('Error fetching live Unstop competitions:', err);
-      setFetchError(err.message || 'Unable to load real-time competitions from Unstop.');
+      console.error('Error fetching live competitions:', err);
+      setFetchError(err.message || 'Unable to load real-time competitions.');
       setCompetitions([]);
       if (onCountUpdate) onCountUpdate(0);
     } finally {
@@ -1253,7 +1253,7 @@ export default function CompetitionsPage({
             <div className="cc-header-info">
               <div className="cc-title-row">
                 <h1 className="cc-title">{bookmarkedOnly ? 'Bookmarked' : 'Competitions'}</h1>
-                <div className="cc-unstop-pill-badge" title="Live synced from Unstop, InsideKampus, Devpost & Campus Direct.">
+                <div className="cc-unstop-pill-badge" title="Live synced across collegiate, corporate, and national competition portals.">
                   <span className="cc-unstop-pulse-dot" />
                   <span className="cc-unstop-pill-text">MULTI-SOURCE LIVE</span>
                 </div>
@@ -1261,7 +1261,7 @@ export default function CompetitionsPage({
               <p className="cc-subtitle">
                 {bookmarkedOnly
                   ? 'All your saved competitions in one place. Synced and updated live.'
-                  : 'Discover top competitions, hackathons, and challenges right here, synced live across Unstop, InsideKampus, Devpost & Campus Direct.'}
+                  : 'Discover top competitions, hackathons, and challenges right here, synced live across collegiate, corporate, and national portals.'}
               </p>
             </div>
           </div>
@@ -1276,7 +1276,7 @@ export default function CompetitionsPage({
         <div className="cc-unstop-notice-banner">
           <span className="cc-unstop-notice-tag">MULTI-PLATFORM</span>
           <span className="cc-unstop-notice-text">
-            <strong>Direct Sourcing:</strong> Sourced live from <strong>Unstop</strong>, <strong>InsideKampus</strong>, <strong>Devpost</strong>, and verified <strong>Campus Direct</strong> portals.
+            <strong>Direct Sourcing:</strong> Sourced live from premier competition platforms, corporate challenges, and verified campus portals.
           </span>
         </div>
 
@@ -1651,7 +1651,7 @@ export default function CompetitionsPage({
             <div className="cc-results-status-bar">
               <div className="cc-count-sort-row">
                 <div className="cc-inline-count">
-                  <span className="cc-pulse-dot" title="Live Unstop sync active"></span>
+                  <span className="cc-pulse-dot" title="Live sync active"></span>
                   <span>
                     <strong>{filteredCompetitions.length}</strong>{' '}
                     {filteredCompetitions.length === 1 ? 'competition' : 'competitions'}
@@ -1787,7 +1787,7 @@ export default function CompetitionsPage({
       {/* ── Competitions Section Loading: Redesigned minimalist loading card ── */}
       {(showFetchingScreen || loading) ? (
         <SectionLoadingWidget
-          headline={bookmarkedOnly ? 'Syncing your saved competitions...' : 'Fetching live competitions from Unstop...'}
+          headline={bookmarkedOnly ? 'Syncing your saved competitions...' : 'Fetching live competitions...'}
           subtitle={bookmarkedOnly ? 'Checking deadlines on everything you bookmarked' : 'Pulling direct listings across DU, IIMs, IITs & premier colleges'}
           customPuns={BROWSE_PUNS}
           minDurationMs={1500}
@@ -1803,7 +1803,7 @@ export default function CompetitionsPage({
           <h3 className="cc-empty-title">Could not load live competitions</h3>
           <p className="cc-empty-desc">{fetchError}</p>
           <button className="cc-empty-btn" onClick={() => fetchOpportunities(true)}>
-            Retry Connection to Unstop
+            Retry Connection
           </button>
         </div>
       ) : filteredCompetitions.length === 0 ? (

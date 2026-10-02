@@ -13,18 +13,12 @@ import {
   BellIcon
 } from './icons';
 import {
-  isPushSupported,
   getPushPermission,
   isPushEnabled,
   setPushEnabled,
-  requestPushPermission,
-  dispatchBrowserNotification,
-  isIOS,
-  isStandalone,
-  isMobileDevice
+  requestPushPermission
 } from '../lib/browserPushService';
 import { getProfileCooldown } from '../context/AuthContext';
-import { isAdminEmail } from '../lib/admin';
 import ProfileAuthGate from './ProfileAuthGate';
 import './ProfileScreen.css';
 
@@ -133,17 +127,6 @@ function ProfileScreenContent({
     setPushEnabledState(next);
     if (flashToast) {
       flashToast(next ? 'Desktop alerts enabled' : 'Desktop alerts muted');
-    }
-  };
-
-  const handleSendTestPush = () => {
-    const dispatched = dispatchBrowserNotification({
-      title: '🚨 Final 15m · Flipkart GRiD 6.0',
-      body: 'Flipkart · Round 1: Online Quiz cutoff at Today, 11:59 PM IST (15m left). Submit files before portal lock.',
-      tag: 'test_push_' + Date.now()
-    });
-    if (dispatched && flashToast) {
-      flashToast('Sample reminder sent!');
     }
   };
 
@@ -396,60 +379,6 @@ function ProfileScreenContent({
             </div>
           </div>
 
-          {/* Admin Portal Card (Strictly for aditya.25015@sscbs.du.ac.in, located above profile settings) */}
-          {user && isAdminEmail(user.email) && (
-            <div
-              className="profile-account-card"
-              style={{
-                borderColor: 'rgba(220, 38, 38, 0.35)',
-                background: 'linear-gradient(180deg, rgba(220, 38, 38, 0.04), var(--surface))',
-                marginBottom: '16px'
-              }}
-            >
-              <div className="profile-account-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '15px' }}>🛡️</span>
-                  <span className="profile-account-title" style={{ color: '#DC2626', fontWeight: 800 }}>
-                    System Admin
-                  </span>
-                </div>
-                <span
-                  style={{
-                    background: '#DC2626',
-                    color: '#FFFFFF',
-                    borderRadius: '4px',
-                    padding: '2px 7px',
-                    fontSize: '9px',
-                    fontWeight: 800,
-                    letterSpacing: '0.5px',
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  CONSOLE
-                </span>
-              </div>
-              <div style={{ padding: '0 16px 14px', fontSize: '0.82rem', color: 'var(--ink-secondary)', lineHeight: 1.45 }}>
-                Real-time user demographics, live student presence roster, and platform directory.
-              </div>
-              <div className="profile-account-actions" style={{ paddingTop: 0 }}>
-                <button
-                  type="button"
-                  className="profile-account-action-btn"
-                  onClick={() => onNavigate && onNavigate('admin')}
-                  style={{
-                    background: 'var(--primary)',
-                    color: '#FFFFFF',
-                    justifyContent: 'center',
-                    fontWeight: 700,
-                    borderRadius: '8px',
-                    padding: '9px 14px'
-                  }}
-                >
-                  <span>Open Admin Console →</span>
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Card B: Account Card */}
           <div className="profile-account-card">
@@ -658,150 +587,6 @@ function ProfileScreenContent({
                   </button>
                 );
               })}
-            </div>
-          </section>
-
-          {/* Section 4: Reminders & Notification Preferences */}
-          <section className="profile-section-card">
-            <div className="profile-section-header">
-              <h2 className="profile-section-title">Reminders &amp; Notification Preferences</h2>
-              <p className="profile-section-subtitle">
-                deadline cutoffs, round alerts, and squad notifications
-              </p>
-            </div>
-
-            <div className="profile-notif-setting-box">
-              <div className="profile-notif-setting-info">
-                <div className="profile-notif-setting-title-row">
-                  <span className="profile-notif-setting-title">Phone &amp; Browser Notifications</span>
-                  {pushPermission === 'granted' && (
-                    <span className={`profile-notif-status-badge ${pushEnabled ? 'active' : 'disabled'}`}>
-                      {pushEnabled ? 'Active' : 'Muted'}
-                    </span>
-                  )}
-                </div>
-                <p className="profile-notif-setting-desc">
-                  native alerts 1h before deadlines and 30m before cutoffs
-                </p>
-                {isIOS() && !isStandalone() && (
-                  <div style={{ marginTop: '8px', fontSize: '11.5px', color: 'var(--ink)', background: 'rgba(245, 158, 11, 0.08)', padding: '7px 10px', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
-                    📲 <strong>For iPhone alerts:</strong> Tap <strong>Share</strong> ⎋ then <strong>"Add to Home Screen"</strong> to receive iOS push notifications.
-                  </div>
-                )}
-              </div>
-
-              <div className="profile-notif-setting-control">
-                {pushPermission === 'unsupported' ? (
-                  <span className="profile-notif-note">Not supported in this browser</span>
-                ) : pushPermission === 'denied' ? (
-                  <span className="profile-notif-denied-note">
-                    Blocked in browser settings. Please allow notifications in your site permissions.
-                  </span>
-                ) : pushPermission === 'granted' ? (
-                  <div className="profile-notif-toggle-row">
-                    <button
-                      type="button"
-                      className={`profile-notif-toggle-switch ${pushEnabled ? 'enabled' : ''}`}
-                      onClick={handleTogglePush}
-                      role="switch"
-                      aria-checked={pushEnabled}
-                      aria-label="Toggle notifications"
-                    >
-                      <span className="profile-notif-toggle-knob" />
-                    </button>
-                    {pushEnabled && (
-                      <button
-                        type="button"
-                        className="profile-notif-test-btn"
-                        onClick={handleSendTestPush}
-                        title="Send a sample notification"
-                      >
-                        Send Test Alert
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="profile-notif-enable-btn"
-                    onClick={handleRequestPush}
-                  >
-                    Enable Device Alerts
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {!isStandalone() && (
-              <div className="profile-notif-setting-box" style={{ marginTop: '12px' }}>
-                <div className="profile-notif-setting-info">
-                  <div className="profile-notif-setting-title-row">
-                    <span className="profile-notif-setting-title">📲 Install OneStop Shortcut</span>
-                    <span className="profile-notif-status-badge active" style={{ background: 'var(--primary-tint-8)', color: 'var(--primary)', borderColor: 'var(--primary-tint-18)' }}>
-                      Home Screen
-                    </span>
-                  </div>
-                  <p className="profile-notif-setting-desc">
-                    Install a fast 1-tap shortcut on your phone’s home screen to discover competitions, track deadlines, and connect with squads on the go.
-                  </p>
-                </div>
-                <div className="profile-notif-setting-control">
-                  <button
-                    type="button"
-                    className="profile-notif-enable-btn"
-                    style={{ background: 'var(--primary)', color: '#ffffff', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    onClick={() => {
-                      window.dispatchEvent(new CustomEvent('onestop:open-install-prompt'));
-                    }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    <span>Install Shortcut</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Monitored Radar Channels */}
-            <div className="profile-notif-channels-grid">
-              <div className="profile-notif-channel-item">
-                <div className="profile-notif-channel-icon">⏱️</div>
-                <div className="profile-notif-channel-text">
-                  <strong>Registration Deadlines</strong>
-                  <span>1 hour, 6 hours, and 24 hours prior</span>
-                </div>
-                <span className="profile-notif-channel-active">Monitored</span>
-              </div>
-
-              <div className="profile-notif-channel-item">
-                <div className="profile-notif-channel-icon">🎯</div>
-                <div className="profile-notif-channel-text">
-                  <strong>Multi-Round Timelines</strong>
-                  <span>Round start notices &amp; 30m cutoff alerts</span>
-                </div>
-                <span className="profile-notif-channel-active">Monitored</span>
-              </div>
-
-              <div className="profile-notif-channel-item">
-                <div className="profile-notif-channel-icon">🎉</div>
-                <div className="profile-notif-channel-text">
-                  <strong>Deadline Extensions</strong>
-                  <span>Automated diff detection for rescheduled dates</span>
-                </div>
-                <span className="profile-notif-channel-active">Monitored</span>
-              </div>
-
-              <div className="profile-notif-channel-item">
-                <div className="profile-notif-channel-icon">💬</div>
-                <div className="profile-notif-channel-text">
-                  <strong>Squad Handshakes</strong>
-                  <span>Incoming applicants &amp; WhatsApp connects</span>
-                </div>
-                <span className="profile-notif-channel-active">Monitored</span>
-              </div>
             </div>
           </section>
 

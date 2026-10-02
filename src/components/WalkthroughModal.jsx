@@ -2442,7 +2442,7 @@ export default function WalkthroughModal({
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          Reminders &amp; Radar
+                          Reminders
                         </span>
                         <span
                           style={{

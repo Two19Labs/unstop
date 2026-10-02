@@ -733,11 +733,6 @@
   color: var(--ink, #1A1A19);
 }
 
-[data-theme='dark'] .tf-sort-select option {
-  background: #18181b;
-  color: #ffffff;
-}
-
 /* Status Row & Active Chips */
 .tf-status-row {
   display: flex;
@@ -1298,52 +1293,6 @@
   box-sizing: border-box;
 }
 
-[data-theme='dark'] .tf-comp-logo-wrap {
-  background: #18181b;
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme='dark'] .tf-chat-btn {
-  background: #18181b;
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-[data-theme='dark'] .tf-chat-btn.tf-chat-wa {
-  background: rgba(37, 211, 102, 0.12);
-  border-color: rgba(37, 211, 102, 0.35);
-  color: #4ade80;
-}
-
-[data-theme='dark'] .tf-chat-btn.tf-chat-inapp {
-  background: rgba(15, 63, 254, 0.15);
-  border-color: rgba(15, 63, 254, 0.35);
-  color: #60a5fa;
-}
-
-[data-theme='dark'] .tf-full-btn {
-  background: #27272a;
-  color: #71717a;
-}
-
-[data-theme='dark'] .tf-sidebar-footer-count {
-  background: #1f1f23;
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #d4d4d8;
-}
-
-[data-theme='dark'] .tf-skill-pill-needed,
-[data-theme='dark'] .tf-skill-pill-more {
-  background: #27272a;
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #d4d4d8;
-}
-
-[data-theme='dark'] .tf-skill-pill-welcome {
-  background: #18181b;
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #a1a1aa;
-}
-
 .tf-withdraw-btn {
   flex: 1;
   display: flex;
@@ -1441,20 +1390,6 @@
   background: rgba(220, 38, 38, 0.12) !important;
   border-color: rgba(220, 38, 38, 0.45) !important;
   color: #B91C1C !important;
-}
-
-[data-theme='dark'] .tf-btn-delete,
-body.dark .tf-btn-delete {
-  color: #EF4444 !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
-  background: rgba(239, 68, 68, 0.1) !important;
-}
-
-[data-theme='dark'] .tf-btn-delete:hover,
-body.dark .tf-btn-delete:hover {
-  background: rgba(239, 68, 68, 0.2) !important;
-  border-color: rgba(239, 68, 68, 0.5) !important;
-  color: #F87171 !important;
 }
 
 /* ── Loading Skeleton ── */

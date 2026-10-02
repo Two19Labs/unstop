@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    Case Competitions Alerts  -  OneStop / Two19 Labs Portal
-   Matches Light & Dark theme tokens (--bg, --surface, --ink, --border)
+   Light theme design tokens (--bg, --surface, --ink, --border)
    ═══════════════════════════════════════════════════════════ */
 
 :root {
@@ -16,21 +16,6 @@
   --tint: rgba(36, 26, 20, 0.05);
   --track: rgba(36, 26, 20, 0.08);
   --on-accent: #ffffff;
-}
-
-[data-theme='dark'] {
-  --bg: var(--canvas, #0F1013);
-  --border: var(--line, #262830);
-  --ink-dim: var(--ink-secondary, #9DA3AE);
-  --accent: var(--primary, #3B6BFF);
-  --accent-tint: var(--primary-tint-8, rgba(59, 107, 255, 0.12));
-  --maroon: #d98a94;
-  --gold: #c9a558;
-  --gold-text: #c9a558;
-  --amber: #e8a355;
-  --tint: rgba(255, 255, 255, 0.05);
-  --track: rgba(255, 255, 255, 0.08);
-  --on-accent: #171717;
 }
 
 /* ── Standalone Full-Page Competitions View (No OS Sidebar; Left is only Filters) ── */
@@ -113,10 +98,6 @@
 .cc-btn-back-dashboard:hover {
   background: #262626;
   transform: translateX(-2px);
-}
-
-[data-theme='dark'] .cc-btn-back-dashboard {
-  background: var(--color-lab-blue, #0F3FFE);
 }
 
 .cc-directory-stats-pill {
@@ -229,12 +210,6 @@
   margin-bottom: 6px;
 }
 
-[data-theme='dark'] .cc-badge {
-  background: rgba(234, 179, 8, 0.18);
-  color: #facc15;
-  border-color: rgba(234, 179, 8, 0.35);
-}
-
 .cc-title-row {
   display: flex;
   align-items: center;
@@ -321,22 +296,6 @@
 .cc-unstop-notice-text strong {
   color: var(--ink);
   font-weight: 700;
-}
-
-[data-theme='dark'] .cc-unstop-tag {
-  background: #2563eb;
-  color: #ffffff;
-}
-
-[data-theme='dark'] .cc-unstop-notice-banner {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.25);
-  border-left-color: #38bdf8;
-}
-
-[data-theme='dark'] .cc-unstop-notice-tag {
-  background: #2563eb;
-  color: #ffffff;
 }
 
 .cc-header-actions {
@@ -576,11 +535,6 @@
   transition: border-color 0.15s ease;
 }
 
-[data-theme='dark'] .cc-filter-card {
-  background: #18181b;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
 .cc-unified-filter-card {
   padding: 10px 12px;
   gap: 7px;
@@ -624,14 +578,6 @@
   background: rgba(113, 34, 44, 0.08);
 }
 
-[data-theme='dark'] .cc-filter-reset-link {
-  color: #f87171;
-}
-
-[data-theme='dark'] .cc-filter-reset-link:hover {
-  background: rgba(248, 113, 113, 0.12);
-}
-
 /* ── Collapsible Accordion Header (matching reference: 'v Title') ── */
 .cc-accordion-header {
   width: 100%;
@@ -672,11 +618,6 @@
   background: rgba(113, 34, 44, 0.08);
 }
 
-[data-theme='dark'] .cc-mini-select-all:hover {
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.12);
-}
-
 .cc-accordion-header-left {
   display: flex;
   align-items: center;
@@ -711,11 +652,6 @@
   letter-spacing: 0.2px;
 }
 
-[data-theme='dark'] .cc-active-count-badge {
-  background: rgba(248, 113, 113, 0.15);
-  color: #fca5a5;
-}
-
 /* ── Accordion Content & Checkbox Rows ── */
 .cc-accordion-content {
   padding-top: 4px;
@@ -730,10 +666,6 @@
   flex-direction: column;
   padding-top: 6px;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-[data-theme='dark'] .cc-filter-subgroup {
-  border-top-color: rgba(255, 255, 255, 0.06);
 }
 
 .cc-filter-subgroup:first-of-type {
@@ -795,11 +727,6 @@
   color: #ffffff;
 }
 
-[data-theme='dark'] .cc-custom-checkbox {
-  border-color: #4b5563;
-  background: #18181b;
-}
-
 .cc-filter-checkbox-row:hover .cc-custom-checkbox {
   border-color: var(--ink-dim);
 }
@@ -808,11 +735,6 @@
   background: #1c4980;
   border-color: #1c4980;
   color: #ffffff;
-}
-
-[data-theme='dark'] .cc-filter-checkbox-input:checked + .cc-custom-checkbox {
-  background: #2563eb;
-  border-color: #2563eb;
 }
 
 .cc-checkbox-label-text {
@@ -881,12 +803,6 @@
   color: var(--ink);
   font-weight: 700;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-
-[data-theme='dark'] .cc-seg-btn.active {
-  background: #27272a;
-  color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 /* ── Main Content Area (Right Column) ── */
@@ -958,10 +874,6 @@
   border-color: var(--ink);
   background: var(--surface);
   box-shadow: 0 0 0 3px rgba(28, 73, 128, 0.1);
-}
-
-[data-theme='dark'] .cc-search-input:focus {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
 .cc-search-wrapper:focus-within .cc-search-icon {
@@ -1045,11 +957,6 @@
   color: #b45309;
 }
 
-[data-theme='dark'] .cc-section-tab-bookmark.active {
-  background: rgba(245, 158, 11, 0.22);
-  color: #fbbf24;
-}
-
 .cc-section-tab-count {
   font-size: 0.72rem;
   padding: 1px 6px;
@@ -1067,21 +974,10 @@
   color: var(--accent, #71222c);
 }
 
-[data-theme='dark'] .cc-section-tab.active .cc-section-tab-count {
-  background: rgba(248, 113, 113, 0.2);
-  color: #fca5a5;
-}
-
 .cc-section-tab-bookmark.active .cc-section-tab-count,
 .cc-section-tab-count.has-count {
   background: rgba(245, 158, 11, 0.2);
   color: #b45309;
-}
-
-[data-theme='dark'] .cc-section-tab-bookmark.active .cc-section-tab-count,
-[data-theme='dark'] .cc-section-tab-count.has-count {
-  background: rgba(245, 158, 11, 0.28);
-  color: #fcd34d;
 }
 
 .cc-top-actions {
@@ -1269,42 +1165,6 @@
   border: 1px solid #e2e8f0;
 }
 
-[data-theme='dark'] .cc-active-pill.pill-circuit {
-  background: rgba(192, 38, 211, 0.18);
-  color: #f0abfc;
-  border-color: rgba(192, 38, 211, 0.35);
-}
-
-[data-theme='dark'] .cc-active-pill.pill-track {
-  background: rgba(2, 132, 199, 0.18);
-  color: #7dd3fc;
-  border-color: rgba(2, 132, 199, 0.35);
-}
-
-[data-theme='dark'] .cc-active-pill.pill-format {
-  background: rgba(217, 119, 6, 0.18);
-  color: #fcd34d;
-  border-color: rgba(217, 119, 6, 0.35);
-}
-
-[data-theme='dark'] .cc-active-pill.pill-fee {
-  background: rgba(22, 163, 74, 0.18);
-  color: #86efac;
-  border-color: rgba(22, 163, 74, 0.35);
-}
-
-[data-theme='dark'] .cc-active-pill.pill-bookmark {
-  background: rgba(225, 29, 72, 0.18);
-  color: #fda4af;
-  border-color: rgba(225, 29, 72, 0.35);
-}
-
-[data-theme='dark'] .cc-active-pill.pill-search {
-  background: rgba(148, 163, 184, 0.15);
-  color: #cbd5e1;
-  border-color: rgba(148, 163, 184, 0.25);
-}
-
 .cc-clear-all-pill-btn {
   display: inline-flex;
   align-items: center;
@@ -1350,10 +1210,6 @@
 .cc-sort-box:focus-within {
   border-color: var(--ink);
   box-shadow: 0 0 0 3px rgba(28, 73, 128, 0.1);
-}
-
-[data-theme='dark'] .cc-sort-box:focus-within {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
 .cc-sort-icon {
@@ -1405,11 +1261,6 @@
   color: var(--ink);
 }
 
-[data-theme='dark'] .cc-sort-select option {
-  background: #18181b;
-  color: #ffffff;
-}
-
 .cc-reset-btn {
   display: inline-flex;
   align-items: center;
@@ -1441,18 +1292,6 @@
 .cc-reset-icon {
   opacity: 0.85;
   flex-shrink: 0;
-}
-
-[data-theme='dark'] .cc-reset-btn {
-  background: rgba(248, 113, 113, 0.08);
-  border-color: rgba(248, 113, 113, 0.28);
-  color: #fca5a5;
-}
-
-[data-theme='dark'] .cc-reset-btn:hover {
-  background: rgba(248, 113, 113, 0.16);
-  border-color: #f87171;
-  color: #ffffff;
 }
 
 /* ── Inline Opportunities Count ── */
@@ -1514,10 +1353,6 @@
   box-shadow: 0 14px 30px -6px rgba(0, 0, 0, 0.09);
 }
 
-[data-theme='dark'] .cc-card:hover {
-  box-shadow: 0 14px 34px -6px rgba(0, 0, 0, 0.5);
-}
-
 /* Subtle Circuit Hover Accents */
 .cc-card-du:hover {
   border-color: rgba(147, 51, 234, 0.5);
@@ -1550,11 +1385,6 @@
 .cc-card.is-bookmarked {
   border-color: rgba(245, 158, 11, 0.45);
   box-shadow: 0 4px 18px -4px rgba(245, 158, 11, 0.15);
-}
-
-[data-theme='dark'] .cc-card.is-bookmarked {
-  border-color: rgba(245, 158, 11, 0.5);
-  box-shadow: 0 4px 22px -4px rgba(245, 158, 11, 0.22);
 }
 
 /* ── Card Inner Container ── */
@@ -1643,13 +1473,6 @@
   border: 1px solid var(--border);
 }
 
-[data-theme='dark'] .cc-category-badge.case { color: #a78bfa; border-color: rgba(167, 139, 250, 0.35); }
-[data-theme='dark'] .cc-category-badge.hackathon { color: #38bdf8; border-color: rgba(56, 189, 248, 0.35); }
-[data-theme='dark'] .cc-category-badge.simulation { color: #34d399; border-color: rgba(52, 211, 153, 0.35); }
-[data-theme='dark'] .cc-category-badge.writing { color: #fbbf24; border-color: rgba(251, 191, 36, 0.35); }
-[data-theme='dark'] .cc-category-badge.quiz { color: #fb7185; border-color: rgba(251, 113, 133, 0.35); }
-[data-theme='dark'] .cc-category-badge.debate { color: #fb923c; border-color: rgba(251, 146, 60, 0.35); }
-
 .cc-card-bookmark-btn {
   width: 34px;
   height: 34px;
@@ -1676,18 +1499,6 @@
   color: #d97706;
   background: rgba(245, 158, 11, 0.14);
   border-color: rgba(245, 158, 11, 0.4);
-}
-
-[data-theme='dark'] .cc-card-bookmark-btn:hover {
-  color: #fbbf24;
-  border-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.18);
-}
-
-[data-theme='dark'] .cc-card-bookmark-btn.active {
-  color: #fbbf24;
-  background: rgba(245, 158, 11, 0.24);
-  border-color: rgba(245, 158, 11, 0.5);
 }
 
 .cc-host-logo {
@@ -1749,14 +1560,6 @@
   color: var(--ink);
 }
 
-[data-theme='dark'] .cc-host-avatar.du { color: #c084fc; }
-[data-theme='dark'] .cc-host-avatar.iim,
-[data-theme='dark'] .cc-host-avatar.iim-iit { color: #fbbf24; }
-[data-theme='dark'] .cc-host-avatar.iit,
-[data-theme='dark'] .cc-host-avatar.other-mba-corp,
-[data-theme='dark'] .cc-host-avatar.corporate,
-[data-theme='dark'] .cc-host-avatar.corporate-global { color: #38bdf8; }
-
 .cc-host-meta {
   display: flex;
   flex-direction: column;
@@ -1796,12 +1599,6 @@
 .cc-circuit-tag.other-mba-corp { color: #0284c7; }
 .cc-circuit-tag.flagship { color: #b08d3e; }
 .cc-circuit-tag.general { color: var(--ink-dim); }
-
-[data-theme='dark'] .cc-circuit-tag.du { color: #c084fc; }
-[data-theme='dark'] .cc-circuit-tag.iim,
-[data-theme='dark'] .cc-circuit-tag.iim-iit { color: #fbbf24; }
-[data-theme='dark'] .cc-circuit-tag.iit,
-[data-theme='dark'] .cc-circuit-tag.other-mba-corp { color: #38bdf8; }
 
 .cc-circuit-icon {
   font-size: 0.72rem;
@@ -1851,12 +1648,6 @@
   border: 1px solid rgba(239, 68, 68, 0.32);
 }
 
-[data-theme='dark'] .cc-countdown-chip.red {
-  background: rgba(239, 68, 68, 0.22);
-  color: #f87171;
-  border-color: rgba(248, 113, 113, 0.42);
-}
-
 .cc-countdown-chip.red .cc-status-dot {
   background: #ef4444;
   box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
@@ -1876,12 +1667,6 @@
   border: 1px solid rgba(245, 158, 11, 0.32);
 }
 
-[data-theme='dark'] .cc-countdown-chip.yellow {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.4);
-}
-
 .cc-countdown-chip.yellow .cc-status-dot {
   background: #f59e0b;
 }
@@ -1891,12 +1676,6 @@
   background: rgba(16, 185, 129, 0.1);
   color: #047857;
   border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-[data-theme='dark'] .cc-countdown-chip.green {
-  background: rgba(16, 185, 129, 0.18);
-  color: #34d399;
-  border-color: rgba(52, 211, 153, 0.4);
 }
 
 .cc-countdown-chip.green .cc-status-dot {
@@ -1931,11 +1710,6 @@
   border: 1px solid rgba(16, 185, 129, 0.24);
 }
 
-[data-theme='dark'] .cc-prize-bar {
-  background: rgba(16, 185, 129, 0.14);
-  border-color: rgba(52, 211, 153, 0.28);
-}
-
 .cc-prize-left {
   display: flex;
   align-items: center;
@@ -1958,14 +1732,6 @@
   text-overflow: ellipsis;
 }
 
-[data-theme='dark'] .cc-prize-trophy {
-  color: #34d399;
-}
-
-[data-theme='dark'] .cc-prize-text {
-  color: #6ee7b7;
-}
-
 .cc-entry-tag {
   font-size: 0.68rem;
   font-weight: 700;
@@ -1979,12 +1745,6 @@
   background: var(--surface);
   color: #059669;
   border: 1px solid rgba(16, 185, 129, 0.32);
-}
-
-[data-theme='dark'] .cc-entry-tag.free {
-  background: rgba(6, 78, 59, 0.45);
-  color: #34d399;
-  border-color: rgba(52, 211, 153, 0.35);
 }
 
 .cc-entry-tag.paid {
@@ -2103,18 +1863,6 @@
   transform: translateY(-1px);
 }
 
-[data-theme='dark'] .cc-btn-apply {
-  background: var(--primary, #3B6BFF);
-  color: #ffffff;
-  border-color: var(--primary, #3B6BFF);
-}
-
-[data-theme='dark'] .cc-btn-apply:hover {
-  background: var(--primary-hover, #5982FF);
-  border-color: var(--primary-hover, #5982FF);
-  color: #ffffff;
-}
-
 .cc-btn-team {
   flex: 1;
   padding: 0 12px;
@@ -2127,17 +1875,6 @@
   background: var(--accent-tint-hover, rgba(113, 34, 44, 0.14));
   border-color: var(--accent, #71222c);
   transform: translateY(-1px);
-}
-
-[data-theme='dark'] .cc-btn-team {
-  background: rgba(248, 113, 113, 0.12);
-  color: #fca5a5;
-  border-color: rgba(248, 113, 113, 0.28);
-}
-
-[data-theme='dark'] .cc-btn-team:hover {
-  background: rgba(248, 113, 113, 0.18);
-  border-color: #fca5a5;
 }
 
 .cc-share-icon-btn {
@@ -2338,12 +2075,6 @@
     line-height: 1.25;
     white-space: nowrap;
     vertical-align: middle;
-  }
-
-  [data-theme='dark'] .cc-unstop-pill-badge {
-    background: rgba(59, 130, 246, 0.14);
-    border-color: rgba(59, 130, 246, 0.32);
-    color: #93c5fd;
   }
 
   .cc-unstop-pulse-dot {
@@ -2654,11 +2385,6 @@
   background: linear-gradient(90deg, #ECEBE6 25%, #F7F6F3 50%, #ECEBE6 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.4s infinite ease-in-out;
-}
-
-[data-theme='dark'] .cc-card-skeleton .skeleton-box {
-  background: linear-gradient(90deg, #2A2A2A 25%, #383838 50%, #2A2A2A 75%);
-  background-size: 200% 100%;
 }
 
 /* ── Mobile v3 Browse Overrides (<= 768px) ── */
@@ -3064,24 +2790,6 @@
   color: #FFFFFF;
 }
 
-[data-theme='dark'] .cc-subtrack-pill {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: var(--ink-dim);
-}
-
-[data-theme='dark'] .cc-subtrack-pill:hover {
-  background: rgba(59, 107, 255, 0.15);
-  border-color: rgba(59, 107, 255, 0.4);
-  color: #FFFFFF;
-}
-
-[data-theme='dark'] .cc-subtrack-pill.active {
-  background: #3B6BFF;
-  border-color: #3B6BFF;
-  color: #FFFFFF;
-}
-
 .cc-subtrack-check {
   font-size: 0.65rem;
   font-weight: 800;
@@ -3120,25 +2828,6 @@
   border: 1px solid #ddd6fe;
 }
 
-[data-theme='dark'] .cc-source-pill.cc-source-institutional,
-[data-theme='dark'] .cc-source-pill.cc-source-campus_direct {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.35);
-}
-
-[data-theme='dark'] .cc-source-pill.cc-source-inside_campus {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  border-color: rgba(59, 130, 246, 0.35);
-}
-
-[data-theme='dark'] .cc-source-pill.cc-source-devpost {
-  background: rgba(139, 92, 246, 0.15);
-  color: #a78bfa;
-  border-color: rgba(139, 92, 246, 0.35);
-}
-
 /* ── Active Filter Pills for Platforms and Subtracks ── */
 .cc-active-pill.pill-platform {
   background: #fdf4ff;
@@ -3150,17 +2839,5 @@
   background: #f0fdf4;
   color: #15803d;
   border: 1px solid #bbf7d0;
-}
-
-[data-theme='dark'] .cc-active-pill.pill-platform {
-  background: rgba(217, 70, 239, 0.15);
-  color: #f0abfc;
-  border-color: rgba(217, 70, 239, 0.35);
-}
-
-[data-theme='dark'] .cc-active-pill.pill-subtrack {
-  background: rgba(34, 197, 94, 0.15);
-  color: #86efac;
-  border-color: rgba(34, 197, 94, 0.35);
 }
 

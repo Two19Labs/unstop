@@ -61,9 +61,14 @@ export default function DetailDrawer({
     { k: 'Closes in', v: countdownFormatted }
   ];
 
-  const squadNote = squadsCount > 0
+  const isSolo = (item.maxTeam !== undefined && Number(item.maxTeam) <= 1) ||
+    (item.team && (String(item.team).toLowerCase().includes('solo') || String(item.team).toLowerCase().includes('individual') || String(item.team).trim() === '1')) ||
+    (item.teamSizeDisplay && (String(item.teamSizeDisplay).toLowerCase().includes('solo') || String(item.teamSizeDisplay).toLowerCase().includes('individual'))) ||
+    item.isSolo === true;
+
+  const squadNote = !isSolo ? (squadsCount > 0
     ? `${squadsCount} ${squadsCount === 1 ? 'squad is' : 'squads are'} already looking for teammates on this.`
-    : 'No squads posted for this yet  -  post one and applicants come to you.';
+    : 'No squads posted for this yet  -  post one and applicants come to you.') : null;
 
   return (
     <div className="detail-drawer-overlay" onClick={onClose}>
@@ -140,17 +145,17 @@ export default function DetailDrawer({
 
         {/* Footer Actions */}
         <div className="detail-drawer-footer">
-          {/* Full-width 48px Apply on Unstop Primary Action */}
+          {/* Full-width 48px Apply Primary Action */}
           <a
             href={item.unstopUrl || 'https://unstop.com'}
             target="_blank"
             rel="noopener noreferrer"
             className="detail-drawer-apply-btn"
             onClick={() => {
-              trackEvent('competition_unstop_outbound_clicked', {
+              trackEvent('competition_outbound_clicked', {
                 competition_id: item.id,
                 title: item.title,
-                unstop_url: item.unstopUrl || 'https://unstop.com',
+                url: item.unstopUrl || 'https://unstop.com',
               });
             }}
           >
@@ -162,27 +167,32 @@ export default function DetailDrawer({
             </svg>
           </a>
 
-          {/* Dual 44px Row: Post a squad + Bookmark */}
+          {/* Action Row: Post a squad (for team comps) + Bookmark */}
           <div className="detail-drawer-dual-row">
-            <button
-              onClick={() => onOpenPostSquad(item)}
-              className="detail-drawer-post-btn"
-            >
-              Post a squad
-            </button>
+            {!isSolo && (
+              <button
+                onClick={() => onOpenPostSquad(item)}
+                className="detail-drawer-post-btn"
+              >
+                Post a squad
+              </button>
+            )}
 
             <button
               onClick={() => onToggleBookmark(item.id)}
               className={`detail-drawer-bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
+              style={isSolo ? { flex: 1 } : {}}
             >
               <BookmarkIcon size={16} filled={isBookmarked} color={isBookmarked ? '#0F3FFE' : 'currentColor'} />
               <span>{isBookmarked ? 'Saved' : 'Bookmark'}</span>
             </button>
           </div>
 
-          <p className="detail-drawer-squad-note">
-            {squadNote}
-          </p>
+          {squadNote && (
+            <p className="detail-drawer-squad-note">
+              {squadNote}
+            </p>
+          )}
         </div>
       </div>
     </div>

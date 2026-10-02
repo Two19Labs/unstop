@@ -184,7 +184,7 @@ export default function CompetitionRoundsTracker({
       {/* Loading State */}
       {loading && Object.keys(roundsMap).length === 0 && (
         <div style={{ padding: '24px', textAlign: 'center', color: 'var(--ink-secondary)', fontSize: '13px' }}>
-          Syncing round schedules and deadlines directly from Unstop...
+          Syncing round schedules and deadlines live...
         </div>
       )}
 
@@ -431,7 +431,7 @@ export default function CompetitionRoundsTracker({
                             rel="noopener noreferrer"
                             className="rounds-btn-primary"
                           >
-                            <span>Open Round on Unstop</span>
+                            <span>Open Round Portal</span>
                             <ExternalLinkIcon size={12} />
                           </a>
                         )}

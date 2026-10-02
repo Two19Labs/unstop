@@ -12,7 +12,7 @@ export const GENERAL_PUNS = [
   "Formatting financial valuation models until Excel starts crying in #VALUE!...",
   "Aggressively googling 'TAM SAM SOM difference' in incognito 4 minutes before deadline...",
   "Rehearsing confident head nods for the Q&A round we didn't prepare for...",
-  "Praying the Unstop submission server doesn't 504 at 11:58:59 PM...",
+  "Praying the competition submission server doesn't 504 at 11:58:59 PM...",
   "Inserting buzzwords: 'Synergistic paradigm shift with high-conviction hyper-scalability'...",
   "Calling an unsourced bar chart 'Proprietary Primary Market Research'...",
   "Pretending we understood the judge's question about DCF sensitivity analysis...",
@@ -100,7 +100,7 @@ export default function FunLoadingScreen({
   minDurationMs = 1500,
   maxDurationMs = 3000,
   onComplete,
-  headline = "Fetching live competitions from Unstop...",
+  headline = "Fetching live competitions...",
   subtitle = null,
   customPuns = null,
 }) {

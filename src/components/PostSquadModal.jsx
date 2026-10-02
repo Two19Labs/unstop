@@ -20,6 +20,25 @@ function formatDueText(comp) {
   return `${d}d left`;
 }
 
+export function isSoloCompetition(comp) {
+  if (!comp) return false;
+  if (comp.isSolo === true) return true;
+  if (comp.maxTeam !== undefined && comp.maxTeam !== null && Number(comp.maxTeam) <= 1) return true;
+  if (comp.team && typeof comp.team === 'string') {
+    const t = comp.team.toLowerCase().trim();
+    if (t.includes('solo') || t.includes('individual') || t === '1' || t === '1 member' || t === '1 person') {
+      return true;
+    }
+  }
+  if (comp.teamSizeDisplay && typeof comp.teamSizeDisplay === 'string') {
+    const td = comp.teamSizeDisplay.toLowerCase().trim();
+    if (td.includes('solo') || td.includes('individual') || td === '1' || td === '1 member' || td === '1 person') {
+      return true;
+    }
+  }
+  return false;
+}
+
 export default function PostSquadModal({
   isOpen,
   onClose,
@@ -58,16 +77,22 @@ export default function PostSquadModal({
 
   const [formError, setFormError] = useState('');
 
+  // Filter out solo / individual competitions: Squads are for team participation only
+  const teamCompetitions = useMemo(() => {
+    return (competitions || []).filter(c => !isSoloCompetition(c));
+  }, [competitions]);
+
   // Pre-fill fields on open / edit
   useEffect(() => {
     if (!isOpen) return;
     setFormError('');
 
     if (editingPost) {
-      const matchComp = competitions.find(c => String(c.id) === String(editingPost.compId));
+      const matchComp = teamCompetitions.find(c => String(c.id) === String(editingPost.compId)) ||
+        competitions.find(c => String(c.id) === String(editingPost.compId));
       if (matchComp) {
         setCustom(false);
-        setSelectedCompId(String(editingPost.compId));
+        setSelectedCompId(String(matchComp.id));
       } else {
         setCustom(true);
         setCustomTitle(editingPost.competition_name || editingPost.title || '');
@@ -89,11 +114,17 @@ export default function PostSquadModal({
       setPhone(sanitizeIndianPhone(editingPost.phone_number || editingPost.phone || editingPost.leadPhone || profile?.phone || ''));
     } else {
       if (initialCompId) {
+        const match = teamCompetitions.find(c => String(c.id) === String(initialCompId));
+        if (match) {
+          setCustom(false);
+          setSelectedCompId(String(initialCompId));
+        } else {
+          setCustom(false);
+          setSelectedCompId(teamCompetitions.length > 0 ? String(teamCompetitions[0].id) : '');
+        }
+      } else if (teamCompetitions.length > 0 && (!selectedCompId || !teamCompetitions.some(c => String(c.id) === String(selectedCompId)))) {
         setCustom(false);
-        setSelectedCompId(String(initialCompId));
-      } else if (competitions.length > 0 && !selectedCompId) {
-        setCustom(false);
-        setSelectedCompId(String(competitions[0].id));
+        setSelectedCompId(String(teamCompetitions[0].id));
       } else {
         setCustom(false);
       }
@@ -108,7 +139,7 @@ export default function PostSquadModal({
       setCommMethod('whatsapp');
       setPhone(sanitizeIndianPhone(profile?.phone || ''));
     }
-  }, [isOpen, editingPost, initialCompId, competitions, profile]);
+  }, [isOpen, editingPost, initialCompId, teamCompetitions, competitions, profile]);
 
   // Escape key handler
   useEffect(() => {
@@ -119,14 +150,14 @@ export default function PostSquadModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Filter top 4 Unstop competitions for picker
+  // Filter team competitions for picker (excluding solo/individual opportunities)
   const filteredComps = useMemo(() => {
-    if (!compQ.trim()) return competitions.slice(0, 4);
+    if (!compQ.trim()) return teamCompetitions.slice(0, 5);
     const q = compQ.trim().toLowerCase();
-    return competitions
+    return teamCompetitions
       .filter(c => (c.title || '').toLowerCase().includes(q) || (c.host || c.orgName || '').toLowerCase().includes(q))
-      .slice(0, 4);
-  }, [competitions, compQ]);
+      .slice(0, 8);
+  }, [teamCompetitions, compQ]);
 
   if (!isOpen) return null;
 
@@ -177,9 +208,10 @@ export default function PostSquadModal({
 
     let compDeadline = null;
     if (!custom) {
-      const match = competitions.find(c => String(c.id) === String(selectedCompId));
+      const match = teamCompetitions.find(c => String(c.id) === String(selectedCompId)) ||
+        competitions.find(c => String(c.id) === String(selectedCompId));
       if (!match) {
-        setFormError('Please select a competition from the list or switch to "Not on Unstop?".');
+        setFormError('Please select a competition from the list or switch to "Not on OneStop?".');
         return;
       }
       compTitle = match.title;
@@ -396,7 +428,7 @@ export default function PostSquadModal({
                   padding: 0
                 }}
               >
-                {custom ? 'Pick from Unstop' : 'Not on Unstop?'}
+                {custom ? 'Pick from OneStop' : 'Not on OneStop?'}
               </button>
             </div>
 
@@ -421,7 +453,7 @@ export default function PostSquadModal({
                   <input
                     value={compQ}
                     onChange={(e) => setCompQ(e.target.value)}
-                    placeholder="Search competitions on Unstop"
+                    placeholder="Search competitions"
                     style={{
                       flex: 1,
                       minWidth: 0,
@@ -436,55 +468,95 @@ export default function PostSquadModal({
                 </label>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {filteredComps.map((c) => {
-                    const isSelected = String(selectedCompId) === String(c.id);
-                    const inits = initialsOf(c.host || c.orgName || 'Host');
-                    const dueStr = formatDueText(c);
-                    const teamInfo = c.team || (c.maxTeam ? `Teams of ${c.maxTeam}` : 'Teams of 2–4');
-
-                    return (
+                  {filteredComps.length === 0 ? (
+                    <div
+                      style={{
+                        padding: '16px 12px',
+                        textAlign: 'center',
+                        background: 'var(--surface-sunken, #F9F9F7)',
+                        borderRadius: '10px',
+                        border: '1px dashed var(--line, #E7E6E2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-muted, #75736C)' }}>
+                        {compQ.trim() ? `No team competitions found matching "${compQ.trim()}".` : 'No team competitions found.'}
+                      </p>
                       <button
-                        key={c.id}
                         type="button"
                         onClick={() => {
-                          setSelectedCompId(String(c.id));
+                          setCustom(true);
+                          if (compQ.trim()) setCustomTitle(compQ.trim());
                           setFormError('');
                         }}
                         style={{
-                          display: 'grid',
-                          gridTemplateColumns: '32px minmax(0, 1fr) auto',
-                          gap: '10px',
-                          alignItems: 'center',
-                          textAlign: 'left',
-                          border: isSelected ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
-                          background: isSelected ? 'var(--primary-tint-7, rgba(15,63,254,0.07))' : 'var(--surface, #FFFFFF)',
-                          borderRadius: '10px',
-                          padding: '9px 11px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: 'var(--primary, #0F3FFE)',
+                          background: 'none',
+                          border: 'none',
                           cursor: 'pointer',
-                          transition: 'border-color 0.15s ease'
+                          padding: '2px 6px',
+                          textDecoration: 'underline'
                         }}
                       >
-                        <InstitutionLogo
-                          name={c.host || c.orgName}
-                          title={c.title}
-                          logo={c.logo || c.orgLogo}
-                          size={32}
-                          borderRadius={8}
-                        />
-                        <span style={{ minWidth: 0, lineHeight: 1.3 }}>
-                          <span style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {c.title}
-                          </span>
-                          <span style={{ display: 'block', fontSize: '12px', color: 'var(--ink-muted, #75736C)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {c.host || c.orgName || 'Organizer'} · {teamInfo}
-                          </span>
-                        </span>
-                        <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)', whiteSpace: 'nowrap' }}>
-                          {dueStr}
-                        </span>
+                        Not on OneStop? Enter details manually
                       </button>
-                    );
-                  })}
+                    </div>
+                  ) : (
+                    filteredComps.map((c) => {
+                      const isSelected = String(selectedCompId) === String(c.id);
+                      const inits = initialsOf(c.host || c.orgName || 'Host');
+                      const dueStr = formatDueText(c);
+                      const teamInfo = c.team || (c.maxTeam ? `Teams of ${c.maxTeam}` : 'Teams of 2–4');
+
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCompId(String(c.id));
+                            setFormError('');
+                          }}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '32px minmax(0, 1fr) auto',
+                            gap: '10px',
+                            alignItems: 'center',
+                            textAlign: 'left',
+                            border: isSelected ? '1px solid var(--primary, #0F3FFE)' : '1px solid var(--line, #E7E6E2)',
+                            background: isSelected ? 'var(--primary-tint-7, rgba(15,63,254,0.07))' : 'var(--surface, #FFFFFF)',
+                            borderRadius: '10px',
+                            padding: '9px 11px',
+                            cursor: 'pointer',
+                            transition: 'border-color 0.15s ease'
+                          }}
+                        >
+                          <InstitutionLogo
+                            name={c.host || c.orgName}
+                            title={c.title}
+                            logo={c.logo || c.orgLogo}
+                            size={32}
+                            borderRadius={8}
+                          />
+                          <span style={{ minWidth: 0, lineHeight: 1.3 }}>
+                            <span style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {c.title}
+                            </span>
+                            <span style={{ display: 'block', fontSize: '12px', color: 'var(--ink-muted, #75736C)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {c.host || c.orgName || 'Organizer'} · {teamInfo}
+                            </span>
+                          </span>
+                          <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)', whiteSpace: 'nowrap' }}>
+                            {dueStr}
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </>
             ) : (

@@ -1549,7 +1549,7 @@ export default function TeamFinderScreen({
                     rel="noopener noreferrer"
                     style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600, color: 'var(--primary, #0F3FFE)', textDecoration: 'none' }}
                   >
-                    View on Unstop
+                    View Competition
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                       <polyline points="15 3 21 3 21 9"></polyline>
