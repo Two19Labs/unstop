@@ -36,6 +36,10 @@ export default function Footer() {
         >
           Two19 Labs
         </a>
+        <span className="onestop-footer-dot"> · </span>
+        <a href="/privacy" className="onestop-footer-link">Privacy</a>
+        <span className="onestop-footer-dot"> · </span>
+        <a href="/terms" className="onestop-footer-link">Terms</a>
       </p>
     </footer>
   );

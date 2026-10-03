@@ -390,6 +390,11 @@
   line-height: 1.45;
 }
 
+.onestop-auth-terms a {
+  color: inherit;
+  text-decoration: underline;
+}
+
 .onestop-auth-back-btn {
   background: transparent;
   border: none;
