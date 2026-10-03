@@ -9,7 +9,7 @@
 // Enabled only when VITE_GOOGLE_CLIENT_ID is set; otherwise callers fall back
 // to the Supabase OAuth redirect flow.
 
-const GOOGLE_CLIENT_ID = import.meta.env?.VITE_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID = (import.meta.env?.VITE_GOOGLE_CLIENT_ID || '').trim();
 const GSI_SRC = 'https://accounts.google.com/gsi/client';
 
 export const isGoogleIdentityEnabled = Boolean(GOOGLE_CLIENT_ID);
