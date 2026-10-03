@@ -2,7 +2,7 @@
 // OneStop Team Finder Standalone Page - Full High-Fidelity Implementation
 import React, { useState, useEffect, useMemo } from 'react';
 import { SKILLS, initialsOf, isMockPost, isMockApp, normalizeSkill } from '../data/initialData';
-import { formatWhatsAppUrl, sanitizeIndianPhone, useAuth } from '../context/AuthContext';
+import { formatWhatsAppUrl, useAuth } from '../context/AuthContext';
 import { normalizeYear } from '../data/colleges';
 import PostSquadModal from './PostSquadModal';
 import ApplyModal from './ApplyModal';
@@ -141,7 +141,13 @@ export default function TeamFinderScreen({
   tab: propTab,
   onTabChange: propOnTabChange
 }) {
-  const { applyToSquad, openAuthModal } = useAuth();
+  const {
+    openAuthModal,
+    squadConversations = [],
+    requestSquadChat,
+    respondToChatRequest,
+    cancelChatRequest,
+  } = useAuth();
   const [internalTab, setInternalTab] = useState('other'); // 'other' | 'mine'
   const tab = propTab !== undefined ? propTab : internalTab;
   const setTab = (nextTab) => {
@@ -203,8 +209,14 @@ export default function TeamFinderScreen({
   // Modals & Sheets State
   const [detailPostId, setDetailPostId] = useState(null);
   const [reviewPostId, setReviewPostId] = useState(null);
-  const [reviewTab, setReviewTab] = useState('pending'); // 'pending' | 'accepted' | 'declined'
-  const [chatModalPost, setChatModalPost] = useState(null);
+  const [reviewTab, setReviewTab] = useState('pending'); // 'pending' | 'accepted' | 'declined' | 'chats'
+
+  // Chat-mode: the open conversation, and the "Request to chat" sheet
+  const [chatConvId, setChatConvId] = useState(null);
+  const [chatRequestPost, setChatRequestPost] = useState(null);
+  const [chatIntro, setChatIntro] = useState('');
+  const [chatRequestError, setChatRequestError] = useState('');
+  const [chatRequestSending, setChatRequestSending] = useState(false);
 
   // Post / Edit Squad Modal State
   const [postModalOpen, setPostModalOpen] = useState(false);
@@ -213,7 +225,6 @@ export default function TeamFinderScreen({
   // Apply Modal State
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [applyTargetPost, setApplyTargetPost] = useState(null);
-  const [chatModalApp, setChatModalApp] = useState(null);
 
   const profileSkills = useMemo(() => (Array.isArray(profile?.skills) ? profile.skills : []), [profile]);
   const userCollege = (profile?.college || user?.user_metadata?.college || '').trim();
@@ -223,22 +234,23 @@ export default function TeamFinderScreen({
     return checkIsPostgraduate(profile);
   }, [profile]);
 
-  const activeChatApp = useMemo(() => {
-    if (chatModalApp) return chatModalApp;
-    if (!chatModalPost) return null;
-    const existing = applications.find(a => String(a.postId || a.post_id) === String(chatModalPost.id) && !isMockApp(a));
-    if (existing) return existing;
-    return {
-      id: `chat_app_${chatModalPost.id}`,
-      post_id: chatModalPost.id,
-      applicant_name: userName || 'You',
-      applicant_college: userCollege,
-      applicant_year: userYear,
-      comm_method: 'chat',
-      status: 'pending',
-      dir: chatModalPost.isOwn ? 'in' : 'out'
-    };
-  }, [chatModalApp, chatModalPost, applications, userName, userCollege, userYear]);
+  const activeConversation = useMemo(
+    () => (chatConvId ? squadConversations.find(c => c.id === chatConvId) || null : null),
+    [chatConvId, squadConversations]
+  );
+  const activeConversationPost = useMemo(() => {
+    if (!activeConversation) return null;
+    return posts.find(p => String(p.id) === String(activeConversation.post_id)) || null;
+  }, [activeConversation, posts]);
+  // Removed from the squad -> the chat becomes read-only
+  const activeConversationRemoved = useMemo(() => {
+    if (!activeConversation) return false;
+    return applications.some(a =>
+      String(a.postId || a.post_id) === String(activeConversation.post_id) &&
+      a.applicant_id === activeConversation.member_id &&
+      a.status === 'removed'
+    );
+  }, [activeConversation, applications]);
 
   // Helper to find competition metadata
   const getCompMeta = (compId, fallbackTitle, fallbackHost) => {
@@ -353,14 +365,21 @@ export default function TeamFinderScreen({
       if (isMine) {
         state = p.is_open === false ? 'closed' : 'own';
       } else if (myApp) {
-        state = myApp.status === 'accepted' ? 'accepted' : (myApp.status === 'rejected' || myApp.status === 'declined' ? 'open' : 'requested');
+        state = myApp.status === 'accepted' ? 'accepted' : (['rejected', 'declined', 'removed'].includes(myApp.status) ? 'open' : 'requested');
       } else if (openN <= 0 || p.is_open === false) {
         state = 'full';
       }
 
       const normUserSkills = profileSkills.map(normalizeSkill);
       const match = want.filter(w => normUserSkills.includes(normalizeSkill(w))).length;
-      const comm_method = p.comm_method || p.commMethod || (p.phone || p.phone_number || p.leadPhone ? 'whatsapp' : 'chat');
+      const comm_method = p.comm_method === 'chat' ? 'chat' : 'whatsapp';
+      // Chat-mode conversations: mine with this host, or (for my own squad) everyone's with me
+      const chatConv = !isMine && user
+        ? squadConversations.find(c => String(c.post_id) === String(p.id) && c.member_id === user.id) || null
+        : null;
+      const hostConvs = isMine
+        ? squadConversations.filter(c => String(c.post_id) === String(p.id) && c.role === 'host')
+        : [];
       // Filter out squads for PG/MBA only competitions if viewer is Undergraduate (unless it's user's own post)
       if (!isViewerPostgraduate && !isMine) {
         if (comp && !isEligibleForUndergrad(comp)) {
@@ -372,8 +391,6 @@ export default function TeamFinderScreen({
           return null;
         }
       }
-
-      const safePhone = comm_method === 'chat' ? '' : (p.phone_number || p.phone || p.leadPhone || '');
 
       return {
         id: p.id,
@@ -389,19 +406,22 @@ export default function TeamFinderScreen({
         want,
         have,
         desc: p.description || p.desc || '',
-        phone: safePhone,
         comm_method,
+        chatConv,
+        hostConvs,
         state,
         isOwn: isMine,
         apps: postApps.map(a => ({
           id: a.id,
+          applicantId: a.applicant_id,
           name: a.applicant_name || a.who || 'Applicant',
           college: a.applicant_college || a.meta || 'Collegiate',
           year: a.applicant_year || 'UG',
           status: a.status || 'pending',
           skills: a.highlighted_skills || a.skills || [],
           pitch: a.pitch_note || a.pitch || '',
-          phone: a.applicant_phone || a.phone || ''
+          // Only filled in for the host of a WhatsApp-mode squad (from the applicant's profile)
+          phone: comm_method === 'whatsapp' ? (a.applicant_phone || '') : ''
         })),
         members: acceptedApps.map(a => ({
           name: a.applicant_name || a.who || 'Member',
@@ -412,7 +432,7 @@ export default function TeamFinderScreen({
         idx: i
       };
     }).filter(Boolean);
-  }, [realCleanPosts, competitions, applications, user, userName, userCollege, userYear, profileSkills, isViewerPostgraduate]);
+  }, [realCleanPosts, competitions, applications, squadConversations, user, userName, userCollege, userYear, profileSkills, isViewerPostgraduate]);
 
   // Pools
   const otherPool = useMemo(() => allPosts.filter(p => !p.isOwn && (p.state === 'open' || p.state === 'full')), [allPosts]);
@@ -521,69 +541,104 @@ export default function TeamFinderScreen({
 
   const totalCardsShown = displayedSections.reduce((acc, s) => acc + s.cards.length, 0);
 
-  // Card interaction handlers
-  const handleOpenChat = async (e, post) => {
-    if (e?.stopPropagation) e.stopPropagation();
-    if (!user) {
-      if (openAuthModal) {
-        openAuthModal({
-          title: 'Sign In to Chat',
-          subtitle: 'Create your collegiate account to chat with squad leads inside OneStop.',
-          initialTab: 'signup',
-        });
-      }
-      return;
-    }
-
-    const existing = applications.find(a => String(a.postId || a.post_id) === String(post.id) && !isMockApp(a));
-    if (existing) {
-      setChatModalApp(existing);
-      setChatModalPost(post);
-      return;
-    }
-
-    // Atomically create an application in squad_applications so the lead's inbox reflects it immediately
-    let targetApp = null;
-    try {
-      if (applyToSquad) {
-        targetApp = await applyToSquad({
-          post_id: post.id,
-          applicant_name: userName || 'Applicant',
-          applicant_phone: profile?.phone || null,
-          applicant_college: userCollege,
-          applicant_year: userYear,
-          pitch_note: 'Initiated conversation via In-Platform Chat.',
-          comm_method: 'chat',
-          highlighted_skills: profileSkills.slice(0, 3),
-        });
-      }
-    } catch (err) {
-      console.warn('Could not auto-create application for chat:', err);
-    }
-    setChatModalApp(targetApp);
-    setChatModalPost(post);
+  // Logged-out visitors can browse cards, but any tap asks them to sign up first.
+  // After signing up they land back on the squad they tapped.
+  const promptSignIn = (post) => {
+    if (!openAuthModal) return;
+    openAuthModal({
+      title: 'Sign up to see this squad',
+      subtitle: 'Create your account to see squad details, contact hosts and request to join.',
+      initialTab: 'signup',
+      postLoginAction: post ? () => setDetailPostId(post.id) : null,
+    });
   };
 
+  // Chat-mode squads: open the chat if the host accepted, otherwise ask to chat
+  const handleOpenChat = (e, post) => {
+    if (e?.stopPropagation) e.stopPropagation();
+    if (!user) {
+      promptSignIn(post);
+      return;
+    }
+    if (post.comm_method !== 'chat') return;
+    const conv = post.chatConv;
+    if (conv?.status === 'accepted') {
+      setChatConvId(conv.id);
+      return;
+    }
+    if (conv?.status === 'requested') {
+      if (showToast) showToast(`Chat request sent. Waiting on ${post.lead.split(' ')[0]}.`);
+      return;
+    }
+    setChatIntro('');
+    setChatRequestError('');
+    setChatRequestPost(post);
+  };
+
+  const handleSendChatRequest = async (e) => {
+    if (e) e.preventDefault();
+    if (!chatRequestPost || chatRequestSending) return;
+    const intro = chatIntro.trim();
+    if (!intro) {
+      setChatRequestError('Add a short intro so the host knows who you are.');
+      return;
+    }
+    setChatRequestSending(true);
+    setChatRequestError('');
+    try {
+      await requestSquadChat(chatRequestPost.id, intro);
+      if (showToast) showToast(`Chat request sent to ${chatRequestPost.lead.split(' ')[0]}`);
+      setChatRequestPost(null);
+      setChatIntro('');
+    } catch (err) {
+      setChatRequestError(err.message || 'Could not send your chat request.');
+    } finally {
+      setChatRequestSending(false);
+    }
+  };
+
+  const handleCancelChatRequest = async (e, post) => {
+    if (e?.stopPropagation) e.stopPropagation();
+    if (!post.chatConv) return;
+    try {
+      await cancelChatRequest(post.chatConv.id);
+      if (showToast) showToast('Chat request cancelled');
+    } catch (err) {
+      if (showToast) showToast(err.message || 'Could not cancel the chat request.');
+    }
+  };
+
+  const handleRespondToChat = async (conv, accept) => {
+    try {
+      await respondToChatRequest(conv.id, accept);
+      if (showToast) showToast(accept ? `Chat with ${conv.member_name || 'them'} is open` : 'Chat request declined');
+    } catch (err) {
+      if (showToast) showToast(err.message || 'Could not update the chat request.');
+    }
+  };
+
+  // WhatsApp-mode squads: the host's number is fetched from their profile on tap
   const handleOpenWhatsAppPost = (e, post) => {
-    e.stopPropagation();
+    if (e?.stopPropagation) e.stopPropagation();
+    if (!user) {
+      promptSignIn(post);
+      return;
+    }
     if (post.comm_method === 'chat') {
       handleOpenChat(e, post);
       return;
     }
-    if (onOpenWhatsApp) {
-      onOpenWhatsApp(post.rawPost || post);
-    } else {
-      const phone = post.phone;
-      if (!phone) {
-        if (showToast) showToast('No WhatsApp number provided for this squad.');
-        return;
-      }
-      const leadName = (post.lead || 'Leader').split(' ')[0];
-      const msg = `Hey ${leadName}! Reaching out regarding your squad for "${post.comp?.title || 'the competition'}". Wanted to connect!`;
-      const url = formatWhatsAppUrl(phone, msg);
-      if (url && url !== '#') window.open(url, '_blank', 'noopener,noreferrer');
-      else if (showToast) showToast('Invalid WhatsApp number provided.');
-    }
+    if (onOpenWhatsApp) onOpenWhatsApp(post.rawPost || post);
+  };
+
+  // Host -> applicant on a WhatsApp-mode squad (number from the applicant's profile)
+  const handleWhatsAppApplicant = (app, squad) => {
+    const url = formatWhatsAppUrl(
+      app.phone,
+      `Hey ${app.name.split(' ')[0]}! Reaching out about your request to join our squad for "${squad.comp.title}" on OneStop.`
+    );
+    if (url && url !== '#') window.open(url, '_blank', 'noopener,noreferrer');
+    else if (showToast) showToast('This applicant has no valid WhatsApp number yet.');
   };
 
   const handleRequestJoin = (e, post) => {
@@ -591,8 +646,8 @@ export default function TeamFinderScreen({
     if (!user) {
       if (openAuthModal) {
         openAuthModal({
-          title: 'Create your account',
-          subtitle: 'Bookmark competitions, track every round, and find a squad.',
+          title: 'Sign up to join this squad',
+          subtitle: 'Create your account to request to join squads and contact hosts.',
           initialTab: 'signup',
           postLoginAction: () => {
             if (onOpenApply) onOpenApply(post.rawPost || post);
@@ -693,6 +748,146 @@ export default function TeamFinderScreen({
   const handlePostSuccess = () => {
     setTab('mine');
     if (showToast) showToast('Squad posted! Switched to My listings.');
+  };
+
+  const renderApplicantWhatsApp = (app, squad) => (
+    <button
+      type="button"
+      onClick={() => handleWhatsAppApplicant(app, squad)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        border: '1px solid var(--success-border, rgba(23, 163, 74, 0.30))',
+        borderRadius: '9px',
+        background: 'var(--success-tint, rgba(23, 163, 74, 0.08))',
+        color: 'var(--success-text, #15803D)',
+        padding: '7px 12px',
+        fontSize: '13px',
+        fontWeight: 600,
+        cursor: 'pointer'
+      }}
+    >
+      <WhatsAppIcon size={14} />
+      <span>WhatsApp</span>
+    </button>
+  );
+
+  // Host view of chat requests for one of their chat-mode squads
+  const renderHostChats = (squad) => {
+    const order = { requested: 0, accepted: 1, declined: 2, cancelled: 3 };
+    const convs = squad.hostConvs
+      .filter(c => c.status !== 'cancelled')
+      .slice()
+      .sort((a, b) => (order[a.status] - order[b.status]) ||
+        (new Date(b.last_message_at || b.updated_at) - new Date(a.last_message_at || a.updated_at)));
+
+    if (convs.length === 0) {
+      return (
+        <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>No chat requests yet</h4>
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-muted, #75736C)' }}>
+            {squad.comm_method === 'chat'
+              ? 'People who want to talk before joining ask here. You choose who you chat with.'
+              : 'This squad uses WhatsApp, so there is no in-app chat.'}
+          </p>
+        </div>
+      );
+    }
+
+    return convs.map(conv => (
+      <div key={conv.id} className="tf-applicant-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+          <span style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--surface-muted, #F2F1ED)', color: 'var(--ink-secondary, #55534D)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flex: 'none' }}>
+            {initialsOf(conv.member_name || 'Student')}
+          </span>
+          <div style={{ minWidth: 0, flex: 1, lineHeight: 1.3 }}>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink, #1A1A19)' }}>{conv.member_name || 'Student'}</div>
+            {conv.member_college && (
+              <div style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)' }}>{conv.member_college}</div>
+            )}
+          </div>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink-muted, #75736C)', whiteSpace: 'nowrap' }}>
+            {conv.status === 'requested' ? 'Wants to chat' : conv.status === 'accepted' ? 'Chatting' : 'Declined'}
+          </span>
+        </div>
+
+        {conv.intro && <p className="tf-pitch-box">"{conv.intro}"</p>}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {conv.status === 'requested' && (
+            <>
+              <button
+                type="button"
+                onClick={() => handleRespondToChat(conv, true)}
+                style={{ border: '1px solid var(--primary, #0F3FFE)', borderRadius: '9px', background: 'var(--primary, #0F3FFE)', color: '#FFFFFF', padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Accept chat
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRespondToChat(conv, false)}
+                className="tf-btn-secondary"
+                style={{ padding: '8px 14px' }}
+              >
+                Decline
+              </button>
+            </>
+          )}
+          {conv.status === 'accepted' && (
+            <button
+              type="button"
+              onClick={() => {
+                setChatConvId(conv.id);
+                setReviewPostId(null);
+              }}
+              className="tf-chat-accepted-btn"
+              style={{ padding: '8px 14px', fontSize: '13px' }}
+            >
+              Open chat
+            </button>
+          )}
+        </div>
+      </div>
+    ));
+  };
+
+  // The one way to contact a host: WhatsApp (WhatsApp mode) or a chat request (chat mode)
+  const renderContactButton = (post, style = undefined) => {
+    if (post.comm_method === 'whatsapp') {
+      return (
+        <button
+          type="button"
+          onClick={(e) => handleOpenWhatsAppPost(e, post)}
+          className="tf-chat-btn tf-chat-wa"
+          title={`Message ${post.lead.split(' ')[0]} on WhatsApp`}
+          style={style}
+        >
+          <WhatsAppIcon size={14} />
+          <span>WhatsApp</span>
+        </button>
+      );
+    }
+    const status = post.chatConv?.status;
+    if (status === 'requested') {
+      return (
+        <span className="tf-badge tf-badge-requested" style={style ? { ...style, display: 'inline-flex', alignItems: 'center' } : undefined}>
+          Chat requested
+        </span>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={(e) => handleOpenChat(e, post)}
+        className="tf-chat-btn tf-chat-inapp"
+        title={status === 'accepted' ? 'Open chat' : 'Ask the host to chat'}
+        style={style}
+      >
+        <ChatBubbleIcon size={14} />
+        <span>{status === 'accepted' ? 'Chat' : 'Request chat'}</span>
+      </button>
+    );
   };
 
   return (
@@ -1253,15 +1448,20 @@ export default function TeamFinderScreen({
                     const isOwn = post.isOwn;
                     const catColor = CAT_COLORS[post.comp.cat] || '#75736C';
                     const hasFit = !isOwn && post.match > 0;
-                    const pendingAppsCount = post.apps.filter(a => a.status === 'pending').length;
+                    const pendingJoinCount = post.apps.filter(a => a.status === 'pending').length;
+                    const pendingChatCount = post.hostConvs.filter(c => c.status === 'requested').length;
+                    const pendingAppsCount = pendingJoinCount + pendingChatCount;
+                    const firstReviewTab = pendingJoinCount > 0 ? 'pending' : (pendingChatCount > 0 ? 'chats' : 'accepted');
 
                     return (
                       <article
                         key={post.id}
                         onClick={() => {
-                          if (isOwn) {
+                          if (!user) {
+                            promptSignIn(post);
+                          } else if (isOwn) {
                             setReviewPostId(post.id);
-                            setReviewTab(pendingAppsCount > 0 ? 'pending' : 'accepted');
+                            setReviewTab(firstReviewTab);
                           } else {
                             setDetailPostId(post.id);
                           }
@@ -1397,27 +1597,7 @@ export default function TeamFinderScreen({
                             ) : post.state === 'closed' ? (
                               <span className="tf-badge tf-badge-closed">Closed</span>
                             ) : (
-                              post.comm_method === 'whatsapp' ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleOpenWhatsAppPost(e, post)}
-                                  className="tf-chat-btn tf-chat-wa"
-                                  title="Chat on WhatsApp"
-                                >
-                                  <WhatsAppIcon size={14} />
-                                  <span>WhatsApp</span>
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleOpenChat(e, post)}
-                                  className="tf-chat-btn tf-chat-inapp"
-                                  title="In-Platform Chat"
-                                >
-                                  <ChatBubbleIcon size={14} />
-                                  <span>Chat</span>
-                                </button>
-                              )
+                              renderContactButton(post)
                             )}
                           </div>
 
@@ -1430,7 +1610,7 @@ export default function TeamFinderScreen({
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setReviewPostId(post.id);
-                                    setReviewTab(pendingAppsCount > 0 ? 'pending' : 'accepted');
+                                    setReviewTab(firstReviewTab);
                                   }}
                                   className="tf-join-btn"
                                   style={{
@@ -1475,16 +1655,7 @@ export default function TeamFinderScreen({
                               </button>
                             ) : post.state === 'requested' ? (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleOpenChat(e, post)}
-                                  className="tf-chat-btn tf-chat-inapp"
-                                  style={{ flex: 1, height: '36px', justifyContent: 'center', margin: 0 }}
-                                  title="Chat with squad lead"
-                                >
-                                  <ChatBubbleIcon size={14} />
-                                  <span>Chat with Lead</span>
-                                </button>
+                                {renderContactButton(post, { flex: 1, height: '36px', justifyContent: 'center', margin: 0 })}
                                 <button
                                   type="button"
                                   onClick={(e) => handleWithdraw(e, post)}
@@ -1496,13 +1667,17 @@ export default function TeamFinderScreen({
                               </div>
                             ) : post.state === 'accepted' ? (
                               post.comm_method === 'chat' ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => handleOpenChat(e, post)}
-                                  className="tf-chat-accepted-btn"
-                                >
-                                  Open In-Platform Chat
-                                </button>
+                                post.chatConv?.status === 'accepted' ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleOpenChat(e, post)}
+                                    className="tf-chat-accepted-btn"
+                                  >
+                                    Open chat
+                                  </button>
+                                ) : (
+                                  renderContactButton(post, { flex: 1, height: '36px', justifyContent: 'center', margin: 0 })
+                                )
                               ) : (
                                 <button
                                   type="button"
@@ -1748,9 +1923,23 @@ export default function TeamFinderScreen({
                   >
                     Request to join
                   </button>
+                  {renderContactButton(detailTarget, { width: '100%', height: '40px', justifyContent: 'center', margin: 0 })}
                   <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)', textAlign: 'center' }}>
-                    {detailTarget.lead.split(' ')[0]} sees your profile and a short note. Your number is shared only if you're accepted.
+                    {detailTarget.comm_method === 'whatsapp'
+                      ? `${detailTarget.lead.split(' ')[0]} sees your profile, a short note and your WhatsApp number when you request to join.`
+                      : detailTarget.chatConv?.status === 'declined'
+                        ? `${detailTarget.lead.split(' ')[0]} declined your last chat request. You can ask again.`
+                        : `${detailTarget.lead.split(' ')[0]} chats on OneStop. Request a chat, and once they accept you can message freely.`}
                   </span>
+                  {detailTarget.chatConv?.status === 'requested' && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleCancelChatRequest(e, detailTarget)}
+                      style={{ color: 'var(--ink-muted, #75736C)', fontSize: '13px', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
+                    >
+                      Cancel chat request
+                    </button>
+                  )}
                 </>
               )}
 
@@ -1775,34 +1964,28 @@ export default function TeamFinderScreen({
                       Withdraw
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      handleOpenChat(e, detailTarget);
-                      setDetailPostId(null);
-                    }}
-                    className="tf-chat-accepted-btn"
-                    style={{ width: '100%', padding: '10px 14px', fontSize: '13.5px' }}
-                  >
-                    Chat with Lead
-                  </button>
+                  {renderContactButton(detailTarget, { width: '100%', height: '40px', justifyContent: 'center', margin: 0 })}
                 </div>
               )}
 
               {detailTarget.state === 'accepted' && (
                 <>
                   {detailTarget.comm_method === 'chat' ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        handleOpenChat(e, detailTarget);
-                        setDetailPostId(null);
-                      }}
-                      className="tf-chat-accepted-btn"
-                      style={{ width: '100%', padding: '11px 14px', fontSize: '14px' }}
-                    >
-                      Open In-Platform Chat
-                    </button>
+                    detailTarget.chatConv?.status === 'accepted' ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          handleOpenChat(e, detailTarget);
+                          setDetailPostId(null);
+                        }}
+                        className="tf-chat-accepted-btn"
+                        style={{ width: '100%', padding: '11px 14px', fontSize: '14px' }}
+                      >
+                        Open chat
+                      </button>
+                    ) : (
+                      renderContactButton(detailTarget, { width: '100%', height: '40px', justifyContent: 'center', margin: 0 })
+                    )
                   ) : (
                     <button
                       type="button"
@@ -1815,16 +1998,31 @@ export default function TeamFinderScreen({
                   )}
                   <span style={{ fontSize: '12px', color: 'var(--ink-muted, #75736C)', textAlign: 'center' }}>
                     {detailTarget.comm_method === 'chat'
-                      ? "You're on the team. Chat with your squad inside OneStop."
-                      : "You're on the team. The rest of the squad can see your number."}
+                      ? "You're on the team. Chat with the host inside OneStop."
+                      : "You're on the team. Message the host on WhatsApp."}
                   </span>
                 </>
               )}
 
               {detailTarget.state === 'full' && (
-                <div className="tf-full-block">
-                  This squad is full. Look for another team or post your own.
-                </div>
+                <>
+                  <div className="tf-full-block">
+                    This squad is full. Look for another team or post your own.
+                  </div>
+                  {detailTarget.comm_method === 'chat' && detailTarget.chatConv?.status === 'accepted' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        handleOpenChat(e, detailTarget);
+                        setDetailPostId(null);
+                      }}
+                      className="tf-chat-accepted-btn"
+                      style={{ width: '100%', padding: '10px 14px', fontSize: '13.5px' }}
+                    >
+                      Open chat
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1899,9 +2097,12 @@ export default function TeamFinderScreen({
                 {[
                   ['pending', 'Pending'],
                   ['accepted', 'Accepted'],
-                  ['declined', 'Declined']
+                  ['declined', 'Declined'],
+                  ...(reviewTarget.comm_method === 'chat' || reviewTarget.hostConvs.length > 0 ? [['chats', 'Chats']] : [])
                 ].map(([id, label]) => {
-                  const count = reviewTarget.apps.filter(a => id === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === id).length;
+                  const count = id === 'chats'
+                    ? reviewTarget.hostConvs.filter(c => c.status === 'requested').length
+                    : reviewTarget.apps.filter(a => id === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === id).length;
                   return (
                     <button
                       key={id}
@@ -1921,7 +2122,9 @@ export default function TeamFinderScreen({
 
             {/* Body */}
             <div className="tf-review-body">
-              {reviewTarget.apps.filter(a => reviewTab === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === reviewTab).length === 0 ? (
+              {reviewTab === 'chats' ? (
+                renderHostChats(reviewTarget)
+              ) : reviewTarget.apps.filter(a => reviewTab === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === reviewTab).length === 0 ? (
                 <div style={{ padding: '36px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
                     {reviewTab === 'pending'
@@ -1993,25 +2196,19 @@ export default function TeamFinderScreen({
                           })}
                         </div>
 
+                        {/* WhatsApp-mode squads: the applicant's number, from their profile */}
+                        {reviewTarget.comm_method === 'whatsapp' && app.phone && (app.status === 'pending' || app.status === 'accepted') && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--ink-secondary, #55534D)' }}>
+                            <WhatsAppIcon size={14} />
+                            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{app.phone}</span>
+                          </div>
+                        )}
+
                         {/* Action buttons */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           {app.status === 'pending' && (
                             <>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const rawApp = applications.find(a => String(a.id) === String(app.id)) || app;
-                                  setChatModalApp({ ...rawApp, dir: 'in' });
-                                  setChatModalPost(reviewTarget);
-                                  setReviewPostId(null);
-                                }}
-                                className="tf-btn-secondary"
-                                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px' }}
-                                title="Chat with applicant before deciding"
-                              >
-                                <ChatBubbleIcon size={14} color="currentColor" />
-                                <span>Chat</span>
-                              </button>
+                              {reviewTarget.comm_method === 'whatsapp' && app.phone && renderApplicantWhatsApp(app, reviewTarget)}
                               <button
                                 type="button"
                                 onClick={() => handleAcceptApplicant(app.id)}
@@ -2041,64 +2238,35 @@ export default function TeamFinderScreen({
 
                           {app.status === 'accepted' && (
                             <>
-                              {reviewTarget.comm_method === 'chat' || app.comm_method === 'chat' || !app.phone ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const rawApp = applications.find(a => String(a.id) === String(app.id)) || app;
-                                    setChatModalApp({ ...rawApp, dir: 'in' });
-                                    setChatModalPost(reviewTarget);
-                                    setReviewPostId(null);
-                                  }}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    border: '1px solid var(--primary-border, rgba(15, 63, 254, 0.30))',
-                                    borderRadius: '9px',
-                                    background: 'var(--primary-tint, rgba(15, 63, 254, 0.08))',
-                                    color: 'var(--primary, #0F3FFE)',
-                                    padding: '7px 12px',
-                                    fontSize: '13px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <ChatBubbleIcon size={14} color="currentColor" />
-                                  <span>In-Platform Chat</span>
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const leadFirst = userName.split(' ')[0];
-                                    const msg = `Hey ${app.name.split(' ')[0]}! Welcoming you to our squad for "${reviewTarget.comp.title}". Connecting!`;
-                                    if (!app.phone) {
-                                      if (showToast) showToast('No WhatsApp number provided by this applicant.');
-                                      return;
-                                    }
-                                    const url = formatWhatsAppUrl(app.phone, msg);
-                                    if (url && url !== '#') window.open(url, '_blank', 'noopener,noreferrer');
-                                    else if (showToast) showToast('No WhatsApp number available for this applicant.');
-                                  }}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    border: '1px solid var(--success-border, rgba(23, 163, 74, 0.30))',
-                                    borderRadius: '9px',
-                                    background: 'var(--success-tint, rgba(23, 163, 74, 0.08))',
-                                    color: 'var(--success-text, #15803D)',
-                                    padding: '7px 12px',
-                                    fontSize: '13px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  <WhatsAppIcon size={14} />
-                                  <span>WhatsApp</span>
-                                </button>
-                              )}
+                              {reviewTarget.comm_method === 'whatsapp' && app.phone && renderApplicantWhatsApp(app, reviewTarget)}
+                              {reviewTarget.comm_method === 'chat' && (() => {
+                                const conv = reviewTarget.hostConvs.find(c => c.member_id === app.applicantId && c.status === 'accepted');
+                                return conv ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setChatConvId(conv.id);
+                                      setReviewPostId(null);
+                                    }}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px',
+                                      border: '1px solid var(--primary-border, rgba(15, 63, 254, 0.30))',
+                                      borderRadius: '9px',
+                                      background: 'var(--primary-tint, rgba(15, 63, 254, 0.08))',
+                                      color: 'var(--primary, #0F3FFE)',
+                                      padding: '7px 12px',
+                                      fontSize: '13px',
+                                      fontWeight: 600,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <ChatBubbleIcon size={14} color="currentColor" />
+                                    <span>Open chat</span>
+                                  </button>
+                                ) : null;
+                              })()}
                               <button
                                 type="button"
                                 onClick={() => handleRemoveApplicant(app.id)}
@@ -2171,21 +2339,65 @@ export default function TeamFinderScreen({
         }}
       />
 
-      {/* ── In-App Chat Modal ── */}
-      {chatModalPost && (
+      {/* ── Request to chat (chat-mode squads) ── */}
+      {chatRequestPost && (
+        <div className="tf-modal-center-wrap">
+          <div className="tf-backdrop" onClick={() => setChatRequestPost(null)} />
+          <form className="tf-modal-card" onSubmit={handleSendChatRequest} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '440px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--ink, #1A1A19)' }}>
+                  Request to chat with {chatRequestPost.lead.split(' ')[0]}
+                </h2>
+                <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--ink-muted, #75736C)' }}>
+                  {chatRequestPost.comp.title}. Once {chatRequestPost.lead.split(' ')[0]} accepts, you can message each other freely.
+                </p>
+              </div>
+              <button type="button" onClick={() => setChatRequestPost(null)} aria-label="Close" className="tf-sheet-close-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>Short intro *</span>
+              <textarea
+                value={chatIntro}
+                onChange={(e) => setChatIntro(e.target.value.slice(0, 300))}
+                placeholder="Hi! I've done 3 case comps and I'm keen to talk about this one."
+                rows={4}
+                autoFocus
+                style={{ border: '1px solid var(--line, #E7E6E2)', borderRadius: '9px', padding: '10px 12px', fontSize: '14px', fontFamily: 'inherit', resize: 'vertical', background: 'var(--surface, #FFFFFF)', color: 'var(--ink, #1A1A19)', outline: 'none' }}
+              />
+              <span style={{ alignSelf: 'flex-end', fontSize: '11px', color: 'var(--ink-muted, #75736C)' }}>{chatIntro.length}/300</span>
+            </label>
+            {chatRequestError && (
+              <div style={{ fontSize: '13px', color: 'var(--urgency-red, #DC2626)' }}>{chatRequestError}</div>
+            )}
+            <button
+              type="submit"
+              className="tf-join-btn"
+              disabled={chatRequestSending || !chatIntro.trim()}
+              style={{ width: '100%', padding: '11px 14px', fontSize: '14px', opacity: chatRequestSending || !chatIntro.trim() ? 0.6 : 1 }}
+            >
+              {chatRequestSending ? 'Sending…' : 'Send chat request'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── Real-time 1:1 chat ── */}
+      {activeConversation && (
         <CompetitionChatModal
-          isOpen={Boolean(chatModalPost)}
-          onClose={() => {
-            setChatModalPost(null);
-            setChatModalApp(null);
-          }}
-          application={activeChatApp}
-          post={chatModalPost.rawPost || chatModalPost}
-          competition={chatModalPost.comp}
+          isOpen={Boolean(activeConversation)}
+          onClose={() => setChatConvId(null)}
+          conversation={activeConversation}
+          post={activeConversationPost}
+          competition={null}
           currentUser={user}
           profile={profile}
-          onAcceptApp={handleAcceptApplicant}
-          onDeclineApp={handleDeclineApplicant}
+          isRemoved={activeConversationRemoved}
         />
       )}
 

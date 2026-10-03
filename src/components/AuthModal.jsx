@@ -1,6 +1,6 @@
 // src/components/AuthModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, cleanPhoneInput, phoneValidationError } from '../context/AuthContext';
 import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
 import WhatIsOneStopTour from './WhatIsOneStopTour';
@@ -156,10 +156,8 @@ export default function AuthModal() {
           }
         }, 500);
       } else if (mode === 'signup') {
-        const cleanPhone = (phone || '').replace(/\D/g, '');
-        if (cleanPhone.length < 10) {
-          throw new Error('Please enter a valid 10-digit WhatsApp number to create your account.');
-        }
+        const phoneError = phoneValidationError(phone);
+        if (phoneError) throw new Error(phoneError);
 
         const res = await signUpWithPassword({
           email,
@@ -356,9 +354,11 @@ export default function AuthModal() {
                       id="auth-phone"
                       type="tel"
                       className="onestop-auth-input"
-                      placeholder="10-digit mobile"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="9876543210"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(cleanPhoneInput(e.target.value))}
                       required
                     />
                   </div>

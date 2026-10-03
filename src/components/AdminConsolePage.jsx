@@ -709,7 +709,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <span>💬</span>
-                                <span>+91 {student.phone}</span>
+                                <span>{student.phone}</span>
                               </a>
                             ) : (
                               <span style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
@@ -786,7 +786,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                               onClick={(e) => e.stopPropagation()}
                             >
                               <span>💬</span>
-                              <span>+91 {student.phone}</span>
+                              <span>{student.phone}</span>
                             </a>
                           ) : (
                             <span style={{ color: 'var(--ink-muted)' }}>No phone</span>

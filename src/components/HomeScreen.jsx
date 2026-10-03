@@ -1966,6 +1966,24 @@ export default function HomeScreen({
                       >
                         Manage squad
                       </button>
+                    ) : isAccepted && s.comm_method === 'chat' ? (
+                      <button
+                        onClick={() => handleNavigate('requests')}
+                        className="home-btn-hover"
+                        style={{
+                          width: '100%',
+                          border: '1px solid var(--primary)',
+                          borderRadius: '9px',
+                          background: 'rgba(15,63,254,0.08)',
+                          color: 'var(--primary)',
+                          padding: '10px 14px',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Open inbox
+                      </button>
                     ) : isAccepted ? (
                       <button
                         onClick={() => onOpenWhatsApp && onOpenWhatsApp(s)}

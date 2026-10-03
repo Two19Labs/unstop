@@ -526,6 +526,12 @@
   cursor: not-allowed;
 }
 
+.comp-chat-send-error {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--urgency-red, #DC2626);
+}
+
 .comp-chat-turn-wait {
   padding: 12px;
   background: var(--surface-muted, #F3EFE6);

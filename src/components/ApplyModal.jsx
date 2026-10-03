@@ -1,6 +1,5 @@
 // src/components/ApplyModal.jsx
 import React, { useState, useEffect } from 'react';
-import { sanitizeIndianPhone } from '../context/AuthContext';
 
 export default function ApplyModal({
   isOpen,
@@ -11,15 +10,13 @@ export default function ApplyModal({
   onSubmitApply
 }) {
   const [pitch, setPitch] = useState('');
-  const [phone, setPhone] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
     setPitch('');
     setErrorMsg('');
-    setPhone(sanitizeIndianPhone(profile?.phone || ''));
-  }, [isOpen, profile]);
+  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -54,14 +51,7 @@ export default function ApplyModal({
       return;
     }
 
-    const isChatOnly = post.comm_method === 'chat' || post.commMethod === 'chat';
-    const cleanPhone = sanitizeIndianPhone(phone);
-    if (!isChatOnly && (!cleanPhone || cleanPhone.length !== 10)) {
-      setErrorMsg('Please enter a valid 10-digit WhatsApp number (e.g. 9876543210).');
-      return;
-    }
-
-    onSubmitApply(post, pitch.trim(), highlightedSkills, isChatOnly ? (cleanPhone || '') : cleanPhone);
+    onSubmitApply(post, pitch.trim(), highlightedSkills);
   };
 
   return (
@@ -251,48 +241,12 @@ export default function ApplyModal({
             />
           </label>
 
-          {/* WhatsApp Phone or In-Platform Chat Notice */}
-          {(post.comm_method === 'chat' || post.commMethod === 'chat') ? (
-            <div style={{ padding: '12px 14px', background: 'rgba(15, 63, 254, 0.06)', borderRadius: '10px', border: '1px solid rgba(15, 63, 254, 0.22)', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary, #0F3FFE)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span>💬</span> In-Platform Chat Mode
-              </span>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--ink-secondary)', lineHeight: 1.45 }}>
-                The squad lead chose <strong>In-Platform Chat</strong>. Your phone number is kept strictly private and will <strong>not</strong> be shown or shared.
-              </p>
-            </div>
-          ) : (
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-                Your WhatsApp Phone Number *
-              </span>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: 'var(--ink-secondary)', fontWeight: 500 }}>
-                  +91
-                </span>
-                <input
-                  type="tel"
-                  placeholder="9876543210"
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
-                  style={{
-                    width: '100%',
-                    border: '1px solid var(--line)',
-                    borderRadius: '8px',
-                    background: 'var(--surface)',
-                    color: 'var(--ink)',
-                    padding: '9px 12px 9px 42px',
-                    fontSize: '14px',
-                    fontFamily: 'monospace'
-                  }}
-                />
-              </div>
-              <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
-                10-digit WhatsApp number. Shared with the lead only when your request is accepted.
-              </span>
-            </label>
-          )}
+          {/* What the host gets to see (never a typed-in number) */}
+          <p style={{ margin: 0, fontSize: '12px', color: 'var(--ink-secondary)', lineHeight: 1.45 }}>
+            {post.comm_method === 'chat'
+              ? `${leadName.split(' ')[0]} chats on OneStop. Your number stays private.`
+              : `${leadName.split(' ')[0]} will see the WhatsApp number on your profile so they can reach you.`}
+          </p>
 
           <button
             type="submit"

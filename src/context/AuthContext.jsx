@@ -58,9 +58,30 @@ export function sanitizeIndianPhone(raw) {
   return digits.slice(0, 10);
 }
 
+// WhatsApp numbers are strictly 10 digits starting with 6-9 (same rule as the database)
+export function isValidIndianPhone(raw) {
+  return /^[6-9]\d{9}$/.test(String(raw || ''));
+}
+
+// Input handler for every WhatsApp number box: digits only, max 10. A pasted
+// "+91 98765 43210" or "098765..." is trimmed to the 10-digit number.
+export function cleanPhoneInput(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.length > 10) return sanitizeIndianPhone(digits);
+  return digits;
+}
+
+export function phoneValidationError(raw) {
+  const digits = String(raw || '');
+  if (!digits) return 'Please enter your 10-digit WhatsApp number.';
+  if (digits.length !== 10) return 'WhatsApp number must be exactly 10 digits.';
+  if (!isValidIndianPhone(digits)) return 'Enter a valid mobile number (starts with 6, 7, 8 or 9).';
+  return '';
+}
+
 export function formatWhatsAppUrl(phone, textMessage = '') {
   const cleanPhone = sanitizeIndianPhone(phone);
-  if (!cleanPhone || cleanPhone.length !== 10) return '#';
+  if (!isValidIndianPhone(cleanPhone)) return '#';
   return `https://wa.me/91${cleanPhone}${textMessage ? `?text=${encodeURIComponent(textMessage)}` : ''}`;
 }
 
@@ -68,8 +89,11 @@ export function formatWhatsAppUrl(phone, textMessage = '') {
 const SQUAD_POSTS_LIMIT = 500;
 const SQUAD_APPS_LIMIT = 1000;
 
-export function normalizeSquadApp(a, userId) {
+// applicantPhones: numbers the host may see (WhatsApp-mode squads only), looked up
+// live from profiles by get_my_applicants_whatsapp(). Never stored on the row.
+export function normalizeSquadApp(a, userId, applicantPhones = null) {
   const isApplicant = a.applicant_id === userId;
+  const applicantPhone = (!isApplicant && applicantPhones?.get(String(a.id))) || '';
   return {
     ...a,
     dir: isApplicant ? 'out' : 'in',
@@ -83,26 +107,34 @@ export function normalizeSquadApp(a, userId) {
     highlighted_skills: a.highlighted_skills || [],
     pitch: a.pitch_note,
     pitch_note: a.pitch_note,
-    phone: a.applicant_phone,
-    applicant_phone: a.applicant_phone,
-    leadPhone: a.lead_phone || '',
-    lead_phone: a.lead_phone || '',
+    phone: applicantPhone,
+    applicant_phone: applicantPhone,
     comm_method: a.comm_method || 'whatsapp'
   };
 }
 
-// Contact details live in the private squad_post_contacts table: the lead sees their
-// own (contacts map), accepted members get the lead phone from their application.
-function normalizeSquadPost(p, contacts, leadPhones) {
+// Squads never carry a phone number: the host's WhatsApp number is fetched on tap
+// with getHostWhatsApp() (WhatsApp-mode squads, signed-in users only).
+function normalizeSquadPost(p, contacts) {
   const contact = contacts.get(String(p.id));
   const acceptedCount = p.accepted_count ?? (Array.isArray(p.accepted_emails) ? p.accepted_emails.length : 0);
   return {
     ...p,
     compId: p.competition_id || p.compId,
+    comm_method: p.comm_method === 'chat' ? 'chat' : 'whatsapp',
     accepted_count: Number(acceptedCount) || 0,
-    phone_number: contact ? (contact.phone_number || '') : (p.phone_number || ''),
+    phone_number: '',
     created_by_email: contact ? (contact.created_by_email || '') : (p.created_by_email || ''),
-    leadPhone: leadPhones.get(String(p.id)) || '',
+  };
+}
+
+export function normalizeConversation(c, userId) {
+  const isHost = c.host_id === userId;
+  return {
+    ...c,
+    post_id: String(c.post_id),
+    role: isHost ? 'host' : 'member',
+    otherName: isHost ? (c.member_name || 'Student') : (c.host_name || 'Squad host'),
   };
 }
 
@@ -149,6 +181,9 @@ export function AuthProvider({ children }) {
   // Squad Applications State (100% real, zero mock data)
   const [squadApps, setSquadApps] = useState([]);
 
+  // Chat-mode conversations the user is part of (as host or as the person asking)
+  const [squadConversations, setSquadConversations] = useState([]);
+
   // Notification States (Cloud-synced across devices via Supabase user_notification_states)
   const [notificationStates, setNotificationStates] = useState({});
 
@@ -169,8 +204,7 @@ export function AuthProvider({ children }) {
   // Column projections to minimize Supabase egress
   // Private squad details used to merge realtime post updates
   const postContactsRef = useRef(new Map());
-  const leadPhonesRef = useRef(new Map());
-  const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_year, pitch_note, highlighted_skills, status, lead_phone, comm_method, created_at, updated_at';
+  const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_college, applicant_year, pitch_note, highlighted_skills, status, comm_method, created_at, updated_at';
   const PROFILE_SELECT = 'id, email, full_name, college, year, phone, bio, education_level, skills, profile_last_updated_at';
 
   // In-flight request caching & deduplication to eliminate duplicate parallel calls
@@ -316,7 +350,7 @@ export function AuthProvider({ children }) {
         const activeUser = targetUser || userRef.current;
         const userId = activeUser?.id || null;
 
-        const [publicRes, mineRes, contactsRes, appsRes] = await Promise.all([
+        const [publicRes, mineRes, contactsRes, appsRes, phonesRes, convRes] = await Promise.all([
           supabase
             .from('squad_posts')
             .select('*')
@@ -328,22 +362,30 @@ export function AuthProvider({ children }) {
           userId
             ? supabase.from('squad_applications').select(SQUAD_APPS_SELECT).order('created_at', { ascending: false }).limit(SQUAD_APPS_LIMIT)
             : null,
+          userId ? supabase.rpc('get_my_applicants_whatsapp') : null,
+          userId
+            ? supabase.from('squad_conversations').select('*').order('updated_at', { ascending: false }).limit(SQUAD_APPS_LIMIT)
+            : null,
         ]);
 
         if (publicRes.error) throw publicRes.error;
 
+        const applicantPhones = new Map(
+          (!phonesRes?.error && Array.isArray(phonesRes?.data) ? phonesRes.data : [])
+            .map(row => [String(row.application_id), row.phone || ''])
+        );
         const apps = userId && !appsRes?.error && Array.isArray(appsRes?.data)
-          ? appsRes.data.filter(a => !isMockApp(a)).map(a => normalizeSquadApp(a, userId))
+          ? appsRes.data.filter(a => !isMockApp(a)).map(a => normalizeSquadApp(a, userId, applicantPhones))
           : [];
 
         const contacts = new Map((contactsRes?.data || []).map(c => [String(c.post_id), c]));
-        const leadPhones = new Map(
-          apps
-            .filter(a => a.dir === 'out' && a.status === 'accepted' && a.lead_phone)
-            .map(a => [String(a.post_id), a.lead_phone])
-        );
         postContactsRef.current = contacts;
-        leadPhonesRef.current = leadPhones;
+
+        if (userId && !convRes?.error && Array.isArray(convRes?.data)) {
+          setSquadConversations(convRes.data.map(c => normalizeConversation(c, userId)));
+        } else if (!userId) {
+          setSquadConversations([]);
+        }
 
         const byId = new Map();
         [...(publicRes.data || []), ...(mineRes?.data || [])].forEach(post => byId.set(post.id, post));
@@ -358,7 +400,7 @@ export function AuthProvider({ children }) {
         const cleanPosts = [...byId.values()]
           .filter(post => !isMockPost(post))
           .sort((x, y) => new Date(y.created_at) - new Date(x.created_at))
-          .map(post => normalizeSquadPost(post, contacts, leadPhones));
+          .map(post => normalizeSquadPost(post, contacts));
 
         setSquadPosts(cleanPosts);
         setSquadApps(userId ? apps : []);
@@ -485,6 +527,7 @@ export function AuthProvider({ children }) {
           setProfile(null);
           setBookmarks([]);
           setSquadApps([]);
+          setSquadConversations([]);
           setNotificationStates({});
           setMessageNotifications([]);
           setIsAdmin(false);
@@ -532,7 +575,7 @@ export function AuthProvider({ children }) {
         }
         const row = payload.new;
         if (!row?.id || isMockPost(row)) return;
-        const next = normalizeSquadPost(row, postContactsRef.current, leadPhonesRef.current);
+        const next = normalizeSquadPost(row, postContactsRef.current);
         setSquadPosts(prev => {
           const idx = prev.findIndex(p => p.id === row.id);
           if (idx === -1) return [next, ...prev];
@@ -540,12 +583,15 @@ export function AuthProvider({ children }) {
           copy[idx] = {
             ...prev[idx],
             ...next,
-            phone_number: next.phone_number || prev[idx].phone_number || '',
             created_by_email: next.created_by_email || prev[idx].created_by_email || '',
-            leadPhone: next.leadPhone || prev[idx].leadPhone || '',
           };
           return copy;
         });
+        // The host's own squad changed (e.g. WhatsApp <-> chat): re-check which
+        // applicant numbers they may see
+        if (activeUserId && row.user_id === activeUserId) {
+          scheduleDebouncedSync();
+        }
       }
     );
 
@@ -557,6 +603,21 @@ export function AuthProvider({ children }) {
           { event: '*', schema: 'public', table: 'squad_applications' },
           () => {
             scheduleDebouncedSync();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'squad_conversations' },
+          (payload) => {
+            const row = payload.new;
+            if (payload.eventType === 'DELETE' || !row?.id) {
+              const goneId = payload.old?.id;
+              if (goneId) setSquadConversations(prev => prev.filter(c => c.id !== goneId));
+              return;
+            }
+            if (row.host_id !== activeUserId && row.member_id !== activeUserId) return;
+            const next = normalizeConversation(row, activeUserId);
+            setSquadConversations(prev => [next, ...prev.filter(c => c.id !== next.id)]);
           }
         )
         .on(
@@ -739,6 +800,9 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
     }
+    const cleanPhone = sanitizeIndianPhone(phone);
+    const phoneError = phoneValidationError(cleanPhone);
+    if (phoneError) throw new Error(phoneError);
     trackEvent('auth_sign_up_attempted', { college });
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -748,7 +812,7 @@ export function AuthProvider({ children }) {
         data: {
           full_name: fullName,
           college: college || '',
-          phone: phone || '',
+          phone: cleanPhone,
         },
       },
     });
@@ -756,7 +820,7 @@ export function AuthProvider({ children }) {
       trackEvent('auth_sign_up_failed', { error: error.message });
       throw error;
     }
-    trackEvent('auth_sign_up_success', { college, hasPhone: Boolean(phone) });
+    trackEvent('auth_sign_up_success', { college, hasPhone: true });
     return data;
   };
 
@@ -776,6 +840,7 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setBookmarks([]);
     setSquadApps([]);
+    setSquadConversations([]);
     setNotificationStates({});
     setMessageNotifications([]);
     setIsAdmin(false);
@@ -906,6 +971,8 @@ export function AuthProvider({ children }) {
     }
 
     const cleanPhone = sanitizeIndianPhone(phone);
+    const phoneError = phoneValidationError(cleanPhone);
+    if (phoneError) throw new Error(phoneError);
     const trimmedName = (fullName || '').trim();
     const trimmedCollege = (college || '').trim();
     const selectedYear = normalizeYear(year);
@@ -972,6 +1039,9 @@ export function AuthProvider({ children }) {
     }
 
     if (saveErr) {
+      if (saveErr.hint === 'INVALID_PHONE') {
+        throw new Error('Please enter a valid 10-digit WhatsApp number.');
+      }
       if (saveErr.hint === 'PROFILE_COOLDOWN') {
         // Another tab/device saved first: adopt the server's timestamp so the lock UI shows
         const serverLastUpdated = saveErr.details || new Date().toISOString();
@@ -1014,6 +1084,86 @@ export function AuthProvider({ children }) {
       hasPhone: Boolean(cleanPhone),
     });
     return merged;
+  };
+
+  // Adds a missing WhatsApp number (the required-number prompt). The database lets
+  // this through without starting the 24-hour profile cooldown.
+  const saveWhatsAppNumber = async (rawPhone) => {
+    if (!user || !supabase) throw new Error('You must be signed in.');
+    const cleanPhone = sanitizeIndianPhone(rawPhone);
+    const phoneError = phoneValidationError(cleanPhone);
+    if (phoneError) throw new Error(phoneError);
+
+    let { data: saved, error } = await supabase
+      .from('profiles')
+      .update({ phone: cleanPhone })
+      .eq('id', user.id)
+      .select(PROFILE_SELECT)
+      .maybeSingle();
+
+    if (!error && !saved) {
+      ({ data: saved, error } = await supabase
+        .from('profiles')
+        .insert({ id: user.id, email: user.email, phone: cleanPhone })
+        .select(PROFILE_SELECT)
+        .single());
+    }
+
+    if (error) {
+      if (error.hint === 'PROFILE_COOLDOWN') {
+        throw new Error('Your profile was edited in the last 24 hours. Please try again later.');
+      }
+      throw new Error(error.hint === 'INVALID_PHONE'
+        ? 'Please enter a valid 10-digit WhatsApp number.'
+        : (error.message || 'Could not save your number. Please try again.'));
+    }
+
+    setProfile(prev => ({ ...(prev || {}), ...(saved || {}), phone: cleanPhone }));
+    trackEvent('profile_phone_added');
+    return cleanPhone;
+  };
+
+  // Host's WhatsApp number for a WhatsApp-mode squad (signed-in users only)
+  const getHostWhatsApp = async (postId) => {
+    if (!supabase || !user) throw new Error('Please sign in to contact the squad host.');
+    const { data, error } = await supabase.rpc('get_squad_host_whatsapp', { p_post_id: postId });
+    if (error) throw new Error(error.message || 'Could not get the host’s number.');
+    return data || '';
+  };
+
+  // ── Chat-mode conversations ──────────────────────────────────────────────
+  const upsertConversation = (row) => {
+    if (!row?.id) return null;
+    const next = normalizeConversation(row, user?.id);
+    setSquadConversations(prev => [next, ...prev.filter(c => c.id !== next.id)]);
+    return next;
+  };
+
+  const requestSquadChat = async (postId, intro) => {
+    if (!user) throw new Error('Please sign in to chat with the squad host.');
+    const { data, error } = await supabase.rpc('request_squad_chat', { p_post_id: postId, p_intro: intro });
+    if (error) throw new Error(error.message || 'Could not send your chat request.');
+    trackEvent('squad_chat_requested', { post_id: postId });
+    return upsertConversation(data);
+  };
+
+  const respondToChatRequest = async (conversationId, accept) => {
+    if (!user) throw new Error('Please sign in.');
+    const { data, error } = await supabase.rpc('respond_to_chat_request', {
+      p_conversation_id: conversationId,
+      p_accept: Boolean(accept),
+    });
+    if (error) throw new Error(error.message || 'Could not update the chat request.');
+    trackEvent('squad_chat_request_answered', { conversation_id: conversationId, accepted: Boolean(accept) });
+    return upsertConversation(data);
+  };
+
+  const cancelChatRequest = async (conversationId) => {
+    if (!user) throw new Error('Please sign in.');
+    const { data, error } = await supabase.rpc('cancel_chat_request', { p_conversation_id: conversationId });
+    if (error) throw new Error(error.message || 'Could not cancel the chat request.');
+    trackEvent('squad_chat_request_cancelled', { conversation_id: conversationId });
+    return upsertConversation(data);
   };
 
   // Bookmark Toggle with Live Database Sync (Strict Authentication Required)
@@ -1097,8 +1247,8 @@ export function AuthProvider({ children }) {
       expires_at: postData.expires_at || null,
       organizer: postData.organizer || '',
       competition_link: postData.competition_link || '',
-      phone_number: postData.phone_number || '',
-      comm_method: postData.comm_method || 'whatsapp',
+      phone_number: '',
+      comm_method: postData.comm_method === 'chat' ? 'chat' : 'whatsapp',
       title: postData.title,
       description: postData.description || '',
       skills_have: postData.skills_have || [],
@@ -1123,9 +1273,8 @@ export function AuthProvider({ children }) {
         throw error;
       }
 
-      const contact = { phone_number: payload.comm_method === 'chat' ? '' : payload.phone_number, created_by_email: creatorEmail };
-      postContactsRef.current.set(String(data.id), contact);
-      const created = normalizeSquadPost(data, postContactsRef.current, leadPhonesRef.current);
+      postContactsRef.current.set(String(data.id), { created_by_email: creatorEmail });
+      const created = normalizeSquadPost(data, postContactsRef.current);
       setSquadPosts(prev => [created, ...prev.filter(p => p.id !== created.id)].filter(p => !isMockPost(p)));
       trackEvent('squad_post_created', {
         post_id: data.id,
@@ -1161,8 +1310,8 @@ export function AuthProvider({ children }) {
       expires_at: updatedData.expires_at !== undefined ? updatedData.expires_at : currentPost.expires_at,
       organizer: updatedData.organizer !== undefined ? updatedData.organizer : currentPost.organizer,
       competition_link: updatedData.competition_link !== undefined ? updatedData.competition_link : currentPost.competition_link,
-      phone_number: updatedData.phone_number !== undefined ? updatedData.phone_number : currentPost.phone_number,
-      comm_method: updatedData.comm_method !== undefined ? updatedData.comm_method : (currentPost.comm_method || 'whatsapp'),
+      phone_number: '',
+      comm_method: (updatedData.comm_method !== undefined ? updatedData.comm_method : currentPost.comm_method) === 'chat' ? 'chat' : 'whatsapp',
       title: updatedData.title || currentPost.title,
       description: updatedData.description !== undefined ? updatedData.description : currentPost.description,
       skills_have: updatedData.skills_have !== undefined ? updatedData.skills_have : (currentPost.skills_have || []),
@@ -1194,13 +1343,10 @@ export function AuthProvider({ children }) {
         total_members: updatePayload.total_members,
       });
 
-      const nextComm = updatePayload.comm_method;
-      postContactsRef.current.set(String(postId), {
-        ...(postContactsRef.current.get(String(postId)) || {}),
-        phone_number: nextComm === 'chat' ? '' : (updatePayload.phone_number || ''),
-      });
-      const edited = normalizeSquadPost(data, postContactsRef.current, leadPhonesRef.current);
+      const edited = normalizeSquadPost(data, postContactsRef.current);
       setSquadPosts(prev => prev.map(p => p.id === postId ? edited : p));
+      // Switching WhatsApp <-> chat changes which applicant numbers the host may see
+      if (currentPost.comm_method !== edited.comm_method) refreshSquadData(null, true);
       return edited;
     }
 
@@ -1226,7 +1372,6 @@ export function AuthProvider({ children }) {
       applicant_id: user.id,
       applicant_name: applicantName,
       applicant_email: applicantEmail,
-      applicant_phone: appData.applicant_phone || profile?.phone || '',
       applicant_college: appData.applicant_college || profile?.college || '',
       applicant_year: normalizeYear(appData.applicant_year || profile?.year || profile?.batch || ''),
       pitch_note: appData.pitch_note || '',
@@ -1273,8 +1418,8 @@ export function AuthProvider({ children }) {
         highlighted_skills: data.highlighted_skills || [],
         pitch: data.pitch_note,
         pitch_note: data.pitch_note,
-        phone: data.applicant_phone,
-        applicant_phone: data.applicant_phone,
+        phone: '',
+        applicant_phone: '',
         comm_method: data.comm_method || payload.comm_method || 'whatsapp'
       };
 
@@ -1355,8 +1500,6 @@ export function AuthProvider({ children }) {
                 ? {
                     ...app,
                     status: updatedApp.status,
-                    lead_phone: updatedApp.lead_phone || '',
-                    leadPhone: updatedApp.lead_phone || '',
                     updated_at: updatedApp.updated_at
                   }
                 : app
@@ -1614,6 +1757,13 @@ export function AuthProvider({ children }) {
         isBookmarked,
         squadPosts,
         squadApps,
+        squadConversations,
+        requestSquadChat,
+        respondToChatRequest,
+        cancelChatRequest,
+        getHostWhatsApp,
+        saveWhatsAppNumber,
+        needsWhatsAppNumber: Boolean(user && profile && !isValidIndianPhone(profile.phone)),
         createSquadPost,
         editSquadPost,
         applyToSquad,

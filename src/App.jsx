@@ -1,6 +1,6 @@
 // src/App.jsx
 import React, { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
-import { AuthProvider, useAuth, formatWhatsAppUrl, sanitizeIndianPhone } from './context/AuthContext';
+import { AuthProvider, useAuth, formatWhatsAppUrl } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
 import CompetitionsPage from './components/CompetitionsPage';
@@ -11,6 +11,7 @@ import ApplyModal from './components/ApplyModal';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
 import SetNewPasswordModal from './components/SetNewPasswordModal';
+import WhatsAppNumberPrompt from './components/WhatsAppNumberPrompt';
 import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -157,6 +158,8 @@ function OneStopInner() {
     withdrawApplication: authWithdrawApp,
     reapplyToSquad: authReapplySquad,
     updateProfile: authUpdateProfile,
+    getHostWhatsApp,
+    squadConversations = [],
     refreshSquadData,
     openAuthModal,
     signOut,
@@ -822,9 +825,7 @@ function OneStopInner() {
       skills_have: draft.skills_have || [],
       lead: creatorName,
       created_by_name: creatorName,
-      leadPhone: (draft.comm_method === 'chat' || draft.commMethod === 'chat') ? '' : (draft.phone_number || profile.phone || ''),
-      phone_number: (draft.comm_method === 'chat' || draft.commMethod === 'chat') ? '' : (draft.phone_number || profile.phone || ''),
-      comm_method: draft.comm_method || draft.commMethod || 'whatsapp',
+      comm_method: draft.comm_method === 'chat' ? 'chat' : 'whatsapp',
       college: draft.college || profile.college || '',
       year: draft.year || profile.batch || profile.year || '',
       mine: true,
@@ -841,8 +842,7 @@ function OneStopInner() {
 
     if (user && authCreatePost) {
       try {
-        const commMethod = draft.comm_method || draft.commMethod || 'whatsapp';
-        const postPhone = commMethod === 'chat' ? '' : (draft.phone_number || profile.phone || '');
+        const commMethod = draft.comm_method === 'chat' ? 'chat' : 'whatsapp';
         const createdPost = await authCreatePost({
           competition_name: compTitle,
           competition_id: draft.competition_id || draft.compId || null,
@@ -856,7 +856,6 @@ function OneStopInner() {
           skills_have: draft.skills_have || [],
           spots_left: draft.spots,
           total_members: draft.total_members || Math.max(2, draft.spots + 1),
-          phone_number: postPhone,
           comm_method: commMethod,
           college: draft.college || profile.college || '',
           year: draft.year || profile.batch || profile.year || ''
@@ -922,16 +921,12 @@ function OneStopInner() {
     setApplyModalOpen(true);
   };
 
-  const handleSubmitApply = async (targetPost, pitchText, highlightedSkills = [], phone = '') => {
+  // The applicant's WhatsApp number is never sent: the host of a WhatsApp-mode squad
+  // sees it live from the applicant's profile.
+  const handleSubmitApply = async (targetPost, pitchText, highlightedSkills = []) => {
     const comp = competitions.find(c => String(c.id) === String(targetPost.compId) || (targetPost.competition_name && c.title === targetPost.competition_name));
     const compTitle = comp ? comp.title : (targetPost.competition_name || 'Competition');
     const applicantName = profile.name || user?.email?.split('@')[0] || 'You';
-    const applicantPhone = phone || profile.phone || '';
-
-    // If phone was just entered, update local profile immediately
-    if (phone && !profile.phone) {
-      handleSaveProfile({ ...profile, phone });
-    }
 
     const newApp = {
       id: `app_${Date.now()}`,
@@ -940,8 +935,6 @@ function OneStopInner() {
       who: applicantName,
       applicant_name: applicantName,
       meta: compTitle,
-      phone: applicantPhone,
-      applicant_phone: applicantPhone,
       applicant_college: profile.college || '',
       applicant_year: profile.batch || profile.year || '',
       skills: highlightedSkills.length > 0 ? highlightedSkills : (profile.skills || []),
@@ -965,12 +958,11 @@ function OneStopInner() {
         const createdApp = await authApplySquad({
           post_id: targetPost.id,
           applicant_name: applicantName,
-          applicant_phone: applicantPhone,
           applicant_college: profile.college || '',
           applicant_year: profile.batch || profile.year || '',
           pitch_note: pitchText,
           highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : profile.skills,
-          comm_method: targetPost.comm_method || targetPost.commMethod || 'whatsapp'
+          comm_method: targetPost.comm_method === 'chat' ? 'chat' : 'whatsapp'
         });
         if (createdApp && createdApp.id) {
           setLocalApplications(prev => prev.map(a => a.id === newApp.id ? createdApp : a));
@@ -1000,7 +992,7 @@ function OneStopInner() {
       }));
     }
 
-    flash('Accepted  -  WhatsApp chat ready');
+    flash(`${(targetApp?.applicant_name || 'Applicant').split(' ')[0]} is on the team`);
 
     if (user && authUpdateAppStatus) {
       try {
@@ -1083,41 +1075,60 @@ function OneStopInner() {
     flash('Request withdrawn');
   };
 
-  // WhatsApp Handshake Launcher (strictly real phone numbers with prefilled message)
-  const handleOpenWhatsApp = (appOrPost) => {
-    const rawPhone =
-      appOrPost?.lead_phone ||
-      appOrPost?.leadPhone ||
-      appOrPost?.myApp?.lead_phone ||
-      appOrPost?.myApp?.leadPhone ||
-      appOrPost?.phone ||
-      appOrPost?.phone_number ||
-      appOrPost?.applicant_phone ||
-      '';
-    const name = appOrPost?.created_by_name || appOrPost?.lead || appOrPost?.applicant_name || appOrPost?.who || '';
-    const comp = appOrPost?.competition_name || appOrPost?.displayTitle || appOrPost?.title || 'Competition';
-    const message = `Hey ${name ? name.split(' ')[0] : ''}! Connecting regarding our squad for "${comp}".`;
-    const waUrl = formatWhatsAppUrl(rawPhone, message);
+  // Message a squad host on WhatsApp. Only WhatsApp-mode squads have one; the number
+  // comes live from the host's profile (signed-in users only) and is never stored here.
+  const handleOpenWhatsApp = async (target) => {
+    // Accepts a squad post, or anything that points at one (application, notification data)
+    const postId = target?.post_id || target?.postId || target?.rawPost?.id || target?.id;
+    const post = posts.find(p => String(p.id) === String(postId)) || (target?.comm_method ? target : null);
 
-    trackEvent('whatsapp_chat_opened', {
-      competition_name: comp,
-      has_phone: Boolean(rawPhone),
-      is_applicant: Boolean(appOrPost?.applicant_name),
-    });
-
-    if (!waUrl || waUrl === '#') {
-      flash('No phone number shared for this squad.');
+    if (!user) {
+      openAuthModal({
+        title: 'Sign up to contact this host',
+        subtitle: 'Create your account to message squad hosts and request to join.',
+        initialTab: 'signup',
+      });
+      return;
+    }
+    if (!post || post.comm_method === 'chat') {
+      flash('This host chats on OneStop, not WhatsApp.');
       return;
     }
 
-    flash('Opening WhatsApp…');
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    // Open the tab now (inside the click) so the browser doesn't block it as a popup,
+    // then point it at WhatsApp once the number arrives.
+    const waWindow = window.open('', '_blank');
+    try {
+      const phone = await getHostWhatsApp(post.id);
+      const leadFirst = (post.created_by_name || post.lead || '').split(' ')[0];
+      const comp = post.competition_name || post.title || 'your squad';
+      const waUrl = formatWhatsAppUrl(phone, `Hey ${leadFirst}! I found your squad for "${comp}" on OneStop and wanted to connect.`);
+
+      trackEvent('whatsapp_chat_opened', { competition_name: comp, has_phone: Boolean(phone) });
+
+      if (!waUrl || waUrl === '#') {
+        if (waWindow) waWindow.close();
+        flash('This host has no WhatsApp number on their profile yet.');
+        return;
+      }
+      if (waWindow) {
+        waWindow.opener = null;
+        waWindow.location.href = waUrl;
+      } else {
+        window.location.href = waUrl;
+      }
+    } catch (err) {
+      if (waWindow) waWindow.close();
+      flash(err.message || 'Could not open WhatsApp.');
+    }
   };
 
   // Derived Counts for Sidebar Badges
   // Legacy saved-alerts badge (feature removed; nothing is stored in the browser anymore)
   const totalNewAlerts = 0;
-  const pendingInboxCount = applications.filter(a => a.dir === 'in' && a.status === 'pending').length;
+  const pendingInboxCount =
+    applications.filter(a => a.dir === 'in' && a.status === 'pending').length +
+    squadConversations.filter(c => c.role === 'host' && c.status === 'requested').length;
 
   // Detail Drawer Target Competition
   const selectedDetailComp = detailCompId ? (visibleCompetitions.find(c => c.id === detailCompId) || competitions.find(c => c.id === detailCompId)) : null;
@@ -1332,6 +1343,7 @@ function OneStopInner() {
                   onRemove={handleRemoveApp}
                   onWithdraw={handleWithdrawApp}
                   onOpenWhatsApp={handleOpenWhatsApp}
+                  showToast={flash}
                 />
               </Suspense>
             )}
@@ -1426,6 +1438,9 @@ function OneStopInner() {
 
       {/* Set New Password Modal (for password recovery email links) */}
       <SetNewPasswordModal />
+
+      {/* Required WhatsApp number (accounts without a valid one, e.g. Google sign-ups) */}
+      <WhatsAppNumberPrompt />
 
       {/* Walkthrough Tour Modal (downloaded only when opened) */}
       {showWalkthrough && (

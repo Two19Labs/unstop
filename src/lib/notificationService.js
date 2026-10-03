@@ -90,7 +90,8 @@ export function generateNotifications({
   posts = [],
   profile = {},
   roundsMap = {},
-  messageNotifications = []
+  messageNotifications = [],
+  conversations = []
 }) {
   const notifs = [];
   const dismissedSet = new Set(getDismissedNotificationIds());
@@ -200,12 +201,12 @@ export function generateNotifications({
       }
     }
 
-    // B. Accepted into Squad (WhatsApp Handshake Ready!)
+    // B. Accepted into Squad (contact follows the host's chosen mode)
     if (app.dir === 'out' && app.status === 'accepted') {
       const notifId = `squad_acc_${rawId}`;
       if (!dismissedSet.has(notifId)) {
         const leadName = targetPost?.created_by_name || targetPost?.lead || 'Squad Lead';
-        const isChatMethod = targetPost?.comm_method === 'chat' || app.comm_method === 'chat';
+        const isChatMethod = targetPost?.comm_method === 'chat';
         notifs.push({
           id: notifId,
           type: 'squad_accepted',
@@ -213,8 +214,8 @@ export function generateNotifications({
           urgency: 'success',
           title: `🎉 Accepted into Squad · ${compTitle}`,
           subtitle: isChatMethod
-            ? `${compHost ? `${compHost} · ` : ''}${leadName} accepted your squad request. Tap to open in-platform chat.`
-            : `${compHost ? `${compHost} · ` : ''}${leadName} accepted your squad request. Tap to connect on WhatsApp.`,
+            ? `${compHost ? `${compHost} · ` : ''}${leadName} accepted your squad request. Chat with them from your inbox.`
+            : `${compHost ? `${compHost} · ` : ''}${leadName} accepted your squad request. Tap to message them on WhatsApp.`,
           timestamp: app.updated_at ? new Date(app.updated_at).getTime() : now,
           data: {
             appId: app.id,
@@ -226,8 +227,8 @@ export function generateNotifications({
           },
           actions: [
             isChatMethod
-              ? { label: 'Open In-Platform Chat', actionType: 'chat', isPrimary: true }
-              : { label: 'Chat on WhatsApp', actionType: 'whatsapp', isPrimary: true }
+              ? { label: 'Open Inbox', actionType: 'requests', isPrimary: true }
+              : { label: 'Message on WhatsApp', actionType: 'whatsapp', isPrimary: true }
           ]
         });
 
@@ -235,7 +236,7 @@ export function generateNotifications({
           title: `🎉 Squad Request Accepted!`,
           body: isChatMethod
             ? `You joined ${leadName}'s squad for ${compTitle}${compHost ? ` (${compHost})` : ''}. Chat inside OneStop.`
-            : `You joined ${leadName}'s squad for ${compTitle}${compHost ? ` (${compHost})` : ''}. Connect on WhatsApp.`,
+            : `You joined ${leadName}'s squad for ${compTitle}${compHost ? ` (${compHost})` : ''}. Message them on WhatsApp.`,
           tag: `push_squad_acc_${rawId}`
         });
       }
@@ -635,6 +636,52 @@ export function generateNotifications({
     neutral: 0
   };
 
+  // 4A. CHAT REQUESTS (chat-mode squads: request -> host accepts -> chat)
+  conversations.forEach((conv) => {
+    const post = postMap.get(String(conv.post_id));
+    const compTitle = post?.competition_name || post?.title || 'your squad';
+    const updatedAt = new Date(conv.responded_at || conv.updated_at || conv.created_at || now).getTime();
+
+    let notif = null;
+    if (conv.role === 'host' && conv.status === 'requested') {
+      notif = {
+        id: `chat_req_${conv.id}_${updatedAt}`,
+        type: 'squad_chat_request',
+        urgency: 'info',
+        title: `💬 ${conv.member_name || 'Someone'} wants to chat`,
+        subtitle: `${compTitle} · "${(conv.intro || '').slice(0, 80)}"`,
+        actions: [{ label: 'Review', actionType: 'requests', isPrimary: true }],
+      };
+    } else if (conv.role === 'member' && conv.status === 'accepted' && conv.responded_at) {
+      notif = {
+        id: `chat_acc_${conv.id}_${updatedAt}`,
+        type: 'squad_chat_accepted',
+        urgency: 'success',
+        title: `💬 ${conv.host_name || 'The host'} accepted your chat request`,
+        subtitle: `${compTitle} · You can message each other now.`,
+        actions: [{ label: 'Open Chat', actionType: 'requests', isPrimary: true }],
+      };
+    } else if (conv.role === 'member' && conv.status === 'declined') {
+      notif = {
+        id: `chat_dec_${conv.id}_${updatedAt}`,
+        type: 'squad_chat_declined',
+        urgency: 'neutral',
+        title: `Chat request · ${compTitle}`,
+        subtitle: `${conv.host_name || 'The host'} declined your chat request. You can ask again later.`,
+        actions: [{ label: 'Open Inbox', actionType: 'requests', isPrimary: false }],
+      };
+    }
+
+    if (notif && !dismissedSet.has(notif.id)) {
+      notifs.push({
+        ...notif,
+        category: 'squads',
+        timestamp: updatedAt,
+        data: { postId: conv.post_id, conversationId: conv.id },
+      });
+    }
+  });
+
   // 4. NEW CHAT MESSAGES (created server-side in user_notifications; one row per thread)
   messageNotifications.forEach((row) => {
     // A newer message in the same thread gets a new id, so it shows as unread again
@@ -652,7 +699,7 @@ export function generateNotifications({
       timestamp: row.created_at ? new Date(row.created_at).getTime() : now,
       data: {
         postId: row.data?.post_id || null,
-        appId: row.data?.application_id || null,
+        conversationId: row.data?.conversation_id || null,
       },
       actions: [
         { label: 'Open Chat', actionType: 'requests', isPrimary: true }

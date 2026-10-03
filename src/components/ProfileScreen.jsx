@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SKILLS, initialsOf } from '../data/initialData';
 import SearchableCollegeSelect from './SearchableCollegeSelect';
+import { sanitizeIndianPhone, cleanPhoneInput, phoneValidationError } from '../context/AuthContext';
 import {
   WhatsAppIcon,
   CheckIcon,
@@ -83,7 +84,7 @@ function ProfileScreenContent({
   const [college, setCollege] = useState(profile?.college || '');
   const [level, setLevel] = useState(initialAcademic.level || '');
   const [yearNum, setYearNum] = useState(initialAcademic.yearNum || '');
-  const [phone, setPhone] = useState(profile?.phone || '');
+  const [phone, setPhone] = useState(sanitizeIndianPhone(profile?.phone || ''));
   const [skills, setSkills] = useState(Array.isArray(profile?.skills) ? profile.skills : []);
 
 
@@ -93,7 +94,7 @@ function ProfileScreenContent({
     college: profile?.college || '',
     level: initialAcademic.level || '',
     yearNum: initialAcademic.yearNum || '',
-    phone: profile?.phone || '',
+    phone: sanitizeIndianPhone(profile?.phone || ''),
     skills: Array.isArray(profile?.skills) ? profile.skills : []
   });
 
@@ -160,7 +161,7 @@ function ProfileScreenContent({
         college: profile.college || '',
         level: parsed.level || '',
         yearNum: parsed.yearNum || '',
-        phone: profile.phone || '',
+        phone: sanitizeIndianPhone(profile.phone || ''),
         skills: Array.isArray(profile.skills) ? profile.skills : []
       };
       setName(nextSaved.name);
@@ -261,10 +262,10 @@ function ProfileScreenContent({
     const isPost = level === 'PG';
     const computedYear = level && yearNum ? `${level} ${yearNum} Year` : (yearNum ? `${yearNum} Year` : '');
 
-    const cleanPhone = phone.trim().replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
+    const phoneError = phoneValidationError(phone);
+    if (phoneError) {
       if (flashToast) {
-        flashToast('Please enter a valid 10-digit WhatsApp number.');
+        flashToast(phoneError);
       }
       return;
     }
@@ -275,7 +276,7 @@ function ProfileScreenContent({
       year: computedYear,
       batch: computedYear,
       education_level: isPost ? 'postgraduate' : (level === 'UG' ? 'undergraduate' : ''),
-      phone: phone.trim(),
+      phone,
       skills
     };
 
@@ -517,14 +518,18 @@ function ProfileScreenContent({
                 <input
                   id="profile-phone-input"
                   type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
                   className="profile-input profile-phone-input"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+91 98••• ••210"
+                  onChange={(e) => setPhone(cleanPhoneInput(e.target.value))}
+                  placeholder="9876543210"
                   required
                 />
                 <span className="profile-field-help">
-                  shared with your squad only if you opt-in
+                  {phone && phoneValidationError(phone)
+                    ? phoneValidationError(phone)
+                    : '10-digit number, no country code. Only shared with hosts of WhatsApp squads you request to join, or people contacting your WhatsApp squads.'}
                 </span>
               </div>
 
