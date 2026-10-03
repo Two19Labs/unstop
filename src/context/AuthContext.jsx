@@ -1358,7 +1358,7 @@ export function AuthProvider({ children }) {
     if (!user) {
       openAuthModal({
         title: 'Sign Up to Join this Squad',
-        subtitle: 'Create your collegiate account to apply to join a squad and connect on WhatsApp.',
+        subtitle: 'Create your collegiate account to request to join squads and contact hosts.',
         initialTab: 'signup',
       });
       throw new Error('Please sign in to apply to this squad.');

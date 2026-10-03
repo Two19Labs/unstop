@@ -455,7 +455,7 @@ export default function AuthModal() {
             <p className="onestop-auth-terms">
               By continuing, you agree to our{' '}
               <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a> and{' '}
-              <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>. WhatsApp numbers are shared only with teammates you accept.
+              <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>. Your WhatsApp number is only shared with hosts of WhatsApp squads you ask to join.
             </p>
           )}
         </div>

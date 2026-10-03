@@ -908,7 +908,7 @@ function OneStopInner() {
     if (!user) {
       openAuthModal({
         title: 'Sign Up to Join this Squad',
-        subtitle: 'Create your collegiate account to apply and connect directly with squad leads on WhatsApp.',
+        subtitle: 'Create your collegiate account to request to join squads and contact hosts.',
         initialTab: 'signup',
         postLoginAction: () => {
           setApplyTargetPost(post);
