@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
 import WhatIsOneStopTour from './WhatIsOneStopTour';
+import SearchableCollegeSelect from './SearchableCollegeSelect';
 import { trackEvent } from '../lib/posthog';
 import './AuthModal.css';
 
@@ -344,13 +345,11 @@ export default function AuthModal() {
                 <div className="onestop-auth-grid-2">
                   <div className="onestop-auth-field">
                     <label htmlFor="auth-college">College</label>
-                    <input
+                    <SearchableCollegeSelect
                       id="auth-college"
-                      type="text"
-                      className="onestop-auth-input"
-                      placeholder="SRCC, IIT Delhi..."
                       value={college}
-                      onChange={(e) => setCollege(e.target.value)}
+                      onChange={setCollege}
+                      placeholder="Search SRCC, IIT Delhi..."
                     />
                   </div>
 

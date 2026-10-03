@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
 import WhatIsOneStopTour from './WhatIsOneStopTour';
+import SearchableCollegeSelect from './SearchableCollegeSelect';
 import { trackEvent } from '../lib/posthog';
 import './ProfileAuthGate.css';
 import './AuthModal.css';
@@ -277,13 +278,11 @@ export default function ProfileAuthGate({ initialMode = 'signup' }) {
                 <div className="onestop-auth-grid-2">
                   <div className="onestop-auth-field">
                     <label htmlFor="gate-college">College</label>
-                    <input
+                    <SearchableCollegeSelect
                       id="gate-college"
-                      type="text"
-                      className="onestop-auth-input"
-                      placeholder="SRCC, IIT Delhi..."
                       value={college}
-                      onChange={(e) => setCollege(e.target.value)}
+                      onChange={setCollege}
+                      placeholder="Search SRCC, IIT Delhi..."
                     />
                   </div>
 

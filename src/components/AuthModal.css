@@ -297,6 +297,29 @@
   gap: 10px;
 }
 
+/* Searchable college picker: match the auth inputs, and let the dropdown
+   span both columns so long college names stay readable */
+.onestop-auth-field .t19-college-input-wrapper input.t19-college-input {
+  padding: 9px 32px 9px 34px !important;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: #0F172A;
+  border: 1px solid #E2E8F0;
+}
+
+.onestop-auth-field .t19-college-input::placeholder {
+  color: #94A3B8;
+}
+
+.onestop-auth-field .t19-college-search-icon {
+  left: 11px;
+}
+
+.onestop-auth-grid-2 .t19-college-dropdown-menu {
+  right: auto;
+  width: calc(200% + 10px);
+}
+
 /* Password wrapper with "Show" / "Hide" text button */
 .onestop-auth-password-wrap {
   position: relative;
