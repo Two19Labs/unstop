@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { supabase, hasValidCredentials } from '../lib/supabaseClient';
+import { supabase, hasValidCredentials, openedFromRecoveryLink } from '../lib/supabaseClient';
 import { normalizeYear } from '../data/colleges';
 import { isMockPost, isMockApp, isMockBookmark } from '../data/initialData';
 import { identifyUser, setPersonProperties, resetUser, trackEvent } from '../lib/posthog';
@@ -444,11 +444,7 @@ export function AuthProvider({ children }) {
       } else {
         setBookmarks([]);
       }
-      if (
-        typeof window !== 'undefined' &&
-        (window.location.hash.includes('type=recovery') ||
-          (window.location.hash.includes('access_token') && window.location.hash.includes('recovery')))
-      ) {
+      if (openedFromRecoveryLink && currentSession) {
         setRecoveryModalOpen(true);
       }
       setAuthLoading(false);

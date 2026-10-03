@@ -22,6 +22,12 @@ if (hasValidCredentials) {
   console.warn('⚠️ Supabase credentials not detected yet. If you just created .env, restart Vite with: npm run dev');
 }
 
+// Captured before createClient(): with detectSessionInUrl, Supabase consumes
+// and clears a recovery link's URL hash and emits PASSWORD_RECOVERY before the
+// app's auth listener is attached, so the app checks this flag instead.
+export const openedFromRecoveryLink =
+  typeof window !== 'undefined' && /(^|[#&?])type=recovery(&|$)/.test(window.location.hash);
+
 export const supabase = hasValidCredentials
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
