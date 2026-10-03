@@ -79,7 +79,6 @@ export function normalizeSquadApp(a, userId) {
     applicant_name: a.applicant_name,
     applicant_college: a.applicant_college,
     applicant_year: a.applicant_year || '',
-    applicant_course: a.applicant_course || '',
     skills: a.highlighted_skills || [],
     highlighted_skills: a.highlighted_skills || [],
     pitch: a.pitch_note,
@@ -171,8 +170,8 @@ export function AuthProvider({ children }) {
   // Private squad details used to merge realtime post updates
   const postContactsRef = useRef(new Map());
   const leadPhonesRef = useRef(new Map());
-  const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_course, applicant_year, pitch_note, highlighted_skills, status, lead_phone, comm_method, created_at, updated_at';
-  const PROFILE_SELECT = 'id, email, full_name, college, course, year, phone, bio, education_level, skills, profile_last_updated_at';
+  const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_phone, applicant_college, applicant_year, pitch_note, highlighted_skills, status, lead_phone, comm_method, created_at, updated_at';
+  const PROFILE_SELECT = 'id, email, full_name, college, year, phone, bio, education_level, skills, profile_last_updated_at';
 
   // In-flight request caching & deduplication to eliminate duplicate parallel calls
   const squadDataInFlightRef = useRef(null);
@@ -200,7 +199,6 @@ export function AuthProvider({ children }) {
         education_level: data.education_level || '',
         college: data.college || '',
         phone: data.phone || '',
-        course: data.course || '',
         year: data.year || '',
         bio: data.bio || '',
         skills: Array.isArray(data.skills) ? data.skills : [],
@@ -212,7 +210,6 @@ export function AuthProvider({ children }) {
         education_level: meta.education_level || '',
         college: meta.college || '',
         phone: meta.phone || '',
-        course: meta.course || '',
         year: meta.year || '',
         bio: meta.bio || '',
         skills: Array.isArray(meta.skills) ? meta.skills : [],
@@ -225,7 +222,6 @@ export function AuthProvider({ children }) {
           email: resolvedProfile.email || activeUser?.email,
           college: resolvedProfile.college,
           year: resolvedProfile.year,
-          course: resolvedProfile.course,
           education_level: resolvedProfile.education_level,
         });
       }
@@ -896,7 +892,7 @@ export function AuthProvider({ children }) {
   };
 
   // Profile Update (Database & Auth Metadata)
-  const updateProfile = async ({ fullName, college, course, year, phone, bio, education_level, skills }) => {
+  const updateProfile = async ({ fullName, college, year, phone, bio, education_level, skills }) => {
     if (!user || !supabase) {
       throw new Error('You must be signed in to update your profile.');
     }
@@ -912,7 +908,6 @@ export function AuthProvider({ children }) {
     const cleanPhone = sanitizeIndianPhone(phone);
     const trimmedName = (fullName || '').trim();
     const trimmedCollege = (college || '').trim();
-    const trimmedCourse = (course || '').trim();
     const selectedYear = normalizeYear(year);
     // The profile screen doesn't edit bio: keep the stored one instead of wiping it
     const trimmedBio = (bio === undefined ? (profile?.bio || '') : (bio || '')).trim();
@@ -925,7 +920,6 @@ export function AuthProvider({ children }) {
     // Check if any field has actually changed
     const prevName = (profile?.full_name || '').trim();
     const prevCollege = (profile?.college || '').trim();
-    const prevCourse = (profile?.course || '').trim();
     const prevYear = normalizeYear(profile?.year);
     const prevPhone = sanitizeIndianPhone(profile?.phone || '');
     const prevBio = (profile?.bio || '').trim();
@@ -938,7 +932,6 @@ export function AuthProvider({ children }) {
     const hasChanged =
       trimmedName !== prevName ||
       trimmedCollege !== prevCollege ||
-      trimmedCourse !== prevCourse ||
       selectedYear !== prevYear ||
       cleanPhone !== prevPhone ||
       trimmedBio !== prevBio ||
@@ -955,7 +948,6 @@ export function AuthProvider({ children }) {
     const fields = {
       full_name: trimmedName,
       college: trimmedCollege,
-      course: trimmedCourse,
       year: selectedYear,
       education_level: selectedEducationLevel,
       phone: cleanPhone,
@@ -1011,7 +1003,6 @@ export function AuthProvider({ children }) {
     setPersonProperties({
       name: trimmedName,
       college: trimmedCollege,
-      course: trimmedCourse,
       year: selectedYear,
       education_level: selectedEducationLevel,
     });
@@ -1117,7 +1108,6 @@ export function AuthProvider({ children }) {
       initial_open_spots: Number(postData.spots_left || 1),
       is_open: true,
       college: (profile?.college || user?.user_metadata?.college || postData.college || '').trim(),
-      course: postData.course || profile?.course || user?.user_metadata?.course || '',
       year: normalizeYear(profile?.year || user?.user_metadata?.year || postData.year),
     };
 
@@ -1238,7 +1228,6 @@ export function AuthProvider({ children }) {
       applicant_email: applicantEmail,
       applicant_phone: appData.applicant_phone || profile?.phone || '',
       applicant_college: appData.applicant_college || profile?.college || '',
-      applicant_course: appData.applicant_course || profile?.course || 'General',
       applicant_year: normalizeYear(appData.applicant_year || profile?.year || profile?.batch || ''),
       pitch_note: appData.pitch_note || '',
       highlighted_skills: appData.highlighted_skills || [],
@@ -1280,7 +1269,6 @@ export function AuthProvider({ children }) {
         applicant_name: data.applicant_name,
         applicant_college: data.applicant_college,
         applicant_year: data.applicant_year || '',
-        applicant_course: data.applicant_course || '',
         skills: data.highlighted_skills || [],
         highlighted_skills: data.highlighted_skills || [],
         pitch: data.pitch_note,

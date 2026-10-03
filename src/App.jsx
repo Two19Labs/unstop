@@ -44,7 +44,6 @@ const EMPTY_PROFILE = {
   college: '',
   batch: '',
   year: '',
-  course: '',
   phone: '',
   skills: [],
   education_level: ''
@@ -405,7 +404,6 @@ function OneStopInner() {
         id: user.id,
         name: authProfile.full_name || authProfile.name || (user.email ? user.email.split('@')[0] : ''),
         college: authProfile.college || '',
-        course: authProfile.course || '',
         year: yr,
         batch: yr,
         phone: authProfile.phone || '',
@@ -452,7 +450,6 @@ function OneStopInner() {
       const saved = await authUpdateProfile({
         fullName: updatedData.name,
         college: updatedData.college,
-        course: updatedData.course || '',
         year: yr,
         phone: updatedData.phone,
         skills: updatedData.skills || [],
@@ -971,7 +968,6 @@ function OneStopInner() {
           applicant_phone: applicantPhone,
           applicant_college: profile.college || '',
           applicant_year: profile.batch || profile.year || '',
-          applicant_course: profile.course || 'General',
           pitch_note: pitchText,
           highlighted_skills: highlightedSkills.length > 0 ? highlightedSkills : profile.skills,
           comm_method: targetPost.comm_method || targetPost.commMethod || 'whatsapp'

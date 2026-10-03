@@ -84,7 +84,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
         // 1. Fetch real profiles
         const { data: dbProfiles, error: profileErr } = await supabase
           .from('profiles')
-          .select('id, email, full_name, college, course, year, phone, bio, avatar_url, education_level, skills, created_at, updated_at, profile_last_updated_at')
+          .select('id, email, full_name, college, year, phone, bio, avatar_url, education_level, skills, created_at, updated_at, profile_last_updated_at')
           .order('created_at', { ascending: false });
 
         if (!profileErr && Array.isArray(dbProfiles)) {
@@ -239,13 +239,12 @@ function AdminConsoleContent({ onBack, user, profile }) {
 
   // Export CSV Handler
   const handleExportCSV = () => {
-    const headers = ['Serial No', 'Full Name', 'Email', 'College', 'Course', 'Academic Standing', 'Phone', 'Skills', 'Created At'];
+    const headers = ['Serial No', 'Full Name', 'Email', 'College', 'Academic Standing', 'Phone', 'Skills', 'Created At'];
     const rows = filteredStudents.map((s, idx) => [
       idx + 1,
       `"${(s.full_name || '').replace(/"/g, '""')}"`,
       `"${(s.email || '').replace(/"/g, '""')}"`,
       `"${(s.college || 'Pending Setup').replace(/"/g, '""')}"`,
-      `"${(s.course || '').replace(/"/g, '""')}"`,
       `"${(s.year || 'Not Set').replace(/"/g, '""')}"`,
       `"${s.phone || ''}"`,
       `"${Array.isArray(s.skills) ? s.skills.join(', ') : ''}"`,
@@ -654,7 +653,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
                     <tr>
                       <th style={{ width: '50px', textAlign: 'center' }}>#</th>
                       <th>Student</th>
-                      <th>College &amp; Course</th>
+                      <th>College</th>
                       <th>Standing</th>
                       <th>WhatsApp / Contact</th>
                       <th>Status</th>
@@ -692,11 +691,6 @@ function AdminConsoleContent({ onBack, user, profile }) {
                           <td>
                             <div>
                               <strong>{student.college || 'Setup Pending'}</strong>
-                              {student.course && (
-                                <div style={{ fontSize: '0.78rem', color: 'var(--ink-muted)' }}>
-                                  {student.course}
-                                </div>
-                              )}
                             </div>
                           </td>
                           <td>
@@ -778,7 +772,6 @@ function AdminConsoleContent({ onBack, user, profile }) {
 
                       <div style={{ fontSize: '0.84rem' }}>
                         <div><strong>College:</strong> {student.college || 'Setup Pending'}</div>
-                        {student.course && <div><strong>Course:</strong> {student.course}</div>}
                         <div><strong>Standing:</strong> {student.year || 'Setup Pending'}</div>
                       </div>
 
@@ -920,12 +913,6 @@ function AdminConsoleContent({ onBack, user, profile }) {
                           <span className="drawer-info-label">College</span>
                           <span className="drawer-info-value">
                             {isSelectedGuest ? 'Visiting OneStop' : (selectedStudentForInspect.college || 'Setup Pending')}
-                          </span>
-                        </div>
-                        <div className="drawer-info-item">
-                          <span className="drawer-info-label">Course</span>
-                          <span className="drawer-info-value">
-                            {isSelectedGuest ? 'N/A (Guest Session)' : (selectedStudentForInspect.course || 'Unset')}
                           </span>
                         </div>
                         <div className="drawer-info-item">
