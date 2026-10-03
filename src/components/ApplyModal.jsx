@@ -1,6 +1,5 @@
 // src/components/ApplyModal.jsx
 import React, { useState, useEffect } from 'react';
-import { SKILLS } from '../data/initialData';
 import { sanitizeIndianPhone } from '../context/AuthContext';
 
 export default function ApplyModal({
@@ -12,7 +11,6 @@ export default function ApplyModal({
   onSubmitApply
 }) {
   const [pitch, setPitch] = useState('');
-  const [highlightedSkills, setHighlightedSkills] = useState([]);
   const [phone, setPhone] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -20,8 +18,6 @@ export default function ApplyModal({
     if (!isOpen) return;
     setPitch('');
     setErrorMsg('');
-    const userSkills = profile?.skills || [];
-    setHighlightedSkills(userSkills.slice(0, 3));
     setPhone(sanitizeIndianPhone(profile?.phone || ''));
   }, [isOpen, profile]);
 
@@ -41,13 +37,13 @@ export default function ApplyModal({
   const spotsLeft = post.spots_left !== undefined ? post.spots_left : (post.displaySpotsLeft || 1);
   const spotsText = spotsLeft <= 1 ? '1 spot left' : `${spotsLeft} spots left`;
 
-  const toggleSkill = (skill) => {
-    setHighlightedSkills(prev =>
-      prev.includes(skill)
-        ? prev.filter(s => s !== skill)
-        : prev.length < 4 ? [...prev, skill] : prev
-    );
-  };
+  // Top 3 profile skills, ones the lead is looking for first
+  const leadWants = Array.isArray(post.skills_looking_for) ? post.skills_looking_for : [];
+  const profileSkills = Array.isArray(profile?.skills) ? profile.skills : [];
+  const highlightedSkills = [
+    ...profileSkills.filter(s => leadWants.includes(s)),
+    ...profileSkills.filter(s => !leadWants.includes(s))
+  ].slice(0, 3);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -193,41 +189,44 @@ export default function ApplyModal({
             )}
           </div>
 
-          {/* Highlighted Skills */}
+          {/* Skills shared with the lead (auto-picked from profile) */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '6px' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-                Highlight Your Relevant Skills (Pick up to 3)
+                Your skills
               </span>
               <span style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
-                {highlightedSkills.length} selected
+                from your profile
               </span>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {SKILLS.map((skill) => {
-                const on = highlightedSkills.includes(skill);
-                return (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => toggleSkill(skill)}
-                    style={{
-                      border: `1px solid ${on ? 'var(--primary)' : 'var(--line)'}`,
-                      borderRadius: '20px',
-                      background: on ? 'var(--primary)' : 'var(--surface-sunken)',
-                      color: on ? '#FFFFFF' : 'var(--ink)',
-                      padding: '5px 12px',
-                      cursor: 'pointer',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      transition: 'all 120ms ease'
-                    }}
-                  >
-                    {skill}
-                  </button>
-                );
-              })}
-            </div>
+            {highlightedSkills.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {highlightedSkills.map((skill) => {
+                  const match = leadWants.includes(skill);
+                  return (
+                    <span
+                      key={skill}
+                      title={match ? 'The lead is looking for this' : undefined}
+                      style={{
+                        border: `1px solid ${match ? 'var(--primary)' : 'var(--line)'}`,
+                        borderRadius: '20px',
+                        background: match ? 'var(--primary)' : 'var(--surface-sunken)',
+                        color: match ? '#FFFFFF' : 'var(--ink)',
+                        padding: '5px 12px',
+                        fontSize: '12px',
+                        fontWeight: 500
+                      }}
+                    >
+                      {skill}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : (
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--ink-secondary)' }}>
+                Add skills to your profile so leads can see what you bring.
+              </p>
+            )}
           </div>
 
           {/* Pitch */}
