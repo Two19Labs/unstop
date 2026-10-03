@@ -586,8 +586,25 @@ GRANT EXECUTE ON FUNCTION public.cancel_chat_request(UUID) TO authenticated;
 -- ─────────────────────────────────────────────────────────────────────────────────
 ALTER TABLE public.squad_messages
   ADD COLUMN IF NOT EXISTS conversation_id UUID REFERENCES public.squad_conversations(id) ON DELETE CASCADE;
--- Messages belong to a conversation now, not a join request
+-- Messages belong to a conversation now, not a join request. Older setups made
+-- application_id / competition_id required and capped messages at 1000 characters.
 ALTER TABLE public.squad_messages ALTER COLUMN application_id DROP NOT NULL;
+ALTER TABLE public.squad_messages ALTER COLUMN competition_id DROP NOT NULL;
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN
+    SELECT conname FROM pg_constraint
+    WHERE conrelid = 'public.squad_messages'::regclass
+      AND contype = 'c'
+      AND pg_get_constraintdef(oid) ILIKE '%content%'
+  LOOP
+    EXECUTE format('ALTER TABLE public.squad_messages DROP CONSTRAINT %I', r.conname);
+  END LOOP;
+END $$;
+ALTER TABLE public.squad_messages ADD CONSTRAINT squad_messages_content_length_check
+  CHECK (char_length(content) > 0 AND char_length(content) <= 2000);
 CREATE INDEX IF NOT EXISTS idx_squad_messages_conversation ON public.squad_messages(conversation_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_squad_messages_sender_created ON public.squad_messages(sender_id, created_at DESC);
 
@@ -662,6 +679,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_conv public.squad_conversations;
+  v_post public.squad_posts;
   v_name TEXT;
   v_recent INT;
 BEGIN
@@ -696,11 +714,13 @@ BEGIN
     RAISE EXCEPTION 'You''re sending messages too fast. Wait a few seconds.';
   END IF;
 
+  SELECT * INTO v_post FROM public.squad_posts WHERE id = v_conv.post_id;
   SELECT NULLIF(btrim(full_name), '') INTO v_name FROM public.profiles WHERE id = auth.uid();
   NEW.sender_id := auth.uid();
   NEW.sender_role := CASE WHEN auth.uid() = v_conv.host_id THEN 'lead' ELSE 'applicant' END;
   NEW.sender_name := COALESCE(v_name, split_part(COALESCE(auth.jwt()->>'email', ''), '@', 1), 'Student');
   NEW.post_id := v_conv.post_id::text;
+  NEW.competition_id := COALESCE(v_post.competition_id, '');
   NEW.application_id := NULL;
   NEW.created_at := NOW();
   RETURN NEW;
