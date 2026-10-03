@@ -132,8 +132,14 @@ export function AuthProvider({ children }) {
 
   // Password Recovery Modal State (triggered on PASSWORD_RECOVERY event)
   const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
+  // Set when an emailed auth link is expired/already used; the recovery modal
+  // then explains it and offers to send a fresh link.
+  const [recoveryLinkError, setRecoveryLinkError] = useState(null);
   const openRecoveryModal = () => setRecoveryModalOpen(true);
-  const closeRecoveryModal = () => setRecoveryModalOpen(false);
+  const closeRecoveryModal = () => {
+    setRecoveryModalOpen(false);
+    setRecoveryLinkError(null);
+  };
 
   // Bookmarks State (100% real, zero mock data)
   const [bookmarks, setBookmarks] = useState([]);
@@ -380,6 +386,39 @@ export function AuthProvider({ children }) {
 
     let isMounted = true;
 
+    // Emailed auth links. Recovery emails link to ?token_hash=...&type=recovery
+    // and are verified here in the browser, so email security scanners that
+    // pre-open links can't use up the one-time token before the user clicks.
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tokenHash = params.get('token_hash');
+      const linkType = params.get('type');
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const linkErrorCode = hashParams.get('error_code') || params.get('error_code');
+
+      if (tokenHash && linkType === 'recovery') {
+        window.history.replaceState(null, '', window.location.pathname);
+        supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }).then(({ error }) => {
+          // No isMounted guard: the URL is cleared above, so a StrictMode re-run
+          // can't verify again and this first result must still be shown.
+          if (error) {
+            trackEvent('auth_recovery_link_failed', { error: error.message });
+            setRecoveryLinkError('This password link has expired or was already used.');
+          }
+          setRecoveryModalOpen(true);
+        });
+      } else if (linkErrorCode) {
+        trackEvent('auth_email_link_error', { error_code: linkErrorCode });
+        window.history.replaceState(null, '', window.location.pathname);
+        setRecoveryLinkError(
+          linkErrorCode === 'otp_expired'
+            ? 'This email link has expired or was already used.'
+            : hashParams.get('error_description') || 'This email link is not valid.'
+        );
+        setRecoveryModalOpen(true);
+      }
+    }
+
     // Get current active session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       if (!isMounted) return;
@@ -408,7 +447,6 @@ export function AuthProvider({ children }) {
       if (
         typeof window !== 'undefined' &&
         (window.location.hash.includes('type=recovery') ||
-          window.location.search.includes('type=recovery') ||
           (window.location.hash.includes('access_token') && window.location.hash.includes('recovery')))
       ) {
         setRecoveryModalOpen(true);
@@ -1570,6 +1608,7 @@ export function AuthProvider({ children }) {
         openProfileModal,
         closeProfileModal,
         recoveryModalOpen,
+        recoveryLinkError,
         openRecoveryModal,
         closeRecoveryModal,
         updateProfile,

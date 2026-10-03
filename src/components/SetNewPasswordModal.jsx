@@ -7,7 +7,7 @@ import { trackEvent } from '../lib/posthog';
 import './AuthModal.css';
 
 export default function SetNewPasswordModal() {
-  const { recoveryModalOpen, closeRecoveryModal, changePassword } = useAuth();
+  const { recoveryModalOpen, recoveryLinkError, closeRecoveryModal, changePassword, resetPassword, user } = useAuth();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +37,19 @@ export default function SetNewPasswordModal() {
   }, [recoveryModalOpen, closeRecoveryModal]);
 
   if (!recoveryModalOpen) return null;
+
+  const handleSendNewLink = async () => {
+    setErrorMsg(null);
+    setSubmitting(true);
+    try {
+      await resetPassword(user.email);
+      setSuccessMsg(`New link sent to ${user.email}. Open the newest email and click its link.`);
+    } catch (err) {
+      setErrorMsg(err.message || 'Could not send a new link. Please try again in a minute.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -111,10 +124,12 @@ export default function SetNewPasswordModal() {
             <OneStopLogo height={28} />
           </div>
           <h2 id="recovery-modal-title" className="arena-auth-title">
-            Set New Password
+            {recoveryLinkError ? 'Link expired' : 'Set New Password'}
           </h2>
           <p className="arena-auth-subtitle">
-            Enter your new password below to secure your OneStop account.
+            {recoveryLinkError
+              ? `${recoveryLinkError} Links work once and only the newest email is valid.`
+              : 'Enter your new password below to secure your OneStop account.'}
           </p>
         </div>
 
@@ -133,7 +148,24 @@ export default function SetNewPasswordModal() {
           </div>
         )}
 
-        {/* Form */}
+        {recoveryLinkError ? (
+          <div className="arena-auth-form">
+            {user?.email ? (
+              <button
+                type="button"
+                className="arena-auth-submit-btn"
+                onClick={handleSendNewLink}
+                disabled={submitting || Boolean(successMsg)}
+              >
+                {submitting ? 'Sending...' : `Email a new link to ${user.email}`}
+              </button>
+            ) : (
+              <p className="arena-auth-terms">
+                Open Sign in and use <strong>Forgot password?</strong> to get a new link.
+              </p>
+            )}
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="arena-auth-form">
           <div className="arena-auth-field">
             <label htmlFor="recovery-new-password">New Password</label>
@@ -174,6 +206,7 @@ export default function SetNewPasswordModal() {
             )}
           </button>
         </form>
+        )}
 
         <div className="arena-auth-footer">
           <p className="arena-auth-terms">
