@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   CloseIcon,
   BellIcon,
   ClockIcon,
@@ -434,8 +436,11 @@ export default function WalkthroughModal({
   isOpen,
   onClose,
   onComplete,
-  autoAdvance = true
+  autoAdvance = true,
+  embedded = false
 }) {
+  // Embedded mode: inline, always-on, looping player (used on the login panel).
+  const active = embedded || isOpen;
   const [currentStep, setCurrentStep] = useState(0);
   const [t, setT] = useState(0);
   const [manualOpen, setManualOpen] = useState(null);
@@ -450,34 +455,35 @@ export default function WalkthroughModal({
 
   // Reset clock, manual interaction state, and position cache when slide changes
   const goToSlide = useCallback((newStep) => {
-    const target = Math.max(0, Math.min(TOUR_SLIDES.length - 1, newStep));
+    const n = TOUR_SLIDES.length;
+    const target = embedded ? (newStep + n) % n : Math.max(0, Math.min(n - 1, newStep));
     setCurrentStep(target);
     setT(0);
     setManualOpen(null);
     setManualTab(null);
     lastPosRef.current = {};
-  }, []);
+  }, [embedded]);
 
   // PostHog analytics
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !embedded) {
       trackEvent('walkthrough_opened', { step: currentStep });
     }
-  }, [isOpen]);
+  }, [isOpen, embedded]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !embedded) {
       trackEvent('walkthrough_step_viewed', {
         step_index: currentStep,
         step_id: TOUR_SLIDES[currentStep]?.id,
         step_title: TOUR_SLIDES[currentStep]?.title
       });
     }
-  }, [currentStep, isOpen]);
+  }, [currentStep, isOpen, embedded]);
 
   // Animation ticker loop
   useEffect(() => {
-    if (!isOpen) return;
+    if (!active) return;
 
     const prefersReduced =
       typeof window !== 'undefined' &&
@@ -486,7 +492,10 @@ export default function WalkthroughModal({
 
     if (prefersReduced) {
       setT(SCRIPTS[currentStep].len);
-      return;
+      if (!embedded) return;
+      // Still cycle through slides in embedded mode, just without the animation.
+      const timer = setTimeout(() => goToSlide(currentStep + 1), SCRIPTS[currentStep].len);
+      return () => clearTimeout(timer);
     }
 
     let animId;
@@ -501,8 +510,8 @@ export default function WalkthroughModal({
           const sc = SCRIPTS[currentStep];
           const nextT = prevT + dt;
           if (nextT >= sc.len) {
-            if (autoAdvance && currentStep < TOUR_SLIDES.length - 1) {
-              setCurrentStep((s) => s + 1);
+            if (autoAdvance && (embedded || currentStep < TOUR_SLIDES.length - 1)) {
+              setCurrentStep((s) => (s + 1) % TOUR_SLIDES.length);
               setManualOpen(null);
               setManualTab(null);
               lastPosRef.current = {};
@@ -521,7 +530,7 @@ export default function WalkthroughModal({
 
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [isOpen, currentStep, autoAdvance]);
+  }, [active, currentStep, autoAdvance, embedded, goToSlide]);
 
   // Handlers
   const handleSkip = useCallback(() => {
@@ -556,7 +565,7 @@ export default function WalkthroughModal({
 
   // Keyboard navigation
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || embedded) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -573,7 +582,7 @@ export default function WalkthroughModal({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleNext, handlePrev, handleSkip]);
+  }, [isOpen, embedded, handleNext, handlePrev, handleSkip]);
 
   // Mobile swipe support
   const handleTouchStart = (e) => {
@@ -591,7 +600,7 @@ export default function WalkthroughModal({
     touchStartX.current = null;
   };
 
-  if (!isOpen) return null;
+  if (!active) return null;
 
   const slide = TOUR_SLIDES[currentStep];
   const sc = SCRIPTS[currentStep];
@@ -714,52 +723,7 @@ export default function WalkthroughModal({
   const k3 = currentStep === 6 ? cnt(2, 600) : '0';
   const reqOp = currentStep === 6 && t > 2300 && t < 3800 ? 0.75 : 1;
 
-  return (
-    <div
-      className="walkthrough-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="walkthrough-title"
-    >
-      <div
-        className="walkthrough-modal"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Header Bar */}
-        <div className="walkthrough-header">
-          <div className="walkthrough-brand">
-            <OneStopLogo height={20} />
-          </div>
-
-          <div className="walkthrough-header-actions">
-            <span className="walkthrough-step-counter">
-              {currentStep + 1} of {TOUR_SLIDES.length}
-            </span>
-            <button
-              type="button"
-              className="walkthrough-close-btn"
-              onClick={handleSkip}
-              aria-label="Close walkthrough"
-              title="Close walkthrough"
-            >
-              <CloseIcon size={16} />
-            </button>
-          </div>
-        </div>
-
-        {/* Slide Body */}
-        <div className="walkthrough-body">
-          {/* Left Text Pane */}
-          <div className="walkthrough-text-pane">
-            <span className="walkthrough-badge">{slide.badge}</span>
-            <h2 id="walkthrough-title" className="walkthrough-title">
-              {slide.title}
-            </h2>
-            <p className="walkthrough-description">{slide.description}</p>
-          </div>
-
-          {/* Right Visual Pane */}
+  const visualPane = (
           <div ref={paneRef} className="walkthrough-visual-pane">
             <div className="walkthrough-zoom-wrapper">
               {/* Slide 0: Filters */}
@@ -3466,11 +3430,9 @@ export default function WalkthroughModal({
               />
             </div>
           </div>
-        </div>
+  );
 
-        {/* Footer Navigation Bar */}
-        <div className="walkthrough-footer">
-          {/* Step Indicator Dots */}
+  const progressDots = (
           <div className="walkthrough-dots" role="tablist" aria-label="Walkthrough progress">
             {TOUR_SLIDES.map((s, idx) => {
               const isPast = idx < currentStep;
@@ -3507,6 +3469,116 @@ export default function WalkthroughModal({
               );
             })}
           </div>
+  );
+
+  if (embedded) {
+    return (
+      <div
+        className="onestop-tour-container walkthrough-embedded"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        aria-label="What is OneStop product tour"
+      >
+        <div className="onestop-tour-top">
+          <div className="onestop-tour-brand">
+            <span className="onestop-tour-dot-indicator" aria-hidden="true" />
+            <span className="onestop-tour-brand-text">WHAT IS ONESTOP?</span>
+          </div>
+          <span className="onestop-tour-counter">
+            {currentStep + 1} of {TOUR_SLIDES.length}
+          </span>
+        </div>
+
+        {visualPane}
+
+        <div className="onestop-tour-bottom">
+          <div className="onestop-tour-text-meta">
+            <span className="onestop-tour-badge">{slide.badge}</span>
+            <h3 className="onestop-tour-title">{slide.title}</h3>
+            <p className="onestop-tour-desc">{slide.description}</p>
+          </div>
+
+          <div className="onestop-tour-controls">
+            {progressDots}
+            <div className="onestop-tour-arrows">
+              <button
+                type="button"
+                className="onestop-tour-nav-btn"
+                onClick={() => goToSlide(currentStep - 1)}
+                aria-label="Previous tour slide"
+                title="Previous slide"
+              >
+                <ChevronLeftIcon size={15} />
+              </button>
+              <button
+                type="button"
+                className="onestop-tour-nav-btn"
+                onClick={() => goToSlide(currentStep + 1)}
+                aria-label="Next tour slide"
+                title="Next slide"
+              >
+                <ChevronRightIcon size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="walkthrough-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="walkthrough-title"
+    >
+      <div
+        className="walkthrough-modal"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Header Bar */}
+        <div className="walkthrough-header">
+          <div className="walkthrough-brand">
+            <OneStopLogo height={20} />
+          </div>
+
+          <div className="walkthrough-header-actions">
+            <span className="walkthrough-step-counter">
+              {currentStep + 1} of {TOUR_SLIDES.length}
+            </span>
+            <button
+              type="button"
+              className="walkthrough-close-btn"
+              onClick={handleSkip}
+              aria-label="Close walkthrough"
+              title="Close walkthrough"
+            >
+              <CloseIcon size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Slide Body */}
+        <div className="walkthrough-body">
+          {/* Left Text Pane */}
+          <div className="walkthrough-text-pane">
+            <span className="walkthrough-badge">{slide.badge}</span>
+            <h2 id="walkthrough-title" className="walkthrough-title">
+              {slide.title}
+            </h2>
+            <p className="walkthrough-description">{slide.description}</p>
+          </div>
+
+          {/* Right Visual Pane */}
+          {visualPane}
+        </div>
+
+        {/* Footer Navigation Bar */}
+        <div className="walkthrough-footer">
+          {/* Step Indicator Dots */}
+          {progressDots}
 
           {/* Action Buttons */}
           <div className="walkthrough-actions">
