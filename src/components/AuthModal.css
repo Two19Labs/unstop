@@ -181,6 +181,18 @@
   cursor: not-allowed;
 }
 
+/* Google's rendered "Continue with Google" button */
+.onestop-auth-gis-wrap {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.onestop-auth-gis-wrap.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 /* Divider with "or with email" */
 .onestop-auth-divider {
   display: flex;

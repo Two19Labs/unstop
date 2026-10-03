@@ -668,6 +668,26 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  // Google Identity Services flow: exchange the ID token from Google's own
+  // button for a Supabase session (keeps the Google popup on our domain).
+  const signInWithGoogleIdToken = async (idToken, nonce) => {
+    if (!supabase) {
+      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+    }
+    trackEvent('auth_google_initiated', { method: 'id_token' });
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken,
+      nonce,
+    });
+    if (error) {
+      trackEvent('auth_google_failed', { method: 'id_token', error: error.message });
+      throw error;
+    }
+    trackEvent('auth_sign_in_success', { method: 'google_id_token' });
+    return data;
+  };
+
   const signInWithPassword = async ({ email, password }) => {
     if (!supabase) {
       throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
@@ -1556,6 +1576,7 @@ export function AuthProvider({ children }) {
         getProfileCooldown,
         PROFILE_COOLDOWN_MS,
         signInWithGoogle,
+        signInWithGoogleIdToken,
         signInWithPassword,
         signUpWithPassword,
         signOut,
