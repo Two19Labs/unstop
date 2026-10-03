@@ -4,6 +4,7 @@ import { normalizeYear } from '../data/colleges';
 import { isMockPost, isMockApp, isMockBookmark } from '../data/initialData';
 import { identifyUser, setPersonProperties, resetUser, trackEvent } from '../lib/posthog';
 import { purgeUserStorage } from '../lib/storage';
+import { dispatchBrowserNotification } from '../lib/browserPushService';
 
 const AuthContext = createContext(null);
 
@@ -184,6 +185,15 @@ export function AuthProvider({ children }) {
   // Chat-mode conversations the user is part of (as host or as the person asking)
   const [squadConversations, setSquadConversations] = useState([]);
 
+  // Per-chat unread count + last message preview + block state (get_my_chat_summaries)
+  const [chatSummaries, setChatSummaries] = useState({});
+  // People I've blocked: [{ blocked_id, blocked_name }]
+  const [myBlocks, setMyBlocks] = useState([]);
+  // The one chat window open anywhere in the app
+  const [activeChatId, setActiveChatId] = useState(null);
+  const activeChatIdRef = useRef(null);
+  activeChatIdRef.current = activeChatId;
+
   // Notification States (Cloud-synced across devices via Supabase user_notification_states)
   const [notificationStates, setNotificationStates] = useState({});
 
@@ -309,13 +319,36 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('user_notifications')
-        .select('id, type, title, message, link, data, created_at')
+        .select('id, type, title, message, link, data, is_read, created_at')
         .eq('type', 'new_message')
         .order('created_at', { ascending: false })
         .limit(30);
       if (!error && Array.isArray(data)) setMessageNotifications(data);
     } catch (err) {
       console.warn('Message notifications fetch error:', err.message);
+    }
+  }, []);
+
+  const fetchChatSummaries = useCallback(async () => {
+    if (!supabase || !userRef.current) return;
+    try {
+      const { data, error } = await supabase.rpc('get_my_chat_summaries');
+      if (error || !Array.isArray(data)) return;
+      const map = {};
+      data.forEach(row => { map[row.conversation_id] = row; });
+      setChatSummaries(map);
+    } catch (err) {
+      console.warn('Chat summaries fetch error:', err.message);
+    }
+  }, []);
+
+  const fetchMyBlocks = useCallback(async () => {
+    if (!supabase || !userRef.current) return;
+    try {
+      const { data, error } = await supabase.from('user_blocks').select('blocked_id, blocked_name, created_at');
+      if (!error && Array.isArray(data)) setMyBlocks(data);
+    } catch (err) {
+      console.warn('Blocks fetch error:', err.message);
     }
   }, []);
 
@@ -383,8 +416,12 @@ export function AuthProvider({ children }) {
 
         if (userId && !convRes?.error && Array.isArray(convRes?.data)) {
           setSquadConversations(convRes.data.map(c => normalizeConversation(c, userId)));
+          fetchChatSummaries();
+          fetchMyBlocks();
         } else if (!userId) {
           setSquadConversations([]);
+          setChatSummaries({});
+          setMyBlocks([]);
         }
 
         const byId = new Map();
@@ -528,6 +565,9 @@ export function AuthProvider({ children }) {
           setBookmarks([]);
           setSquadApps([]);
           setSquadConversations([]);
+          setChatSummaries({});
+          setMyBlocks([]);
+          setActiveChatId(null);
           setNotificationStates({});
           setMessageNotifications([]);
           setIsAdmin(false);
@@ -559,6 +599,12 @@ export function AuthProvider({ children }) {
 
     const activeUserId = userRef.current?.id || user?.id;
     let isRealtimeConnected = false;
+
+    let summariesTimer = null;
+    const scheduleSummaries = () => {
+      if (summariesTimer) clearTimeout(summariesTimer);
+      summariesTimer = setTimeout(() => fetchChatSummaries(), 300);
+    };
 
     // Realtime Postgres changes subscription across devices with user-scoped filters to prevent cross-user egress amplification
     let realtimeBuilder = supabase.channel(`public:app_realtime_sync_${activeUserId || 'guest'}`);
@@ -618,6 +664,37 @@ export function AuthProvider({ children }) {
             if (row.host_id !== activeUserId && row.member_id !== activeUserId) return;
             const next = normalizeConversation(row, activeUserId);
             setSquadConversations(prev => [next, ...prev.filter(c => c.id !== next.id)]);
+            scheduleSummaries();
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'squad_messages' },
+          (payload) => {
+            scheduleSummaries();
+            const row = payload.new;
+            if (payload.eventType !== 'INSERT' || !row?.conversation_id || row.sender_id === activeUserId) return;
+            // Alert when the chat isn't on screen (another chat, another page, or a background tab)
+            const watching = activeChatIdRef.current === row.conversation_id &&
+              typeof document !== 'undefined' && !document.hidden;
+            if (watching) return;
+            const snippet = (row.content || '').length > 90 ? `${row.content.slice(0, 90)}…` : (row.content || '');
+            dispatchBrowserNotification({
+              title: `${row.sender_name || 'Someone'} messaged you`,
+              body: snippet,
+              // At most one alert per chat per minute
+              tag: `chat_${row.conversation_id}_${Math.floor(Date.now() / 60000)}`,
+              url: `/?chat=${row.conversation_id}`,
+              onClick: () => setActiveChatId(row.conversation_id),
+            }).catch(() => {});
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'user_blocks', filter: `blocker_id=eq.${activeUserId}` },
+          () => {
+            fetchMyBlocks();
+            scheduleSummaries();
           }
         )
         .on(
@@ -715,6 +792,7 @@ export function AuthProvider({ children }) {
     return () => {
       clearInterval(pollInterval);
       if (debounceTimer) clearTimeout(debounceTimer);
+      if (summariesTimer) clearTimeout(summariesTimer);
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       }
@@ -723,7 +801,7 @@ export function AuthProvider({ children }) {
       }
       supabase.removeChannel(channel);
     };
-  }, [user, refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchMessageNotifications, fetchUserProfile]);
+  }, [user, refreshSquadData, fetchUserBookmarks, fetchNotificationStates, fetchMessageNotifications, fetchUserProfile, fetchChatSummaries, fetchMyBlocks]);
 
   // Modal Open/Close Controls
   const openAuthModal = (options = {}) => {
@@ -841,6 +919,9 @@ export function AuthProvider({ children }) {
     setBookmarks([]);
     setSquadApps([]);
     setSquadConversations([]);
+    setChatSummaries({});
+    setMyBlocks([]);
+    setActiveChatId(null);
     setNotificationStates({});
     setMessageNotifications([]);
     setIsAdmin(false);
@@ -1164,6 +1245,61 @@ export function AuthProvider({ children }) {
     if (error) throw new Error(error.message || 'Could not cancel the chat request.');
     trackEvent('squad_chat_request_cancelled', { conversation_id: conversationId });
     return upsertConversation(data);
+  };
+
+  // ── Chat window, read markers, unsend, block, report ─────────────────────
+  const openChat = useCallback((conversationId) => {
+    if (conversationId) setActiveChatId(conversationId);
+  }, []);
+  const closeChat = useCallback(() => setActiveChatId(null), []);
+
+  // Clears the chat's unread count and its bell notification (on every device)
+  const markConversationRead = useCallback(async (conversationId) => {
+    if (!supabase || !userRef.current || !conversationId) return;
+    setChatSummaries(prev => (prev[conversationId] ? { ...prev, [conversationId]: { ...prev[conversationId], unread: 0 } } : prev));
+    setMessageNotifications(prev => prev.map(n => (n.data?.conversation_id === conversationId ? { ...n, is_read: true } : n)));
+    try {
+      const { data, error } = await supabase.rpc('mark_conversation_read', { p_conversation_id: conversationId });
+      if (!error && data?.id) {
+        const next = normalizeConversation(data, userRef.current.id);
+        setSquadConversations(prev => prev.map(c => (c.id === next.id ? next : c)));
+      }
+    } catch (err) {
+      console.warn('Mark chat read error:', err.message);
+    }
+  }, []);
+
+  const unsendMessage = async (messageId) => {
+    const { data, error } = await supabase.rpc('unsend_message', { p_message_id: messageId });
+    if (error) throw new Error(error.message || 'Could not unsend the message.');
+    trackEvent('squad_chat_message_unsent');
+    return data;
+  };
+
+  const blockUser = async (userId) => {
+    const { error } = await supabase.rpc('block_user', { p_user_id: userId });
+    if (error) throw new Error(error.message || 'Could not block this person.');
+    trackEvent('squad_chat_user_blocked');
+    await Promise.all([fetchMyBlocks(), fetchChatSummaries()]);
+    refreshSquadData(null, true);
+  };
+
+  const unblockUser = async (userId) => {
+    const { error } = await supabase.rpc('unblock_user', { p_user_id: userId });
+    if (error) throw new Error(error.message || 'Could not unblock this person.');
+    trackEvent('squad_chat_user_unblocked');
+    await Promise.all([fetchMyBlocks(), fetchChatSummaries()]);
+    refreshSquadData(null, true);
+  };
+
+  const reportChat = async (conversationId, reason, note) => {
+    const { error } = await supabase.rpc('report_chat', {
+      p_conversation_id: conversationId,
+      p_reason: reason,
+      p_note: note || '',
+    });
+    if (error) throw new Error(error.message || 'Could not send the report.');
+    trackEvent('squad_chat_reported', { reason });
   };
 
   // Bookmark Toggle with Live Database Sync (Strict Authentication Required)
@@ -1758,6 +1894,17 @@ export function AuthProvider({ children }) {
         squadPosts,
         squadApps,
         squadConversations,
+        chatSummaries,
+        totalUnreadMessages: Object.values(chatSummaries).reduce((n, s) => n + (Number(s.unread) || 0), 0),
+        myBlocks,
+        activeChatId,
+        openChat,
+        closeChat,
+        markConversationRead,
+        unsendMessage,
+        blockUser,
+        unblockUser,
+        reportChat,
         requestSquadChat,
         respondToChatRequest,
         cancelChatRequest,

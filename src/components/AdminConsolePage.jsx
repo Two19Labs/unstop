@@ -8,6 +8,7 @@ import {
   SCREEN_COLORS
 } from '../lib/presenceService';
 import { formatWhatsAppUrl, sanitizeIndianPhone, useAuth } from '../context/AuthContext';
+import ChatReportsPanel from './ChatReportsPanel';
 import './AdminConsolePage.css';
 
 export default function AdminConsolePage({ onBack, user, profile }) {
@@ -322,6 +323,9 @@ function AdminConsoleContent({ onBack, user, profile }) {
 
       {/* ── Main Content Area ── */}
       <main className="admin-console-content">
+        {/* Chat reports from users */}
+        <ChatReportsPanel />
+
         {/* 1. Real Metric Cards Grid */}
         <section className="analytics-stats-grid">
           <div className="stat-card-admin highlight-online">

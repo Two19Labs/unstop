@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
 import { isMockApp, isMockPost } from '../data/initialData';
 import { useAuth, formatWhatsAppUrl } from '../context/AuthContext';
-import CompetitionChatModal from './CompetitionChatModal';
 import './RequestsScreen.css';
+
+// "3:48 pm" today, "Yesterday", or "12 Oct"
+function formatPreviewTime(at) {
+  const d = new Date(at);
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+}
 
 const ChatIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -27,7 +37,6 @@ export default function RequestsScreen({
   showToast
 }) {
   const [reqTab, setReqTab] = useState('in'); // 'in' | 'out'
-  const [chatConvId, setChatConvId] = useState(null);
   const [reaskConvId, setReaskConvId] = useState(null);
   const [reaskIntro, setReaskIntro] = useState('');
   const [busyId, setBusyId] = useState(null);
@@ -38,7 +47,12 @@ export default function RequestsScreen({
     requestSquadChat,
     respondToChatRequest,
     cancelChatRequest,
+    openChat,
+    chatSummaries = {},
   } = useAuth();
+
+  const unreadFor = (convId) => Number(chatSummaries[convId]?.unread) || 0;
+  const chatLabel = (convId, base) => (unreadFor(convId) > 0 ? `${base} (${unreadFor(convId)})` : base);
 
   const notify = (msg) => {
     if (showToast) showToast(msg);
@@ -59,21 +73,19 @@ export default function RequestsScreen({
       .map(a => ({ kind: 'join', id: `join_${a.id}`, app: a, at: a.updated_at || a.created_at }));
     const chatRows = convs
       .filter(c => (dir === 'in' ? c.role === 'host' : c.role === 'member'))
-      .map(c => ({ kind: 'chat', id: `chat_${c.id}`, conv: c, at: c.last_message_at || c.updated_at || c.created_at }));
-    return [...joinRows, ...chatRows].sort((x, y) => new Date(y.at || 0) - new Date(x.at || 0));
+      .map(c => ({ kind: 'chat', id: `chat_${c.id}`, conv: c, at: chatSummaries[c.id]?.last_message_at || c.last_message_at || c.updated_at || c.created_at }));
+    return [...joinRows, ...chatRows].sort((x, y) => {
+      const ux = x.kind === 'chat' && unreadFor(x.conv.id) > 0 ? 1 : 0;
+      const uy = y.kind === 'chat' && unreadFor(y.conv.id) > 0 ? 1 : 0;
+      if (ux !== uy) return uy - ux;
+      return new Date(y.at || 0) - new Date(x.at || 0);
+    });
   };
 
   const inRows = rowsFor('in');
   const outRows = rowsFor('out');
   const currentRows = reqTab === 'in' ? inRows : outRows;
 
-  const activeConversation = chatConvId ? squadConversations.find(c => c.id === chatConvId) || null : null;
-  const activeConversationPost = activeConversation ? postMap.get(String(activeConversation.post_id)) || null : null;
-  const activeConversationRemoved = Boolean(activeConversation) && cleanApps.some(a =>
-    String(a.postId || a.post_id) === String(activeConversation.post_id) &&
-    a.applicant_id === activeConversation.member_id &&
-    a.status === 'removed'
-  );
 
   const acceptedConvFor = (postId, memberId) =>
     squadConversations.find(c => String(c.post_id) === String(postId) && c.member_id === memberId && c.status === 'accepted');
@@ -226,9 +238,9 @@ export default function RequestsScreen({
                 </button>
               )}
               {!isWhatsApp && memberConv && (
-                <button onClick={() => setChatConvId(memberConv.id)} className="requests-btn-chat">
+                <button onClick={() => openChat(memberConv.id)} className="requests-btn-chat">
                   <ChatIcon />
-                  <span className="requests-btn-chat-label">Chat</span>
+                  <span className="requests-btn-chat-label">{chatLabel(memberConv.id, 'Chat')}</span>
                 </button>
               )}
               {app.dir === 'in' && onRemove && (
@@ -272,9 +284,19 @@ export default function RequestsScreen({
       : `Squad hosted by ${conv.host_name || post?.created_by_name || 'the host'}`;
     const busy = busyId === conv.id;
     const chatClosed = post && post.comm_method !== 'chat';
+    const unread = unreadFor(conv.id);
+    const summary = chatSummaries[conv.id];
+    const otherFirst = (isHost ? (conv.member_name || 'Student') : (conv.host_name || 'Host')).split(' ')[0];
+    const preview = summary?.last_message_at
+      ? {
+          who: summary.last_sender_id === user.id ? 'You' : otherFirst,
+          text: summary.last_unsent ? 'Message removed' : summary.last_message,
+          when: formatPreviewTime(summary.last_message_at),
+        }
+      : null;
 
     return (
-      <div key={`chat_${conv.id}`} className="requests-row">
+      <div key={`chat_${conv.id}`} className={`requests-row ${unread > 0 ? 'requests-row-unread' : ''}`}>
         <div className="requests-row-left">
           <div className="requests-row-title-row">
             <span className="requests-row-who">{whoTitle}</span>
@@ -282,9 +304,17 @@ export default function RequestsScreen({
             <span className="requests-status-badge" style={{ background: look.bg, color: look.color, border: `1px solid ${look.border}` }}>
               {conv.status === 'accepted' ? 'Chatting' : look.label}
             </span>
+            {unread > 0 && <span className="requests-unread-badge">{unread}</span>}
           </div>
           <p className="requests-row-subline">{subline}</p>
-          {conv.intro && <p className="requests-row-pitch">{conv.intro}</p>}
+          {conv.status === 'accepted' && preview ? (
+            <p className="requests-row-preview">
+              <span className="requests-row-preview-text">{preview.who}: {preview.text}</span>
+              <span className="requests-row-preview-time"> · {preview.when}</span>
+            </p>
+          ) : (
+            conv.intro && <p className="requests-row-pitch">{conv.intro}</p>
+          )}
 
           {!isHost && reaskConvId === conv.id && (
             <div className="requests-reask">
@@ -326,9 +356,9 @@ export default function RequestsScreen({
           )}
 
           {conv.status === 'accepted' && (
-            <button onClick={() => setChatConvId(conv.id)} className="requests-btn-chat">
+            <button onClick={() => openChat(conv.id)} className="requests-btn-chat">
               <ChatIcon />
-              <span className="requests-btn-chat-label">{chatClosed ? 'View chat' : 'Open chat'}</span>
+              <span className="requests-btn-chat-label">{chatLabel(conv.id, chatClosed ? 'View chat' : 'Open chat')}</span>
             </button>
           )}
 
@@ -397,18 +427,6 @@ export default function RequestsScreen({
         )}
       </div>
 
-      {activeConversation && (
-        <CompetitionChatModal
-          isOpen={Boolean(activeConversation)}
-          onClose={() => setChatConvId(null)}
-          conversation={activeConversation}
-          post={activeConversationPost}
-          competition={null}
-          currentUser={user}
-          profile={profile}
-          isRemoved={activeConversationRemoved}
-        />
-      )}
     </div>
   );
 }

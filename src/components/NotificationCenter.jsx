@@ -220,6 +220,10 @@ export default function NotificationCenter({
         onOpenDetail(notif.data.compId);
         setIsOpen(false);
       }
+    } else if (action.actionType === 'open_chat') {
+      if (notif.data?.conversationId && auth?.openChat) auth.openChat(notif.data.conversationId);
+      else onNavigate('requests');
+      setIsOpen(false);
     } else if (action.actionType === 'requests') {
       onNavigate('requests');
       setIsOpen(false);
@@ -230,7 +234,7 @@ export default function NotificationCenter({
       onNavigate('browse');
       setIsOpen(false);
     }
-  }, [user, authMarkRead, onOpenWhatsApp, onOpenDetail, onNavigate]);
+  }, [user, authMarkRead, onOpenWhatsApp, onOpenDetail, onNavigate, auth]);
 
   const handleToggleDeviceAlerts = async () => {
     if (!pushSupported) return;

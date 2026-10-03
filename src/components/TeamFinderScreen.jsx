@@ -832,13 +832,16 @@ export default function TeamFinderScreen({
               className="tf-chat-accepted-btn"
               style={{ padding: '8px 14px', fontSize: '13px' }}
             >
-              Open chat
+              {chatLabel(conv.id)}
             </button>
           )}
         </div>
       </div>
     ));
   };
+
+  const unreadFor = (convId) => Number(chatSummaries[convId]?.unread) || 0;
+  const chatLabel = (convId, base = 'Open chat') => (unreadFor(convId) > 0 ? `${base} (${unreadFor(convId)})` : base);
 
   // The one way to contact a host: WhatsApp (WhatsApp mode) or a chat request (chat mode)
   const renderContactButton = (post, style = undefined) => {
@@ -873,7 +876,7 @@ export default function TeamFinderScreen({
         style={style}
       >
         <ChatBubbleIcon size={14} />
-        <span>{status === 'accepted' ? 'Chat' : 'Request chat'}</span>
+        <span>{status === 'accepted' ? chatLabel(post.chatConv.id, 'Chat') : 'Request chat'}</span>
       </button>
     );
   };
@@ -1439,7 +1442,8 @@ export default function TeamFinderScreen({
                     const pendingJoinCount = post.apps.filter(a => a.status === 'pending').length;
                     const pendingChatCount = post.hostConvs.filter(c => c.status === 'requested').length;
                     const pendingAppsCount = pendingJoinCount + pendingChatCount;
-                    const firstReviewTab = pendingJoinCount > 0 ? 'pending' : (pendingChatCount > 0 ? 'chats' : 'accepted');
+                    const unreadChatCount = post.hostConvs.reduce((n, c) => n + unreadFor(c.id), 0);
+                    const firstReviewTab = pendingJoinCount > 0 ? 'pending' : (pendingChatCount > 0 || post.hostConvs.some(c => unreadFor(c.id) > 0) ? 'chats' : 'accepted');
 
                     return (
                       <article
@@ -1571,8 +1575,8 @@ export default function TeamFinderScreen({
 
                             {/* Right side of lead row */}
                             {isOwn ? (
-                              pendingAppsCount > 0 ? (
-                                <span className="tf-badge tf-badge-pending-count">{pendingAppsCount} new</span>
+                              pendingAppsCount + unreadChatCount > 0 ? (
+                                <span className="tf-badge tf-badge-pending-count">{pendingAppsCount + unreadChatCount} new</span>
                               ) : (
                                 <span className="tf-posted-time">{post.posted}</span>
                               )
@@ -1661,7 +1665,7 @@ export default function TeamFinderScreen({
                                     onClick={(e) => handleOpenChat(e, post)}
                                     className="tf-chat-accepted-btn"
                                   >
-                                    Open chat
+                                    {chatLabel(post.chatConv.id)}
                                   </button>
                                 ) : (
                                   renderContactButton(post, { flex: 1, height: '36px', justifyContent: 'center', margin: 0 })
@@ -1969,7 +1973,7 @@ export default function TeamFinderScreen({
                         className="tf-chat-accepted-btn"
                         style={{ width: '100%', padding: '11px 14px', fontSize: '14px' }}
                       >
-                        Open chat
+                        {chatLabel(detailTarget.chatConv.id)}
                       </button>
                     ) : (
                       renderContactButton(detailTarget, { width: '100%', height: '40px', justifyContent: 'center', margin: 0 })
@@ -2007,7 +2011,7 @@ export default function TeamFinderScreen({
                       className="tf-chat-accepted-btn"
                       style={{ width: '100%', padding: '10px 14px', fontSize: '13.5px' }}
                     >
-                      Open chat
+                      {chatLabel(detailTarget.chatConv.id)}
                     </button>
                   )}
                 </>
@@ -2089,7 +2093,8 @@ export default function TeamFinderScreen({
                   ...(reviewTarget.comm_method === 'chat' || reviewTarget.hostConvs.length > 0 ? [['chats', 'Chats']] : [])
                 ].map(([id, label]) => {
                   const count = id === 'chats'
-                    ? reviewTarget.hostConvs.filter(c => c.status === 'requested').length
+                    ? reviewTarget.hostConvs.filter(c => c.status === 'requested').length +
+                      reviewTarget.hostConvs.reduce((n, c) => n + unreadFor(c.id), 0)
                     : reviewTarget.apps.filter(a => id === 'declined' ? (a.status === 'declined' || a.status === 'rejected') : a.status === id).length;
                   return (
                     <button
@@ -2251,7 +2256,7 @@ export default function TeamFinderScreen({
                                     }}
                                   >
                                     <ChatBubbleIcon size={14} color="currentColor" />
-                                    <span>Open chat</span>
+                                    <span>{chatLabel(conv.id)}</span>
                                   </button>
                                 ) : null;
                               })()}

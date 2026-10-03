@@ -659,7 +659,7 @@ export function generateNotifications({
         urgency: 'success',
         title: `💬 ${conv.host_name || 'The host'} accepted your chat request`,
         subtitle: `${compTitle} · You can message each other now.`,
-        actions: [{ label: 'Open Chat', actionType: 'requests', isPrimary: true }],
+        actions: [{ label: 'Open Chat', actionType: 'open_chat', isPrimary: true }],
       };
     } else if (conv.role === 'member' && conv.status === 'declined') {
       notif = {
@@ -684,6 +684,8 @@ export function generateNotifications({
 
   // 4. NEW CHAT MESSAGES (created server-side in user_notifications; one row per thread)
   messageNotifications.forEach((row) => {
+    // Read once the chat is opened (on any device)
+    if (row.is_read) return;
     // A newer message in the same thread gets a new id, so it shows as unread again
     const notifId = `msg_${row.id}_${new Date(row.created_at).getTime()}`;
     if (dismissedSet.has(notifId)) return;
@@ -694,16 +696,16 @@ export function generateNotifications({
       type: 'squad_message',
       category: 'squads',
       urgency: 'info',
-      title: `💬 ${row.title || 'New message'}${count > 1 ? ` (${count})` : ''}`,
+      title: `💬 ${row.title || 'New message'}${count > 1 ? ` (${count} new)` : ''}`,
       subtitle: `${compName} · ${row.message || ''}`,
       timestamp: row.created_at ? new Date(row.created_at).getTime() : now,
       data: {
         postId: row.data?.post_id || null,
         conversationId: row.data?.conversation_id || null,
       },
-      actions: [
-        { label: 'Open Chat', actionType: 'requests', isPrimary: true }
-      ]
+      actions: row.data?.conversation_id
+        ? [{ label: 'Open Chat', actionType: 'open_chat', isPrimary: true }]
+        : [{ label: 'Open Inbox', actionType: 'requests', isPrimary: true }]
     });
   });
 

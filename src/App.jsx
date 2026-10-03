@@ -12,6 +12,7 @@ import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
 import SetNewPasswordModal from './components/SetNewPasswordModal';
 import WhatsAppNumberPrompt from './components/WhatsAppNumberPrompt';
+import ChatHost from './components/ChatHost';
 import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
 import MobileBottomNav from './components/MobileBottomNav';
@@ -160,6 +161,7 @@ function OneStopInner() {
     updateProfile: authUpdateProfile,
     getHostWhatsApp,
     squadConversations = [],
+    totalUnreadMessages = 0,
     refreshSquadData,
     openAuthModal,
     signOut,
@@ -1128,7 +1130,8 @@ function OneStopInner() {
   const totalNewAlerts = 0;
   const pendingInboxCount =
     applications.filter(a => a.dir === 'in' && a.status === 'pending').length +
-    squadConversations.filter(c => c.role === 'host' && c.status === 'requested').length;
+    squadConversations.filter(c => c.role === 'host' && c.status === 'requested').length +
+    totalUnreadMessages;
 
   // Detail Drawer Target Competition
   const selectedDetailComp = detailCompId ? (visibleCompetitions.find(c => c.id === detailCompId) || competitions.find(c => c.id === detailCompId)) : null;
@@ -1441,6 +1444,9 @@ function OneStopInner() {
 
       {/* Required WhatsApp number (accounts without a valid one, e.g. Google sign-ups) */}
       <WhatsAppNumberPrompt />
+
+      {/* The one chat window (Inbox, Team Finder, bell, browser alerts) */}
+      <ChatHost posts={posts} applications={applications} showToast={flash} />
 
       {/* Walkthrough Tour Modal (downloaded only when opened) */}
       {showWalkthrough && (

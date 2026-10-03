@@ -400,3 +400,49 @@
     flex: 1;
   }
 }
+
+/* Unread chats */
+.requests-row-unread {
+  background: rgba(15, 63, 254, 0.04);
+}
+
+.requests-row-unread .requests-row-who,
+.requests-row-unread .requests-row-preview-text {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.requests-unread-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--primary, #0F3FFE);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.requests-row-preview {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--ink-secondary);
+  display: flex;
+  min-width: 0;
+}
+
+.requests-row-preview-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.requests-row-preview-time {
+  flex: none;
+  white-space: nowrap;
+  color: var(--ink-muted);
+}
