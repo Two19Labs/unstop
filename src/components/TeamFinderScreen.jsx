@@ -7,7 +7,6 @@ import { normalizeYear } from '../data/colleges';
 import PostSquadModal from './PostSquadModal';
 import ApplyModal from './ApplyModal';
 import SectionLoadingWidget from './SectionLoadingWidget';
-import CompetitionChatModal from './CompetitionChatModal';
 import { SQUAD_PUNS } from './FunLoadingScreen';
 import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN } from '../utils/eligibilityUtils';
 import './TeamFinderScreen.css';
@@ -147,6 +146,8 @@ export default function TeamFinderScreen({
     requestSquadChat,
     respondToChatRequest,
     cancelChatRequest,
+    openChat,
+    chatSummaries = {},
   } = useAuth();
   const [internalTab, setInternalTab] = useState('other'); // 'other' | 'mine'
   const tab = propTab !== undefined ? propTab : internalTab;
@@ -212,7 +213,6 @@ export default function TeamFinderScreen({
   const [reviewTab, setReviewTab] = useState('pending'); // 'pending' | 'accepted' | 'declined' | 'chats'
 
   // Chat-mode: the open conversation, and the "Request to chat" sheet
-  const [chatConvId, setChatConvId] = useState(null);
   const [chatRequestPost, setChatRequestPost] = useState(null);
   const [chatIntro, setChatIntro] = useState('');
   const [chatRequestError, setChatRequestError] = useState('');
@@ -234,23 +234,6 @@ export default function TeamFinderScreen({
     return checkIsPostgraduate(profile);
   }, [profile]);
 
-  const activeConversation = useMemo(
-    () => (chatConvId ? squadConversations.find(c => c.id === chatConvId) || null : null),
-    [chatConvId, squadConversations]
-  );
-  const activeConversationPost = useMemo(() => {
-    if (!activeConversation) return null;
-    return posts.find(p => String(p.id) === String(activeConversation.post_id)) || null;
-  }, [activeConversation, posts]);
-  // Removed from the squad -> the chat becomes read-only
-  const activeConversationRemoved = useMemo(() => {
-    if (!activeConversation) return false;
-    return applications.some(a =>
-      String(a.postId || a.post_id) === String(activeConversation.post_id) &&
-      a.applicant_id === activeConversation.member_id &&
-      a.status === 'removed'
-    );
-  }, [activeConversation, applications]);
 
   // Helper to find competition metadata
   const getCompMeta = (compId, fallbackTitle, fallbackHost) => {
@@ -352,8 +335,13 @@ export default function TeamFinderScreen({
       const pendingApps = postApps.filter(a => a.status === 'pending');
       const declinedApps = postApps.filter(a => a.status === 'declined' || a.status === 'rejected');
 
-      const filled = 1 + acceptedApps.length;
-      const openN = Math.max(0, total - filled);
+      // spots_left is what the host entered (the DB decrements it on accept);
+      // fall back to counting accepted members only for posts without it
+      const storedOpen = Number(p.spots_left);
+      const openN = Number.isFinite(storedOpen) && p.spots_left !== null && p.spots_left !== ''
+        ? Math.min(Math.max(0, storedOpen), Math.max(0, total - 1))
+        : Math.max(0, total - 1 - acceptedApps.length);
+      const filled = total - openN;
 
       const myApp = applications.find(a =>
         String(a.postId || a.post_id) === String(p.id) &&
@@ -563,7 +551,7 @@ export default function TeamFinderScreen({
     if (post.comm_method !== 'chat') return;
     const conv = post.chatConv;
     if (conv?.status === 'accepted') {
-      setChatConvId(conv.id);
+      openChat(conv.id);
       return;
     }
     if (conv?.status === 'requested') {
@@ -838,7 +826,7 @@ export default function TeamFinderScreen({
             <button
               type="button"
               onClick={() => {
-                setChatConvId(conv.id);
+                openChat(conv.id);
                 setReviewPostId(null);
               }}
               className="tf-chat-accepted-btn"
@@ -2245,7 +2233,7 @@ export default function TeamFinderScreen({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setChatConvId(conv.id);
+                                      openChat(conv.id);
                                       setReviewPostId(null);
                                     }}
                                     style={{
@@ -2387,19 +2375,6 @@ export default function TeamFinderScreen({
         </div>
       )}
 
-      {/* ── Real-time 1:1 chat ── */}
-      {activeConversation && (
-        <CompetitionChatModal
-          isOpen={Boolean(activeConversation)}
-          onClose={() => setChatConvId(null)}
-          conversation={activeConversation}
-          post={activeConversationPost}
-          competition={null}
-          currentUser={user}
-          profile={profile}
-          isRemoved={activeConversationRemoved}
-        />
-      )}
 
     </div>
   );
