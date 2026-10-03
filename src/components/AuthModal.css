@@ -52,6 +52,13 @@
   }
 }
 
+/* Single-column variant (e.g. Set new password) */
+.onestop-auth-modal.onestop-auth-modal-compact {
+  grid-template-columns: 1fr;
+  max-width: 440px;
+  min-height: 0;
+}
+
 /* Left Pane (Tour) */
 .onestop-auth-tour-pane {
   display: flex;

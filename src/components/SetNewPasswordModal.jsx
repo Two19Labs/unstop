@@ -1,7 +1,7 @@
 // src/components/SetNewPasswordModal.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { CloseIcon, CheckIcon, AlertCircleIcon, LockIcon } from './icons';
+import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
 import { trackEvent } from '../lib/posthog';
 import './AuthModal.css';
@@ -92,126 +92,115 @@ export default function SetNewPasswordModal() {
   };
 
   return (
-    <div className="arena-auth-backdrop" onClick={closeRecoveryModal}>
+    <div className="onestop-auth-backdrop" onClick={closeRecoveryModal}>
       <div
-        className="arena-auth-card"
+        className="onestop-auth-modal onestop-auth-modal-compact"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="recovery-modal-title"
       >
-        {/* Top Bar with Brand Pill & Close Button */}
-        <div className="arena-auth-top-bar">
-          <div className="arena-auth-brand-pill">
-            <span className="arena-auth-t19">Two19 Labs</span>
-            <span className="arena-auth-divider">/</span>
-            <span className="arena-auth-badge">PASSWORD RECOVERY</span>
+        <div className="onestop-auth-form-pane">
+          <div className="onestop-auth-top-row">
+            <OneStopLogo height={24} />
+            <button
+              type="button"
+              className="onestop-auth-close-btn"
+              onClick={closeRecoveryModal}
+              aria-label="Close"
+            >
+              <CloseIcon size={16} />
+            </button>
           </div>
 
-          <button
-            className="arena-auth-close"
-            onClick={closeRecoveryModal}
-            aria-label="Close modal"
-            type="button"
-          >
-            <CloseIcon size={16} />
-          </button>
-        </div>
-
-        {/* Brand Header */}
-        <div className="arena-auth-header">
-          <div className="arena-auth-logo-wrap">
-            <OneStopLogo height={28} />
+          <div className="onestop-auth-headings">
+            <h2 id="recovery-modal-title" className="onestop-auth-title">
+              {recoveryLinkError ? 'Link expired' : 'Set a new password'}
+            </h2>
+            <p className="onestop-auth-subtitle">
+              {recoveryLinkError
+                ? `${recoveryLinkError} Links work once and only the newest email is valid.`
+                : 'Choose a new password for your OneStop account.'}
+            </p>
           </div>
-          <h2 id="recovery-modal-title" className="arena-auth-title">
-            {recoveryLinkError ? 'Link expired' : 'Set New Password'}
-          </h2>
-          <p className="arena-auth-subtitle">
-            {recoveryLinkError
-              ? `${recoveryLinkError} Links work once and only the newest email is valid.`
-              : 'Enter your new password below to secure your OneStop account.'}
-          </p>
-        </div>
 
-        {/* Error / Success Notifications */}
-        {errorMsg && (
-          <div className="arena-auth-alert arena-auth-alert-error">
-            <AlertCircleIcon size={16} />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+          {errorMsg && (
+            <div className="onestop-auth-alert onestop-auth-alert-error">
+              <AlertCircleIcon size={16} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
-        {successMsg && (
-          <div className="arena-auth-alert arena-auth-alert-success">
-            <CheckIcon size={16} />
-            <span>{successMsg}</span>
-          </div>
-        )}
+          {successMsg && (
+            <div className="onestop-auth-alert onestop-auth-alert-success">
+              <CheckIcon size={16} />
+              <span>{successMsg}</span>
+            </div>
+          )}
 
-        {recoveryLinkError ? (
-          <div className="arena-auth-form">
-            {user?.email ? (
+          {recoveryLinkError ? (
+            user?.email ? (
               <button
                 type="button"
-                className="arena-auth-submit-btn"
+                className="onestop-auth-submit-btn"
                 onClick={handleSendNewLink}
                 disabled={submitting || Boolean(successMsg)}
               >
-                {submitting ? 'Sending...' : `Email a new link to ${user.email}`}
+                {submitting ? 'Sending...' : 'Email me a new link'}
               </button>
             ) : (
-              <p className="arena-auth-terms">
+              <p className="onestop-auth-terms">
                 Open Sign in and use <strong>Forgot password?</strong> to get a new link.
               </p>
-            )}
-          </div>
-        ) : (
-        <form onSubmit={handleSubmit} className="arena-auth-form">
-          <div className="arena-auth-field">
-            <label htmlFor="recovery-new-password">New Password</label>
-            <input
-              id="recovery-new-password"
-              type="password"
-              placeholder="Min 6 characters"
-              minLength={6}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
+            )
+          ) : (
+            <form onSubmit={handleSubmit} className="onestop-auth-form">
+              <div className="onestop-auth-field">
+                <label htmlFor="recovery-new-password">New password</label>
+                <input
+                  id="recovery-new-password"
+                  type="password"
+                  className="onestop-auth-input"
+                  placeholder="At least 6 characters"
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                  autoFocus
+                />
+              </div>
 
-          <div className="arena-auth-field">
-            <label htmlFor="recovery-confirm-password">Confirm New Password</label>
-            <input
-              id="recovery-confirm-password"
-              type="password"
-              placeholder="Re-enter new password"
-              minLength={6}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
+              <div className="onestop-auth-field">
+                <label htmlFor="recovery-confirm-password">Confirm new password</label>
+                <input
+                  id="recovery-confirm-password"
+                  type="password"
+                  className="onestop-auth-input"
+                  placeholder="Re-enter new password"
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
 
-          <button
-            type="submit"
-            className="arena-auth-submit-btn"
-            disabled={submitting}
-          >
-            {submitting ? (
-              <span className="arena-auth-spinner">Updating Password...</span>
-            ) : (
-              'Save New Password'
-            )}
-          </button>
-        </form>
-        )}
+              <button
+                type="submit"
+                className="onestop-auth-submit-btn"
+                disabled={submitting || Boolean(successMsg)}
+              >
+                {submitting ? 'Saving...' : 'Save new password'}
+              </button>
+            </form>
+          )}
 
-        <div className="arena-auth-footer">
-          <p className="arena-auth-terms">
-            Your password is encrypted with end-to-end security. Once saved, you can log in with your email on any device.
-          </p>
+          {!recoveryLinkError && (
+            <p className="onestop-auth-terms">
+              Once saved, you can sign in with your email and this password on any device.
+            </p>
+          )}
         </div>
       </div>
     </div>
