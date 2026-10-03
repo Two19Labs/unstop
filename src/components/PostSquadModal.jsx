@@ -53,6 +53,8 @@ export default function PostSquadModal({
   const [custom, setCustom] = useState(false);
   const [compQ, setCompQ] = useState('');
   const [selectedCompId, setSelectedCompId] = useState('');
+  // Once a competition is picked, collapse the list to just that pick until the search bar is focused again
+  const [pickerOpen, setPickerOpen] = useState(true);
 
   // Custom competition fields
   const [customTitle, setCustomTitle] = useState('');
@@ -86,6 +88,8 @@ export default function PostSquadModal({
   useEffect(() => {
     if (!isOpen) return;
     setFormError('');
+    setCompQ('');
+    setPickerOpen(true);
 
     if (editingPost) {
       const matchComp = teamCompetitions.find(c => String(c.id) === String(editingPost.compId)) ||
@@ -93,6 +97,7 @@ export default function PostSquadModal({
       if (matchComp) {
         setCustom(false);
         setSelectedCompId(String(matchComp.id));
+        setPickerOpen(false);
       } else {
         setCustom(true);
         setCustomTitle(editingPost.competition_name || editingPost.title || '');
@@ -118,6 +123,7 @@ export default function PostSquadModal({
         if (match) {
           setCustom(false);
           setSelectedCompId(String(initialCompId));
+          setPickerOpen(false);
         } else {
           setCustom(false);
           setSelectedCompId(teamCompetitions.length > 0 ? String(teamCompetitions[0].id) : '');
@@ -158,6 +164,13 @@ export default function PostSquadModal({
       .filter(c => (c.title || '').toLowerCase().includes(q) || (c.host || c.orgName || '').toLowerCase().includes(q))
       .slice(0, 8);
   }, [teamCompetitions, compQ]);
+
+  const selectedComp = selectedCompId
+    ? (teamCompetitions.find(c => String(c.id) === String(selectedCompId)) ||
+      competitions.find(c => String(c.id) === String(selectedCompId)))
+    : null;
+  const showCollapsed = !pickerOpen && Boolean(selectedComp);
+  const visibleComps = showCollapsed ? [selectedComp] : filteredComps;
 
   if (!isOpen) return null;
 
@@ -452,7 +465,11 @@ export default function PostSquadModal({
                   </svg>
                   <input
                     value={compQ}
-                    onChange={(e) => setCompQ(e.target.value)}
+                    onChange={(e) => {
+                      setCompQ(e.target.value);
+                      setPickerOpen(true);
+                    }}
+                    onFocus={() => setPickerOpen(true)}
                     placeholder="Search competitions"
                     style={{
                       flex: 1,
@@ -468,7 +485,7 @@ export default function PostSquadModal({
                 </label>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {filteredComps.length === 0 ? (
+                  {visibleComps.length === 0 ? (
                     <div
                       style={{
                         padding: '16px 12px',
@@ -507,7 +524,7 @@ export default function PostSquadModal({
                       </button>
                     </div>
                   ) : (
-                    filteredComps.map((c) => {
+                    visibleComps.map((c) => {
                       const isSelected = String(selectedCompId) === String(c.id);
                       const inits = initialsOf(c.host || c.orgName || 'Host');
                       const dueStr = formatDueText(c);
@@ -518,7 +535,13 @@ export default function PostSquadModal({
                           key={c.id}
                           type="button"
                           onClick={() => {
+                            if (showCollapsed) {
+                              setPickerOpen(true);
+                              return;
+                            }
                             setSelectedCompId(String(c.id));
+                            setCompQ('');
+                            setPickerOpen(false);
                             setFormError('');
                           }}
                           style={{
