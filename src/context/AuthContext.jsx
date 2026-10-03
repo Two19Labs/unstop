@@ -5,85 +5,33 @@ import { isMockPost, isMockApp, isMockBookmark } from '../data/initialData';
 import { identifyUser, setPersonProperties, resetUser, trackEvent } from '../lib/posthog';
 import { purgeUserStorage } from '../lib/storage';
 import { dispatchBrowserNotification } from '../lib/browserPushService';
+import { PROFILE_COOLDOWN_MS, getProfileCooldown } from '../utils/profileCooldown';
+import { sanitizeIndianPhone, isValidIndianPhone, phoneValidationError } from '../utils/phoneUtils';
+
+// Re-exported so components keep importing these from the context
+export { PROFILE_COOLDOWN_MS, getProfileCooldown } from '../utils/profileCooldown';
+export { sanitizeIndianPhone, isValidIndianPhone, cleanPhoneInput, phoneValidationError, formatWhatsAppUrl } from '../utils/phoneUtils';
 
 const AuthContext = createContext(null);
-
-export const PROFILE_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
-
-// The database owns profile_last_updated_at (see PROFILE_COOLDOWN_AND_PRIVACY_MIGRATION.sql).
-export function getProfileCooldown(profile, user) {
-  const lastUpdated = profile?.profile_last_updated_at || null;
-
-  if (!lastUpdated) {
-    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
-  }
-
-  const lastTime = new Date(lastUpdated).getTime();
-  if (isNaN(lastTime)) {
-    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
-  }
-
-  const now = Date.now();
-  const elapsed = now - lastTime;
-  if (elapsed >= PROFILE_COOLDOWN_MS) {
-    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
-  }
-
-  const remainingMs = PROFILE_COOLDOWN_MS - elapsed;
-  const hours = Math.floor(remainingMs / (1000 * 60 * 60));
-  const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
-  const remainingFormatted = `${hours}h ${minutes}m ${seconds}s`;
-
-  return {
-    isLocked: true,
-    remainingMs,
-    hours,
-    minutes,
-    seconds,
-    remainingFormatted,
-    unlockDate: new Date(lastTime + PROFILE_COOLDOWN_MS),
-  };
-}
 
 export function isProfileCooldownError(err) {
   return err?.code === 'PROFILE_COOLDOWN';
 }
 
-export function sanitizeIndianPhone(raw) {
-  if (!raw) return '';
-  let digits = String(raw).trim().replace(/\D/g, '');
-  if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
-  else if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
-  else if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(-10);
-  return digits.slice(0, 10);
+// Google-only accounts have no password to confirm destructive actions with
+export function accountHasPassword(user) {
+  const identities = user?.identities;
+  if (!Array.isArray(identities) || identities.length === 0) {
+    return (user?.app_metadata?.provider || 'email') === 'email';
+  }
+  return identities.some(i => i.provider === 'email');
 }
 
-// WhatsApp numbers are strictly 10 digits starting with 6-9 (same rule as the database)
-export function isValidIndianPhone(raw) {
-  return /^[6-9]\d{9}$/.test(String(raw || ''));
-}
-
-// Input handler for every WhatsApp number box: digits only, max 10. A pasted
-// "+91 98765 43210" or "098765..." is trimmed to the 10-digit number.
-export function cleanPhoneInput(raw) {
-  const digits = String(raw || '').replace(/\D/g, '');
-  if (digits.length > 10) return sanitizeIndianPhone(digits);
-  return digits;
-}
-
-export function phoneValidationError(raw) {
-  const digits = String(raw || '');
-  if (!digits) return 'Please enter your 10-digit WhatsApp number.';
-  if (digits.length !== 10) return 'WhatsApp number must be exactly 10 digits.';
-  if (!isValidIndianPhone(digits)) return 'Enter a valid mobile number (starts with 6, 7, 8 or 9).';
-  return '';
-}
-
-export function formatWhatsAppUrl(phone, textMessage = '') {
-  const cleanPhone = sanitizeIndianPhone(phone);
-  if (!isValidIndianPhone(cleanPhone)) return '#';
-  return `https://wa.me/91${cleanPhone}${textMessage ? `?text=${encodeURIComponent(textMessage)}` : ''}`;
+// Matches the 10-minute window delete_user_account() enforces (with a small margin)
+const RECENT_SIGN_IN_MS = 9 * 60 * 1000;
+export function signedInRecently(user) {
+  const at = user?.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+  return Boolean(at) && Date.now() - at < RECENT_SIGN_IN_MS;
 }
 
 // Active squads shown on the board (expired ones are kept in the DB but hidden)
@@ -995,37 +943,55 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const deleteAccount = async (currentPassword) => {
+  // Password accounts confirm with their password. Google-only accounts have no
+  // password, so they confirm by signing in with Google again (or by having
+  // signed in within the last few minutes). The database re-checks this:
+  // delete_user_account() refuses unless the last sign-in was under 10 minutes ago.
+  const deleteAccount = async (currentPassword, { googleIdToken, googleNonce } = {}) => {
     if (!supabase || !user) {
       throw new Error('You must be signed in to delete your account.');
     }
 
-    const cleanPassword = (currentPassword || '').trim();
-    if (!cleanPassword) {
-      throw new Error('Please enter your current password to confirm account deletion.');
-    }
-
     trackEvent('auth_account_deletion_attempted');
 
-    // 1. Verify current password with Supabase Auth
-    const { error: authErr } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: cleanPassword,
-    });
-
-    if (authErr) {
-      console.warn('Password verification failed during account deletion:', authErr.message);
-      if (
-        authErr.message?.toLowerCase().includes('invalid login credentials') ||
-        authErr.message?.toLowerCase().includes('invalid credentials')
-      ) {
-        throw new Error('Incorrect password. Please enter your valid current password to confirm account deletion.');
+    if (accountHasPassword(user)) {
+      // Passwords are used exactly as typed (spaces included)
+      if (!currentPassword) {
+        throw new Error('Please enter your current password to confirm account deletion.');
       }
-      throw new Error(authErr.message || 'Incorrect password. Verification failed.');
+      const { error: authErr } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (authErr) {
+        console.warn('Password verification failed during account deletion:', authErr.message);
+        if (
+          authErr.message?.toLowerCase().includes('invalid login credentials') ||
+          authErr.message?.toLowerCase().includes('invalid credentials')
+        ) {
+          throw new Error('Incorrect password. Please enter your valid current password to confirm account deletion.');
+        }
+        throw new Error(authErr.message || 'Incorrect password. Verification failed.');
+      }
+    } else if (googleIdToken) {
+      const { data, error: googleErr } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: googleIdToken,
+        nonce: googleNonce,
+      });
+      if (googleErr) throw new Error(googleErr.message || 'Google confirmation failed.');
+      if (data?.user?.id !== user.id) {
+        throw new Error('That is a different Google account. Nothing was deleted.');
+      }
+    } else if (!signedInRecently(user)) {
+      throw new Error('For your security, sign in with Google again to confirm.');
     }
 
-    // 2. Perform account deletion via RPC
     const { error: rpcErr } = await supabase.rpc('delete_user_account');
+    if (rpcErr?.message?.includes('REAUTH_REQUIRED')) {
+      throw new Error('For your security, please sign in again (within the last 10 minutes) to delete your account.');
+    }
     if (rpcErr) {
       // Never report success unless the login itself was deleted server-side
       console.warn('Account deletion RPC issue:', rpcErr);

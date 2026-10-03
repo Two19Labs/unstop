@@ -3,21 +3,7 @@
 
 import { normalizeYear } from '../src/data/colleges.js';
 import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN } from '../src/utils/eligibilityUtils.js';
-
-export function sanitizeIndianPhone(raw) {
-  if (!raw) return '';
-  let digits = String(raw).trim().replace(/\D/g, '');
-  if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
-  else if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
-  else if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(-10);
-  return digits.slice(0, 10);
-}
-
-export function formatWhatsAppUrl(phone, textMessage = '') {
-  const cleanPhone = sanitizeIndianPhone(phone);
-  if (!cleanPhone || cleanPhone.length !== 10) return '#';
-  return `https://wa.me/91${cleanPhone}${textMessage ? `?text=${encodeURIComponent(textMessage)}` : ''}`;
-}
+import { sanitizeIndianPhone, formatWhatsAppUrl } from '../src/utils/phoneUtils.js';
 
 let passed = 0;
 let failed = 0;

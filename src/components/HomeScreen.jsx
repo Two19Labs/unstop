@@ -524,8 +524,8 @@ export default function HomeScreen({
   const { openAuthModal } = useAuth();
   const rawFirst = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/)[0]
-    : (profile?.full_name?.trim() ? profile.full_name.trim().split(/\s+/)[0] : (user?.email ? user.email.split('@')[0] : 'there'));
-  const firstName = rawFirst ? (rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()) : 'there';
+    : (profile?.full_name?.trim() ? profile.full_name.trim().split(/\s+/)[0] : (user?.email ? user.email.split('@')[0] : ''));
+  const firstName = rawFirst ? (rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase()) : '';
 
   const isPostgraduate = checkIsPostgraduate(profile);
 
@@ -956,7 +956,7 @@ export default function HomeScreen({
       <div className="home-header">
         <div className="home-header-identity">
           <h1 className="home-header-greeting">
-            {greeting}, {firstName}
+            {greeting}{firstName ? `, ${firstName}` : ''}
           </h1>
           <div
             className="home-header-meta"

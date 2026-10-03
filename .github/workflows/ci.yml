@@ -24,7 +24,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci || npm install
 
-      - name: Run E2E Test Suite (52/52 Assertions)
+      - name: Run test suites
         run: npm test
 
       - name: Verify Production Build

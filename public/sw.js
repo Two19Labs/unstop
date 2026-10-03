@@ -1,6 +1,6 @@
 // public/sw.js - OneStop Service Worker with PWA Offline Caching & Push Notifications
 
-const SW_VERSION = 'v1.1.0';
+const SW_VERSION = 'v1.2.0';
 const CACHE_NAME = `onestop-static-${SW_VERSION}`;
 
 // Precache essential application shell assets
@@ -64,9 +64,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((networkRes) => {
-          if (networkRes.ok) {
+          // One cached app shell, never keyed by URL: page URLs can carry one-time
+          // tokens (password links) that must not be stored on the device
+          const isAppShell = !/^\/(privacy|terms)(\.html)?$/.test(url.pathname);
+          if (networkRes.ok && isAppShell) {
             const resClone = networkRes.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', resClone));
           }
           return networkRes;
         })

@@ -897,6 +897,13 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
 }
 
 export default async function handler(req, res) {
+  // The app never sends a query string; one-off ones would bypass the edge cache
+  // and make cold instances re-fetch everything from Unstop
+  if ((req.url || '').includes('?')) {
+    res.setHeader('Location', '/api/competitions');
+    return res.status(308).end();
+  }
+
   try {
     const competitions = await fetchCompetitionsFromUnstop();
 

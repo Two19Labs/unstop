@@ -22,7 +22,8 @@ import {
   setPushEnabled,
   requestPushPermission
 } from '../lib/browserPushService';
-import { getProfileCooldown, isProfileCooldownError } from '../context/AuthContext';
+import { getProfileCooldown, isProfileCooldownError, useAuth, accountHasPassword, signedInRecently } from '../context/AuthContext';
+import GoogleSignInButton from './GoogleSignInButton';
 import ProfileAuthGate from './ProfileAuthGate';
 import './ProfileScreen.css';
 
@@ -900,25 +901,26 @@ function ChangePasswordModal({ user, onClose, onResetPassword, flashToast }) {
 }
 
 function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
+  const { signInWithGoogle } = useAuth();
+  const hasPassword = accountHasPassword(user);
   const [password, setPassword] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const targetEmail = user?.email || '';
+  // Google-only accounts: type the email, and confirm with Google unless they just signed in
+  const emailMatches = confirmEmail.trim().toLowerCase() === targetEmail.toLowerCase();
+  const recent = signedInRecently(user);
+  const canSubmit = hasPassword ? password.length >= 6 : emailMatches && recent;
 
-  const handleDelete = async (e) => {
-    e.preventDefault();
-    if (!password || password.length < 6) {
-      setErrorMsg('Please enter your current password (min 6 characters).');
-      return;
-    }
-
+  const runDelete = async (googleCredential) => {
     setLoading(true);
     setErrorMsg('');
     try {
       if (onDeleteAccount) {
-        await onDeleteAccount(password);
+        await onDeleteAccount(hasPassword ? password : '', googleCredential || {});
       }
       if (flashToast) {
         flashToast('Your account has been deleted');
@@ -926,7 +928,7 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
       onClose();
     } catch (err) {
       console.error('Account deletion error:', err);
-      let msg = err.message || 'Failed to delete account. Please verify your password.';
+      let msg = err.message || 'Failed to delete account. Please try again.';
       if (
         msg.toLowerCase().includes('invalid login credentials') ||
         msg.toLowerCase().includes('invalid credentials') ||
@@ -936,6 +938,36 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
       }
       setErrorMsg(msg);
       setLoading(false);
+    }
+  };
+
+  const handleDelete = (e) => {
+    e.preventDefault();
+    if (hasPassword && password.length < 6) {
+      setErrorMsg('Please enter your current password (min 6 characters).');
+      return;
+    }
+    if (!hasPassword && !emailMatches) {
+      setErrorMsg('Type your account email exactly to confirm.');
+      return;
+    }
+    runDelete();
+  };
+
+  const handleGoogleCredential = (idToken, nonce) => {
+    if (!emailMatches) {
+      setErrorMsg('Type your account email exactly first, then confirm with Google.');
+      return;
+    }
+    runDelete({ googleIdToken: idToken, googleNonce: nonce });
+  };
+
+  const handleGoogleRedirect = async () => {
+    try {
+      // Leaves the page; after signing back in they have 10 minutes to delete
+      await signInWithGoogle();
+    } catch (err) {
+      setErrorMsg(err.message || 'Could not open Google sign-in.');
     }
   };
 
@@ -982,36 +1014,72 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
             <strong className="profile-modal-account-value">{targetEmail}</strong>
           </div>
 
-          <div className="profile-field-group">
-            <label className="profile-field-label" htmlFor="delete-confirm-password">
-              Current Password <span style={{ color: 'var(--urgency-red)' }}>*</span>
-            </label>
-            <div className="profile-password-input-wrap">
-              <input
-                id="delete-confirm-password"
-                type={showPassword ? 'text' : 'password'}
-                autoFocus
-                required
-                minLength={6}
-                className="profile-input profile-password-input"
-                placeholder="Enter your current password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button
-                type="button"
-                className="profile-password-toggle-btn"
-                onClick={() => setShowPassword((prev) => !prev)}
-                title={showPassword ? 'Hide password' : 'Show password'}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOffIcon size={15} /> : <EyeIcon size={15} />}
-              </button>
+          {hasPassword ? (
+            <div className="profile-field-group">
+              <label className="profile-field-label" htmlFor="delete-confirm-password">
+                Current Password <span style={{ color: 'var(--urgency-red)' }}>*</span>
+              </label>
+              <div className="profile-password-input-wrap">
+                <input
+                  id="delete-confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoFocus
+                  required
+                  minLength={6}
+                  className="profile-input profile-password-input"
+                  placeholder="Enter your current password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="profile-password-toggle-btn"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOffIcon size={15} /> : <EyeIcon size={15} />}
+                </button>
+              </div>
+              <span className="profile-field-help">
+                You must enter your current password to authorize permanent deletion.
+              </span>
             </div>
-            <span className="profile-field-help">
-              You must enter your current password to authorize permanent deletion.
-            </span>
-          </div>
+          ) : (
+            <div className="profile-field-group">
+              <label className="profile-field-label" htmlFor="delete-confirm-email">
+                Type your email to confirm <span style={{ color: 'var(--urgency-red)' }}>*</span>
+              </label>
+              <input
+                id="delete-confirm-email"
+                type="email"
+                autoFocus
+                autoComplete="off"
+                className="profile-input"
+                placeholder={targetEmail}
+                value={confirmEmail}
+                onChange={(e) => setConfirmEmail(e.target.value)}
+              />
+              {recent ? (
+                <span className="profile-field-help">
+                  You signed in with Google a moment ago, so you can delete now.
+                </span>
+              ) : (
+                <>
+                  <span className="profile-field-help">
+                    You signed in with Google, so confirm with Google to delete.
+                  </span>
+                  <div style={{ marginTop: '10px' }}>
+                    <GoogleSignInButton
+                      onCredential={handleGoogleCredential}
+                      onRedirectSignIn={handleGoogleRedirect}
+                      disabled={loading || !emailMatches}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="profile-modal-actions">
             <button
@@ -1022,13 +1090,15 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="profile-modal-danger-btn"
-              disabled={!password || password.length < 6 || loading}
-            >
-              {loading ? 'Verifying & deleting...' : 'Permanently Delete Account'}
-            </button>
+            {(hasPassword || recent) && (
+              <button
+                type="submit"
+                className="profile-modal-danger-btn"
+                disabled={!canSubmit || loading}
+              >
+                {loading ? 'Verifying & deleting...' : 'Permanently Delete Account'}
+              </button>
+            )}
           </div>
         </form>
       </div>

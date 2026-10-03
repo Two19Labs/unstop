@@ -6,79 +6,9 @@ import { SKILLS, SKILL_ALIASES, normalizeSkill, isMockPost, isMockApp } from '..
 import { normalizeYear, YEAR_OPTIONS } from '../src/data/colleges.js';
 import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN } from '../src/utils/eligibilityUtils.js';
 // Cooldown, Phone, WhatsApp, and Solo Competition logic tested directly
-export const PROFILE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-
-export function getProfileCooldown(profile, user) {
-  const lastUpdated =
-    profile?.profile_last_updated_at ||
-    user?.user_metadata?.profile_last_updated_at ||
-    (user?.id ? null : null);
-
-  if (!lastUpdated) {
-    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
-  }
-
-  const lastTime = new Date(lastUpdated).getTime();
-  if (isNaN(lastTime)) {
-    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
-  }
-
-  const now = Date.now();
-  const elapsed = now - lastTime;
-  if (elapsed >= PROFILE_COOLDOWN_MS) {
-    return { isLocked: false, remainingMs: 0, hours: 0, minutes: 0, seconds: 0, remainingFormatted: '' };
-  }
-
-  const remainingMs = PROFILE_COOLDOWN_MS - elapsed;
-  const hours = Math.floor(remainingMs / (1000 * 60 * 60));
-  const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
-  const remainingFormatted = `${hours}h ${minutes}m ${seconds}s`;
-
-  return {
-    isLocked: true,
-    remainingMs,
-    hours,
-    minutes,
-    seconds,
-    remainingFormatted,
-    unlockDate: new Date(lastTime + PROFILE_COOLDOWN_MS),
-  };
-}
-
-export function sanitizeIndianPhone(raw) {
-  if (!raw) return '';
-  let digits = String(raw).trim().replace(/\D/g, '');
-  if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2);
-  else if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1);
-  else if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(-10);
-  return digits.slice(0, 10);
-}
-
-export function formatWhatsAppUrl(phone, textMessage = '') {
-  const cleanPhone = sanitizeIndianPhone(phone);
-  if (!cleanPhone || cleanPhone.length !== 10) return '#';
-  return `https://wa.me/91${cleanPhone}${textMessage ? `?text=${encodeURIComponent(textMessage)}` : ''}`;
-}
-
-export function isSoloCompetition(comp) {
-  if (!comp) return false;
-  if (comp.isSolo === true) return true;
-  if (comp.maxTeam !== undefined && comp.maxTeam !== null && Number(comp.maxTeam) <= 1) return true;
-  if (comp.team && typeof comp.team === 'string') {
-    const t = comp.team.toLowerCase().trim();
-    if (t.includes('solo') || t.includes('individual') || t === '1' || t === '1 member' || t === '1 person') {
-      return true;
-    }
-  }
-  if (comp.teamSizeDisplay && typeof comp.teamSizeDisplay === 'string') {
-    const td = comp.teamSizeDisplay.toLowerCase().trim();
-    if (td.includes('solo') || td.includes('individual') || td === '1' || td === '1 member' || td === '1 person') {
-      return true;
-    }
-  }
-  return false;
-}
+import { PROFILE_COOLDOWN_MS, getProfileCooldown } from '../src/utils/profileCooldown.js';
+import { sanitizeIndianPhone, formatWhatsAppUrl } from '../src/utils/phoneUtils.js';
+import { isSoloCompetition } from '../src/utils/competitionUtils.js';
 
 let totalTests = 0;
 let passedTests = 0;

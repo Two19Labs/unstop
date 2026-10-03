@@ -692,7 +692,7 @@ function OneStopInner() {
     if (target === 'saved' || target === 'bookmarked') target = 'home';
     if (VALID_SCREENS.includes(target)) {
       if (target !== screen) {
-        const targetHash = target === 'home' ? window.location.pathname + window.location.search : `#${target}`;
+        const targetHash = target === 'home' ? '/' + window.location.search : `#${target}`;
         window.history.pushState({ screen: target }, '', targetHash);
       }
       setScreen(target);
