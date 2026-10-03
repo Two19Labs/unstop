@@ -586,6 +586,8 @@ GRANT EXECUTE ON FUNCTION public.cancel_chat_request(UUID) TO authenticated;
 -- ─────────────────────────────────────────────────────────────────────────────────
 ALTER TABLE public.squad_messages
   ADD COLUMN IF NOT EXISTS conversation_id UUID REFERENCES public.squad_conversations(id) ON DELETE CASCADE;
+-- Messages belong to a conversation now, not a join request
+ALTER TABLE public.squad_messages ALTER COLUMN application_id DROP NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_squad_messages_conversation ON public.squad_messages(conversation_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_squad_messages_sender_created ON public.squad_messages(sender_id, created_at DESC);
 
