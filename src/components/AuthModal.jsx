@@ -210,7 +210,7 @@ export default function AuthModal() {
       >
         {/* Left Column: Product Tour Self-Playing */}
         <div className="onestop-auth-tour-pane">
-          <WhatIsOneStopTour initialStep={6} />
+          <WhatIsOneStopTour />
         </div>
 
         {/* Right Column: Sign In / Create Account Form */}

@@ -1,5 +1,5 @@
 // src/components/WhatIsOneStopTour.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -15,23 +15,19 @@ import { TOUR_SLIDES } from '../data/tourSlides';
 import './WhatIsOneStopTour.css';
 
 
-export default function WhatIsOneStopTour({ initialStep = 6 }) {
+const SLIDE_DURATION_MS = 4800;
+
+export default function WhatIsOneStopTour({ initialStep = 0 }) {
   const [currentStep, setCurrentStep] = useState(initialStep);
-  const [isPaused, setIsPaused] = useState(false);
-  const timerRef = useRef(null);
 
-  // Auto-play the tour with infinite loop
+  // Auto-play in an infinite loop. Re-armed on every step change so each slide
+  // (including one picked via dots/arrows) gets its full duration.
   useEffect(() => {
-    if (isPaused) return;
-
-    timerRef.current = setInterval(() => {
+    const timer = setTimeout(() => {
       setCurrentStep((prev) => (prev + 1) % TOUR_SLIDES.length);
-    }, 4800);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isPaused]);
+    }, SLIDE_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [currentStep]);
 
   const handleNext = useCallback(() => {
     setCurrentStep((prev) => (prev + 1) % TOUR_SLIDES.length);
@@ -50,8 +46,6 @@ export default function WhatIsOneStopTour({ initialStep = 6 }) {
   return (
     <div
       className="onestop-tour-container"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
       aria-label="What is OneStop product tour"
     >
       {/* Top Header: Indicator + Label + Step Counter */}

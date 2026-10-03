@@ -156,7 +156,7 @@ export default function ProfileAuthGate({ initialMode = 'signup' }) {
       <div className="profile-auth-gate-card">
         {/* Left Column: Product Tour Self-Playing */}
         <div className="profile-auth-tour-pane">
-          <WhatIsOneStopTour initialStep={6} />
+          <WhatIsOneStopTour />
         </div>
 
         {/* Right Column: Sign In / Create Account Form */}
