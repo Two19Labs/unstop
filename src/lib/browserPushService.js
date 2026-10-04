@@ -221,8 +221,9 @@ export async function dispatchBrowserNotification({
 
         if (typeof onClick === 'function') {
           onClick();
-        } else if (url) {
-          window.open(url, '_blank');
+        } else if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
+          const w = window.open(url, '_blank', 'noopener,noreferrer');
+          if (w) w.opener = null;
         }
         notification.close();
       };

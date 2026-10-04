@@ -98,13 +98,17 @@ export default function SearchableCollegeSelect({
     }
   };
 
-  // WhatsApp redirect for requesting unlisted colleges (7007679485)
+  // Support request link for unlisted colleges (configured via VITE_SUPPORT_WHATSAPP or support email)
   const whatsAppUrl = useMemo(() => {
     const requested = query.trim();
+    const supportPhone = (import.meta.env?.VITE_SUPPORT_WHATSAPP || '').trim();
     const message = requested
       ? `Hi, I'd like to request adding my college "${requested}" to OneStop.`
       : `Hi, I'd like to request adding my college to OneStop.`;
-    return `https://wa.me/917007679485?text=${encodeURIComponent(message)}`;
+    if (supportPhone && /^[6-9]\d{9}$/.test(supportPhone)) {
+      return `https://wa.me/91${supportPhone}?text=${encodeURIComponent(message)}`;
+    }
+    return `mailto:support@two19labs.in?subject=${encodeURIComponent('College Addition Request')}&body=${encodeURIComponent(message)}`;
   }, [query]);
 
   return (

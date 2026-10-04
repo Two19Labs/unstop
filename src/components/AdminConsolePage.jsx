@@ -32,7 +32,7 @@ export default function AdminConsolePage({ onBack, user, profile }) {
               You do not have administrative privileges to access the OneStop Admin Console.
             </p>
             <div className="access-denied-sub">
-              Authorized Administrator: aditya.25015@sscbs.du.ac.in
+              If you believe you should have access, please contact platform administration.
             </div>
             <button className="btn-access-denied-back" onClick={onBack}>
               ← Return to OneStop Home
@@ -238,18 +238,27 @@ function AdminConsoleContent({ onBack, user, profile }) {
     });
   }, [students, searchQuery, filterCollege, filterStanding, filterStatus, onlineUserSet]);
 
-  // Export CSV Handler
+  // Export CSV Handler with Formula Injection Defense
   const handleExportCSV = () => {
+    const sanitizeCsvCell = (val) => {
+      let str = String(val ?? '');
+      // Defend against CSV/formula injection: prefix dangerous formula triggers with a single quote
+      if (/^[=+\-@\t\r]/.test(str)) {
+        str = `'${str}`;
+      }
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
     const headers = ['Serial No', 'Full Name', 'Email', 'College', 'Academic Standing', 'Phone', 'Skills', 'Created At'];
     const rows = filteredStudents.map((s, idx) => [
       idx + 1,
-      `"${(s.full_name || '').replace(/"/g, '""')}"`,
-      `"${(s.email || '').replace(/"/g, '""')}"`,
-      `"${(s.college || 'Pending Setup').replace(/"/g, '""')}"`,
-      `"${(s.year || 'Not Set').replace(/"/g, '""')}"`,
-      `"${s.phone || ''}"`,
-      `"${Array.isArray(s.skills) ? s.skills.join(', ') : ''}"`,
-      `"${s.created_at || ''}"`
+      sanitizeCsvCell(s.full_name || ''),
+      sanitizeCsvCell(s.email || ''),
+      sanitizeCsvCell(s.college || 'Pending Setup'),
+      sanitizeCsvCell(s.year || 'Not Set'),
+      sanitizeCsvCell(s.phone || ''),
+      sanitizeCsvCell(Array.isArray(s.skills) ? s.skills.join(', ') : ''),
+      sanitizeCsvCell(s.created_at || '')
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

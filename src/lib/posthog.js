@@ -33,10 +33,10 @@ export function initPostHog() {
       capture_pageleave: true,
       disable_session_recording: false,
       session_recording: {
-        maskAllInputs: false,
+        maskAllInputs: true,
         maskInputOptions: {
           password: true,
-          tel: true, // Mask phone inputs for user privacy
+          tel: true,
         },
       },
       persistence: 'localStorage+cookie',
@@ -49,7 +49,7 @@ export function initPostHog() {
           );
         }
       },
-      enable_recording_console_log: true,
+      enable_recording_console_log: false,
     });
     isInitialized = true;
   } catch (err) {

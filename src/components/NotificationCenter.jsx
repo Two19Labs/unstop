@@ -209,8 +209,9 @@ export default function NotificationCenter({
 
     if (action.actionType === 'portal') {
       const url = action.url || notif.data?.url || notif.data?.publicUrl || notif.data?.competition?.unstopUrl;
-      if (url) {
-        window.open(url, '_blank');
+      if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
+        const w = window.open(url, '_blank', 'noopener,noreferrer');
+        if (w) w.opener = null;
       }
     } else if (action.actionType === 'whatsapp') {
       const payload = notif.data?.application || notif.data?.post || notif.data;

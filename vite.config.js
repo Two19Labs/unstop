@@ -53,14 +53,19 @@ function devApiPlugin() {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), devApiPlugin()],
+  esbuild: {
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+    legalComments: 'none',
+  },
   server: {
     port: 5173,
-    host: true,
+    host: 'localhost',
     open: false,
   },
   build: {
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -80,4 +85,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

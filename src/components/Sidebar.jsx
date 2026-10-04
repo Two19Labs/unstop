@@ -247,7 +247,7 @@ export default function Sidebar({
             </button>
           )}
 
-          {/* Admin Console (Strictly for aditya.25015@sscbs.du.ac.in, located above profile tag) */}
+          {/* Admin Console (Accessible to authorized administrators) */}
           {user && isAdmin && (
             <button
               onClick={() => handleNav('admin')}

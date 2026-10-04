@@ -18,8 +18,9 @@ export async function fetchRoundsForSingleCompetition(compId) {
   // Handle Institutional / Campus Direct Competitions (from Supabase)
   if (String(compId).startsWith('inst_')) {
     try {
-      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://ncnkzlugelkhafjtupbf.supabase.co';
-      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbmt6bHVnZWxraGFmanR1cGJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzOTcxNDYsImV4cCI6MjEwNDk3MzE0Nn0.DERn_Nf62VX0ScFXF9Jyokm9cLJZsdr_RcttHsoi8lU';
+      const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+      const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseKey) return null;
       const sRes = await fetch(`${supabaseUrl}/rest/v1/institutional_competitions?id=eq.${encodeURIComponent(compId)}&select=*`, {
         headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` },
         signal: AbortSignal.timeout(5000)
