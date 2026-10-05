@@ -324,7 +324,7 @@ function ProfileScreenContent({
   const isPhoneMissing = !phone.trim();
 
   return (
-    <div className="profile-screen-container">
+    <div className="profile-screen-container ph-no-capture">
       {/* 1. Header */}
       <header className="profile-header">
         <div className="profile-header-titles">
@@ -780,7 +780,7 @@ function ChangePasswordModal({ user, onClose, onResetPassword, flashToast }) {
   };
 
   return (
-    <div className="profile-modal-overlay" onClick={onClose}>
+    <div className="profile-modal-overlay ph-no-capture" onClick={onClose}>
       <div
         className="profile-modal-dialog"
         role="dialog"
@@ -972,7 +972,7 @@ function DeleteAccountModal({ user, onClose, onDeleteAccount, flashToast }) {
   };
 
   return (
-    <div className="profile-modal-overlay" onClick={onClose}>
+    <div className="profile-modal-overlay ph-no-capture" onClick={onClose}>
       <div
         className="profile-modal-dialog danger"
         role="dialog"

@@ -8,6 +8,7 @@ import {
   useLiveSecondTicker,
   compareCompetitionDeadlines
 } from '../utils/roundDeadlineUtils';
+import { safeExternalUrl } from '../lib/safeUrl';
 import './CompetitionRoundsTracker.css';
 
 // SVG Icons
@@ -293,7 +294,7 @@ export default function CompetitionRoundsTracker({
                   </span>
 
                   <a
-                    href={comp.unstopUrl || 'https://unstop.com'}
+                    href={safeExternalUrl(comp.unstopUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounds-btn-apply"
@@ -426,7 +427,7 @@ export default function CompetitionRoundsTracker({
                         </button>
                         {selectedRound.publicUrl && (
                           <a
-                            href={selectedRound.publicUrl}
+                            href={safeExternalUrl(selectedRound.publicUrl)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="rounds-btn-primary"

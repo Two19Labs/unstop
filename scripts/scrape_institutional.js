@@ -52,6 +52,18 @@ function loadLocalEnv() {
 
 loadLocalEnv();
 
+// AI-extracted links are untrusted (a scraped page can steer the model):
+// only http(s) URLs are stored, everything else falls back
+function httpUrlOr(value, fallback) {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
@@ -899,10 +911,10 @@ async function saveToSupabase(competitions, sourceMeta) {
               ? 'inside_campus'
               : (sourceMeta.circuit === 'devpost' ? 'devpost' : 'campus_direct'))),
         source_label: c.customSourceLabel || sourceMeta.sourceLabel || `${sourceMeta.institution.split('(')[0].trim()} Direct`,
-        apply_url: c.apply_url || sourceMeta.url,
+        apply_url: httpUrlOr(c.apply_url, sourceMeta.url),
         website_url: sourceMeta.url,
         banner_url: null,
-        logo_url: c.logo_url || sourceMeta.defaultLogo,
+        logo_url: httpUrlOr(c.logo_url, sourceMeta.defaultLogo),
         prizes: c.prizes || 'Cash Prizes & Certificates',
         fee: c.fee || 'Free',
         mode: c.mode || 'Online',

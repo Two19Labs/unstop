@@ -9,6 +9,17 @@ const HEADERS = {
   'Accept': 'application/json, text/plain, */*',
 };
 
+// Scraped links are untrusted: only pass http(s) URLs through to the browser
+function httpUrlOr(value, fallback = '#') {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
 export async function fetchRoundsForSingleCompetition(compId) {
   const cached = roundsCache.get(String(compId));
   if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
@@ -47,7 +58,7 @@ export async function fetchRoundsForSingleCompetition(compId) {
               duration: null,
               totalQuestions: null,
               displayText: regIsClosed ? 'Closed' : 'Open',
-              publicUrl: item.apply_url || item.website_url || '#'
+              publicUrl: httpUrlOr(item.apply_url || item.website_url)
             },
             {
               order: 1,
@@ -63,7 +74,7 @@ export async function fetchRoundsForSingleCompetition(compId) {
               duration: null,
               totalQuestions: null,
               displayText: item.location || 'Online',
-              publicUrl: item.apply_url || item.website_url || '#'
+              publicUrl: httpUrlOr(item.apply_url || item.website_url)
             }
           ];
           const result = {
@@ -71,11 +82,11 @@ export async function fetchRoundsForSingleCompetition(compId) {
             title: item.title,
             host: item.host_institution || item.organizer || 'Campus Direct',
             orgName: item.host_institution || item.organizer || 'Campus Direct',
-            logo: item.logo_url || null,
-            orgLogo: item.logo_url || null,
+            logo: httpUrlOr(item.logo_url, null),
+            orgLogo: httpUrlOr(item.logo_url, null),
             deadline: item.deadline,
             sourcePlatform: item.source_platform || 'campus_direct',
-            unstopUrl: item.apply_url || item.website_url || '#',
+            unstopUrl: httpUrlOr(item.apply_url || item.website_url),
             rounds
           };
           roundsCache.set(String(compId), { timestamp: Date.now(), data: result });
@@ -310,7 +321,7 @@ export async function fetchRoundsForMultipleCompetitions(compIds = []) {
             results[id] = data;
           } catch (err) {
             console.warn(`[api/rounds] Could not load rounds for ${id}:`, err.message);
-            results[id] = { id, error: err.message, rounds: [] };
+            results[id] = { id, error: 'Could not load rounds', rounds: [] };
           }
         })
       );
@@ -362,7 +373,7 @@ export default async function handler(req, res) {
     console.error('[api/rounds] Handler error:', err);
     return res.status(500).json({
       success: false,
-      error: err.message || 'Internal server error while fetching competition rounds'
+      error: 'Internal server error while fetching competition rounds'
     });
   }
 }

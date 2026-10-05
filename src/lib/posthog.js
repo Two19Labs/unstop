@@ -6,6 +6,29 @@ const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.
 
 let isInitialized = false;
 
+const URL_PROPERTIES = ['$current_url', '$referrer', '$initial_current_url', '$initial_referrer'];
+
+function stripUrlSecrets(value) {
+  if (typeof value !== 'string') return value;
+  try {
+    const url = new URL(value, window.location.origin);
+    return `${url.origin}${url.pathname}`;
+  } catch (e) {
+    return value.split(/[?#]/)[0];
+  }
+}
+
+function scrubUrlTokens(event) {
+  if (!event) return event;
+  [event.properties, event.properties?.$set, event.properties?.$set_once].forEach((props) => {
+    if (!props) return;
+    URL_PROPERTIES.forEach((key) => {
+      if (key in props) props[key] = stripUrlSecrets(props[key]);
+    });
+  });
+  return event;
+}
+
 /**
  * Initializes the PostHog SDK client.
  * If VITE_POSTHOG_KEY is not configured or is a placeholder,
@@ -40,6 +63,8 @@ export function initPostHog() {
         },
       },
       persistence: 'localStorage+cookie',
+      // Auth links carry one-time tokens in the URL hash/query: never send them
+      before_send: scrubUrlTokens,
       loaded: (ph) => {
         if (import.meta.env.DEV) {
           console.info(
@@ -108,7 +133,7 @@ export function trackScreenView(screenName, properties = {}) {
 /**
  * Identify an authenticated user and register super properties.
  * @param {string} userId - Supabase UUID
- * @param {Record<string, any>} [traits] - { email, full_name, college, year, education_level }
+ * @param {Record<string, any>} [traits] - non-identifying traits only (never email or phone)
  */
 export function identifyUser(userId, traits = {}) {
   try {

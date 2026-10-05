@@ -456,7 +456,7 @@ export default function CompetitionChatModal({
   const seen = Boolean(myLastMsg && otherLastReadAt && new Date(otherLastReadAt) >= new Date(myLastMsg.created_at));
 
   return (
-    <div className="comp-chat-backdrop" onClick={onClose}>
+    <div className="comp-chat-backdrop ph-no-capture" onClick={onClose}>
       <div
         className="comp-chat-dialog"
         onClick={(e) => {

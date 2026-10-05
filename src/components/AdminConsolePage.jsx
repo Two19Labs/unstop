@@ -287,7 +287,7 @@ function AdminConsoleContent({ onBack, user, profile }) {
   }, [fetchData]);
 
   return (
-    <div className="admin-console-container">
+    <div className="admin-console-container ph-no-capture">
       {/* ── Top Header ── */}
       <header className="admin-console-header">
         <div className="header-left-admin">

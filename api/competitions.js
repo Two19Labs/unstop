@@ -583,9 +583,9 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
           title: r.title,
           orgName: r.host_institution || r.organizer || 'Host Institution',
           host: r.host_institution || r.organizer || 'Host Institution',
-          bannerUrl: r.banner_url || null,
-          logo: r.logo_url || null,
-          orgLogo: r.logo_url || null,
+          bannerUrl: httpUrlOr(r.banner_url, null),
+          logo: httpUrlOr(r.logo_url, null),
+          orgLogo: httpUrlOr(r.logo_url, null),
           deadline: r.deadline,
           startDate: r.start_date || null,
           daysRemainingNum: r.deadline ? Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
@@ -601,8 +601,8 @@ async function fetchInstitutionalCompetitionsFromSupabase() {
           subTracks: Array.isArray(r.sub_tracks) ? r.sub_tracks : (r.sub_tracks ? [r.sub_tracks] : ['General']),
           sourcePlatform: r.source_platform || 'campus_direct',
           sourceLabel: r.source_label || (r.host_institution ? `${r.host_institution} Direct` : 'Campus Direct'),
-          unstopUrl: r.apply_url || r.website_url || '#',
-          sourceUrl: r.apply_url || r.website_url || '#',
+          unstopUrl: httpUrlOr(r.apply_url || r.website_url),
+          sourceUrl: httpUrlOr(r.apply_url || r.website_url),
           registeredCount: r.registered_count || 0,
           viewsCount: r.views_count || 0,
           description: r.raw_scraped_text || r.description || r.title,
@@ -896,6 +896,17 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
   return formatted;
 }
 
+// Scraped links are untrusted: only pass http(s) URLs through to the browser
+function httpUrlOr(value, fallback = '#') {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
 export default async function handler(req, res) {
   // The app never sends a query string; one-off ones would bypass the edge cache
   // and make cold instances re-fetch everything from Unstop
@@ -951,7 +962,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to fetch competitions from Unstop',
+      error: 'Failed to fetch competitions',
     });
   }
 }

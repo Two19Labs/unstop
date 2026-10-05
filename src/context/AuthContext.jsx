@@ -211,7 +211,6 @@ export function AuthProvider({ children }) {
         setProfile(resolvedProfile);
         setPersonProperties({
           name: resolvedProfile.full_name,
-          email: resolvedProfile.email || activeUser?.email,
           college: resolvedProfile.college,
           year: resolvedProfile.year,
           education_level: resolvedProfile.education_level,
@@ -450,7 +449,7 @@ export function AuthProvider({ children }) {
       setUser(currentUser);
       userRef.current = currentUser;
       if (currentUser) {
-        identifyUser(currentUser.id, { email: currentUser.email });
+        identifyUser(currentUser.id);
         fetchUserProfile(currentUser.id, currentUser);
         fetchUserBookmarks(currentUser.id);
         fetchNotificationStates(currentUser.id);
@@ -493,7 +492,7 @@ export function AuthProvider({ children }) {
         }
 
         if (currentUser) {
-          identifyUser(currentUser.id, { email: currentUser.email });
+          identifyUser(currentUser.id);
           await fetchUserProfile(currentUser.id, currentUser);
           await fetchUserBookmarks(currentUser.id);
           await fetchNotificationStates(currentUser.id);
@@ -769,7 +768,7 @@ export function AuthProvider({ children }) {
   // Auth Operations
   const signInWithGoogle = async () => {
     if (!supabase) {
-      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+      throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
     trackEvent('auth_google_initiated');
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -789,7 +788,7 @@ export function AuthProvider({ children }) {
   // button for a Supabase session (keeps the Google popup on our domain).
   const signInWithGoogleIdToken = async (idToken, nonce) => {
     if (!supabase) {
-      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+      throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
     trackEvent('auth_google_initiated', { method: 'id_token' });
     const { data, error } = await supabase.auth.signInWithIdToken({
@@ -807,7 +806,7 @@ export function AuthProvider({ children }) {
 
   const signInWithPassword = async ({ email, password }) => {
     if (!supabase) {
-      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+      throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
     trackEvent('auth_sign_in_attempted', { method: 'password' });
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -824,7 +823,7 @@ export function AuthProvider({ children }) {
 
   const signUpWithPassword = async ({ email, password, fullName, college, phone }) => {
     if (!supabase) {
-      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+      throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
     const cleanPhone = sanitizeIndianPhone(phone);
     const phoneError = phoneValidationError(cleanPhone);
@@ -878,7 +877,7 @@ export function AuthProvider({ children }) {
 
   const resetPassword = async (email) => {
     if (!supabase) {
-      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+      throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes('@')) {
@@ -898,7 +897,7 @@ export function AuthProvider({ children }) {
 
   const changePassword = async (newPassword) => {
     if (!supabase) {
-      throw new Error('Supabase credentials missing.');
+      throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
     if (!newPassword || newPassword.length < 6) {
       throw new Error('Password must be at least 6 characters.');
@@ -921,7 +920,7 @@ export function AuthProvider({ children }) {
 
   const resendVerificationEmail = async (email) => {
     if (!supabase) {
-      throw new Error('Supabase credentials missing. Check your .env file or SUPABASE_SETUP.md.');
+      throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
     const cleanEmail = (email || '').trim();
     if (!cleanEmail) {

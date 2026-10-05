@@ -11,6 +11,7 @@ import {
   getActiveOrNextRound,
   useLiveSecondTicker
 } from '../utils/roundDeadlineUtils';
+import { safeExternalUrl } from '../lib/safeUrl';
 import './BookmarkRoundTrackerCard.css';
 
 const ExternalLinkIcon = ({ size = 13, color = 'currentColor' }) => (
@@ -52,7 +53,7 @@ export default function BookmarkRoundTrackerCard({
   const compTitle = competition.title || 'Competition';
   const hostName = competition.host || competition.orgName || 'Host Institution';
   const logo = competition.logo || competition.orgLogo;
-  const portalUrl = currentRound?.publicUrl || competition.unstopUrl || 'https://unstop.com';
+  const portalUrl = safeExternalUrl(currentRound?.publicUrl || competition.unstopUrl);
 
   // Fallback if no rounds data yet
   if (!currentRound) {

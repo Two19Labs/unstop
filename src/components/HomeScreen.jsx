@@ -18,6 +18,7 @@ import BookmarkRoundTrackerCard from './BookmarkRoundTrackerCard';
 import { compareCompetitionDeadlines } from '../utils/roundDeadlineUtils';
 import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 import { useAuth } from '../context/AuthContext';
+import { safeExternalUrl } from '../lib/safeUrl';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
 
@@ -1243,7 +1244,7 @@ export default function HomeScreen({
                   {/* Actions */}
                   <div className={`home-compact-actions ${isSolo ? 'home-compact-actions--solo' : ''}`}>
                     <a
-                      href={b.unstopUrl || 'https://unstop.com'}
+                      href={safeExternalUrl(b.unstopUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="home-compact-btn-apply"
@@ -1563,7 +1564,7 @@ export default function HomeScreen({
                   {/* Action Buttons */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
                     <a
-                      href={c.unstopUrl || 'https://unstop.com'}
+                      href={safeExternalUrl(c.unstopUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}

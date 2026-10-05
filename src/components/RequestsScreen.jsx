@@ -389,7 +389,7 @@ export default function RequestsScreen({
   };
 
   return (
-    <div className="requests-screen-container">
+    <div className="requests-screen-container ph-no-capture">
       <div className="requests-desktop-header">
         <h1 className="requests-header-title">Inbox</h1>
         <p className="requests-header-sub">

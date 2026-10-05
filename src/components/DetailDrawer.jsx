@@ -6,6 +6,7 @@ import { BookmarkIcon } from './icons';
 import { trackEvent } from '../lib/posthog';
 import { useAuth } from '../context/AuthContext';
 import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
+import { safeExternalUrl } from '../lib/safeUrl';
 import './DetailDrawer.css';
 
 export default function DetailDrawer({
@@ -147,7 +148,7 @@ export default function DetailDrawer({
         <div className="detail-drawer-footer">
           {/* Full-width 48px Apply Primary Action */}
           <a
-            href={item.unstopUrl || 'https://unstop.com'}
+            href={safeExternalUrl(item.unstopUrl)}
             target="_blank"
             rel="noopener noreferrer"
             className="detail-drawer-apply-btn"

@@ -6,6 +6,7 @@ import CompetitionRoundsTracker from './CompetitionRoundsTracker';
 import { BROWSE_PUNS } from './FunLoadingScreen';
 import Footer from './Footer';
 import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
+import { safeExternalUrl } from '../lib/safeUrl';
 const trackCaseCompsEvent = () => {};
 
 const FILTER_PREFS_KEY = 'onestop_user_filter_prefs';
@@ -1932,7 +1933,7 @@ export default function CompetitionsPage({
                   {/* Action Buttons */}
                   <div className="cc-card-actions">
                     <a
-                      href={comp.unstopUrl}
+                      href={safeExternalUrl(comp.unstopUrl)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="cc-action-btn cc-btn-apply"
