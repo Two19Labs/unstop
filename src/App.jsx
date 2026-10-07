@@ -40,6 +40,8 @@ const TeamFinderScreen = lazy(() => import('./components/TeamFinderScreen'));
 const RequestsScreen = lazy(() => import('./components/RequestsScreen'));
 const ProfileScreen = lazy(() => import('./components/ProfileScreen'));
 const WalkthroughModal = lazy(() => import('./components/WalkthroughModal'));
+const AboutScreen = lazy(() => import('./components/AboutScreen'));
+const ContactScreen = lazy(() => import('./components/ContactScreen'));
 
 const EMPTY_PROFILE = {
   name: '',
@@ -60,7 +62,7 @@ const DEFAULT_FILTERS = {
   sort: 'deadline'
 };
 
-const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile', 'admin'];
+const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile', 'admin', 'about', 'contact'];
 
 function getInitialScreen() {
   try {
@@ -1369,9 +1371,21 @@ function OneStopInner() {
                 />
               </Suspense>
             )}
+
+            {screen === 'about' && (
+              <Suspense fallback={null}>
+                <AboutScreen onNavigate={handleNavigate} />
+              </Suspense>
+            )}
+
+            {screen === 'contact' && (
+              <Suspense fallback={null}>
+                <ContactScreen onNavigate={handleNavigate} showToast={flash} />
+              </Suspense>
+            )}
           </div>
 
-          <Footer />
+          <Footer onNavigate={handleNavigate} />
         </main>
       )}
 

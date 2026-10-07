@@ -8,6 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node scripts/e2e_team_finder_test.js && node scripts/deep_e2e_diagnostic_test.js && node scripts/platform_and_security_deep_diagnostic.js",
+    "test:live": "node scripts/deep_live_diagnostic.js",
+    "test:server": "node scripts/e2e_server_diagnostic.js",
     "scan:institutional": "node scripts/scrape_institutional.js"
   },
   "dependencies": {

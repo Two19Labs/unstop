@@ -2,7 +2,15 @@
 import React from 'react';
 import './Footer.css';
 
-export default function Footer() {
+export default function Footer({ onNavigate = () => {} }) {
+  const handleNav = (screenId) => {
+    if (typeof onNavigate === 'function') {
+      onNavigate(screenId);
+    } else {
+      window.location.hash = `#${screenId}`;
+    }
+  };
+
   return (
     <footer className="onestop-site-footer">
       <p className="onestop-footer-text">
@@ -28,14 +36,31 @@ export default function Footer() {
         </a>
         <span className="onestop-footer-dot"> · </span>
         <span>From the House of </span>
-        <a
-          href="https://two19labs.in"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="onestop-footer-link"
+        <button
+          type="button"
+          onClick={() => handleNav('about')}
+          className="onestop-footer-link onestop-footer-btn"
+          style={{ fontWeight: 700 }}
+          title="About Two19 Labs"
         >
-          Two19 Labs
-        </a>
+          Two19 Labs<span style={{ color: 'var(--primary)' }}>.</span>
+        </button>
+        <span className="onestop-footer-dot"> · </span>
+        <button
+          type="button"
+          onClick={() => handleNav('about')}
+          className="onestop-footer-link onestop-footer-btn"
+        >
+          About
+        </button>
+        <span className="onestop-footer-dot"> · </span>
+        <button
+          type="button"
+          onClick={() => handleNav('contact')}
+          className="onestop-footer-link onestop-footer-btn"
+        >
+          Contact Us
+        </button>
         <span className="onestop-footer-dot"> · </span>
         <a href="/privacy" className="onestop-footer-link">Privacy</a>
         <span className="onestop-footer-dot"> · </span>

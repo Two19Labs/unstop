@@ -247,6 +247,95 @@ export default function Sidebar({
             </button>
           )}
 
+          {/* About Two19 Labs Button */}
+          <button
+            type="button"
+            onClick={() => handleNav('about')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              width: '100%',
+              textAlign: 'left',
+              border: screen === 'about' ? '1px solid var(--primary)' : '1px solid var(--line)',
+              borderRadius: '9px',
+              background: screen === 'about' ? 'var(--primary-tint-8)' : 'var(--surface-sunken)',
+              padding: '8px 12px',
+              cursor: 'pointer',
+              color: screen === 'about' ? 'var(--primary)' : 'var(--ink-secondary)',
+              fontSize: '13px',
+              fontWeight: screen === 'about' ? 700 : 500,
+              transition: 'all 120ms ease'
+            }}
+            onMouseEnter={(e) => {
+              if (screen !== 'about') {
+                e.currentTarget.style.background = 'var(--surface-muted)';
+                e.currentTarget.style.color = 'var(--ink)';
+                e.currentTarget.style.borderColor = 'var(--card-hover-border)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (screen !== 'about') {
+                e.currentTarget.style.background = 'var(--surface-sunken)';
+                e.currentTarget.style.color = 'var(--ink-secondary)';
+                e.currentTarget.style.borderColor = 'var(--line)';
+              }
+            }}
+            aria-label="About Two19 Labs"
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>About Two19 Labs</span>
+              <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--primary)' }} />
+            </span>
+            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--primary)', letterSpacing: '0.04em' }}>
+              STUDIO
+            </span>
+          </button>
+
+          {/* Contact Us Button */}
+          <button
+            type="button"
+            onClick={() => handleNav('contact')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              width: '100%',
+              textAlign: 'left',
+              border: screen === 'contact' ? '1px solid var(--primary)' : '1px solid var(--line)',
+              borderRadius: '9px',
+              background: screen === 'contact' ? 'var(--primary-tint-8)' : 'var(--surface-sunken)',
+              padding: '8px 12px',
+              cursor: 'pointer',
+              color: screen === 'contact' ? 'var(--primary)' : 'var(--ink-secondary)',
+              fontSize: '13px',
+              fontWeight: screen === 'contact' ? 700 : 500,
+              transition: 'all 120ms ease'
+            }}
+            onMouseEnter={(e) => {
+              if (screen !== 'contact') {
+                e.currentTarget.style.background = 'var(--surface-muted)';
+                e.currentTarget.style.color = 'var(--ink)';
+                e.currentTarget.style.borderColor = 'var(--card-hover-border)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (screen !== 'contact') {
+                e.currentTarget.style.background = 'var(--surface-sunken)';
+                e.currentTarget.style.color = 'var(--ink-secondary)';
+                e.currentTarget.style.borderColor = 'var(--line)';
+              }
+            }}
+            aria-label="Contact Us"
+          >
+            <span>Contact Us</span>
+            <span style={{ fontSize: '11px', color: '#16A34A', fontWeight: 700 }}>
+              WhatsApp ↗
+            </span>
+          </button>
+
           {/* Admin Console (Accessible to authorized administrators) */}
           {user && isAdmin && (
             <button
