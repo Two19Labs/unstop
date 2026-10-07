@@ -1380,7 +1380,7 @@ function OneStopInner() {
 
             {screen === 'contact' && (
               <Suspense fallback={null}>
-                <ContactScreen onNavigate={handleNavigate} showToast={flash} />
+                <ContactScreen profileName={profile.name} />
               </Suspense>
             )}
           </div>

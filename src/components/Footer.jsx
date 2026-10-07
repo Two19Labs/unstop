@@ -3,13 +3,7 @@ import React from 'react';
 import './Footer.css';
 
 export default function Footer({ onNavigate = () => {} }) {
-  const handleNav = (screenId) => {
-    if (typeof onNavigate === 'function') {
-      onNavigate(screenId);
-    } else {
-      window.location.hash = `#${screenId}`;
-    }
-  };
+  const handleNav = (screenId) => onNavigate(screenId);
 
   return (
     <footer className="onestop-site-footer">
@@ -36,15 +30,14 @@ export default function Footer({ onNavigate = () => {} }) {
         </a>
         <span className="onestop-footer-dot"> · </span>
         <span>From the House of </span>
-        <button
-          type="button"
-          onClick={() => handleNav('about')}
-          className="onestop-footer-link onestop-footer-btn"
-          style={{ fontWeight: 700 }}
-          title="About Two19 Labs"
+        <a
+          href="https://two19labs.in"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="onestop-footer-link"
         >
-          Two19 Labs<span style={{ color: 'var(--primary)' }}>.</span>
-        </button>
+          Two19 Labs
+        </a>
         <span className="onestop-footer-dot"> · </span>
         <button
           type="button"
@@ -59,7 +52,7 @@ export default function Footer({ onNavigate = () => {} }) {
           onClick={() => handleNav('contact')}
           className="onestop-footer-link onestop-footer-btn"
         >
-          Contact Us
+          Contact &amp; support
         </button>
         <span className="onestop-footer-dot"> · </span>
         <a href="/privacy" className="onestop-footer-link">Privacy</a>
