@@ -55,26 +55,32 @@ export default function ContactScreen({ profileName = '' }) {
   };
 
   return (
-    <div className="info-page">
-      <header className="info-hero">
-        <span className="info-label">Contact &amp; support</span>
-        <h1 className="info-title">
-          Something broken? Just want to say hi<span className="info-dot">?</span>
+    <div className="t19-page t19-contact">
+      <header className="t19-panel t19-halftone t19-hero t19-contact-intro">
+        <div className="t19-hero-top t19-label">
+          <span>Contact &amp; support</span>
+        </div>
+        <h1 className="t19-display t19-hero-title">
+          Something broken? Just want to say hi<span className="t19-dot">?</span>
         </h1>
-        <p className="info-sub">
-          Write your message below and hit send. It opens WhatsApp with your message ready to go, straight to us.
+        <p className="t19-hero-sub">
+          Write your message and hit send. It opens WhatsApp with your message ready to go, straight to us.
         </p>
+        <div className="t19-contact-alt">
+          <span className="t19-label">Prefer email?</span>
+          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
+        </div>
       </header>
 
-      <form className="contact-card" onSubmit={handleSubmit}>
-        <fieldset className="contact-field">
-          <legend className="contact-field-label">What's this about?</legend>
-          <div className="contact-chips">
+      <form className="t19-panel t19-form" onSubmit={handleSubmit}>
+        <fieldset className="t19-field t19-field--full">
+          <legend className="t19-label t19-field-label">01 · What's this about?</legend>
+          <div className="t19-chips">
             {TOPICS.map((t) => (
               <button
                 key={t.id}
                 type="button"
-                className={`contact-chip${t.id === topicId ? ' is-active' : ''}`}
+                className={`t19-chip${t.id === topicId ? ' is-active' : ''}`}
                 aria-pressed={t.id === topicId}
                 onClick={() => setTopicId(t.id)}
               >
@@ -84,11 +90,11 @@ export default function ContactScreen({ profileName = '' }) {
           </div>
         </fieldset>
 
-        <label className="contact-field">
-          <span className="contact-field-label">Your name <span className="contact-optional">(optional)</span></span>
+        <label className="t19-field t19-field--full">
+          <span className="t19-label t19-field-label">02 · Your name <span className="t19-optional">(optional)</span></span>
           <input
             type="text"
-            className="contact-input"
+            className="t19-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
@@ -96,26 +102,25 @@ export default function ContactScreen({ profileName = '' }) {
           />
         </label>
 
-        <label className="contact-field">
-          <span className="contact-field-label">Message</span>
+        <label className="t19-field t19-field--full">
+          <span className="t19-label t19-field-label">03 · Message</span>
           <textarea
-            className="contact-input contact-textarea"
+            className="t19-input t19-textarea"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={topic.placeholder}
-            rows={6}
+            rows={7}
             maxLength={2000}
           />
         </label>
 
-        <button type="submit" className="contact-send" disabled={!canSend}>
-          Send on WhatsApp
-        </button>
+        <div className="t19-form-actions">
+          <button type="submit" className="t19-btn t19-btn--dark t19-btn--lg" disabled={!canSend}>
+            Send on WhatsApp
+          </button>
+          <span className="t19-hint">Opens WhatsApp. Nothing is sent until you hit send there.</span>
+        </div>
       </form>
-
-      <p className="contact-alt">
-        Prefer email? <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-      </p>
     </div>
   );
 }
