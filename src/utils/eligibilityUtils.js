@@ -6,6 +6,15 @@ export const MBA_EXCLUSION_PATTERN = /\b(mba\s+only|pgdm\s+only|postgraduate\s+o
 
 export const UG_AFFIRMATIVE_PATTERN = /\b(undergraduate|undergrad|undergraduates|ug\s+only|only\s+for\s+ug|ug\s+students|all\s+collegiate|all\s+college\s+students|open\s+to\s+all\s+students|all\s+students\s+eligible|b\.tech|bba|b\.com|bcom|bachelor|bachelors|b\.sc|bsc|b\.a\b|engineering\s+students)\b/i;
 
+// A "(PG)" / "PG Track" / "PGDM" marker in the title means the listing is the postgraduate edition
+export const PG_TITLE_PATTERN = /(\(\s*pg\s*\)|\bpg\s+track\b|\bpgdm\b)/i;
+export const UG_TITLE_PATTERN = /(\(\s*ug\s*\)|\bug\s+track\b|\bundergrad)/i;
+
+export function isPgOnlyByTitle(title) {
+  const t = String(title || '');
+  return PG_TITLE_PATTERN.test(t) && !UG_TITLE_PATTERN.test(t);
+}
+
 /**
  * Returns true if a competition is legitimately eligible for undergraduate students.
  * Returns false if it is exclusively for Postgraduate / MBA / B-School students.
@@ -17,6 +26,7 @@ export function isEligibleForUndergrad(comp) {
   if (comp.isUndergradEligible === false) return false;
   if (comp.isPGOnly === true) return false;
   if (comp.targetLevel === 'pg') return false;
+  if (isPgOnlyByTitle(comp.title)) return false;
 
   // 2. Platform check: InsideKampus & InsideIIM are dedicated MBA/B-School platforms
   const platform = (comp.sourcePlatform || comp.source_platform || '').toLowerCase();

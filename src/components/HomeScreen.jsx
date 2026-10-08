@@ -19,94 +19,14 @@ import { compareCompetitionDeadlines } from '../utils/roundDeadlineUtils';
 import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 import { useAuth } from '../context/AuthContext';
 import { safeExternalUrl } from '../lib/safeUrl';
+import { matchesFilters, sortCompetitions, loadPrefs, isFreeComp } from '../utils/competitionFilters';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
 
 const CARDS_PER_RAIL = 3;
 
-function parsePrizeAmount(prizesStr) {
-  if (!prizesStr) return 0;
-  const str = String(prizesStr).toLowerCase().replace(/,/g, '');
-  if (str.includes('$')) {
-    const m = str.match(/\$\s*([\d.]+)/);
-    if (m) return parseFloat(m[1]) * 85;
-  }
-  if (str.includes('lakh')) {
-    const m = str.match(/([\d.]+)\s*lakh/);
-    if (m) return parseFloat(m[1]) * 100000;
-  }
-  if (str.includes('crore')) {
-    const m = str.match(/([\d.]+)\s*crore/);
-    if (m) return parseFloat(m[1]) * 10000000;
-  }
-  const match = str.match(/\d+/);
-  return match ? parseInt(match[0], 10) : 0;
-}
-
-function getDeadlineTimestamp(comp) {
-  if (!comp) return Infinity;
-  if (comp.deadline) {
-    const t = new Date(comp.deadline).getTime();
-    if (!isNaN(t)) return t;
-  }
-  if (comp.days !== undefined && comp.days !== null) {
-    return Date.now() + Number(comp.days) * 24 * 60 * 60 * 1000;
-  }
-  return Infinity;
-}
-
-export function sortCompetitions(list, sortBy = 'closing-soonest') {
-  const arr = [...list];
-  arr.sort((a, b) => {
-    switch (sortBy) {
-      case 'title-asc':
-        return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
-      case 'title-desc':
-        return (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' });
-      case 'closing-soonest': {
-        const now = Date.now();
-        const timeA = getDeadlineTimestamp(a);
-        const timeB = getDeadlineTimestamp(b);
-        const isPastA = timeA !== Infinity && timeA < now;
-        const isPastB = timeB !== Infinity && timeB < now;
-        if (!isPastA && !isPastB) {
-          if (timeA !== timeB) return timeA - timeB;
-        } else if (!isPastA && isPastB) {
-          return -1;
-        } else if (isPastA && !isPastB) {
-          return 1;
-        } else {
-          if (timeA !== timeB) return timeB - timeA;
-        }
-        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
-      }
-      case 'closing-latest': {
-        const timeA = getDeadlineTimestamp(a);
-        const timeB = getDeadlineTimestamp(b);
-        if (timeA === Infinity && timeB === Infinity) return 0;
-        if (timeA === Infinity) return 1;
-        if (timeB === Infinity) return -1;
-        if (timeA !== timeB) return timeB - timeA;
-        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
-      }
-      case 'prize-highest': {
-        const prizeA = parsePrizeAmount(a.prize || a.prizes);
-        const prizeB = parsePrizeAmount(b.prize || b.prizes);
-        if (prizeA !== prizeB) return prizeB - prizeA;
-        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
-      }
-      case 'popular':
-        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
-      default: {
-        const timeA = getDeadlineTimestamp(a);
-        const timeB = getDeadlineTimestamp(b);
-        if (timeA !== timeB) return timeA - timeB;
-        return (b.registeredCount || b.regs || 0) - (a.registeredCount || a.regs || 0);
-      }
-    }
-  });
-  return arr;
-}
+// Filtering and sorting are shared with Browse so Home's rails always match the Browse filter
+export { sortCompetitions };
 
 export const SORT_LABELS = {
   'closing-soonest': 'Closing soonest first',
@@ -117,142 +37,8 @@ export const SORT_LABELS = {
   'title-desc': 'Title: Z → A',
 };
 
-const DU_KEYWORDS = [
-  'delhi university', 'university of delhi', '(du)', 'sscbs', 'shaheed sukhdev',
-  'srcc', 'shri ram college', "stephen's", "st. stephen", "stephens college",
-  'hindu college', 'hansraj', 'lsr', 'lady shri ram',
-  'sggscc', 'ramjas', 'kirori mal', 'kmc', 'drc', 'daulat ram', 'gargi', 'venkateswara',
-  'venky', 'sgtb khalsa', 'sgtb', 'sri guru tegh bahadur khalsa', 'keshav mahavidyalaya',
-  'deen dayal upadhyaya college', 'ddu college',
-  'miranda house', 'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc',
-  'shaheed bhagat singh', 'motilal nehru college', 'indraprastha college', 'ipcw',
-  'maharaja agrasen college', 'ramanujan college', 'kalindi college', 'kamala nehru college',
-  'shaheed rajguru', 'bharati college', 'college of vocational studies', 'cvs'
-];
-
-function isMatch(text, kw) {
-  const keyword = kw.trim().toLowerCase();
-  if (!keyword) return false;
-  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(^|\\b)${escaped}(\\b|$)`, 'i');
-  return regex.test(text);
-}
-
-function getCompCircuitKey(comp) {
-  if (!comp) return 'others';
-  if (comp.circuit === 'DU Circuit') return 'du';
-  if (comp.circuit === 'IIM / IIT') return 'iim-iit-premier';
-  if (comp.circuit === 'Corporate') return 'corporate-global';
-  if (comp.circuit === 'Others') return 'others';
-  if (comp.isIIMorIIT || comp.isPremier || comp.isIIMorIITorPremier || comp.isBschool) return 'iim-iit-premier';
-  if (comp.isCorporate || comp.isCorporateOrGlobal) return 'corporate-global';
-  if (comp.isDU) return 'du';
-  return 'others';
-}
-
 export function matchCompetition(comp, f = {}, isViewerPostgrad = false) {
-  if (!comp) return false;
-
-  // 0. Eligibility check: Never show PG/MBA exclusive competitions to Undergraduates
-  if (!isViewerPostgrad && !isEligibleForUndergrad(comp)) {
-    return false;
-  }
-
-  // 1. Circuit filter
-  const selectedCircuits = Array.isArray(f.selectedCircuits)
-    ? f.selectedCircuits
-    : (Array.isArray(f.circ) ? f.circ : []);
-
-  if (selectedCircuits.length > 0 && selectedCircuits.length < 4) {
-    const compCircuitKey = getCompCircuitKey(comp);
-    const matchesCircuit = selectedCircuits.some(cId => {
-      if (cId === 'du' || cId === 'DU Circuit') {
-        return compCircuitKey === 'du' || comp.circuit === 'DU Circuit' || comp.isDU;
-      }
-      if (cId === 'iim-iit-premier' || cId === 'iim-iit-bschool' || cId === 'IIM / IIT') {
-        return compCircuitKey === 'iim-iit-premier' || comp.circuit === 'IIM / IIT' || comp.isIIMorIIT || comp.isPremier;
-      }
-      if (cId === 'corporate-global' || cId === 'Corporate') {
-        return compCircuitKey === 'corporate-global' || comp.circuit === 'Corporate' || comp.isCorporate || comp.isCorporateOrGlobal;
-      }
-      if (cId === 'others' || cId === 'Others') {
-        return compCircuitKey === 'others' || comp.circuit === 'Others' || comp.isOthers;
-      }
-      return comp.circuit === cId;
-    });
-    if (!matchesCircuit) return false;
-  }
-
-  // 2. Discipline / Track filter
-  const selectedTracks = Array.isArray(f.selectedTracks)
-    ? f.selectedTracks
-    : (Array.isArray(f.disc) ? f.disc : []);
-
-  if (selectedTracks.length > 0 && selectedTracks.length < 6) {
-    const compCategory = (comp.category || '').toLowerCase();
-    const compDisc = (comp.discipline || '').toLowerCase();
-    const matchesTrack = selectedTracks.some(tId => {
-      const lower = tId.toLowerCase();
-      if (lower === 'case' || lower === 'case comps') return compCategory === 'case' || compDisc.includes('case');
-      if (lower === 'hackathon' || lower === 'hackathons') return compCategory === 'hackathon' || compDisc.includes('hackathon') || compDisc.includes('tech');
-      if (lower === 'writing' || lower === 'writing & research') return compCategory === 'writing' || compDisc.includes('writ') || compDisc.includes('research') || compDisc.includes('paper');
-      if (lower === 'quiz' || lower === 'quizzes') return compCategory === 'quiz' || compDisc.includes('quiz');
-      if (lower === 'simulation' || lower === 'simulations') return compCategory === 'simulation' || compDisc.includes('simul');
-      if (lower === 'debate' || lower === 'debates') return compCategory === 'debate' || compDisc.includes('debate') || compDisc.includes('mun');
-      return compCategory === lower || compDisc.includes(lower);
-    });
-    if (!matchesTrack) return false;
-  }
-
-  // 3. Team format filter
-  const team = f.teamFilter || f.team;
-  const isSolo = (comp.maxTeam !== undefined && comp.maxTeam <= 1) ||
-    (comp.team && (String(comp.team).toLowerCase().includes('solo') || String(comp.team).trim() === '1' || String(comp.team).trim() === '1 Member' || String(comp.team).trim() === '1 Person')) ||
-    (comp.teamSizeDisplay && comp.teamSizeDisplay.toLowerCase().includes('solo'));
-  const isTeam = (comp.maxTeam !== undefined && comp.maxTeam > 1) || !isSolo;
-
-  if (team === 'solo' && !isSolo) return false;
-  if (team === 'team' && !isTeam) return false;
-
-  // 4. Fee filter
-  const fee = f.feeFilter || f.fee;
-  const isFree = comp.fee === 'Free' || comp.isFree;
-  if (fee === 'free' && !isFree) return false;
-  if (fee === 'paid' && isFree) return false;
-
-  // 5. Platform filter
-  const selectedPlatforms = Array.isArray(f.selectedPlatforms) ? f.selectedPlatforms : [];
-  if (selectedPlatforms.length > 0 && selectedPlatforms.length < 5) {
-    const compPlatform = (comp.sourcePlatform || 'unstop').toLowerCase();
-    const matchesPlatform = selectedPlatforms.some(p => {
-      const lower = p.toLowerCase();
-      if (lower === 'campus_direct' || lower === 'institutional') {
-        return compPlatform === 'campus_direct' || compPlatform === 'institutional';
-      }
-      return compPlatform === lower;
-    });
-    if (!matchesPlatform) return false;
-  }
-
-  // 6. Sub-track filter
-  const selectedSubTracks = Array.isArray(f.selectedSubTracks) ? f.selectedSubTracks : [];
-  if (selectedSubTracks.length > 0) {
-    const compSubTracks = (Array.isArray(comp.subTracks) ? comp.subTracks : []).map(s => String(s).toLowerCase());
-    const matchesSubTrack = selectedSubTracks.some(st => {
-      const lower = st.toLowerCase();
-      return compSubTracks.some(cst => cst.includes(lower) || lower.includes(cst));
-    });
-    if (!matchesSubTrack) return false;
-  }
-
-  // 7. Query filter (if any)
-  const q = f.searchQuery || f.q;
-  if (typeof q === 'string' && q.trim()) {
-    const hay = `${comp.title || ''} ${comp.host || ''} ${comp.orgName || ''} ${comp.discipline || ''} ${comp.circuit || ''}`.toLowerCase();
-    if (!hay.includes(q.trim().toLowerCase())) return false;
-  }
-
-  return true;
+  return matchesFilters(comp, f || {}, { isPostgrad: isViewerPostgrad, search: f?.searchQuery || f?.q || '' });
 }
 
 function getUrgencyConfig(urgencyLevel) {
@@ -506,7 +292,6 @@ export default function HomeScreen({
   competitionsLoading = false,
   savedFilter = null,
   browseSort = null,
-  onUpdateSort,
   onResetFilter,
   applications = [],
   posts = [],
@@ -595,14 +380,7 @@ export default function HomeScreen({
   }, [competitions, firstSeenMap]);
 
   // Last chosen Browse filter preferences (from props or localStorage fallback)
-  const effectiveFilter = savedFilter || (() => {
-    try {
-      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
-      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return null;
-  })();
+  const effectiveFilter = savedFilter || loadPrefs();
 
   const newForYouCount = useMemo(() => {
     const now = Date.now();
@@ -657,17 +435,7 @@ export default function HomeScreen({
   }, [applications]);
 
   // Active sort order (defaults to last chosen sort filter in Browse tab)
-  const effectiveSort = browseSort || effectiveFilter?.sortBy || (() => {
-    try {
-      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
-      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed.sortBy === 'string') return parsed.sortBy;
-      }
-    } catch (e) {}
-    return 'closing-soonest';
-  })();
+  const effectiveSort = browseSort || effectiveFilter?.sortBy || 'closing-soonest';
 
   const containerRef = useRef(null);
 
@@ -766,8 +534,7 @@ export default function HomeScreen({
         unstop: 'Unstop',
         inside_campus: 'InsideKampus',
         devpost: 'Devpost',
-        campus_direct: 'Campus Direct',
-        institutional: 'Campus Direct'
+        corporate: 'Corporate Direct'
       };
       platforms.forEach(p => chips.push(platformLabels[p] || p));
     }
@@ -775,9 +542,9 @@ export default function HomeScreen({
     // Team Format
     const team = effectiveFilter.teamFilter || effectiveFilter.team;
     if (team === 'solo') {
-      chips.push('Solo');
+      chips.push('Solo OK');
     } else if (team === 'team') {
-      chips.push('Teams (2+)');
+      chips.push('Team');
     }
 
     // Fee
@@ -1142,7 +909,7 @@ export default function HomeScreen({
               const countdownText = formatDeadlineCountdown(b.deadline, b.remainDaysText, b.days);
               const urgencyLevel = getUrgencyLevel(b.deadline, b.remainDaysText, b.days);
               const deadlineFormatted = formatDeadlineDateTime(b.deadline);
-              const isFree = b.isFree ?? (typeof b.fee === 'string' ? b.fee.toLowerCase().includes('free') : true);
+              const isFree = isFreeComp(b);
               const registeredCount = Number(b.regs || b.registeredCount || 0);
               const feeText = isFree ? 'Free Entry' : (b.fee ? (b.fee.toLowerCase().includes('entry') ? b.fee : `${b.fee} Entry`) : 'Paid Entry');
               const teamText = b.team || b.teamSizeDisplay || 'Solo / Team';
@@ -1221,7 +988,7 @@ export default function HomeScreen({
                     <span className="home-compact-dot">·</span>
                     <span className="home-compact-specs-item" title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}>
                       <CalendarIcon size={12} color="#4B5563" />
-                      <span>Ends {deadlineFormatted || (b.mode || 'Online')}</span>
+                      <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : 'Deadline TBA'}</span>
                     </span>
                   </div>
 
@@ -1372,7 +1139,7 @@ export default function HomeScreen({
           ) : (
             <>
               {displayedComps.map(c => {
-              const isFree = c.fee === 'Free' || c.isFree;
+              const isFree = isFreeComp(c);
               const deadlineFormatted = formatDeadlineDateTime(c.deadline);
               const countdownText = formatDeadlineCountdown(c.deadline, c.remainDaysText, c.days);
               const urgencyLevel = getUrgencyLevel(c.deadline, c.remainDaysText, c.days);
@@ -1512,7 +1279,7 @@ export default function HomeScreen({
                       title={deadlineFormatted ? `Exact Deadline: ${deadlineFormatted}` : undefined}
                     >
                       <CalendarIcon size={13} color="var(--ink-secondary)" />
-                      <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : (c.mode || 'Online')}</span>
+                      <span>{deadlineFormatted ? `Ends ${deadlineFormatted}` : 'Deadline TBA'}</span>
                     </div>
                   </div>
 

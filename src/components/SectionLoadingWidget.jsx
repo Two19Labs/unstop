@@ -1,5 +1,5 @@
 // src/components/SectionLoadingWidget.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import OneStopLogo from './OneStopLogo';
 import { GENERAL_PUNS } from './FunLoadingScreen';
 import './SectionLoadingWidget.css';
@@ -33,34 +33,32 @@ export default function SectionLoadingWidget({
     return candidate;
   }, [customPuns]);
 
-  // Stays visible for exactly 1.5s (minDurationMs) when ready, capped at maxDurationMs
+  // Measured once from mount: parent re-renders must not restart the clock or cancel the dismissal
+  const startRef = useRef(Date.now());
+  const completedRef = useRef(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
+  const finish = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    setIsDismissing(true);
+    setTimeout(() => onCompleteRef.current && onCompleteRef.current(), 160);
+  }, []);
+
+  // Visible for at least minDurationMs, then dismissed as soon as data is ready
   useEffect(() => {
-    let timer = null;
-    let completed = false;
-    const start = Date.now();
+    if (!isReady) return undefined;
+    const remaining = Math.max(0, minDurationMs - (Date.now() - startRef.current));
+    const timer = setTimeout(finish, remaining);
+    return () => clearTimeout(timer);
+  }, [isReady, minDurationMs, finish]);
 
-    const finish = () => {
-      if (completed) return;
-      completed = true;
-      setIsDismissing(true);
-      timer = setTimeout(() => onComplete && onComplete(), 160);
-    };
-
-    const checkDone = () => {
-      const elapsed = Date.now() - start;
-      if (elapsed >= minDurationMs && isReady) {
-        finish();
-      } else if (elapsed >= maxDurationMs) {
-        finish();
-      } else {
-        const remaining = Math.max(30, minDurationMs - elapsed);
-        timer = setTimeout(checkDone, remaining);
-      }
-    };
-
-    checkDone();
-    return () => timer && clearTimeout(timer);
-  }, [isReady, minDurationMs, maxDurationMs, onComplete]);
+  // Hard cap from mount, whatever happens
+  useEffect(() => {
+    const timer = setTimeout(finish, maxDurationMs);
+    return () => clearTimeout(timer);
+  }, [maxDurationMs, finish]);
 
   return (
     <div

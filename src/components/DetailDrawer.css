@@ -243,3 +243,14 @@
     border-left: none;
   }
 }
+
+.detail-drawer-more-link {
+  color: var(--primary, #0F3FFE);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.detail-drawer-more-link:hover {
+  text-decoration: underline;
+}

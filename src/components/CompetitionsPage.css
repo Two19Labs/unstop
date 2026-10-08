@@ -2841,3 +2841,57 @@
   border: 1px solid #bbf7d0;
 }
 
+
+/* ── Browse overhaul: accessible titles, batched list, counts ── */
+.cc-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 290px;
+}
+
+.cc-card-title-btn {
+  all: unset;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  display: inline;
+}
+
+.cc-card-title-btn:focus-visible {
+  outline: 2px solid var(--brand-primary, #0F3FFE);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.cc-source-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(15, 63, 254, 0.08);
+  color: var(--brand-primary, #0F3FFE);
+  border: 1px solid rgba(15, 63, 254, 0.18);
+  display: inline-block;
+}
+
+.cc-subtrack-count {
+  margin-left: 5px;
+  font-size: 0.68rem;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-active-pill.pill-sort {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.cc-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 8px;
+}
+
+.cc-show-more-btn {
+  margin-top: 0;
+}

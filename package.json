@@ -7,10 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node scripts/e2e_team_finder_test.js && node scripts/deep_e2e_diagnostic_test.js && node scripts/platform_and_security_deep_diagnostic.js",
+    "test": "node scripts/filters_test.js && node scripts/classification_test.js && node scripts/scraper_test.js && node scripts/e2e_team_finder_test.js && node scripts/deep_e2e_diagnostic_test.js && node scripts/platform_and_security_deep_diagnostic.js",
     "test:live": "node scripts/deep_live_diagnostic.js",
     "test:server": "node scripts/e2e_server_diagnostic.js",
-    "scan:institutional": "node scripts/scrape_institutional.js"
+    "scan:institutional": "node scripts/scrape_institutional.js",
+    "test:e2e": "node scripts/e2e/browse_e2e.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "playwright-core": "1.49.1",
     "vite": "^5.4.14"
   }
 }

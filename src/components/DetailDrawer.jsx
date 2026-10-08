@@ -7,6 +7,7 @@ import { trackEvent } from '../lib/posthog';
 import { useAuth } from '../context/AuthContext';
 import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 import { safeExternalUrl } from '../lib/safeUrl';
+import { isFreeComp } from '../utils/competitionFilters';
 import './DetailDrawer.css';
 
 export default function DetailDrawer({
@@ -55,9 +56,8 @@ export default function DetailDrawer({
     { k: 'Circuit', v: item.circuit || 'Collegiate' },
     { k: 'Eligibility', v: eligibilityDisplay },
     { k: 'Team size', v: item.team || (item.minTeam === item.maxTeam ? `${item.minTeam}` : `${item.minTeam}-${item.maxTeam}`) },
-    { k: 'Format', v: item.mode || 'Online' },
     { k: 'Prize', v: item.prize || 'Recognition' },
-    { k: 'Entry', v: item.fee || (item.isFree ? 'Free' : 'Paid') },
+    { k: 'Entry', v: isFreeComp(item) ? 'Free' : 'Paid' },
     ...(deadlineFormatted ? [{ k: 'Deadline', v: deadlineFormatted }] : []),
     { k: 'Closes in', v: countdownFormatted }
   ];
@@ -109,9 +109,19 @@ export default function DetailDrawer({
             <p className="detail-drawer-host">
               {item.host || item.orgName}
             </p>
-            <p className="detail-drawer-desc">
-              {item.desc || 'No additional description provided for this listing.'}
-            </p>
+            {item.desc && item.desc.trim() !== String(item.title || '').trim() && (
+              <p className="detail-drawer-desc">
+                {item.desc}{' '}
+                <a
+                  href={safeExternalUrl(item.unstopUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="detail-drawer-more-link"
+                >
+                  Full details →
+                </a>
+              </p>
+            )}
           </div>
         </div>
 

@@ -123,6 +123,9 @@ export function AuthProvider({ children }) {
 
   // Bookmarks State (100% real, zero mock data)
   const [bookmarks, setBookmarks] = useState([]);
+  // Latest bookmarks for handlers created in earlier renders (auth listeners, post-login callbacks)
+  const bookmarksRef = useRef([]);
+  useEffect(() => { bookmarksRef.current = bookmarks; }, [bookmarks]);
 
   // Squad Posts State (100% real, zero mock data)
   const [squadPosts, setSquadPosts] = useState([]);
@@ -231,10 +234,35 @@ export function AuthProvider({ children }) {
 
       if (!error && Array.isArray(data)) {
         const ids = data.map(b => String(b.comp_id)).filter(id => !isMockBookmark(id));
+        bookmarksRef.current = ids;
         setBookmarks(ids);
       }
     } catch (err) {
       console.warn('Bookmarks fetch warning:', err.message);
+    }
+  }, []);
+
+  // A bookmark tapped while signed out is saved once the user signs in: add-only, never a toggle,
+  // and only after their existing bookmarks have loaded
+  const applyPendingBookmark = useCallback(async (activeUser) => {
+    let pendingId = null;
+    try {
+      pendingId = sessionStorage.getItem('onestop_pending_bookmark_after_auth');
+      if (pendingId) sessionStorage.removeItem('onestop_pending_bookmark_after_auth');
+    } catch (e) {}
+    if (!pendingId || !activeUser || !supabase) return;
+    const sId = String(pendingId);
+    if (bookmarksRef.current.some(id => String(id) === sId)) return;
+    const next = [...bookmarksRef.current, sId];
+    bookmarksRef.current = next;
+    setBookmarks(next);
+    trackEvent('competition_bookmarked', { competition_id: sId, after_signin: true });
+    try {
+      await supabase
+        .from('bookmarks')
+        .upsert([{ user_id: activeUser.id, comp_id: sId }], { onConflict: 'user_id,comp_id', ignoreDuplicates: true });
+    } catch (err) {
+      console.warn('Could not sync bookmark to Supabase:', err.message);
     }
   }, []);
 
@@ -451,18 +479,11 @@ export function AuthProvider({ children }) {
       if (currentUser) {
         identifyUser(currentUser.id);
         fetchUserProfile(currentUser.id, currentUser);
-        fetchUserBookmarks(currentUser.id);
+        fetchUserBookmarks(currentUser.id).then(() => applyPendingBookmark(currentUser));
         fetchNotificationStates(currentUser.id);
         fetchMessageNotifications(currentUser.id);
         fetchIsAdmin(currentUser.id);
         refreshSquadData(currentUser);
-        try {
-          const pendingId = sessionStorage.getItem('onestop_pending_bookmark_after_auth');
-          if (pendingId) {
-            sessionStorage.removeItem('onestop_pending_bookmark_after_auth');
-            toggleBookmark(pendingId);
-          }
-        } catch (e) {}
       } else {
         setBookmarks([]);
       }
@@ -499,13 +520,7 @@ export function AuthProvider({ children }) {
           fetchMessageNotifications(currentUser.id);
           fetchIsAdmin(currentUser.id);
           refreshSquadData(currentUser, true);
-          try {
-            const pendingId = sessionStorage.getItem('onestop_pending_bookmark_after_auth');
-            if (pendingId) {
-              sessionStorage.removeItem('onestop_pending_bookmark_after_auth');
-              toggleBookmark(pendingId);
-            }
-          } catch (e) {}
+          await applyPendingBookmark(currentUser);
         } else {
           resetUser();
           setProfile(null);
@@ -1268,8 +1283,10 @@ export function AuthProvider({ children }) {
   };
 
   // Bookmark Toggle with Live Database Sync (Strict Authentication Required)
+  // The single owner of bookmark changes. Signed out: remember the bookmark and ask the user to
+  // sign up; applyPendingBookmark saves it after login (no postLoginAction, which would hold stale state).
   const toggleBookmark = async (compId) => {
-    const activeUser = user || userRef.current;
+    const activeUser = userRef.current || user;
     if (!activeUser) {
       try {
         sessionStorage.setItem('onestop_pending_bookmark_after_auth', String(compId));
@@ -1278,24 +1295,23 @@ export function AuthProvider({ children }) {
         title: 'Sign Up to Bookmark Competitions',
         subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
         initialTab: 'signup',
-        postLoginAction: () => {
-          toggleBookmark(compId);
-        },
       });
       return false;
     }
 
     const sCompId = String(compId);
-    const isCurrentlySaved = bookmarks.some(id => String(id) === sCompId);
+    const current = bookmarksRef.current;
+    const isCurrentlySaved = current.some(id => String(id) === sCompId);
     const nextBookmarks = isCurrentlySaved
-      ? bookmarks.filter(id => String(id) !== sCompId)
-      : [...bookmarks, sCompId];
+      ? current.filter(id => String(id) !== sCompId)
+      : [...current, sCompId];
 
     trackEvent(isCurrentlySaved ? 'competition_unbookmarked' : 'competition_bookmarked', {
       competition_id: sCompId,
     });
 
     // Optimistic UI update
+    bookmarksRef.current = nextBookmarks;
     setBookmarks(nextBookmarks);
 
     // Persist to Supabase if authenticated
@@ -1308,9 +1324,10 @@ export function AuthProvider({ children }) {
             .eq('user_id', activeUser.id)
             .eq('comp_id', sCompId);
         } else {
+          // ON CONFLICT DO NOTHING: the table only grants INSERT (no UPDATE) to users
           await supabase
             .from('bookmarks')
-            .insert([{ user_id: activeUser.id, comp_id: sCompId }]);
+            .upsert([{ user_id: activeUser.id, comp_id: sCompId }], { onConflict: 'user_id,comp_id', ignoreDuplicates: true });
         }
       } catch (err) {
         console.warn('Could not sync bookmark to Supabase:', err.message);
@@ -1855,6 +1872,8 @@ export function AuthProvider({ children }) {
         toggleTheme: () => {},
         bookmarks,
         toggleBookmark,
+        // Live user for callbacks created while signed out (e.g. after-login actions)
+        getCurrentUser: () => userRef.current,
         isBookmarked,
         squadPosts,
         squadApps,

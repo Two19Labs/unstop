@@ -21,10 +21,9 @@ import FunLoadingScreen, { GENERAL_PUNS } from './components/FunLoadingScreen';
 import { sendPresencePing, initGlobalPresence } from './lib/presenceService';
 import { useCompetitionRounds } from './hooks/useCompetitionRounds';
 import { isEligibleForUndergrad, checkIsPostgraduate } from './utils/eligibilityUtils';
+import { DEFAULT_PREFS, loadPrefs, savePrefs, sanitizePrefs } from './utils/competitionFilters';
 
 import {
-  describeFilter,
-  matchListing,
   isMockPost,
   isMockApp,
   isMockAlert,
@@ -51,15 +50,6 @@ const EMPTY_PROFILE = {
   phone: '',
   skills: [],
   education_level: ''
-};
-
-const DEFAULT_FILTERS = {
-  disc: [],
-  circ: [],
-  team: 'any',
-  fee: 'any',
-  q: '',
-  sort: 'deadline'
 };
 
 const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile', 'admin', 'about', 'contact'];
@@ -115,7 +105,8 @@ function getInitialScreen() {
   return 'home';
 }
 
-const COMPETITIONS_CACHE_KEY = 'onestop_cached_competitions_v1';
+// v2: listings carry fee 'Paid', summaries and the new categories
+const COMPETITIONS_CACHE_KEY = 'onestop_cached_competitions_v2';
 const COMPETITIONS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes client cache
 
 function getCachedCompetitions() {
@@ -166,6 +157,7 @@ function OneStopInner() {
     totalUnreadMessages = 0,
     refreshSquadData,
     openAuthModal,
+    getCurrentUser,
     signOut,
     changePassword,
     resetPassword,
@@ -350,30 +342,11 @@ function OneStopInner() {
     };
   }, [refreshRounds]);
 
+  // AuthContext owns bookmarks, including the signed-out case (it saves the bookmark after sign-up)
   const handleToggleBookmark = useCallback((compId) => {
-    const sCompId = String(compId);
-    if (!user) {
-      flash('Please sign up to bookmark competitions.');
-      try {
-        sessionStorage.setItem('onestop_pending_bookmark_after_auth', sCompId);
-      } catch (e) {}
-      openAuthModal({
-        title: 'Sign Up to Bookmark Competitions',
-        subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
-        initialTab: 'signup',
-        postLoginAction: () => {
-          if (authToggleBookmark) {
-            authToggleBookmark(sCompId);
-          }
-        },
-      });
-      return;
-    }
-
-    if (authToggleBookmark) {
-      authToggleBookmark(sCompId);
-    }
-  }, [user, authToggleBookmark, openAuthModal, flash]);
+    if (!getCurrentUser()) flash('Please sign up to bookmark competitions.');
+    if (authToggleBookmark) authToggleBookmark(String(compId));
+  }, [authToggleBookmark, getCurrentUser, flash]);
 
   // Squad Posts State (100% real Supabase squad posts)
   // In-memory only: optimistic copies while a save is in flight (never persisted)
@@ -477,103 +450,18 @@ function OneStopInner() {
     }
   }, [user, authUpdateProfile, flash, profile]);
 
-  // Browse Filters State (Synchronized with CompetitionsPage / onestop_user_filter_prefs)
-  const [browseFilters, setBrowseFilters] = useState(() => {
-    try {
-      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
-      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
-      if (raw) {
-        return JSON.parse(raw);
-      }
-    } catch (e) {}
-    try {
-      const saved = localStorage.getItem('onestop_browse_filters');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          selectedCircuits: Array.isArray(parsed.circ) ? parsed.circ : [],
-          selectedTracks: Array.isArray(parsed.disc) ? parsed.disc : [],
-          teamFilter: parsed.team || 'all',
-          feeFilter: parsed.fee || 'all',
-          sortBy: parsed.sort || 'closing-soonest'
-        };
-      }
-    } catch (e) {}
-    return {
-      selectedCircuits: [],
-      selectedTracks: [],
-      teamFilter: 'all',
-      feeFilter: 'all',
-      sortBy: 'closing-soonest'
-    };
-  });
-
-  // Browse Sort State (Synchronized between Browse and Home rails)
-  const [browseSort, setBrowseSort] = useState(() => {
-    if (browseFilters && typeof browseFilters.sortBy === 'string') {
-      return browseFilters.sortBy;
-    }
-    try {
-      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
-      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (typeof parsed.sortBy === 'string') return parsed.sortBy;
-      }
-    } catch (e) {}
-    return 'closing-soonest';
-  });
-
-  // Sync saved filter preferences when user changes
-  useEffect(() => {
-    try {
-      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
-      const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem('onestop_user_filter_prefs');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        setBrowseFilters(parsed);
-        if (parsed.sortBy) setBrowseSort(parsed.sortBy);
-      }
-    } catch (e) {}
-  }, [user]);
+  // Browse filter preferences: Browse (CompetitionsPage) saves them, App mirrors them for Home's rails
+  const [browseFilters, setBrowseFilters] = useState(loadPrefs);
 
   const handleFilterPrefsChange = useCallback((prefs) => {
-    setBrowseFilters(prefs);
-    if (prefs?.sortBy) {
-      setBrowseSort(prefs.sortBy);
-    }
+    setBrowseFilters(sanitizePrefs(prefs));
   }, []);
 
-  const handleUpdateSort = useCallback((newSort) => {
-    setBrowseSort(newSort);
-    setBrowseFilters(prev => {
-      const next = { ...prev, sortBy: newSort };
-      try {
-        const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
-        if (userKey) localStorage.setItem(userKey, JSON.stringify(next));
-        localStorage.setItem('onestop_user_filter_prefs', JSON.stringify(next));
-      } catch (e) {}
-      return next;
-    });
-  }, [user]);
-
   const handleResetFilters = useCallback(() => {
-    const cleanPrefs = {
-      selectedCircuits: [],
-      selectedTracks: [],
-      teamFilter: 'all',
-      feeFilter: 'all',
-      sortBy: 'closing-soonest'
-    };
-    setBrowseFilters(cleanPrefs);
-    setBrowseSort('closing-soonest');
-    try {
-      const userKey = user?.email ? `onestop_user_filter_prefs_${user.email.toLowerCase()}` : null;
-      if (userKey) localStorage.setItem(userKey, JSON.stringify(cleanPrefs));
-      localStorage.setItem('onestop_user_filter_prefs', JSON.stringify(cleanPrefs));
-      localStorage.setItem('onestop_browse_filters', JSON.stringify(DEFAULT_FILTERS));
-    } catch (e) {}
-  }, [user]);
+    const clean = { ...DEFAULT_PREFS };
+    setBrowseFilters(clean);
+    savePrefs(clean);
+  }, []);
 
   // Drawer and Modal States
   const [detailCompId, setDetailCompId] = useState(null);
@@ -603,80 +491,58 @@ function OneStopInner() {
     }
   }, [detailCompId, competitions]);
 
-  // Fetch Live Competitions strictly from /api/competitions (Unstop ingestion)
-  useEffect(() => {
-    let isMounted = true;
-    async function loadCompetitions() {
-      const cached = getCachedCompetitions();
-      if (!cached || cached.length === 0) {
-        setCompetitionsLoading(true);
-      }
-      try {
-        const res = await fetch('/api/competitions');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (isMounted && json.success && Array.isArray(json.data)) {
-          const mapped = json.data.map(c => {
-            let circuitVal = c.circuit;
-            if (!circuitVal) {
-              if (c.isDU) circuitVal = 'DU Circuit';
-              else if (c.isIIMorIIT || c.isPremier || c.isIIMorIITorPremier) circuitVal = 'IIM / IIT';
-              else if (c.isCorporate || c.isCorporateOrGlobal) circuitVal = 'Corporate';
-              else circuitVal = 'Others';
-            }
-
-            let disciplineVal = c.categoryLabel || 'Case';
-            if (disciplineVal.includes('Hackathon') || disciplineVal.includes('Tech')) disciplineVal = 'Hackathon';
-            else if (disciplineVal.includes('Quiz')) disciplineVal = 'Quiz';
-            else if (disciplineVal.includes('Simul')) disciplineVal = 'Simulation';
-            else if (disciplineVal.includes('Writ') || disciplineVal.includes('Paper')) disciplineVal = 'Writing';
-            else if (disciplineVal.includes('Debate') || disciplineVal.includes('MUN')) disciplineVal = 'Debate & MUN';
-            else disciplineVal = 'Case';
-
-            return {
-              ...c,
-              id: c.id,
-              title: c.title,
-              host: c.orgName || c.host || 'Host Institution',
-              orgName: c.orgName || c.host || 'Host Institution',
-              circuit: circuitVal,
-              discipline: disciplineVal,
-              days: c.daysRemainingNum !== undefined ? c.daysRemainingNum : 7,
-              deadline: c.deadline,
-              startDate: c.startDate || null,
-              remainDaysText: c.remainDaysText,
-              prize: c.prizes || 'Recognition',
-              team: c.teamSizeDisplay || `${c.minTeam || 1}-${c.maxTeam || 4}`,
-              mode: c.mode || 'Online',
-              fee: c.isFree ? 'Free' : (c.fee || 'Free'),
-              desc: c.description || c.title,
-              tags: [disciplineVal, circuitVal],
-              regs: c.registeredCount || 0,
-              logo: c.orgLogo || c.logo || c.bannerUrl || null,
-              orgLogo: c.orgLogo || c.logo || null,
-              bannerUrl: c.bannerUrl || null,
-              unstopUrl: c.unstopUrl || 'https://unstop.com',
-              isUndergradEligible: c.isUndergradEligible !== false && isEligibleForUndergrad(c),
-              isPGOnly: Boolean(c.isPGOnly) || !isEligibleForUndergrad(c),
-              isMBAorPG: Boolean(c.isMBAorPG) || !isEligibleForUndergrad(c),
-              targetLevel: (!isEligibleForUndergrad(c) || c.isPGOnly) ? 'pg' : (c.targetLevel || 'ug')
-            };
-          });
-
-          setCompetitions(mapped);
-          setCachedCompetitions(mapped);
-        }
-      } catch (e) {
-        console.warn('Could not fetch real-time Unstop competitions:', e.message);
-      } finally {
-        if (isMounted) setCompetitionsLoading(false);
-      }
+  // Live competitions from /api/competitions (App is the only place that fetches them)
+  const [competitionsError, setCompetitionsError] = useState(null);
+  const loadCompetitions = useCallback(async () => {
+    const cached = getCachedCompetitions();
+    if (!cached || cached.length === 0) setCompetitionsLoading(true);
+    setCompetitionsError(null);
+    try {
+      const res = await fetch('/api/competitions');
+      if (!res.ok) throw new Error(`HTTP ${res.status}: could not load live competitions`);
+      const json = await res.json();
+      if (!json.success || !Array.isArray(json.data)) throw new Error(json.error || 'Empty response received');
+      const mapped = json.data.map(c => {
+        const isFree = typeof c.isFree === 'boolean' ? c.isFree : String(c.fee || '').toLowerCase() === 'free';
+        const ugEligible = isEligibleForUndergrad(c);
+        return {
+          ...c,
+          title: String(c.title || '').trim(),
+          host: c.orgName || c.host || 'Host Institution',
+          orgName: c.orgName || c.host || 'Host Institution',
+          circuit: c.circuit || 'Others',
+          discipline: c.discipline || 'Other',
+          days: c.daysRemainingNum ?? null,
+          startDate: c.startDate || null,
+          prize: c.prizes || 'Recognition',
+          team: c.teamSizeDisplay || `${c.minTeam || 1}-${c.maxTeam || 1}`,
+          isFree,
+          fee: isFree ? 'Free' : 'Paid',
+          desc: c.summary || '',
+          regs: c.registeredCount || 0,
+          logo: c.orgLogo || c.logo || c.bannerUrl || null,
+          orgLogo: c.orgLogo || c.logo || null,
+          bannerUrl: c.bannerUrl || null,
+          unstopUrl: c.unstopUrl || 'https://unstop.com',
+          isUndergradEligible: c.isUndergradEligible !== false && ugEligible,
+          isPGOnly: Boolean(c.isPGOnly) || !ugEligible,
+          isMBAorPG: Boolean(c.isMBAorPG) || !ugEligible,
+          targetLevel: (!ugEligible || c.isPGOnly) ? 'pg' : (c.targetLevel || 'ug')
+        };
+      });
+      setCompetitions(mapped);
+      setCachedCompetitions(mapped);
+    } catch (e) {
+      console.warn('Could not fetch live competitions:', e.message);
+      setCompetitionsError(e.message || 'Unable to load live competitions.');
+    } finally {
+      setCompetitionsLoading(false);
     }
-    loadCompetitions();
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    loadCompetitions();
+  }, [loadCompetitions]);
 
   const isPostgraduate = checkIsPostgraduate(profile);
 
@@ -732,18 +598,23 @@ function OneStopInner() {
       competition_id: comp?.id,
       competition_title: comp?.title,
     });
-    if (!user) {
+    // Only state setters here: this also runs after sign-up, from a callback created while signed out
+    const openSquadForm = () => {
+      handleNavigate('teams');
+      setEditingPost(null);
+      setPostModalCompId(comp.id);
+      setPostModalOpen(true);
+    };
+    if (!getCurrentUser()) {
       openAuthModal({
         title: 'Sign Up to Recruit Teammates',
         subtitle: 'Create your collegiate account to recruit teammates and coordinate over WhatsApp.',
         initialTab: 'signup',
+        postLoginAction: openSquadForm,
       });
       return;
     }
-    setEditingPost(null);
-    setPostModalCompId(comp.id);
-    setScreen('teams');
-    setPostModalOpen(true);
+    openSquadForm();
   };
 
   // Open Create Squad Modal
@@ -909,7 +780,9 @@ function OneStopInner() {
       post_id: post?.id,
       competition_name: post?.competition_name,
     });
-    if (!user) {
+    // getCurrentUser(), not `user`: Team Finder calls this again right after sign-up
+    // from a callback created while signed out
+    if (!getCurrentUser()) {
       openAuthModal({
         title: 'Sign Up to Join this Squad',
         subtitle: 'Create your collegiate account to request to join squads and contact hosts.',
@@ -1136,8 +1009,9 @@ function OneStopInner() {
     totalUnreadMessages;
 
   // Detail Drawer Target Competition
-  const selectedDetailComp = detailCompId ? (visibleCompetitions.find(c => c.id === detailCompId) || competitions.find(c => c.id === detailCompId)) : null;
-  const detailSquadCount = detailCompId ? posts.filter(p => p.compId === detailCompId).length : 0;
+  const sameId = (a, b) => String(a) === String(b);
+  const selectedDetailComp = detailCompId ? (visibleCompetitions.find(c => sameId(c.id, detailCompId)) || competitions.find(c => sameId(c.id, detailCompId))) : null;
+  const detailSquadCount = detailCompId ? posts.filter(p => sameId(p.compId, detailCompId)).length : 0;
 
   const isBrowseMode = screen === 'browse';
   const isStandaloneMode = isBrowseMode || screen === 'teams';
@@ -1201,17 +1075,16 @@ function OneStopInner() {
         <CompetitionsPage
           key={screen}
           onBack={() => handleNavigate('home')}
-          onNavigate={handleNavigate}
           onFindTeammates={handleFindTeammates}
           onOpenDetail={(id) => setDetailCompId(id)}
           showToast={flash}
           bookmarks={bookmarks}
           onToggleBookmark={handleToggleBookmark}
-          bookmarkedOnly={false}
           isPostgraduate={isPostgraduate}
-          initialCompetitions={visibleCompetitions}
-          externalSortBy={browseSort}
-          onSortChange={handleUpdateSort}
+          competitions={visibleCompetitions}
+          loading={competitionsLoading && visibleCompetitions.length === 0}
+          error={competitionsError}
+          onRetry={loadCompetitions}
           onFilterPrefsChange={handleFilterPrefsChange}
           headerAction={
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1307,8 +1180,7 @@ function OneStopInner() {
                 competitions={visibleCompetitions}
                 competitionsLoading={competitionsLoading}
                 savedFilter={browseFilters}
-                browseSort={browseSort}
-                onUpdateSort={handleUpdateSort}
+                browseSort={browseFilters.sortBy}
                 onResetFilter={handleResetFilters}
                 applications={applications}
                 posts={posts}

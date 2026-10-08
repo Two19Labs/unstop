@@ -1,0 +1,2488 @@
+[
+ {
+  "item": {
+   "title": "FinWorld 2026: National Finance Case Study Competition",
+   "type": "competitions",
+   "subtype": "case_competition",
+   "workfunction": [
+    {
+     "name": "Corporate Finance"
+    },
+    {
+     "name": "Financial Planning & Analysis"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case",
+  "subTracks": {
+   "has": [
+    "finance"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Break The Case '26",
+   "type": "competitions",
+   "subtype": "case_competition",
+   "workfunction": [
+    {
+     "name": "Management Consulting"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Consulting Consortium 2026",
+   "type": "competitions",
+   "subtype": "case_competition",
+   "workfunction": [
+    {
+     "name": "Management Consulting"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case",
+  "subTracks": {
+   "has": [
+    "strategy"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Shark Tank: The Ultimate Pitching Challenge",
+   "type": "competitions",
+   "subtype": "innovation_challenge",
+   "workfunction": [
+    {
+     "name": "Strategy & Planning"
+    },
+    {
+     "name": "Business Development"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case",
+  "subTracks": {
+   "has": [
+    "bplan"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Business Model Teardown Challenge",
+   "type": "competitions",
+   "subtype": "case_competition",
+   "workfunction": [
+    {
+     "name": "Strategy & Planning"
+    },
+    {
+     "name": "Business Analysis"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Product Teardown 2026",
+   "type": "competitions",
+   "subtype": "case_competition",
+   "workfunction": [
+    {
+     "name": "Product Management"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case",
+  "subTracks": {
+   "has": [
+    "product"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "The M&A Championship 4.0",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Corporate Finance"
+    },
+    {
+     "name": "Investment Banking"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Case Crack",
+   "type": "quizzes",
+   "subtype": null,
+   "workfunction": [
+    {
+     "name": "Business Analysis"
+    },
+    {
+     "name": "Marketing Analytics"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Pitchverse",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Strategy & Planning"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Shark Tank | Unnati x Prarambh",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Moolyankan 2026 - Equity Research Competition",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Financial Planning & Analysis"
+    },
+    {
+     "name": "Investment Research"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Jaipuria Smart City Innovation Challenge 2026",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Fresher",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "Ops-Essentia: Operations Case Study Challenge",
+   "type": "competitions",
+   "subtype": "case_competition",
+   "workfunction": [
+    {
+     "name": "Supply Chain Operations"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case",
+  "subTracks": {
+   "has": [
+    "operations"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Brand Blitz",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "General Marketing"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "case"
+ },
+ {
+  "item": {
+   "title": "CodeAstra 2.0 – 24-Hour Offline Hackathon",
+   "type": "hackathons",
+   "subtype": "online_coding_challenge",
+   "workfunction": [
+    {
+     "name": "Software Development"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "kBxAc CTF 2026",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Cyber Security"
+    },
+    {
+     "name": "Ethical Hacking"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon",
+  "subTracks": {
+   "has": [
+    "hack_cyber"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Hack Sphere",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Software Development"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "Prompt War",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Prompt Engineering"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "IPL (IIITD Programming League) 2026",
+   "type": "hackathons",
+   "subtype": "online_coding_challenge",
+   "workfunction": [
+    {
+     "name": "Systems Programming"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "Quantathon",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "AlgoVerse: The DSA Challenge",
+   "type": "quizzes",
+   "subtype": "online_coding_challenge",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "Code Clash 2.0",
+   "type": "hackathons",
+   "subtype": "online_coding_challenge",
+   "workfunction": [
+    {
+     "name": "Software Development"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "Cipher Trail CTF",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    },
+    {
+     "name": "Cyber Security"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon"
+ },
+ {
+  "item": {
+   "title": "RAKSHAM - AI Cybersecurity Hackathon",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Cyber Security"
+    },
+    {
+     "name": "Artificial Intelligence"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "hackathon",
+  "subTracks": {
+   "has": [
+    "hack_ai",
+    "hack_cyber"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Logic Odyssey",
+   "type": "quizzes",
+   "subtype": null,
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "quiz"
+ },
+ {
+  "item": {
+   "title": "Treasure Rush",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "quiz",
+  "subTracks": {
+   "lacks": [
+    "quiz_tech"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Prashnotsav",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "quiz"
+ },
+ {
+  "item": {
+   "title": "Integration Bee | TECHKRITI | IIT KANPUR",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "quiz"
+ },
+ {
+  "item": {
+   "title": "Synapse Arena - A Science, Business and Technology Quiz",
+   "type": "quizzes",
+   "subtype": null,
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "quiz",
+  "subTracks": {
+   "has": [
+    "quiz_business",
+    "quiz_tech"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "5th National Accounting Olympiad 2026",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Accounting"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "School Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "quiz"
+ },
+ {
+  "item": {
+   "title": "H&P Projects Quiz 2026",
+   "type": "quizzes",
+   "subtype": null,
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "quiz",
+  "subTracks": {
+   "lacks": [
+    "quiz_tech"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "IPL Auction",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "simulation",
+  "subTracks": {
+   "has": [
+    "sim_auction"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Bull-vs-Bear: The Live Mockstock Exchange",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "simulation"
+ },
+ {
+  "item": {
+   "title": "Stock Wars – 15-Day Stock Market Prediction Challenge",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Investment Research"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "simulation",
+  "subTracks": {
+   "has": [
+    "sim_stock"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Bid It Like Beckham 2026",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Online Gaming & Esports"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "simulation"
+ },
+ {
+  "item": {
+   "title": "Market Maestros 2026 | Stock Market Simulation & Investment Challenge",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Investment Management"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "simulation"
+ },
+ {
+  "item": {
+   "title": "Auction Theory 2026",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "simulation"
+ },
+ {
+  "item": {
+   "title": "Veritas Clash - British Parliamentary Debate",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Performing Arts"
+    },
+    {
+     "name": "Others"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "debate",
+  "subTracks": {
+   "has": [
+    "debate_pd"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "IMI MUN 2026",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Conferences"
+    },
+    {
+     "name": "Government"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Human Resource",
+     "type": "category"
+    },
+    {
+     "name": "Strategy",
+     "type": "category"
+    },
+    {
+     "name": "Conference",
+     "type": "category"
+    },
+    {
+     "name": "Debates",
+     "type": "category"
+    },
+    {
+     "name": "Panel Discussion",
+     "type": "category"
+    },
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "School Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Fresher",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "debate",
+  "subTracks": {
+   "has": [
+    "debate_mun"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "Parivartan '26: Model COP",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Sustainability Analysis"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "debate"
+ },
+ {
+  "item": {
+   "title": "Oxford Style English Debate",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Corporate Communication"
+    },
+    {
+     "name": "Conferences"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "debate"
+ },
+ {
+  "item": {
+   "title": "Paper Presentation",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Applied Research"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "School Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Fresher",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "writing",
+  "subTracks": {
+   "has": [
+    "writing_paper"
+   ]
+  }
+ },
+ {
+  "item": {
+   "title": "FinNomal Q3: Call For Articles",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Content Writing"
+    },
+    {
+     "name": "Journalism"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "writing"
+ },
+ {
+  "item": {
+   "title": "Essay Competition",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Content Writing"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "writing"
+ },
+ {
+  "item": {
+   "title": "Policy Parley 2026",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Policy & Research Support"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "writing"
+ },
+ {
+  "item": {
+   "title": "BGMI",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Online Gaming & Esports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Valorant",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Online Gaming & Esports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Free Fire",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Online Gaming & Esports"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Chess",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Online Gaming & Esports"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Fantasy Football",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Online Gaming & Esports"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Robo War",
+   "type": "competitions",
+   "subtype": "innovation_challenge",
+   "workfunction": [
+    {
+     "name": "Robotics Engineer"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "CAD Design Challenge",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Architectural Design"
+    },
+    {
+     "name": "Design Engineer Mechanical"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Truss Load",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Mechanical Engineer"
+    },
+    {
+     "name": "Design Engineer Mechanical"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Boeing Aeromodelling Competition",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Design Engineer Mechanical"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "School Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Render for Change | AI Art Competition",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Fine Arts"
+    },
+    {
+     "name": "Illustration"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Marathon Madness",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Digital Poster Creation",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Graphic Design"
+    },
+    {
+     "name": "Visual Design"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Tech Reels Competition",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Video Editing"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Drone Race",
+   "type": "hackathons",
+   "subtype": "online_coding_challenge",
+   "workfunction": [
+    {
+     "name": "Robotics Engineer"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "All",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Line Follower Race (LFR)",
+   "type": "hackathons",
+   "subtype": "online_coding_challenge",
+   "workfunction": [
+    {
+     "name": "Embedded Systems Engineer"
+    },
+    {
+     "name": "Robotics Engineer"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Soldering Speedrun",
+   "type": "competitions",
+   "subtype": "general_competition",
+   "workfunction": [
+    {
+     "name": "Electronics Engineer"
+    },
+    {
+     "name": "Quizzes & Treasure Hunt"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ },
+ {
+  "item": {
+   "title": "Valorant Tournament – Battle Zone",
+   "type": "hackathons",
+   "subtype": "online_coding_challenge",
+   "workfunction": [
+    {
+     "name": "Online Gaming & Esports"
+    },
+    {
+     "name": "Games & Sports"
+    }
+   ],
+   "filters": [
+    {
+     "name": "Engineering Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Postgraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "Undergraduate",
+     "type": "eligible"
+    },
+    {
+     "name": "School Students",
+     "type": "eligible"
+    },
+    {
+     "name": "Management",
+     "type": "eligible"
+    },
+    {
+     "name": "Medical",
+     "type": "eligible"
+    },
+    {
+     "name": "Law",
+     "type": "eligible"
+    },
+    {
+     "name": "Arts, Commerce, Sciences & Others",
+     "type": "eligible"
+    }
+   ],
+   "tags": []
+  },
+  "expectCategory": "other"
+ }
+]

@@ -1,9 +1,13 @@
 // api/competitions.js
-// Vercel Serverless Function to fetch, filter and serve 100% REAL active case competitions directly from Unstop
+// Vercel Serverless Function: fetches open competitions from Unstop, classifies them
+// (category, sub-tracks, circuit, eligibility) and merges the scraped listings stored in Supabase.
+
+import { classifyCircuit, matchesKeyword } from '../src/data/circuitKeywords.js';
+import { MBA_EXCLUSION_PATTERN, UG_AFFIRMATIVE_PATTERN, isPgOnlyByTitle } from '../src/utils/eligibilityUtils.js';
 
 const FLAGSHIP_KEYWORDS = [
   'iim', 'iit', 'srcc', 'sscbs', 'shri ram', 'bits', 'xlri', 'fms',
-  "stephen's", "st. stephen", 'stephens college', 'hansraj', 'hindu college', 'lsr', 'lady shri ram', 'sggscc',
+  "stephen's", 'st. stephen', 'stephens college', 'hansraj', 'hindu college', 'lsr', 'lady shri ram', 'sggscc',
   'nsut', 'dtu', "l'oreal", 'loreal', 'tata', 'hul', 'hindustan unilever',
   'aditya birla', 'mckinsey', 'bain', 'bcg', 'boston consulting', 'kearney',
   'ey', 'deloitte', 'pwc', 'kpmg', 'reliance', 'amazon', 'flipkart',
@@ -13,133 +17,39 @@ const FLAGSHIP_KEYWORDS = [
   'brainwars', 'cafta', 'steel-a-thon', 'the ultimate pitch', 'stratos', 'flipkart grid', 'finserv atom'
 ];
 
-const DU_KEYWORDS = [
-  'delhi university', 'university of delhi', '(du)', 'sscbs', 'shaheed sukhdev',
-  'srcc', 'shri ram college', "stephen's", "st. stephen", "stephens college",
-  'hindu college', 'hansraj', 'lsr', 'lady shri ram',
-  'sggscc', 'ramjas', 'kirori mal', 'kmc', 'drc', 'daulat ram', 'gargi', 'venkateswara',
-  'venky', 'sgtb khalsa', 'sgtb', 'sri guru tegh bahadur khalsa', 'keshav mahavidyalaya',
-  'deen dayal upadhyaya college', 'ddu college',
-  'miranda house', 'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc',
-  'shaheed bhagat singh', 'motilal nehru college', 'indraprastha college', 'ipcw',
-  'maharaja agrasen college', 'ramanujan college', 'kalindi college', 'kamala nehru college',
-  'shaheed rajguru', 'bharati college', 'college of vocational studies', 'cvs'
-];
+// ---------- text helpers ----------
 
-const IIM_IIT_PREMIER_KEYWORDS = [
-  // IIMs (All 21 Indian Institutes of Management & IIM Mumbai / NITIE)
-  'iim', 'indian institute of management', 'nitie',
-  // IITs & Premier Research
-  'iit', 'indian institute of technology', 'doms', 'dms', 'sjmsom', 'vgsom', 'iisc', 'indian institute of science', 'techkriti', 'ism dhanbad',
-  'iit bhu', 'banaras hindu university', 'iit (bhu)', 'iit-bhu',
-  // BITS Pilani (All campuses: Pilani, Goa, Hyderabad)
-  'bits pilani', 'birla institute of technology & science', 'birla institute of technology and science', 'bits goa', 'bits hyderabad', 'bits',
-  // NITs (All National Institutes of Technology)
-  'nit ', 'nit,', 'nit)', 'nit -', 'nit-', 'national institute of technology', 'vnit', 'mnit', 'mnnit', 'svnit', 'manit',
-  'motilal nehru national institute of technology',
-  // IIITs (Indian Institutes of Information Technology)
-  'iiit', 'iiit-delhi', 'iiitd', 'iiith', 'iiitb', 'iiit hyderabad', 'iiit bangalore', 'iiit delhi', 'iiit allahabad',
-  // Top Tier 1 & Prominent B-Schools
-  'xlri', 'xavier school of management', 'xavier labour',
-  'isb', 'indian school of business',
-  'fms', 'faculty of management studies',
-  'spjimr', 'sp jain', 's.p. jain', 's p jain',
-  'mdi', 'management development institute',
-  'iift', 'indian institute of foreign trade',
-  'nmims', 'narsee monjee', 'sbm',
-  'sibm', 'scmhrd', 'siib', 'siom', 'scit',
-  'tiss', 'tata institute of social sciences',
-  'jbims', 'jamnalal bajaj',
-  'mica', 'mudra institute',
-  'imt', 'imt ghaziabad', 'imt nagpur', 'imt hyderabad',
-  'great lakes', 'glim',
-  'tapmi', 't. a. pai', 't a pai',
-  'ximb', 'xim university', 'xavier institute of management',
-  'gim', 'goa institute of management',
-  'k j somaiya', 'kj somaiya', 'somaiya', 'simsr', 'kj sim',
-  'fore school', 'fore school of management',
-  'lbsim', 'lal bahadur shastri',
-  'irma', 'institute of rural management',
-  'imi', 'international management institute',
-  'bimtech', 'birla institute of management',
-  'liba', 'loyola institute of business administration',
-  'welingkar', 'weschool',
-  'ibs', 'icfai business school', 'icfai',
-  'masters union', "masters' union",
-  'soil institute', 'ifmr', 'krea university',
-  'nibm', 'nia pune', 'bimm', 'balaji institute',
-  'iiswbm', 'iifm', 'indian institute of forest management',
-  'ksom', 'kiit school of management', 'bvimr', 'gl bajaj institute of management',
-  'commerce and business management, osmania',
-  // Premier State / Central Tech Universities
-  'nsut', 'netaji subhas', 'dtu', 'delhi technological university', 'dce',
-  'bit mesra', 'birla institute of technology (bit), mesra', 'birla institute of technology, mesra',
-  'punjab engineering college', 'pec chandigarh', 'pec, chandigarh', 'coep', 'vjti',
-  'jadavpur university', 'anna university', 'ceg guindy', 'thapar',
-  'psg tech', 'psg college of technology', 'rvce', 'bmsce', 'msrit', 'mit manipal', 'mahe',
-  // Premier Autonomous & Multidisciplinary Colleges
-  'st. xavier', 'st xavier', "xavier's college", 'xaviers college',
-  'ashoka university', 'ashoka', 'christ university', 'christ (deemed to be university)',
-  'loyola college', 'madras christian college', 'mcc chennai',
-  'presidency college', 'presidency university', 'jindal global', 'o.p. jindal',
-  'shiv nadar', 'snu', 'plaksha',
-  // Premier Law / NLUs
-  'nlsiu', 'nalsar', 'nujs', 'nlu delhi', 'nlu jodhpur', 'gnlu',
-  // Premier Science & Statistics
-  'indian statistical institute', 'isi kolkata', 'cmi', 'tifr', 'iiser', 'niser'
-];
+const ENTITIES = { nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', ndash: '–', mdash: '—', hellip: '…', bull: '•', rarr: '→' };
 
-const CORPORATE_KEYWORDS = [
-  // Management Consulting & Professional Services
-  'mckinsey', 'bain', 'bcg', 'boston consulting', 'kearney', 'oliver wyman', 'strategy&',
-  'deloitte', 'pwc', 'pricewaterhousecoopers', 'ey', 'ernst & young', 'kpmg', 'grant thornton', 'bdo', 'accenture',
-  'brainwars', 'bain capability network', 'cafta', 'steel-a-thon', 'the ultimate pitch', 'stratos', 'flipkart grid', 'finserv atom',
-  // FMCG & Consumer Brands
-  "l'oreal", 'loreal', 'brandstorm', 'hul', 'hindustan unilever', 'lime', 'unilever',
-  'itc', 'interrobang', 'marico', 'over the wall', 'mondelez', 'reckitt', 'nestle', 'p&g', 'procter & gamble',
-  'pepsico', 'coca-cola', 'coke', 'aditya birla', 'stratfresh', 'abg', 'dabur', 'godrej', 'asian paints', 'berger paints', 'britannia',
-  // Automotive, Industrial, Energy & PSUs
-  'maruti suzuki', 'maruti', 'satin finserv',
-  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail', 'ntpc', 'bhel', 'coal india',
-  'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
-  'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
-  'hero motocorp', 'hero colabs', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
-  // Tech, E-commerce, Telecom & Semis
-  'amazon', 'flipkart', 'google', 'microsoft', 'apple', 'meta', 'uber', 'swiggy', 'zomato',
-  'qualcomm', 'intel', 'cisco', 'ibm', 'infosys', 'wipro', 'hcl', 'cognizant', 'capgemini', 'tech mahindra',
-  'airtel', 'jio', 'vodafone', 'supervity', 'salesforce', 'adobe',
-  // Banking & Financial Services
-  'goldman sachs', 'jpmorgan', 'jp morgan', 'morgan stanley', 'citi', 'citigroup', 'hsbc',
-  'american express', 'amex', 'standard chartered', 'barclays', 'deutsche bank',
-  'hdfc', 'icici', 'axis bank', 'kotak', 'optum', 'stratethon', 'raam group',
-  // Startups, Platforms & Corporate entities
-  'cogniza', 'wonksknow', 'noobsync', 'invoqe', 'upforge', 'jetlearn', 'languify',
-  'product space', 'mhtechin', 'monomousumi', 'kartexa', 'skilled sapiens', 'indiastox',
-  'godstockss', 'acecubing', 'campusorbit', 'pharmaorbit', 'boss console', 'hackathon raptors',
-  'heritage vastra', 'code-x-novas', 'elite coders', 'wecodecoders', 'interactup', 'internhill',
-  'innovation hacks', 'gradient learnings', 'bharat academix', 'cyber hx', 'talentsec', 'techverse', 'peakforge'
-];
-
-const GLOBAL_KEYWORDS = [
-  // Top Global Universities & International B-Schools
-  'harvard', 'stanford', 'wharton', 'massachusetts institute of technology', 'yale',
-  'columbia university', 'oxford', 'cambridge', 'london school of economics', 'london business school',
-  'insead', 'national university of singapore', 'nanyang technological university', 'hult prize',
-  'hec paris', 'nyu stern', 'kellogg', 'chicago booth', 'berkeley haas', 'mit sloan',
-  'imperial college', 'eth zurich', 'monash', 'melbourne university', 'sydney university', 'toronto university',
-  // Prestigious Global Case Challenges & Flagships
-  'unilever future leaders', 'brandstorm', 'imagine cup', 'solution challenge',
-  'world bank', 'bloomberg global', 'cfa institute research challenge', 'schneider go green',
-  'international case competition', 'global challenge', 'worldwide challenge'
-];
-
-function matchesKeyword(text, keyword) {
-  const kw = keyword.trim().toLowerCase();
-  if (!kw) return false;
-  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(^|\\b)${escaped}(\\b|$)`, 'i');
-  return regex.test(text);
+export function htmlToText(html) {
+  return String(html || '')
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<br\s*\/?>|<\/(p|li|div|h\d)>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&([a-z]+);/gi, (m, name) => ENTITIES[name.toLowerCase()] ?? ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
+
+export function makeSummary(html, max = 200) {
+  const text = htmlToText(html);
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${cut.slice(0, lastSpace > max * 0.6 ? lastSpace : max).replace(/[\s,;:.\-–—]+$/, '')}…`;
+}
+
+// Event identity for de-duplication: ignores years, editions and punctuation
+export function normalizeTitle(title) {
+  return String(title || '')
+    .toLowerCase()
+    .replace(/\b(19|20)\d{2}\b/g, ' ')
+    .replace(/\b(season|edition|ed\.?|vol\.?)\s*\d+\b/g, ' ')
+    .replace(/[^a-z]+/g, '');
+}
+
+// ---------- eligibility ----------
 
 // Check if a competition is strictly for school/K-12 students
 function isSchoolOnly(item) {
@@ -166,14 +76,11 @@ function isJunkOrPass(item) {
   return /\b(gold pass|silver pass|platinum pass|event pass|entry pass|delegate pass|accommodation pass|student pass|general pass|festival pass|ticket pass|entry ticket|workshop pass)\b/i.test(title);
 }
 
-const MBA_EXCLUSION_PATTERN = /\b(mba\s+only|pgdm\s+only|postgraduate\s+only|post-graduate\s+only|mba\s+students\s+only|only\s+for\s+mba|only\s+mba|mba\s+graduate|mba\s+graduates|pre-mba|b-school\s+only|only\s+b-school|mba\s+track|for\s+mba\s+students|for\s+pgdm\s+students|executive\s+mba|1st\s+year\s+mba|2nd\s+year\s+mba|pgp\s+only|only\s+pgp|full-time\s+mba|first\s+year\s+mba|second\s+year\s+mba|two-year\s+mba|premier\s+b-schools|eligible\s+b-schools|participating\s+b-schools|1st\s+year\s+students\s+of\s+2-year|2nd\s+year\s+students\s+of\s+2-year|management\s+students\s+only|open\s+only\s+to\s+b-school|open\s+to\s+b-school\s+students|open\s+to\s+mba\s+students|b-school\s+students\s+and\s+corporate|cummins\s+redefine|mahindra\s+war\s+room|godrej\s+loud|aditya\s+birla\s+group\s+stratos|itc\s+interrobang|hul\s+l\.i\.m\.e\.|marico\s+over\s+the\s+wall|asian\s+paints\s+canvas|colgate\s+transcend|india's\s+most\s+employable\s+mba)\b/i;
-
-const UG_AFFIRMATIVE_PATTERN = /\b(undergraduate|undergrad|undergraduates|ug\s+only|only\s+for\s+ug|ug\s+students|all\s+collegiate|all\s+college\s+students|open\s+to\s+all\s+students|all\s+students\s+eligible|b\.tech|bba|b\.com|bcom|bachelor|bachelors|b\.sc|bsc|b\.a\b|engineering\s+students)\b/i;
-
 // Eligibility check: Allow competitions that undergraduates can participate in
 function isUndergradEligible(item) {
   if (!item) return false;
   if (isSchoolOnly(item)) return false;
+  if (isPgOnlyByTitle(item.title)) return false;
 
   const platform = (item.sourcePlatform || item.source_platform || '').toLowerCase();
   const title = (item.title || '').toLowerCase();
@@ -181,8 +88,7 @@ function isUndergradEligible(item) {
   const desc = (item.description || item.raw_scraped_text || '').toLowerCase();
   const fullText = `${title} ${orgName} ${desc}`;
 
-  // 1. InsideKampus & InsideIIM: Dedicated MBA / B-School platform
-  // Exclusively PG/MBA unless explicitly affirmative for Undergraduates / Engineering
+  // 1. InsideKampus & InsideIIM: dedicated MBA / B-School platform
   const isInsideCampus = platform === 'inside_campus' || platform === 'inside_iim' ||
     /\binside(iim|kampus)\b/i.test(orgName) || /\binside(iim|kampus)\b/i.test(title);
 
@@ -190,31 +96,25 @@ function isUndergradEligible(item) {
     const hasUgAffirmative = UG_AFFIRMATIVE_PATTERN.test(fullText);
     const hasMbaExclusion = MBA_EXCLUSION_PATTERN.test(fullText);
     const hasUgCohort = /\b(ug\s+campuses|engineering\s+campuses|undergraduate\s+track)\b/i.test(fullText);
-
-    if (hasUgAffirmative && (!hasMbaExclusion || hasUgCohort)) {
-      // Eligible for UG
-    } else {
+    if (!(hasUgAffirmative && (!hasMbaExclusion || hasUgCohort))) {
       return false;
     }
   }
 
   // 2. Text-based strong MBA/PG exclusivity pattern across title, host and description
-  if (MBA_EXCLUSION_PATTERN.test(fullText)) {
-    if (!UG_AFFIRMATIVE_PATTERN.test(fullText)) {
-      return false;
-    }
+  if (MBA_EXCLUSION_PATTERN.test(fullText) && !UG_AFFIRMATIVE_PATTERN.test(fullText)) {
+    return false;
   }
 
-  // 3. Filter-based exclusivity from Unstop tags:
+  // 3. Filter-based exclusivity from Unstop tags
   const filterNames = (item.filters || []).map(f => (typeof f === 'string' ? f : (f.name || '')).toLowerCase().trim());
   const hasUG = filterNames.some(f => f.includes('undergraduate') || f.includes('engineering') || f.includes('arts') || f.includes('bachelor'));
   const hasPG = filterNames.some(f => f.includes('postgraduate') || f.includes('mba') || f.includes('b-school'));
-
   if (hasPG && !hasUG) {
     return false;
   }
 
-  // 4. Check structured registration eligibility payload from Unstop
+  // 4. Structured registration eligibility payload from Unstop
   let regnEligibility = item.regnRequirements?.eligibility;
   if (typeof regnEligibility === 'string') {
     try {
@@ -230,17 +130,11 @@ function isUndergradEligible(item) {
 
     const extractCourses = (arr) => arr.map(c => (typeof c === 'string' ? c : (c?.course || '')).toLowerCase()).filter(Boolean);
     const bSchoolCourses = extractCourses(bSchools);
-    const engCourses = extractCourses(engineering);
-    const artsCourses = extractCourses(arts);
-
     const hasUgInBschool = bSchoolCourses.some(c => c.includes('bba') || c.includes('bcom') || c.includes('bms') || c.includes('bhm'));
     const hasPgInBschool = bSchoolCourses.some(c => c.includes('mba') || c.includes('pgdm') || c.includes('exec') || c.includes('phd'));
 
-    const hasEng = engCourses.length > 0;
-    const hasArts = artsCourses.length > 0;
-
-    // If strictly restricted to B-schools with no undergrad/arts/tech access
-    if (bSchools.length > 0 && !hasEng && !hasArts) {
+    // Strictly restricted to B-schools with no undergrad/arts/tech access
+    if (bSchools.length > 0 && extractCourses(engineering).length === 0 && extractCourses(arts).length === 0) {
       if (!hasUgInBschool && hasPgInBschool) {
         return false;
       }
@@ -259,371 +153,401 @@ function isPostgradEligible(item) {
   if (isSchoolOnly(item)) return false;
 
   const title = (item.title || '').toLowerCase();
-  const ugOnlyTitle = /\b(undergraduate\s+only|ug\s+only|only\s+for\s+ug|only\s+for\s+undergraduate)\b/i.test(title);
-  if (ugOnlyTitle) return false;
+  if (/\b(undergraduate\s+only|ug\s+only|only\s+for\s+ug|only\s+for\s+undergraduate)\b/i.test(title)) return false;
 
   const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase().trim());
   const hasAll = filterNames.length === 0 || filterNames.includes('all');
   const hasPG = filterNames.some(f => f.includes('postgraduate') || f.includes('mba'));
   const hasUG = filterNames.some(f => f.includes('undergraduate'));
 
-  if (hasUG && !hasPG && !hasAll && filterNames.length === 1) {
-    return false;
-  }
-
-  return true;
+  return !(hasUG && !hasPG && !hasAll && filterNames.length === 1);
 }
 
-function classifyOpportunity(item) {
+// ---------- category ----------
+
+const CATEGORY_LABELS = {
+  case: { categoryLabel: 'Case Comp', categoryEmoji: '📊' },
+  hackathon: { categoryLabel: 'Hackathon', categoryEmoji: '💻' },
+  quiz: { categoryLabel: 'Quiz & Trivia', categoryEmoji: '🧠' },
+  debate: { categoryLabel: 'Debate & MUN', categoryEmoji: '🗣️' },
+  writing: { categoryLabel: 'Writing & Research', categoryEmoji: '✍️' },
+  simulation: { categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' },
+  other: { categoryLabel: 'Other', categoryEmoji: '🏅' },
+};
+
+const withLabel = (category) => ({ category, ...CATEGORY_LABELS[category] });
+
+// Order matters: the first matching rule wins
+const TITLE_RULES = [
+  ['writing', /\b(case writing|case study writing|call for (papers|articles|abstracts)|paper presentation|research paper|article writing|essay (writing|competition|contest)|essay|white paper|blog writing|content writing|poetry|story writing|creative writing|policy)\b/i],
+  ['case', /\b(case competition|case study|case challenge|case comp|case|business case|consulting challenge|crack the case|break the case)\b/i],
+  ['hackathon', /(hackathon|\bhacks?\b|hack[-\s]?(sphere|era|verse|fest|night|day)|\bcodefest|\bcode\s?fest|coding (challenge|contest|competition|round)|\bctf\b|capture the flag|datathon|buildathon|make-?a-?thon|devfest|\bdsa\b|competitive programming|\bcode\b|\bcoding\b|programming|\bprompt\w*|bug bounty|\b\w+(?<!ide|mar)athon\b)/i],
+  ['quiz', /\b(quiz\w*|trivia|treasure hunt|clue\w*|brain teaser|inquizitive|knowledge bowl|sawaal|buzzer|jeopardy|kahoot|mindspree|olympiad|aptitude|reasoning (test|challenge)|assessment test|bee)\b/i],
+  ['debate', /\b(debate|debating|parliamentary|asian pd|british parliamentary|turncoat|mun|model united nations|youth parliament|lok sabha|unsc|unhrc|oratory|public speaking|extempore|elocution|gavel|battle of ideas|model cop)\b/i],
+  ['simulation', /\b(auction|ipl|mock\s?stock|stock (market|trading|wars?)|trading (simulation|challenge|league|game)|simulation|portfolio management|bull[-\s]?vs[-\s]?bear|big bull|deal room|crisis room|monopoly|predictions? challenge|nifty|equities prediction|bidding|bid|bargain|trade wars?)\b/i],
+];
+
+// Events that are none of the six categories: shown in the full list and search, under no category filter
+const NON_TRACK_TITLE = /\b(bgmi|valorant|free fire|pubg|call of duty|e-?sports?|gaming tournament|chess|checkmate|ludo|carrom|fantasy (football|cricket|league)|war zone|battle zone|minecraft|clash royale|marathon|cricket tournament|football tournament|badminton|robo\w*|robot\w*|bots?|escape|\w*xcape|drone|rc car|aero\s?model\w*|truss|bridge (design|building|it)|cad\b|seismic|hydra\w*|breadboard|circuit (design|making|craft)|soldering|arduino|wireless power|line follower|model (exhibition|making)|project (expo|exhibition)|poster|reels?\b|photography|videography|short film|film making|\bart\b|painting|sketch\w*|design (challenge|competition|contest|decode)|dance|singing|music|fashion|cooking|leather|fabriquer)\b/i;
+
+const CASE_WEAK_TITLE = /\b(pitch\w*|shark tank|b-?plan|business plan|startup|venture|founder|ideathon|consult\w*|strateg\w*|brand\w*|marketing|valuation|equity research|investment|finance|financial|teardown|product (management|case)|go-to-market|growth hack|business model|entrepreneur\w*|enactus|impact tank|investor\w*|innovat\w*|idea\w*|business|manager\w*|management|hr|economics|audit|bank\w*|fraud\w*)\b/i;
+
+// Unstop files puzzle events under the broad "Quizzes & Treasure Hunt" work function; only trust it with a puzzle-like title
+const TECH_TITLE = /(llms?|ai agents?|syntax|software|tech solutions?|technology solutions?)|w*hack/i;
+const PUZZLE_TITLE = /\b(hunt|rush|logic|puzzle\w*|cognitive|apti\w*|prashn\w*|brain\w*|riddle\w*|cryptic|decode)\b/i;
+
+function topicalText(item) {
+  const workFunctions = Array.isArray(item.workfunction)
+    ? item.workfunction.map(w => (w?.name || '').toLowerCase()).filter(w => w && w !== 'quizzes & treasure hunt')
+    : [];
+  // Eligibility tags ("Engineering Students", "Arts, Commerce, Sciences & Others") say who may enter, not what the event is about
+  const topicFilters = Array.isArray(item.filters)
+    ? item.filters.filter(f => f && f.type !== 'eligible').map(f => (f.name || '').toLowerCase())
+    : [];
+  const tags = Array.isArray(item.tags) ? item.tags.map(t => (t?.name || t || '').toString().toLowerCase()) : [];
+  return `${workFunctions.join(' ')} ${topicFilters.join(' ')} ${tags.join(' ')}`;
+}
+
+export function classifyOpportunity(item) {
+  const title = String(item.title || '');
   const type = (item.type || '').toLowerCase();
   const subtype = (item.subtype || item.subType || '').toLowerCase();
-  const title = (item.title || '').toLowerCase();
-  const seoUrl = (item.seo_url || '').toLowerCase();
-  const filterNames = (item.filters || []).map(f => (f.name || '').toLowerCase());
-  const workFunctions = Array.isArray(item.workfunction) 
-    ? item.workfunction.map(w => (w?.name || '').toLowerCase())
-    : [];
-  const tags = Array.isArray(item.tags)
-    ? item.tags.map(t => (t?.name || t || '').toLowerCase())
-    : [];
 
-  // Exclude broad workfunction category 'quizzes & treasure hunt' from corrupting case comps!
-  const cleanedWorkFunctions = workFunctions.filter(w => w !== 'quizzes & treasure hunt');
-  const combined = `${title} ${seoUrl} ${filterNames.join(' ')} ${cleanedWorkFunctions.join(' ')} ${tags.join(' ')}`;
-
-  // Priority 1: High-confidence Title & Explicit Subtype Signals
-  // 1a. Explicit Case Comps (Unstop subtype OR title explicitly mentions case comp/study)
-  if (
-    subtype === 'case_competition' ||
-    subtype === 'case-competitions' ||
-    /\b(case competition|case study|case challenge|case comp|business case|consulting challenge|case quest|break the case|crack the case)\b/i.test(title)
-  ) {
-    return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
+  // 1. What the title explicitly says
+  for (const [category, re] of TITLE_RULES) {
+    if (re.test(title)) return withLabel(category);
   }
+  // 2. Clearly not one of the six (esports, sport, engineering builds, art & media)
+  if (NON_TRACK_TITLE.test(title)) return withLabel('other');
 
-  // 1b. Explicit Coding Challenges & Hackathons (online coding contest or type hackathon)
-  if (
-    type === 'hackathons' ||
-    subtype === 'online_coding_challenge' ||
-    /\b(hackathon|codefest|coding challenge|hack\b|devfest|web dev|app dev|fullstack|machine learning|ai\/ml|data science|datathon|cybersecurity|blockchain|dapp|algorithmic|kaggle|robotics|robot\b|prompt challenge|prompt engineering|techfest|symposium|iot|hardware challenge|developer challenge|open source|ctf\b|code\b)\b/i.test(title)
-  ) {
-    return { category: 'hackathon', categoryLabel: 'Hackathon', categoryEmoji: '💻' };
-  }
+  // 3. Unstop's own structure
+  if (type === 'hackathons' || subtype === 'online_coding_challenge') return withLabel('hackathon');
+  if (subtype === 'case_competition') return withLabel('case');
+  if (type === 'quizzes') return withLabel('quiz');
 
-  // 1c. Explicit Quizzes & Trivia
-  if (
-    type === 'quizzes' ||
-    /\b(quiz\b|trivia\b|quizzing|brain teaser|inquisitive|inquizire|knowledge bowl|sawaal|sawaal jawaab|buzzer|jeopardy|kahoot|brainwave|mindspree)\b/i.test(title) ||
-    filterNames.some(f => f.includes('quiz') || f.includes('quizzing') || f.includes('trivia'))
-  ) {
-    return { category: 'quiz', categoryLabel: 'Quiz & Trivia', categoryEmoji: '🧠' };
-  }
+  // 4. Business-flavoured titles and puzzle events
+  if (CASE_WEAK_TITLE.test(title)) return withLabel('case');
+  const hasPuzzleWorkFunction = Array.isArray(item.workfunction) && item.workfunction.some(w => (w?.name || '').toLowerCase() === 'quizzes & treasure hunt');
+  if (hasPuzzleWorkFunction && PUZZLE_TITLE.test(title)) return withLabel('quiz');
 
-  // 1d. Explicit Debates & Model UN
-  if (
-    /\b(debate\b|debating|parliamentary debate|asian pd|british parliamentary|turncoat|mun\b|model united nations|youth parliament|oratory|public speaking|gavel|battle of ideas)\b/i.test(title) ||
-    filterNames.some(f => f.includes('debate') || f.includes('mun'))
-  ) {
-    return { category: 'debate', categoryLabel: 'Debate & MUN', categoryEmoji: '🗣️' };
-  }
+  // 5. Topic tags (never eligibility tags, never the broad "Quizzes & Treasure Hunt" work function)
+  const topics = topicalText(item);
+  if (TECH_TITLE.test(title) || /(programming|coding|software|hackathon|data science|artificial intelligence|machine learning|cyber|web development|app development)/.test(topics)) return withLabel('hackathon');
+  if (/(trading|stock market|simulation)/.test(topics)) return withLabel('simulation');
+  if (/(debate|model united nations|mun)/.test(topics)) return withLabel('debate');
+  if (/(writing|content|journalism|research paper|essay)/.test(topics)) return withLabel('writing');
+  // Unstop innovation challenges are ideation / pitch events
+  if (subtype === 'innovation_challenge') return withLabel('case');
+  if (/(case|strategy|business plan|marketing|entrepreneurship|finance|consulting|operations|product management|startup)/.test(topics)) return withLabel('case');
 
-  // 1e. Explicit Writing & Research
-  if (
-    /\b(article writing|essay writing|essay competition|essay contest|paper presentation|research paper|call for papers|white paper)\b/i.test(title) ||
-    filterNames.some(f => f.includes('writing') || f.includes('essay') || f.includes('paper presentation') || f.includes('research'))
-  ) {
-    return { category: 'writing', categoryLabel: 'Writing & Research', categoryEmoji: '✍️' };
-  }
-
-  // 1f. Explicit Simulations & Auctions
-  if (
-    /\b(auction\b|ipl auction|football auction|cricket auction|player auction|mock stock|stock trading|trading simulation|simulation game|deal room|portfolio management|bidding|equities prediction|monopoly)\b/i.test(title) ||
-    filterNames.some(f => f.includes('simulation') || f.includes('gaming'))
-  ) {
-    return { category: 'simulation', categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' };
-  }
-
-  // Priority 2: Workfunction & Tag Fallbacks
-  if (
-    filterNames.some(f => f.includes('programming') || f.includes('hackathon') || f.includes('coding') || f.includes('computer') || f.includes('software')) ||
-    cleanedWorkFunctions.some(w => w.includes('software') || w.includes('data science') || w.includes('artificial intelligence') || w.includes('engineering') || w.includes('cyber') || w.includes('robotics'))
-  ) {
-    return { category: 'hackathon', categoryLabel: 'Hackathon', categoryEmoji: '💻' };
-  }
-
-  if (
-    cleanedWorkFunctions.some(w => w.includes('trading') || w.includes('simulation') || w.includes('gaming'))
-  ) {
-    return { category: 'simulation', categoryLabel: 'Simulation & Auction', categoryEmoji: '📈' };
-  }
-
-  if (
-    cleanedWorkFunctions.some(w => w.includes('writing') || w.includes('content') || w.includes('journalism') || w.includes('research'))
-  ) {
-    return { category: 'writing', categoryLabel: 'Writing & Research', categoryEmoji: '✍️' };
-  }
-
-  if (
-    workFunctions.some(w => w.includes('quiz') || w.includes('trivia'))
-  ) {
-    return { category: 'quiz', categoryLabel: 'Quiz & Trivia', categoryEmoji: '🧠' };
-  }
-
-  if (
-    filterNames.some(f => f.includes('case') || f.includes('strategy') || f.includes('business plan') || f.includes('marketing') || f.includes('entrepreneurship') || f.includes('finance') || f.includes('consulting')) ||
-    cleanedWorkFunctions.some(w => w.includes('strategy') || w.includes('consulting') || w.includes('business') || w.includes('marketing') || w.includes('finance') || w.includes('operations')) ||
-    /\b(case\b|case study|case competition|consulting|strategy|b-plan|business plan|pitch deck|pitch\b|valuation|shark tank|impact tank|tank\b|ideathon|venture|entrepreneurship|consultant|product innovation|marketing challenge|brand challenge|brand storm|market entry|growth hack|case challenge|business challenge|enact|enactus|fintech)\b/i.test(combined)
-  ) {
-    return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
-  }
-
-  // Default collegiate fallback: Case Comp (eliminates dead general track)
-  return { category: 'case', categoryLabel: 'Case Comp', categoryEmoji: '📊' };
+  // 6. Unknown: never forced into a category
+  return withLabel('other');
 }
 
-export function extractSubTracks(item, mainCategory) {
-  const subTracks = new Set();
-  const title = (item.title || '').toLowerCase();
-  const workFunctions = Array.isArray(item.workfunction) 
-    ? item.workfunction.map(w => (w?.name || '').toLowerCase())
-    : [];
-  const filterNames = Array.isArray(item.filters)
-    ? item.filters.map(f => (f?.name || '').toLowerCase())
-    : [];
-  const textHaystack = `${title} ${workFunctions.join(' ')} ${filterNames.join(' ')}`;
+// ---------- sub-tracks ----------
 
-  // 1. Case Comps Sub-Tracks
-  if (mainCategory === 'case' || textHaystack.includes('case') || textHaystack.includes('consulting') || textHaystack.includes('strategy')) {
-    if (/\b(finance|financial|valuation|equity|m&a|merger|acquisition|fintech|banking|investment banking|capital market|corporate finance|deal room)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('finance') || w.includes('banking') || w.includes('investment'))) {
-      subTracks.add('finance');
-    }
-    if (/\b(strategy|consulting|consultant|market entry|gtm|go-to-market|growth|corporate strategy|strategic|business analysis)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('strategy') || w.includes('consulting') || w.includes('business analysis'))) {
-      subTracks.add('strategy');
-    }
-    if (/\b(marketing|brand|branding|brandstorm|advertising|fmcg|consumer|pr|ad\b|media|campaign)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('marketing') || w.includes('market research') || w.includes('brand'))) {
-      subTracks.add('marketing');
-    }
-    if (/\b(b-plan|bplan|business plan|pitch deck|pitch|pitching|shark tank|startup|entrepreneur|venture|seed|incubator|ideathon)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('entrepreneur') || w.includes('business plan'))) {
-      subTracks.add('bplan');
-    }
-    if (/\b(product|product management|apm|pm\b|ui\/ux|teardown|feature spec|prd)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('product management'))) {
-      subTracks.add('product');
-    }
-    if (/\b(operations|supply chain|scm|logistics|procurement|process improvement|six sigma|warehouse|distribution)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('operations') || w.includes('supply chain') || w.includes('process improvement'))) {
-      subTracks.add('operations');
-    }
-    if (subTracks.size === 0) {
-      subTracks.add('strategy');
-    }
-  }
+const SUBTRACK_RULES = {
+  case: [
+    ['finance', /\b(finance|financial|valuation|equity|m&a|merger|acquisition|fintech|banking|investment|capital market|credit|accounting)\b/i],
+    ['strategy', /\b(strategy|strategic|consulting|consultant|market entry|gtm|go-to-market|growth|business analysis)\b/i],
+    ['marketing', /\b(marketing|brand|branding|advertis\w*|fmcg|consumer|campaign)\b/i],
+    ['bplan', /\b(b-?plan|business plan|pitch\w*|shark tank|startup|entrepreneur\w*|venture|incubat\w*|ideathon|founder)\b/i],
+    ['product', /\b(product management|product case|product teardown|product|apm|ui\/ux|teardown|prd)\b/i],
+    ['operations', /\b(operations|supply chain|scm|logistics|procurement|process improvement|six sigma|warehouse)\b/i],
+  ],
+  hackathon: [
+    ['hack_ai', /\b(ai|a\.i\.|ml|machine learning|artificial intelligence|deep learning|computer vision|nlp|llm|llms|gen\s?ai|generative|neural|agentic|agents?|prompt)\b/i],
+    ['hack_data', /\b(data science|datathon|analytics|kaggle|big data|data analytics|visuali[sz]ation|data engineering)\b/i],
+    ['hack_web3', /\b(blockchain|web3|crypto\w*|smart contracts?|solidity|ethereum|dapps?|defi|nfts?)\b/i],
+    ['hack_cyber', /\b(cyber\w*|ctf|capture the flag|ethical hacking|security|infosec|cloud|devops)\b/i],
+    ['hack_dev', /\b(web|webdev|apps?|full\s?stack|frontend|backend|mobile|android|ios|software development|web development|app development)\b/i],
+  ],
+  quiz: [
+    ['quiz_business', /\b(business|biz|brand\w*|corporate|marketing|startup|management|economy|economics)\b/i],
+    ['quiz_tech', /\b(tech|technology|technical|science|engineering|computing|coding|ai|physics|chemistry|math\w*|quantum|algo\w*)\b/i],
+    ['quiz_finance', /\b(finance|financial|stock|markets?|money|banking|investment|accounting|economy)\b/i],
+    ['quiz_general', /\b(general|trivia|pop culture|sports|movies?|entertainment|gk|open quiz|treasure hunt|clue\w*|india quiz|mela)\b/i],
+  ],
+  simulation: [
+    ['sim_stock', /\b(stock\w*|trading|markets?|portfolio|forex|equit\w*|shares|mock\s?stock|bull|bear|nifty|prediction\w*)\b/i],
+    ['sim_auction', /\b(auction|ipl|bid|bidding|bidstorm)\b/i],
+    ['sim_crisis', /\b(crisis|deal room|escape room|boardroom|negotiation|hr room)\b/i],
+  ],
+  debate: [
+    ['debate_pd', /\b(parliamentary|asian pd|british parliamentary|pd|bp|cross examination)\b/i],
+    ['debate_mun', /\b(mun|model united nations|youth parliament|lok sabha|unhrc|unsc|united nations)\b/i],
+    ['debate_conventional', /\b(conventional|turncoat|extempore|oratory|public speaking|speech|elocution|oxford style|english debate|hindi debate)\b/i],
+  ],
+  writing: [
+    ['writing_paper', /\b(research paper|paper presentation|call for papers|academic|ieee|journal|conference)\b/i],
+    ['writing_article', /\b(articles?|essays?|blog|editorial|op-ed|content writing|creative writing|poetry|story)\b/i],
+    ['writing_case', /\b(case writing|policy|white paper|case study writing)\b/i],
+  ],
+};
 
-  // 2. Hackathons Sub-Tracks
-  if (mainCategory === 'hackathon' || textHaystack.includes('hack') || textHaystack.includes('coding') || textHaystack.includes('developer')) {
-    if (/\b(ai|ml|machine learning|artificial intelligence|data science|datathon|deep learning|computer vision|nlp|llm|genai|kaggle)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('artificial intelligence') || w.includes('machine learning') || w.includes('applied ai') || w.includes('data science'))) {
-      subTracks.add('hack_ai');
-    }
-    if (/\b(web\b|app\b|fullstack|full stack|frontend|backend|mobile app|android|ios|dev\b|software development|cloud|devops)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('software development') || w.includes('frontend') || w.includes('backend') || w.includes('full stack'))) {
-      subTracks.add('hack_dev');
-    }
-    if (/\b(blockchain|web3|crypto|smart contract|solidity|ethereum|dapp|defi|nft)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('blockchain') || w.includes('web3'))) {
-      subTracks.add('hack_web3');
-    }
-    if (/\b(open innovation|ideathon|design thinking|prototype|social innovation|smart city)\b/i.test(textHaystack)) {
-      subTracks.add('hack_ideathon');
-    }
-    if (/\b(competitive programming|algorithms|data structures|algorithmic|speed coding|icpc|codeforces|codechef)\b/i.test(textHaystack) ||
-        filterNames.some(f => f.includes('coding challenge') || f.includes('programming'))) {
-      subTracks.add('hack_cp');
-    }
-    if (/\b(cybersecurity|cyber|ctf|capture the flag|ethical hacking|security|infosec)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('cyber') || w.includes('security'))) {
-      subTracks.add('hack_cyber');
-    }
-    if (subTracks.size === 0) {
-      subTracks.add('hack_dev');
-    }
-  }
-
-  // 3. Quizzes Sub-Tracks
-  if (mainCategory === 'quiz' || textHaystack.includes('quiz') || textHaystack.includes('trivia')) {
-    if (/\b(business|brand|brands|corporate|tata crucible|menti|ad\b|company)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('strategy') || w.includes('marketing') || w.includes('business'))) {
-      subTracks.add('quiz_biz');
-    }
-    if (/\b(tech|technology|science|engineering|sci-biz-tech|computing|it\b)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('technology') || w.includes('science'))) {
-      subTracks.add('quiz_tech');
-    }
-    if (/\b(finance|stock|market|money|banking|economy|economic)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('investment') || w.includes('finance'))) {
-      subTracks.add('quiz_finance');
-    }
-    if (/\b(general|trivia|pop culture|sports|movies|entertainment|gk|world|inquizitive|treasure hunt)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('treasure hunt'))) {
-      subTracks.add('quiz_general');
-    }
-    if (subTracks.size === 0) {
-      subTracks.add('quiz_general');
-    }
-  }
-
-  // 4. Simulations Sub-Tracks
-  if (mainCategory === 'simulation' || textHaystack.includes('simulation') || textHaystack.includes('auction')) {
-    if (/\b(stock|trading|market|portfolio|forex|equity|aarohan|bidding stock|shares)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('investment') || w.includes('trading'))) {
-      subTracks.add('sim_stock');
-    }
-    if (/\b(auction|ipl|cricket auction|football auction|player auction|bid|bidding)\b/i.test(textHaystack)) {
-      subTracks.add('sim_auction');
-    }
-    if (/\b(crisis|deal room|escape room|hr room|boardroom|negotiation)\b/i.test(textHaystack) ||
-        workFunctions.some(w => w.includes('crisis') || w.includes('human resources') || w.includes('psychology'))) {
-      subTracks.add('sim_crisis');
-    }
-    if (subTracks.size === 0) {
-      subTracks.add('sim_stock');
-    }
-  }
-
-  // 5. Debates Sub-Tracks
-  if (mainCategory === 'debate' || textHaystack.includes('debate') || textHaystack.includes('mun')) {
-    if (/\b(parliamentary|asian pd|british parliamentary|pd\b|bp\b|cross examination)\b/i.test(textHaystack)) {
-      subTracks.add('debate_pd');
-    }
-    if (/\b(mun|model united nations|youth parliament|lok sabha|unhrc|unsc|united nations)\b/i.test(textHaystack)) {
-      subTracks.add('debate_mun');
-    }
-    if (/\b(conventional|turncoat|extempore|oratory|public speaking|speech|clash)\b/i.test(textHaystack)) {
-      subTracks.add('debate_conventional');
-    }
-    if (subTracks.size === 0) {
-      subTracks.add('debate_conventional');
-    }
-  }
-
-  // 6. Writing Sub-Tracks
-  if (mainCategory === 'writing' || textHaystack.includes('writing') || textHaystack.includes('essay') || textHaystack.includes('paper')) {
-    if (/\b(research paper|paper presentation|call for papers|academic|ieee|journal)\b/i.test(textHaystack)) {
-      subTracks.add('writing_paper');
-    }
-    if (/\b(article|essay|blog|editorial|op-ed|content writing)\b/i.test(textHaystack)) {
-      subTracks.add('writing_article');
-    }
-    if (/\b(case writing|policy|white paper|case study writing)\b/i.test(textHaystack)) {
-      subTracks.add('writing_case');
-    }
-    if (subTracks.size === 0) {
-      subTracks.add('writing_article');
-    }
-  }
-
-  return Array.from(subTracks);
+// Only evidence from the title and topic tags; no default sub-tracks
+export function extractSubTracks(item, category) {
+  const rules = SUBTRACK_RULES[category];
+  if (!rules) return [];
+  const haystack = `${item.title || ''} ${topicalText(item)}`;
+  return rules.filter(([, re]) => re.test(haystack)).map(([id]) => id);
 }
 
-const MULTIPLATFORM_OPPORTUNITIES = [];
+// ---------- Unstop ----------
 
 let cachedCompetitions = null;
 let cacheTimestamp = 0;
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute in-memory cache
 
+const extractValidUrl = (...urls) => {
+  for (const u of urls) {
+    if (typeof u === 'string' && u.trim().length > 0 && u.trim() !== 'null' && u.trim() !== 'undefined') {
+      const trimmed = u.trim();
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+      if (trimmed.startsWith('//')) return `https:${trimmed}`;
+      if (trimmed.startsWith('/')) return `https://d8it4huxumps7.cloudfront.net${trimmed}`;
+      return trimmed;
+    }
+  }
+  return null;
+};
+
+const DISCIPLINE = { case: 'Case', hackathon: 'Hackathon', quiz: 'Quiz', simulation: 'Simulation', writing: 'Writing', debate: 'Debate & MUN', other: 'Other' };
+
+function formatUnstopItem(item, now) {
+  const orgName = (item.organisation?.name || 'Academic Institution').trim();
+  const title = String(item.title || '').trim();
+  const circuit = classifyCircuit(orgName, title);
+  const { category, categoryLabel, categoryEmoji } = classifyOpportunity({ ...item, title });
+
+  const minTeam = item.regnRequirements?.min_team_size || 1;
+  const maxTeam = item.regnRequirements?.max_team_size || 4;
+  const isFree = !item.isPaid;
+
+  // Prize: cumulative cash pool across all positions
+  let prizeDisplay = 'Certificates & Recognition';
+  if (Array.isArray(item.prizes) && item.prizes.length > 0) {
+    const totalCash = item.prizes.reduce((sum, p) => sum + (Number(p.cash) || 0), 0);
+    if (totalCash > 0) {
+      prizeDisplay = `₹${totalCash.toLocaleString('en-IN')} Prize Pool`;
+    } else if (item.prizes.some(p => p.rank)) {
+      prizeDisplay = item.prizes.map(p => String(p.rank || '').trim()).filter(Boolean).slice(0, 2).join(' · ');
+    }
+  }
+
+  const remainDaysText = item.regnRequirements?.remain_days || 'Ongoing';
+  let daysRemainingNum = 999;
+  if (item.regnRequirements?.end_regn_dt) {
+    const diffMs = new Date(item.regnRequirements.end_regn_dt).getTime() - now;
+    daysRemainingNum = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  }
+
+  const undergradOk = isUndergradEligible(item);
+  const isPGOnly = !undergradOk;
+  const lowerCombined = `${orgName} ${title}`.toLowerCase();
+  const isMBAorPG = isPGOnly || (item.filters || []).some(f => /mba|postgraduate/i.test(f.name || '')) || /\b(mba|pgdm|iim|b-school)\b/i.test(lowerCombined);
+
+  const orgLogoUrl = extractValidUrl(item.organisation?.logoUrl2, item.organisation?.logoUrl, item.organisation?.logo, item.organisation?.image);
+  const compLogoUrl = extractValidUrl(item.logoUrl2, item.logo);
+  const bannerImgUrl = extractValidUrl(item.banner_mobile?.url, item.banner_desktop?.url, item.banner?.url);
+
+  return {
+    id: item.id || item.short_id,
+    title,
+    host: orgName,
+    orgName,
+    circuit,
+    discipline: DISCIPLINE[category],
+    days: daysRemainingNum,
+    fee: isFree ? 'Free' : 'Paid',
+    orgLogo: orgLogoUrl || compLogoUrl || null,
+    logo: orgLogoUrl || compLogoUrl || bannerImgUrl || null,
+    bannerUrl: bannerImgUrl || compLogoUrl || null,
+    unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
+    deadline: item.regnRequirements?.end_regn_dt || item.end_date,
+    startDate: item.regnRequirements?.start_regn_dt || item.start_date || null,
+    remainDaysText,
+    daysRemainingNum,
+    urgency: daysRemainingNum <= 2 ? 'high' : daysRemainingNum <= 5 ? 'medium' : 'normal',
+    category,
+    categoryLabel,
+    categoryEmoji,
+    minTeam,
+    maxTeam,
+    teamSizeDisplay: minTeam === maxTeam
+      ? (minTeam === 1 ? 'Solo / Individual' : `${minTeam} Members`)
+      : `${minTeam} - ${maxTeam} Members`,
+    prizes: prizeDisplay,
+    prize: prizeDisplay,
+    summary: makeSummary(item.details),
+    isFree,
+    isFlagship: FLAGSHIP_KEYWORDS.some(kw => matchesKeyword(lowerCombined, kw)),
+    isDU: circuit === 'DU Circuit',
+    isIIMorIIT: circuit === 'IIM / IIT',
+    isPremier: circuit === 'IIM / IIT',
+    isIIMorIITorPremier: circuit === 'IIM / IIT',
+    isBschool: circuit === 'IIM / IIT',
+    isCorporate: circuit === 'Corporate',
+    isCorporateOrGlobal: circuit === 'Corporate',
+    isOthers: circuit === 'Others',
+    isFirstYearFriendly: isFree && maxTeam >= 1 && maxTeam <= 5,
+    registeredCount: item.registerCount || 0,
+    viewsCount: item.viewsCount || 0,
+    isUndergradEligible: undergradOk,
+    isPGOnly,
+    isMBAorPG,
+    targetLevel: isPGOnly ? 'pg' : 'ug',
+    subTracks: extractSubTracks({ ...item, title }, category),
+    sourcePlatform: 'unstop',
+    sourceLabel: 'Unstop',
+  };
+}
+
+// ---------- scraped listings (Supabase) ----------
+
+// Only rows written by the current scraper (stable per-source ids). Legacy rows (MLH, campus
+// homepages, BITS Oasis, AI-guessed deadlines) are ignored until the scraper deactivates them.
+const CURRENT_SCRAPER_ID = /^(devpost|insidekampus|corp_[a-z0-9]+)_/;
+const ALLOWED_PLATFORMS = new Set(['corporate', 'devpost', 'inside_campus', 'inside_iim']);
+
+const SUBTRACK_LABEL_TO_ID = {
+  'finance': 'finance', 'finance & valuation': 'finance',
+  'strategy & consulting': 'strategy', 'strategy': 'strategy',
+  'marketing': 'marketing', 'marketing & brand': 'marketing',
+  'b-plan': 'bplan', 'b-plan & pitch': 'bplan',
+  'product': 'product', 'product & tech': 'product',
+  'operations': 'operations', 'operations & scm': 'operations',
+  'ai & ml': 'hack_ai', 'ai & machine learning': 'hack_ai', 'machine learning/ai': 'hack_ai',
+  'web & mobile': 'hack_dev', 'full-stack & mobile': 'hack_dev', 'web': 'hack_dev', 'mobile': 'hack_dev',
+  'blockchain': 'hack_web3', 'cybersecurity': 'hack_cyber', 'security': 'hack_cyber',
+  'databases': 'hack_data', 'data science': 'hack_data',
+};
+
+function normaliseSubTracks(raw) {
+  const list = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+  return [...new Set(list.map(s => {
+    const v = String(s || '').trim();
+    return SUBTRACK_RULES_IDS.has(v) ? v : SUBTRACK_LABEL_TO_ID[v.toLowerCase()];
+  }).filter(Boolean))];
+}
+const SUBTRACK_RULES_IDS = new Set(Object.values(SUBTRACK_RULES).flatMap(rules => rules.map(([id]) => id)));
+
+function httpUrlOr(value, fallback = '#') {
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : fallback;
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function formatScrapedRow(r) {
+  const title = String(r.title || '').trim();
+  const host = (r.host_institution || r.organizer || 'Host Institution').trim();
+  const platform = r.source_platform === 'inside_iim' ? 'inside_campus' : r.source_platform;
+  const description = r.raw_scraped_text || r.description || '';
+  const isInsideCampus = platform === 'inside_campus';
+
+  const autoUndergradEligible = isUndergradEligible({
+    title, description, filters: Array.isArray(r.filters) ? r.filters : [], host, sourcePlatform: platform,
+  });
+  const isUndergrad = isInsideCampus
+    ? (r.is_undergrad_eligible === true && !r.is_pg_only && autoUndergradEligible)
+    : (r.is_undergrad_eligible !== false && !r.is_pg_only && autoUndergradEligible);
+  const isPGOnly = !isUndergrad;
+
+  let circuit;
+  if (r.is_du) circuit = 'DU Circuit';
+  else if (r.is_iim_or_iit) circuit = 'IIM / IIT';
+  else if (platform === 'corporate' || platform === 'devpost' || r.is_corporate) circuit = 'Corporate';
+  else circuit = classifyCircuit(host, title);
+
+  const category = CATEGORY_LABELS[r.category] ? r.category : 'other';
+  const isFree = !r.fee || /free/i.test(r.fee);
+  const minTeam = r.min_team || 1;
+  const maxTeam = r.max_team || Math.max(minTeam, 1);
+  const deadlineMs = new Date(r.deadline).getTime();
+  const daysLeft = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 86400000));
+  const ownSubTracks = new Set((SUBTRACK_RULES[category] || []).map(([id]) => id));
+
+  return {
+    id: r.id,
+    title,
+    orgName: host,
+    host,
+    bannerUrl: httpUrlOr(r.banner_url, null),
+    logo: httpUrlOr(r.logo_url, null),
+    orgLogo: httpUrlOr(r.logo_url, null),
+    deadline: r.deadline,
+    startDate: r.start_date || null,
+    daysRemainingNum: daysLeft,
+    remainDaysText: `${daysLeft} days left`,
+    fee: isFree ? 'Free' : 'Paid',
+    isFree,
+    prizes: r.prizes || 'Certificates & Recognition',
+    category,
+    ...CATEGORY_LABELS[category],
+    subTracks: normaliseSubTracks(r.sub_tracks).filter(id => ownSubTracks.has(id)),
+    sourcePlatform: platform,
+    sourceLabel: r.source_label || 'Direct',
+    unstopUrl: httpUrlOr(r.apply_url || r.website_url),
+    sourceUrl: httpUrlOr(r.apply_url || r.website_url),
+    registeredCount: r.registered_count || 0,
+    viewsCount: r.views_count || 0,
+    summary: makeSummary(description),
+    minTeam,
+    maxTeam,
+    teamSizeDisplay: minTeam === maxTeam
+      ? (minTeam === 1 ? 'Solo / Individual' : `${minTeam} Members`)
+      : `${minTeam} - ${maxTeam} Members`,
+    isUndergradEligible: isUndergrad,
+    isPGOnly,
+    isMBAorPG: isPGOnly || Boolean(r.is_mba_or_pg) || isInsideCampus,
+    targetLevel: isPGOnly ? 'pg' : 'ug',
+    circuit,
+    isDU: circuit === 'DU Circuit',
+    isIIMorIIT: circuit === 'IIM / IIT',
+    isPremier: circuit === 'IIM / IIT',
+    isCorporate: circuit === 'Corporate',
+    isCorporateOrGlobal: circuit === 'Corporate',
+    isOthers: circuit === 'Others',
+    discipline: DISCIPLINE[category],
+    isFlagship: Boolean(r.is_flagship),
+    updatedAt: r.updated_at,
+  };
+}
+
 async function fetchInstitutionalCompetitionsFromSupabase() {
   try {
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-    
     if (!supabaseUrl || !supabaseKey || typeof fetch !== 'function') return [];
-    
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3500);
+
     const res = await fetch(`${supabaseUrl}/rest/v1/institutional_competitions?is_active=eq.true&select=*`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
-      },
-      signal: controller.signal
+      headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+      signal: AbortSignal.timeout(3500),
     });
-    clearTimeout(timeout);
     if (!res.ok) return [];
     const rows = await res.json();
     const nowMs = Date.now();
-    return rows
-      .filter(r => {
-        if (!r.deadline) return true;
-        const dl = new Date(r.deadline).getTime();
-        return !isNaN(dl) && dl >= nowMs;
-      })
-      .map(r => {
-        const rawInstItem = {
-          title: r.title,
-          description: r.raw_scraped_text || r.description || '',
-          filters: Array.isArray(r.filters) ? r.filters : [],
-          organisation: { name: r.host_institution || r.organizer || '' },
-          host: r.host_institution || r.organizer || '',
-          sourcePlatform: r.source_platform
-        };
-        const autoUndergradEligible = isUndergradEligible(rawInstItem);
-        const isInsideCampus = r.source_platform === 'inside_campus' || r.source_platform === 'inside_iim';
-        const isUndergrad = isInsideCampus
-          ? (r.is_undergrad_eligible === true && !r.is_pg_only && autoUndergradEligible)
-          : (r.is_undergrad_eligible !== false && !Boolean(r.is_pg_only) && autoUndergradEligible);
-        const isPGOnly = !isUndergrad;
-        const isMBAorPG = isPGOnly || Boolean(r.is_mba_or_pg) || isInsideCampus || /\b(mba|pgdm|iim|b-school|insideiim)\b/i.test(`${r.title || ''} ${r.host_institution || ''}`);
 
-        return {
-          id: r.id || `inst_${r.slug || Math.random().toString(36).substring(7)}`,
-          title: r.title,
-          orgName: r.host_institution || r.organizer || 'Host Institution',
-          host: r.host_institution || r.organizer || 'Host Institution',
-          bannerUrl: httpUrlOr(r.banner_url, null),
-          logo: httpUrlOr(r.logo_url, null),
-          orgLogo: httpUrlOr(r.logo_url, null),
-          deadline: r.deadline,
-          startDate: r.start_date || null,
-          daysRemainingNum: r.deadline ? Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24))) : 7,
-          remainDaysText: r.deadline ? `${Math.max(0, Math.ceil((new Date(r.deadline) - Date.now()) / (1000 * 60 * 60 * 24)))} days left` : '7 days left',
-          mode: r.mode || 'Online',
-          location: r.location || 'Online',
-          fee: r.fee || 'Free',
-          isFree: !r.fee || /free/i.test(r.fee),
-          prizes: r.prizes || 'Certificates & Cash Prize',
-          category: r.category || 'case',
-          categoryLabel: r.category_label || 'Case Competition',
-          categoryEmoji: r.category_emoji || '💼',
-          subTracks: Array.isArray(r.sub_tracks) ? r.sub_tracks : (r.sub_tracks ? [r.sub_tracks] : ['General']),
-          sourcePlatform: r.source_platform || 'campus_direct',
-          sourceLabel: r.source_label || (r.host_institution ? `${r.host_institution} Direct` : 'Campus Direct'),
-          unstopUrl: httpUrlOr(r.apply_url || r.website_url),
-          sourceUrl: httpUrlOr(r.apply_url || r.website_url),
-          registeredCount: r.registered_count || 0,
-          viewsCount: r.views_count || 0,
-          description: r.raw_scraped_text || r.description || r.title,
-          minTeam: r.min_team || 1,
-          maxTeam: r.max_team || 4,
-          teamSizeDisplay: (r.min_team || 1) === (r.max_team || 4) ? `${r.min_team || 1} Members` : `${r.min_team || 1} - ${r.max_team || 4} Members`,
-          isUndergradEligible: isUndergrad,
-          isPGOnly: isPGOnly,
-          isMBAorPG: isMBAorPG,
-          targetLevel: isPGOnly ? 'pg' : (isUndergrad ? 'ug' : 'all'),
-          isDU: Boolean(r.is_du),
-          isIIMorIIT: Boolean(r.is_iim_or_iit) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
-          isPremier: Boolean(r.is_premier) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost',
-          isCorporate: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
-          isCorporateOrGlobal: r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate),
-          isOthers: !Boolean(r.is_du) && !Boolean(r.is_iim_or_iit) && !Boolean(r.is_premier) && r.source_platform !== 'corporate' && r.source_platform !== 'devpost' && !Boolean(r.is_corporate),
-          circuit: Boolean(r.is_du) ? 'DU Circuit' : (Boolean(r.is_iim_or_iit) || Boolean(r.is_premier)) ? 'IIM / IIT' : (r.source_platform === 'corporate' || r.source_platform === 'devpost' || Boolean(r.is_corporate)) ? 'Corporate' : 'Others',
-          discipline: r.category_label || 'Case',
-          isFlagship: Boolean(r.is_flagship)
-        };
-      });
+    const fresh = rows.filter(r => {
+      if (!CURRENT_SCRAPER_ID.test(String(r.id || ''))) return false;
+      if (!ALLOWED_PLATFORMS.has(r.source_platform)) return false;
+      // No real deadline, no listing (the scraper no longer invents one)
+      const dl = new Date(r.deadline).getTime();
+      return r.deadline && !Number.isNaN(dl) && dl >= nowMs;
+    });
+
+    // Same event saved under several titles: keep the most recently seen copy
+    const byKey = new Map();
+    for (const r of fresh) {
+      const key = normalizeTitle(r.title);
+      const prev = byKey.get(key);
+      if (!prev || String(r.updated_at || '') > String(prev.updated_at || '')) byKey.set(key, r);
+    }
+    return [...byKey.values()].map(formatScrapedRow);
   } catch (err) {
     return [];
   }
@@ -648,7 +572,7 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
   };
 
   const batches = [];
-  // Fetch in concurrent batches of 10 requests with 4500ms timeout for ultra-fast response
+  // Concurrent batches of 10 requests with a 4.5s timeout each
   for (let i = 0; i < queryEndpoints.length; i += 10) {
     const chunk = queryEndpoints.slice(i, i + 10);
     const chunkResults = await Promise.all(
@@ -690,200 +614,38 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
       // Strictly ignore finished or ended competitions
       if (regStatus === 'FINISHED') continue;
       if (remainDays.toLowerCase().includes('ended')) continue;
-
       if (item.regnRequirements?.end_regn_dt) {
         const deadlineTime = new Date(item.regnRequirements.end_regn_dt).getTime();
         if (deadlineTime < now) continue;
       }
 
-      // Strictly exclude school-only / K-12 competitions
       if (isSchoolOnly(item)) continue;
-
-      // Strictly exclude festival passes, tickets, or delegate cards
       if (isJunkOrPass(item)) continue;
 
-      // Ensure item is eligible for collegiate students (either Undergrad or Postgrad/MBA)
-      const undergradOk = isUndergradEligible(item);
-      const postgradOk = isPostgradEligible(item);
-      if (!undergradOk && !postgradOk) continue;
+      // Must be open to collegiate students (undergrad or postgrad)
+      if (!isUndergradEligible(item) && !isPostgradEligible(item)) continue;
 
       map.set(item.id, item);
     }
   }
 
-  const rawList = Array.from(map.values());
+  const formatted = Array.from(map.values()).map(item => formatUnstopItem(item, now));
 
-  const formatted = rawList.map(item => {
-    const orgName = item.organisation?.name || 'Academic Institution';
-    const lowerOrg = orgName.toLowerCase();
-    const lowerTitle = (item.title || '').toLowerCase();
-    const combined = `${lowerOrg} ${lowerTitle}`;
-
-    // Tag categorization: prioritize host institution
-    const isIIMorIITorPremier = IIM_IIT_PREMIER_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
-      /\b(iit|iim|nit|iiit|bits pilani|iisc)\b/i.test(lowerOrg) ||
-      (!/\b(college|university|institute|school of)\b/i.test(lowerOrg) && IIM_IIT_PREMIER_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)));
-
-    const isDU = !isIIMorIITorPremier && (
-      DU_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
-      /\b(delhi university|university of delhi|\(du\))\b/i.test(lowerOrg) ||
-      (!/\b(college|university|institute|school of)\b/i.test(lowerOrg) && DU_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)))
-    );
-
-    const isCorporateOrGlobal = !isDU && !isIIMorIITorPremier && (
-      CORPORATE_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
-      GLOBAL_KEYWORDS.some(kw => matchesKeyword(lowerOrg, kw)) ||
-      (/\b(pvt ltd|private limited|corporation ltd|corporation limited|inc\b|technologies llc|llp\b|limited$|ltd$)\b/i.test(lowerOrg.trim()) && !/\b(college|university|institute|school of|academy|society|trust)\b/i.test(lowerOrg)) ||
-      (item.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(lowerOrg)) ||
-      (!/\b(college|university|institute|school of)\b/i.test(lowerOrg) && CORPORATE_KEYWORDS.some(kw => matchesKeyword(lowerTitle, kw)))
-    );
-
-    const isOthers = !isDU && !isIIMorIITorPremier && !isCorporateOrGlobal;
-    const isCorporate = isCorporateOrGlobal;
-    const isFlagship = FLAGSHIP_KEYWORDS.some(kw => matchesKeyword(combined, kw));
-
-    // Multi-track discipline classification
-    const { category, categoryLabel, categoryEmoji } = classifyOpportunity(item);
-
-    const minTeam = item.regnRequirements?.min_team_size || 1;
-    const maxTeam = item.regnRequirements?.max_team_size || 4;
-    const isFree = !item.isPaid;
-    const isFirstYearFriendly = isFree && (maxTeam >= 1 && maxTeam <= 5);
-
-    // Extract prizes: calculate true cumulative cash pool across all positions
-    let prizeDisplay = 'Certificates & Recognition';
-    if (Array.isArray(item.prizes) && item.prizes.length > 0) {
-      const totalCash = item.prizes.reduce((sum, p) => sum + (Number(p.cash) || 0), 0);
-      if (totalCash > 0) {
-        prizeDisplay = `₹${totalCash.toLocaleString('en-IN')} Prize Pool`;
-      } else if (item.prizes.some(p => p.rank)) {
-        prizeDisplay = item.prizes.map(p => p.rank).filter(Boolean).slice(0, 2).join(' · ');
-      }
-    }
-
-    // Remaining days & urgency
-    const remainDaysText = item.regnRequirements?.remain_days || 'Ongoing';
-    let daysRemainingNum = 999;
-    if (item.regnRequirements?.end_regn_dt) {
-      const diffMs = new Date(item.regnRequirements.end_regn_dt).getTime() - now;
-      daysRemainingNum = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-    }
-
-    const urgency = daysRemainingNum <= 2 ? 'high' : daysRemainingNum <= 5 ? 'medium' : 'normal';
-
-    const undergradOk = isUndergradEligible(item);
-    const isPGOnly = !undergradOk;
-    const isMBAorPG = isPGOnly || (item.filters || []).some(f => /mba|postgraduate/i.test(f.name || '')) || /\b(mba|pgdm|iim|b-school)\b/i.test(combined);
-
-    let circuitVal = 'Others';
-    if (isDU) circuitVal = 'DU Circuit';
-    else if (isIIMorIITorPremier) circuitVal = 'IIM / IIT';
-    else if (isCorporateOrGlobal) circuitVal = 'Corporate';
-    else circuitVal = 'Others';
-
-    let disciplineVal = categoryLabel || 'Case';
-    if (disciplineVal.includes('Hackathon') || disciplineVal.includes('Tech')) disciplineVal = 'Hackathon';
-    else if (disciplineVal.includes('Quiz')) disciplineVal = 'Quiz';
-    else if (disciplineVal.includes('Simul')) disciplineVal = 'Simulation';
-    else if (disciplineVal.includes('Writ') || disciplineVal.includes('Paper')) disciplineVal = 'Writing';
-    else if (disciplineVal.includes('Debate') || disciplineVal.includes('MUN')) disciplineVal = 'Debate & MUN';
-    else disciplineVal = 'Case';
-
-    const extractValidUrl = (...urls) => {
-      for (const u of urls) {
-        if (typeof u === 'string' && u.trim().length > 0 && u.trim() !== 'null' && u.trim() !== 'undefined') {
-          const trimmed = u.trim();
-          if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-          if (trimmed.startsWith('//')) return `https:${trimmed}`;
-          if (trimmed.startsWith('/')) return `https://d8it4huxumps7.cloudfront.net${trimmed}`;
-          return trimmed;
-        }
-      }
-      return null;
-    };
-
-    const orgLogoUrl = extractValidUrl(
-      item.organisation?.logoUrl2,
-      item.organisation?.logoUrl,
-      item.organisation?.logo,
-      item.organisation?.image
-    );
-    const compLogoUrl = extractValidUrl(item.logoUrl2, item.logo);
-    const bannerImgUrl = extractValidUrl(item.banner_mobile?.url, item.banner_desktop?.url, item.banner?.url);
-
-    const finalOrgLogo = orgLogoUrl || compLogoUrl || null;
-    const finalCompLogo = orgLogoUrl || compLogoUrl || bannerImgUrl || null;
-
-    return {
-      id: item.id || item.short_id,
-      title: item.title,
-      host: orgName,
-      orgName,
-      circuit: circuitVal,
-      discipline: disciplineVal,
-      days: daysRemainingNum,
-      fee: isFree ? 'Free' : (item.fee || 'Free'),
-      orgLogo: finalOrgLogo,
-      logo: finalCompLogo,
-      bannerUrl: bannerImgUrl || compLogoUrl || null,
-      unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
-      deadline: item.regnRequirements?.end_regn_dt || item.end_date,
-      startDate: item.regnRequirements?.start_regn_dt || item.start_date || null,
-      remainDaysText,
-      daysRemainingNum,
-      urgency,
-      category,
-      categoryLabel,
-      categoryEmoji,
-      minTeam,
-      maxTeam,
-      teamSizeDisplay: minTeam === maxTeam 
-        ? (minTeam === 1 ? 'Solo / Individual' : `${minTeam} Members`) 
-        : `${minTeam} - ${maxTeam} Members`,
-      prizes: prizeDisplay,
-      prize: prizeDisplay,
-      isFree,
-      isFlagship,
-      isDU,
-      isIIMorIIT: isIIMorIITorPremier,
-      isBschool: isIIMorIITorPremier,
-      isPremier: isIIMorIITorPremier,
-      isIIMorIITorPremier,
-      isCorporate,
-      isCorporateOrGlobal,
-      isOthers,
-      isFirstYearFriendly,
-      registeredCount: item.registerCount || 0,
-      viewsCount: item.viewsCount || 0,
-      isUndergradEligible: undergradOk,
-      isPGOnly,
-      isMBAorPG,
-      targetLevel: isPGOnly ? 'pg' : (undergradOk ? 'ug' : 'all'),
-      subTracks: extractSubTracks(item, category),
-      sourcePlatform: 'unstop',
-      sourceLabel: 'Unstop',
-    };
-  });
-
-  // Append curated multi-platform opportunities
-  formatted.push(...MULTIPLATFORM_OPPORTUNITIES);
-
-  // Append live institutional competitions stored in Supabase (if available)
+  // Scraped listings, minus anything Unstop already lists
   try {
+    const unstopTitles = new Set(formatted.map(c => normalizeTitle(c.title)));
     const institutional = await fetchInstitutionalCompetitionsFromSupabase();
-    if (Array.isArray(institutional) && institutional.length > 0) {
-      formatted.push(...institutional);
-    }
+    formatted.push(...institutional.filter(c => !unstopTitles.has(normalizeTitle(c.title))));
   } catch (e) {
-    // Non-blocking fallback
+    // Non-blocking
   }
 
-  // Sort: Exact closing deadline timestamp first, then by registrations
+  // Closing deadline first, then registrations
   formatted.sort((a, b) => {
     const timeA = a.deadline ? new Date(a.deadline).getTime() : Infinity;
     const timeB = b.deadline ? new Date(b.deadline).getTime() : Infinity;
-    const validA = !isNaN(timeA) ? timeA : Infinity;
-    const validB = !isNaN(timeB) ? timeB : Infinity;
+    const validA = !Number.isNaN(timeA) ? timeA : Infinity;
+    const validB = !Number.isNaN(timeB) ? timeB : Infinity;
     if (validA !== validB) return validA - validB;
     return (b.registeredCount || 0) - (a.registeredCount || 0);
   });
@@ -894,17 +656,6 @@ export async function fetchCompetitionsFromUnstop(forceRefresh = false) {
   }
 
   return formatted;
-}
-
-// Scraped links are untrusted: only pass http(s) URLs through to the browser
-function httpUrlOr(value, fallback = '#') {
-  if (typeof value !== 'string' || !value.trim()) return fallback;
-  try {
-    const url = new URL(value.trim());
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : fallback;
-  } catch (e) {
-    return fallback;
-  }
 }
 
 export default async function handler(req, res) {
@@ -942,7 +693,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Resilient fallback 2: Return institutional competitions from Supabase
+    // Resilient fallback 2: Return scraped competitions from Supabase
     try {
       const fallback = await fetchInstitutionalCompetitionsFromSupabase();
       if (Array.isArray(fallback) && fallback.length > 0) {

@@ -1,38 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import InstitutionLogo from './InstitutionLogo';
 import SectionLoadingWidget from './SectionLoadingWidget';
-import CompetitionRoundsTracker from './CompetitionRoundsTracker';
 import { BROWSE_PUNS } from './FunLoadingScreen';
 import Footer from './Footer';
-import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 import { safeExternalUrl } from '../lib/safeUrl';
-const trackCaseCompsEvent = () => {};
-
-const FILTER_PREFS_KEY = 'onestop_user_filter_prefs';
-
-function loadSavedFilterPrefs(userEmail) {
-  try {
-    if (typeof window === 'undefined') return null;
-    const userKey = userEmail ? `${FILTER_PREFS_KEY}_${userEmail.toLowerCase()}` : null;
-    const raw = (userKey && localStorage.getItem(userKey)) || localStorage.getItem(FILTER_PREFS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        selectedCircuits: Array.isArray(parsed.selectedCircuits) ? parsed.selectedCircuits : [],
-        selectedTracks: Array.isArray(parsed.selectedTracks) ? parsed.selectedTracks : [],
-        selectedSubTracks: Array.isArray(parsed.selectedSubTracks) ? parsed.selectedSubTracks : [],
-        selectedPlatforms: Array.isArray(parsed.selectedPlatforms) ? parsed.selectedPlatforms : [],
-        teamFilter: typeof parsed.teamFilter === 'string' ? parsed.teamFilter : 'all',
-        feeFilter: typeof parsed.feeFilter === 'string' ? parsed.feeFilter : 'all',
-        sortBy: typeof parsed.sortBy === 'string' ? parsed.sortBy : 'closing-soonest',
-      };
-    }
-  } catch (err) {
-    console.error('Error loading saved filter preferences:', err);
-  }
-  return null;
-}
+import { trackEvent } from '../lib/posthog';
+import {
+  CIRCUIT_OPTIONS, TRACK_OPTIONS, PLATFORM_OPTIONS, SUBTRACK_MAP, SORT_OPTIONS, DEFAULT_PREFS,
+  sanitizePrefs, loadPrefs, savePrefs, filterCompetitions, facetCounts, sortCompetitions,
+  getCircuitKey, getPlatformKey, isFreeComp, isTeamOk,
+} from '../utils/competitionFilters';
+import './CompetitionsPage.css';
 
 // Self-contained SVG Icons to guarantee zero bundler chunking collisions or export mismatches
 const BackIcon = ({ size = 18 }) => (
@@ -89,13 +67,6 @@ const FlameIcon = ({ size = 18 }) => (
   </svg>
 );
 
-const SparklesIcon = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z" />
-    <path d="M19 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" />
-  </svg>
-);
-
 const ClockIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
@@ -109,13 +80,6 @@ const CalendarIcon = ({ size = 18 }) => (
     <line x1="16" y1="2" x2="16" y2="6" />
     <line x1="8" y1="2" x2="8" y2="6" />
     <line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-);
-
-const GraduationCapIcon = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 10 12 5 2 10l10 5 10-5v6" />
-    <path d="M6 12v5c0 1.657 2.686 3 6 3s6-1.343 6-3v-5" />
   </svg>
 );
 
@@ -154,13 +118,6 @@ const CopyIcon = ({ size = 18 }) => (
   </svg>
 );
 
-const BriefcaseIcon = ({ size = 18 }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-  </svg>
-);
-
 const FilterIcon = ({ size = 15, className = '' }) => (
   <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
@@ -174,1045 +131,416 @@ const XCloseIcon = ({ size = 13, className = '' }) => (
   </svg>
 );
 
-const CIRCUIT_OPTIONS = [
-  { id: 'du', label: 'DU Circuit', countKey: 'du' },
-  { id: 'iim-iit-premier', label: 'IIMs, IITs & Premier', countKey: 'iimIitPremier' },
-  { id: 'corporate-global', label: 'Corporate & Global', countKey: 'corporateGlobal' },
-  { id: 'others', label: 'Others', countKey: 'others' },
-];
+const PAGE_SIZE = 24;
+const MIN_LOADING_MS = 1500;
+const SORT_LABEL = Object.fromEntries(SORT_OPTIONS.map(o => [o.id, o.label]));
+const SOURCE_BADGE = { inside_campus: 'InsideKampus', devpost: 'Devpost', corporate: 'Corporate' };
+const CARD_CIRCUIT_CLASS = { du: 'du', 'iim-iit-premier': 'iim-iit', 'corporate-global': 'corporate-global', others: 'others' };
 
-const TRACK_OPTIONS = [
-  { id: 'case', label: 'Case Comps', countKey: 'cases' },
-  { id: 'hackathon', label: 'Hackathons', countKey: 'hackathons' },
-  { id: 'writing', label: 'Writing & Research', countKey: 'writing' },
-  { id: 'quiz', label: 'Quizzes', countKey: 'quizzes' },
-  { id: 'simulation', label: 'Simulations', countKey: 'simulations' },
-  { id: 'debate', label: 'Debates', countKey: 'debates' },
-];
-
-const PLATFORM_OPTIONS = [
-  { id: 'unstop', label: 'Unstop', countKey: 'unstop' },
-  { id: 'corporate', label: 'Corporate Direct', countKey: 'corporate' },
-  { id: 'inside_campus', label: 'InsideKampus / InsideIIM', countKey: 'inside_campus' },
-  { id: 'devpost', label: 'Devpost', countKey: 'devpost' },
-  { id: 'institutional', label: 'Campus Direct', countKey: 'institutional' },
-];
-
-const SUBTRACK_MAP = {
-  case: [
-    { id: 'finance', label: 'Finance & Valuation' },
-    { id: 'strategy', label: 'Strategy & Consulting' },
-    { id: 'marketing', label: 'Marketing & Brand' },
-    { id: 'bplan', label: 'B-Plan & Pitch' },
-    { id: 'product', label: 'Product & Tech' },
-    { id: 'operations', label: 'Operations & SCM' },
-  ],
-  hackathon: [
-    { id: 'hack_ai', label: 'AI & Machine Learning' },
-    { id: 'hack_web3', label: 'Web3 & Blockchain' },
-    { id: 'hack_dev', label: 'Full-Stack & Mobile' },
-    { id: 'hack_data', label: 'Data Science & Analytics' },
-    { id: 'hack_cyber', label: 'Cybersecurity & Cloud' },
-  ],
-  quiz: [
-    { id: 'quiz_business', label: 'Business & Economy' },
-    { id: 'quiz_tech', label: 'Tech & Science' },
-    { id: 'quiz_finance', label: 'Finance & Markets' },
-    { id: 'quiz_general', label: 'General & Trivia' },
-  ],
-  simulation: [
-    { id: 'sim_stock', label: 'Stock & Trading' },
-    { id: 'sim_auction', label: 'Auction & Bidding' },
-    { id: 'sim_crisis', label: 'Crisis & Deal Room' },
-  ],
-  debate: [
-    { id: 'debate_pd', label: 'Parliamentary Debate' },
-    { id: 'debate_mun', label: 'Model UN & Youth Parl' },
-    { id: 'debate_conventional', label: 'Conventional Debate' },
-  ],
-  writing: [
-    { id: 'writing_paper', label: 'Research Paper Presentation' },
-    { id: 'writing_article', label: 'Article & Essay' },
-    { id: 'writing_case', label: 'Case Writing & Policy' },
-  ],
-};
-import './CompetitionsPage.css';
-
-const DU_KEYWORDS = [
-  'delhi university', 'university of delhi', '(du)', 'sscbs', 'shaheed sukhdev',
-  'srcc', 'shri ram college', "stephen's", "st. stephen", "stephens college",
-  'hindu college', 'hansraj', 'lsr', 'lady shri ram',
-  'sggscc', 'ramjas', 'kirori mal', 'kmc', 'drc', 'daulat ram', 'gargi', 'venkateswara',
-  'venky', 'sgtb khalsa', 'sgtb', 'sri guru tegh bahadur khalsa', 'keshav mahavidyalaya',
-  'deen dayal upadhyaya college', 'ddu college',
-  'miranda house', 'miranda', 'jesus and mary', 'jmc', 'atma ram', 'arsd', 'sbsc',
-  'shaheed bhagat singh', 'motilal nehru college', 'indraprastha college', 'ipcw',
-  'maharaja agrasen college', 'ramanujan college', 'kalindi college', 'kamala nehru college',
-  'shaheed rajguru', 'bharati college', 'college of vocational studies', 'cvs'
-];
-
-const IIM_IIT_PREMIER_KEYWORDS = [
-  // IIMs (All 21 Indian Institutes of Management & IIM Mumbai / NITIE)
-  'iim', 'indian institute of management', 'nitie',
-  // IITs & Premier Research
-  'iit', 'indian institute of technology', 'doms', 'dms', 'sjmsom', 'vgsom', 'iisc', 'indian institute of science', 'techkriti', 'ism dhanbad',
-  'iit bhu', 'banaras hindu university', 'iit (bhu)', 'iit-bhu',
-  // BITS Pilani (All campuses: Pilani, Goa, Hyderabad)
-  'bits pilani', 'birla institute of technology & science', 'birla institute of technology and science', 'bits goa', 'bits hyderabad', 'bits',
-  // NITs (All National Institutes of Technology)
-  'nit ', 'nit,', 'nit)', 'nit -', 'nit-', 'national institute of technology', 'vnit', 'mnit', 'mnnit', 'svnit', 'manit',
-  'motilal nehru national institute of technology',
-  // IIITs (Indian Institutes of Information Technology)
-  'iiit', 'iiit-delhi', 'iiitd', 'iiith', 'iiitb', 'iiit hyderabad', 'iiit bangalore', 'iiit delhi', 'iiit allahabad',
-  // Top Tier 1 & Prominent B-Schools
-  'xlri', 'xavier school of management', 'xavier labour',
-  'isb', 'indian school of business',
-  'fms', 'faculty of management studies',
-  'spjimr', 'sp jain', 's.p. jain', 's p jain',
-  'mdi', 'management development institute',
-  'iift', 'indian institute of foreign trade',
-  'nmims', 'narsee monjee', 'sbm',
-  'sibm', 'scmhrd', 'siib', 'siom', 'scit',
-  'tiss', 'tata institute of social sciences',
-  'jbims', 'jamnalal bajaj',
-  'mica', 'mudra institute',
-  'imt', 'imt ghaziabad', 'imt nagpur', 'imt hyderabad',
-  'great lakes', 'glim',
-  'tapmi', 't. a. pai', 't a pai',
-  'ximb', 'xim university', 'xavier institute of management',
-  'gim', 'goa institute of management',
-  'k j somaiya', 'kj somaiya', 'somaiya', 'simsr', 'kj sim',
-  'fore school', 'fore school of management',
-  'lbsim', 'lal bahadur shastri',
-  'irma', 'institute of rural management',
-  'imi', 'international management institute',
-  'bimtech', 'birla institute of management',
-  'liba', 'loyola institute of business administration',
-  'welingkar', 'weschool',
-  'ibs', 'icfai business school', 'icfai',
-  'masters union', "masters' union",
-  'soil institute', 'ifmr', 'krea university',
-  'nibm', 'nia pune', 'bimm', 'balaji institute',
-  'iiswbm', 'iifm', 'indian institute of forest management',
-  'ksom', 'kiit school of management', 'bvimr', 'gl bajaj institute of management',
-  'commerce and business management, osmania',
-  // Premier State / Central Tech Universities
-  'nsut', 'netaji subhas', 'dtu', 'delhi technological university', 'dce',
-  'bit mesra', 'birla institute of technology (bit), mesra', 'birla institute of technology, mesra',
-  'punjab engineering college', 'pec chandigarh', 'pec, chandigarh', 'coep', 'vjti',
-  'jadavpur university', 'anna university', 'ceg guindy', 'thapar',
-  'psg tech', 'psg college of technology', 'rvce', 'bmsce', 'msrit', 'mit manipal', 'mahe',
-  // Premier Autonomous & Multidisciplinary Colleges
-  'st. xavier', 'st xavier', "xavier's college", 'xaviers college',
-  'ashoka university', 'ashoka', 'christ university', 'christ (deemed to be university)',
-  'loyola college', 'madras christian college', 'mcc chennai',
-  'presidency college', 'presidency university', 'jindal global', 'o.p. jindal',
-  'shiv nadar', 'snu', 'plaksha',
-  // Premier Law / NLUs
-  'nlsiu', 'nalsar', 'nujs', 'nlu delhi', 'nlu jodhpur', 'gnlu',
-  // Premier Science & Statistics
-  'indian statistical institute', 'isi kolkata', 'cmi', 'tifr', 'iiser', 'niser'
-];
-
-const CORPORATE_KEYWORDS = [
-  // Management Consulting & Professional Services
-  'mckinsey', 'bain', 'bcg', 'boston consulting', 'kearney', 'oliver wyman', 'strategy&',
-  'deloitte', 'pwc', 'pricewaterhousecoopers', 'ey', 'ernst & young', 'kpmg', 'grant thornton', 'bdo', 'accenture',
-  'brainwars', 'bain capability network', 'cafta', 'steel-a-thon', 'the ultimate pitch', 'stratos', 'flipkart grid', 'finserv atom',
-  // FMCG & Consumer Brands
-  "l'oreal", 'loreal', 'brandstorm', 'hul', 'hindustan unilever', 'lime', 'unilever',
-  'itc', 'interrobang', 'marico', 'over the wall', 'mondelez', 'reckitt', 'nestle', 'p&g', 'procter & gamble',
-  'pepsico', 'coca-cola', 'coke', 'aditya birla', 'stratfresh', 'abg', 'dabur', 'godrej', 'asian paints', 'berger paints', 'britannia',
-  // Automotive, Industrial, Energy & PSUs
-  'maruti suzuki', 'maruti', 'satin finserv',
-  'hindustan petroleum', 'hpcl', 'hp power lab', 'bharat petroleum', 'bpcl', 'indian oil', 'iocl', 'ongc', 'gail', 'ntpc', 'bhel', 'coal india',
-  'tata group', 'tata steel', 'tata motors', 'tcs', 'tata crucible', 'tata imagination', 'tata',
-  'reliance', 'reliance retail', 'mahindra', 'war room', 'mahindra rise', 'tvs', 'tvs credit',
-  'hero motocorp', 'hero colabs', 'bajaj finserv', 'bajaj auto', 'l&t', 'larsen & toubro', 'vedanta', 'adani', 'jsw',
-  // Tech, E-commerce, Telecom & Semis
-  'amazon', 'flipkart', 'google', 'microsoft', 'apple', 'meta', 'uber', 'swiggy', 'zomato',
-  'qualcomm', 'intel', 'cisco', 'ibm', 'infosys', 'wipro', 'hcl', 'cognizant', 'capgemini', 'tech mahindra',
-  'airtel', 'jio', 'vodafone', 'supervity', 'salesforce', 'adobe',
-  // Banking & Financial Services
-  'goldman sachs', 'jpmorgan', 'jp morgan', 'morgan stanley', 'citi', 'citigroup', 'hsbc',
-  'american express', 'amex', 'standard chartered', 'barclays', 'deutsche bank',
-  'hdfc', 'icici', 'axis bank', 'kotak', 'optum', 'stratethon', 'raam group',
-  // Startups, Platforms & Corporate entities
-  'cogniza', 'wonksknow', 'noobsync', 'invoqe', 'upforge', 'jetlearn', 'languify',
-  'product space', 'mhtechin', 'monomousumi', 'kartexa', 'skilled sapiens', 'indiastox',
-  'godstockss', 'acecubing', 'campusorbit', 'pharmaorbit', 'boss console', 'hackathon raptors',
-  'heritage vastra', 'code-x-novas', 'elite coders', 'wecodecoders', 'interactup', 'internhill',
-  'innovation hacks', 'gradient learnings', 'bharat academix', 'cyber hx', 'talentsec', 'techverse', 'peakforge'
-];
-
-const GLOBAL_KEYWORDS = [
-  // Top Global Universities & International B-Schools
-  'harvard', 'stanford', 'wharton', 'massachusetts institute of technology', 'yale',
-  'columbia university', 'oxford', 'cambridge', 'london school of economics', 'london business school',
-  'insead', 'national university of singapore', 'nanyang technological university', 'hult prize',
-  'hec paris', 'nyu stern', 'kellogg', 'chicago booth', 'berkeley haas', 'mit sloan',
-  'imperial college', 'eth zurich', 'monash', 'melbourne university', 'sydney university', 'toronto university',
-  // Prestigious Global Case Challenges & Flagships
-  'unilever future leaders', 'brandstorm', 'imagine cup', 'solution challenge',
-  'world bank', 'bloomberg global', 'cfa institute research challenge', 'schneider go green',
-  'international case competition', 'global challenge', 'worldwide challenge'
-];
-
-function isMatch(text, kw) {
-  const keyword = kw.trim().toLowerCase();
-  if (!keyword) return false;
-  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(^|\\b)${escaped}(\\b|$)`, 'i');
-  return regex.test(text);
-}
-
-function isDUComp(comp) {
-  if (comp.circuit === 'DU Circuit') return true;
-  if (comp.circuit && comp.circuit !== 'DU Circuit') return false;
-  if (comp.isDU) return true;
-  const combined = `${comp.orgName || ''} ${comp.title || ''}`.toLowerCase();
-  return DU_KEYWORDS.some(kw => isMatch(combined, kw));
-}
-
-function isIIMorIITorPremierComp(comp) {
-  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate') return false;
-  if (isDUComp(comp)) return false;
-  if (typeof comp.isPremier === 'boolean') return comp.isPremier;
-  if (typeof comp.isIIMorIITorPremier === 'boolean') return comp.isIIMorIITorPremier;
-  if (typeof comp.isBschool === 'boolean') return comp.isBschool;
-  if (typeof comp.isIIMorIIT === 'boolean' && comp.isIIMorIIT) return true;
-  const combined = `${comp.orgName || ''} ${comp.title || ''}`.toLowerCase();
-  return IIM_IIT_PREMIER_KEYWORDS.some(kw => isMatch(combined, kw));
-}
-
-const isIIMorIITorBschoolComp = isIIMorIITorPremierComp;
-
-function isCorporateOrGlobalComp(comp) {
-  if (comp.circuit === 'Corporate') return true;
-  if (comp.circuit && comp.circuit !== 'Corporate') return false;
-  if (isDUComp(comp)) return false;
-  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate') return true;
-  if (isIIMorIITorPremierComp(comp)) return false;
-  if (typeof comp.isCorporateOrGlobal === 'boolean') return comp.isCorporateOrGlobal;
-  const org = (comp.orgName || '').toLowerCase().trim();
-  const title = (comp.title || '').toLowerCase();
-  const combined = `${org} ${title}`;
-  return (
-    CORPORATE_KEYWORDS.some(kw => isMatch(combined, kw)) ||
-    GLOBAL_KEYWORDS.some(kw => isMatch(combined, kw)) ||
-    (/\b(pvt ltd|private limited|corporation ltd|corporation limited|inc\b|technologies llc|llp\b|limited$|ltd$)\b/i.test(org) && !/\b(college|university|institute|school of|academy|society|trust)\b/i.test(org)) ||
-    (comp.isCorporate && !/\b(college|university|institute|school of|academy)\b/i.test(org))
-  );
-}
-
-function parsePrizeAmount(prizesStr) {
-  if (!prizesStr) return 0;
-  const str = String(prizesStr).toLowerCase().replace(/,/g, '');
-  if (str.includes('$')) {
-    const m = str.match(/\$\s*([\d.]+)/);
-    if (m) return parseFloat(m[1]) * 85;
-  }
-  if (str.includes('lakh')) {
-    const m = str.match(/([\d.]+)\s*lakh/);
-    if (m) return parseFloat(m[1]) * 100000;
-  }
-  if (str.includes('crore')) {
-    const m = str.match(/([\d.]+)\s*crore/);
-    if (m) return parseFloat(m[1]) * 10000000;
-  }
-  const match = str.match(/\d+/);
-  return match ? parseInt(match[0], 10) : 0;
-}
+// One shared formatter: creating Intl formatters per card is slow on big lists
+const DEADLINE_FORMAT = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 function getCountdownDetails(deadlineStr, fallbackRemainText, nowMs) {
-  if (!deadlineStr) {
-    return {
-      text: fallbackRemainText || 'Ongoing',
-      exactDateStr: 'Ongoing',
-      urgencyClass: 'green',
-      hoursLeft: 9999,
-      daysLeft: 999,
-    };
+  const deadlineMs = deadlineStr ? new Date(deadlineStr).getTime() : NaN;
+  if (Number.isNaN(deadlineMs)) {
+    return { text: fallbackRemainText || 'Deadline TBA', exactDateStr: 'TBA', urgencyClass: 'green' };
   }
+  const exactDateStr = DEADLINE_FORMAT.format(deadlineMs);
+  const diffMs = deadlineMs - nowMs;
+  if (diffMs <= 0) return { text: 'Closed', exactDateStr, urgencyClass: 'red' };
 
-  try {
-    const deadlineDate = new Date(deadlineStr);
-    const deadlineMs = deadlineDate.getTime();
-    if (isNaN(deadlineMs)) {
-      return {
-        text: fallbackRemainText || 'Ongoing',
-        exactDateStr: 'Ongoing',
-        urgencyClass: 'green',
-        hoursLeft: 9999,
-        daysLeft: 999,
-      };
-    }
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const days = Math.floor(totalHours / 24);
+  let text;
+  if (days > 6) text = `${days}d left`;
+  else if (days >= 1) text = `${days}d ${totalHours % 24}h left`;
+  else if (totalHours >= 1) text = `${totalHours}h ${totalMinutes % 60}m left`;
+  else text = `${totalMinutes}m left`;
 
-    const diffMs = deadlineMs - nowMs;
-    const exactDateStr = deadlineDate.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-
-    if (diffMs <= 0) {
-      return {
-        text: 'Ending Soon',
-        exactDateStr,
-        urgencyClass: 'red',
-        hoursLeft: 0,
-        daysLeft: 0,
-      };
-    }
-
-    const totalMinutes = Math.floor(diffMs / (1000 * 60));
-    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const days = Math.floor(totalHours / 24);
-    const hours = totalHours % 24;
-    const minutes = totalMinutes % 60;
-
-    let text = '';
-    if (days > 6) {
-      text = `${days}d left`;
-    } else if (days >= 1) {
-      text = `${days}d ${hours}h left`;
-    } else if (totalHours >= 1) {
-      text = `${totalHours}h ${minutes}m left`;
-    } else {
-      text = `${minutes}m left`;
-    }
-
-    // Color thresholds:
-    // Red: approaching (<= 48 hours / 2 days)
-    // Yellow: medium time (3 to 6 days / <= 144 hours)
-    // Green: lots of time (7+ days)
-    let urgencyClass = 'green';
-    if (totalHours <= 48) {
-      urgencyClass = 'red';
-    } else if (totalHours <= 144) {
-      urgencyClass = 'yellow';
-    } else {
-      urgencyClass = 'green';
-    }
-
-    return {
-      text,
-      exactDateStr,
-      urgencyClass,
-      hoursLeft: totalHours,
-      daysLeft: days,
-    };
-  } catch {
-    return {
-      text: fallbackRemainText || 'Ongoing',
-      exactDateStr: 'Ongoing',
-      urgencyClass: 'green',
-      hoursLeft: 9999,
-      daysLeft: 999,
-    };
-  }
+  // Red: within 48h. Yellow: within 6 days. Green: a week or more.
+  const urgencyClass = totalHours <= 48 ? 'red' : totalHours <= 144 ? 'yellow' : 'green';
+  return { text, exactDateStr, urgencyClass };
 }
 
-function getCompCircuitKey(comp) {
-  if (!comp) return 'others';
-  if (comp.circuit === 'DU Circuit') return 'du';
-  if (comp.circuit === 'IIM / IIT') return 'iim-iit-premier';
-  if (comp.circuit === 'Corporate') return 'corporate-global';
-  if (comp.circuit === 'Others') return 'others';
-  if (comp.isIIMorIIT || comp.isPremier || comp.isIIMorIITorPremier || comp.isBschool) return 'iim-iit-premier';
-  if (comp.isCorporate || comp.isCorporateOrGlobal) return 'corporate-global';
-  if (comp.isDU) return 'du';
-  if (isIIMorIITorPremierComp(comp)) return 'iim-iit-premier';
-  if (comp.sourcePlatform === 'devpost' || comp.sourcePlatform === 'corporate' || isCorporateOrGlobalComp(comp)) return 'corporate-global';
-  if (isDUComp(comp)) return 'du';
-  return 'others';
-}
+const CompCard = memo(function CompCard({ comp, isBookmarked, isCopied, nowMs, onOpenDetail, onToggleBookmark, onFindTeammates, onShare, onApply }) {
+  const circuitClass = CARD_CIRCUIT_CLASS[getCircuitKey(comp)] || 'others';
+  const countdown = getCountdownDetails(comp.deadline, comp.remainDaysText, nowMs);
+  const canTeamUp = isTeamOk(comp);
+  const prizeText = (comp.prizes || comp.prize || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool');
+  const free = isFreeComp(comp);
+  const badge = SOURCE_BADGE[comp.sourcePlatform];
+  const open = () => onOpenDetail && onOpenDetail(comp.id);
 
-function getCardCircuit(comp) {
-  const key = getCompCircuitKey(comp);
-  if (key === 'du') return { type: 'du', label: 'DU Circuit' };
-  if (key === 'iim-iit-premier') return { type: 'iim-iit', label: 'IIMs, IITs & Premier Colleges' };
-  if (key === 'corporate-global') return { type: 'corporate-global', label: 'Corporate & Global' };
-  return { type: 'others', label: 'Others' };
-}
-
-function CompCardSkeleton() {
   return (
-    <article className="cc-card cc-card-skeleton" aria-hidden="true">
+    <article
+      className={`cc-card cc-card-${circuitClass} ${isBookmarked ? 'is-bookmarked' : ''}`}
+      onClick={open}
+      style={{ cursor: onOpenDetail ? 'pointer' : 'default' }}
+    >
       <div className="cc-card-inner">
-        {/* Top Bar: Logo + Host name + Bookmark button placeholder */}
         <div className="cc-card-top-bar">
           <div className="cc-host-identity">
-            <div className="skeleton-box" style={{ width: '36px', height: '36px', borderRadius: '8px' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1 }}>
-              <div className="skeleton-box" style={{ height: '12px', width: '75%', borderRadius: '4px' }} />
-              <div className="skeleton-box" style={{ height: '10px', width: '40%', borderRadius: '4px' }} />
+            <InstitutionLogo
+              logo={comp.orgLogo || comp.logo || comp.bannerUrl}
+              name={comp.orgName || comp.host}
+              size={36}
+              borderRadius={8}
+              fontSize={12}
+            />
+            <div className="cc-host-meta">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span className="cc-host-name" title={comp.orgName || 'Academic Host'}>
+                  {comp.orgName || 'Academic Host'}
+                </span>
+                {badge && <span className="cc-source-badge">{badge}</span>}
+              </div>
             </div>
           </div>
-          <div className="skeleton-box" style={{ width: '32px', height: '32px', borderRadius: '8px' }} />
+
+          <button
+            type="button"
+            className={`cc-card-bookmark-btn ${isBookmarked ? 'active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onToggleBookmark(comp.id); }}
+            title={isBookmarked ? 'Remove bookmark' : 'Bookmark this competition'}
+            aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this competition'}
+          >
+            <BookmarkIcon size={16} filled={isBookmarked} />
+          </button>
         </div>
 
-        {/* Title */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', margin: '4px 0' }}>
-          <div className="skeleton-box" style={{ height: '16px', width: '92%', borderRadius: '4px' }} />
-          <div className="skeleton-box" style={{ height: '16px', width: '65%', borderRadius: '4px' }} />
+        <h2 className="cc-card-title" title={comp.title || 'Competition'}>
+          <button
+            type="button"
+            className="cc-card-title-btn"
+            onClick={(e) => { e.stopPropagation(); open(); }}
+          >
+            {comp.title || 'Competition'}
+          </button>
+        </h2>
+
+        <div className="cc-prize-bar">
+          <div className="cc-prize-left">
+            <TrophyIcon size={14} />
+            <span className="cc-prize-text" title={prizeText}>{prizeText}</span>
+          </div>
+          <span className={`cc-entry-tag ${free ? 'free' : 'paid'}`}>
+            {free ? 'Free Entry' : 'Paid'}
+          </span>
         </div>
 
-        {/* Prize Bar */}
-        <div className="skeleton-box" style={{ height: '28px', width: '100%', borderRadius: '8px' }} />
-
-        {/* Specs Chips */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          <div className="skeleton-box" style={{ height: '22px', width: '70px', borderRadius: '20px' }} />
-          <div className="skeleton-box" style={{ height: '22px', width: '85px', borderRadius: '20px' }} />
+        <div className="cc-specs-row">
+          <div className="cc-spec-item" title={comp.teamSizeDisplay || 'Solo / Team'}>
+            <UsersIcon size={13} />
+            <span>{comp.teamSizeDisplay || 'Solo / Team'}</span>
+          </div>
+          <div className="cc-spec-dot" />
+          <div className="cc-spec-item" title={`Registration closes: ${countdown.exactDateStr}`}>
+            <CalendarIcon size={13} />
+            <span>Ends {countdown.exactDateStr}</span>
+          </div>
         </div>
 
-        {/* Metrics Row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '22px' }}>
-          <div className="skeleton-box" style={{ height: '14px', width: '110px', borderRadius: '4px' }} />
-          <div className="skeleton-box" style={{ height: '20px', width: '74px', borderRadius: '20px' }} />
+        <div className="cc-card-footer-metric">
+          <div className="cc-footer-metric-left">
+            {Number(comp.registeredCount || 0) > 0 ? (
+              <span className="cc-reg-count">
+                <FlameIcon size={12} />
+                <strong>{Number(comp.registeredCount).toLocaleString()}</strong> registrations
+              </span>
+            ) : (
+              <span className="cc-meta-fresh">Recently Listed</span>
+            )}
+          </div>
+          <span className={`cc-countdown-chip ${countdown.urgencyClass}`} title={`Registration closes: ${countdown.exactDateStr}`}>
+            <span className="cc-status-dot" />
+            <ClockIcon size={12} />
+            <span>{countdown.text}</span>
+          </span>
         </div>
 
-        {/* Action Buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: 'auto', paddingTop: '4px' }}>
-          <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
-          <div className="skeleton-box" style={{ height: '36px', borderRadius: '9px' }} />
+        <div className="cc-card-actions">
+          <a
+            href={safeExternalUrl(comp.unstopUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cc-action-btn cc-btn-apply"
+            onClick={(e) => { e.stopPropagation(); onApply(comp); }}
+          >
+            <span>Apply</span>
+            <ExternalLinkIcon size={12} />
+          </a>
+
+          {canTeamUp && (
+            <button
+              type="button"
+              className="cc-action-btn cc-btn-team"
+              onClick={(e) => { e.stopPropagation(); onFindTeammates(comp); }}
+              title="Find batchmates on Team Finder"
+            >
+              <UsersIcon size={13} />
+              <span>Find Teammates</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            className={`cc-share-icon-btn ${isCopied ? 'copied' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onShare(comp); }}
+            title={isCopied ? 'Details copied!' : 'Copy competition details & link'}
+            aria-label="Copy competition details and link"
+          >
+            {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+          </button>
         </div>
       </div>
     </article>
+  );
+});
+
+function FilterCheckboxRow({ checked, label, count, onChange }) {
+  return (
+    <label className="cc-filter-checkbox-row">
+      <input type="checkbox" className="cc-filter-checkbox-input" checked={checked} onChange={onChange} />
+      <span className="cc-custom-checkbox">{checked && <CheckIcon size={10} />}</span>
+      <span className="cc-checkbox-label-text">{label}</span>
+      <span className="cc-filter-num">({count || 0})</span>
+    </label>
+  );
+}
+
+function AccordionHeader({ title, open, onToggle, activeCount, allSelected, onToggleAll, noun }) {
+  return (
+    <div className="cc-subgroup-header-row">
+      <button type="button" className={`cc-accordion-header ${open ? 'open' : ''}`} onClick={onToggle} aria-expanded={open}>
+        <div className="cc-accordion-header-left">
+          <ChevronDownIcon size={13} className="cc-accordion-chevron" />
+          <span className="cc-accordion-title">{title}</span>
+        </div>
+        {activeCount > 0 && <span className="cc-active-count-badge">{activeCount}</span>}
+      </button>
+      <button
+        type="button"
+        className="cc-mini-select-all"
+        onClick={onToggleAll}
+        title={allSelected ? `Deselect all ${noun}` : `Select all ${noun}`}
+      >
+        {allSelected ? 'Clear' : 'All'}
+      </button>
+    </div>
   );
 }
 
 export default function CompetitionsPage({
   onBack,
-  onNavigate,
   onFindTeammates,
   showToast,
-  bookmarkedOnly: propBookmarkedOnly,
-  setBookmarkedOnly: propSetBookmarkedOnly,
-  bookmarks: propBookmarks,
-  onToggleBookmark: propToggleBookmark,
+  bookmarks = [],
+  onToggleBookmark,
   onOpenDetail,
-  onCountUpdate,
-  onNavigateToSquads,
   headerAction,
-  initialCompetitions = [],
+  competitions = [],
+  loading = false,
+  error = null,
+  onRetry,
   isPostgraduate = false,
-  externalSortBy,
-  onSortChange,
   onFilterPrefsChange,
 }) {
-  const { user, profile, squadPosts = [], openAuthModal } = useAuth();
-  const effectiveIsPostgraduate = useMemo(() => {
-    if (typeof isPostgraduate === 'boolean') return isPostgraduate;
-    return checkIsPostgraduate(profile);
-  }, [isPostgraduate, profile]);
-
-  const initialPrefs = useMemo(() => loadSavedFilterPrefs(user?.email), []);
-
-  const [competitions, setCompetitions] = useState(() => (Array.isArray(initialCompetitions) && initialCompetitions.length > 0 ? initialCompetitions : []));
-  const [loading, setLoading] = useState(() => !(Array.isArray(initialCompetitions) && initialCompetitions.length > 0));
-  const [showFetchingScreen, setShowFetchingScreen] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
+  const [prefs, setPrefs] = useState(loadPrefs);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCircuits, setSelectedCircuits] = useState(() => initialPrefs?.selectedCircuits || []); // [] = All circuits; otherwise: 'du' | 'iim-iit-premier' | 'corporate-global' | 'others'
-  const bookmarkedOnly = Boolean(propBookmarkedOnly);
-  const [savedViewMode, setSavedViewMode] = useState('tracker'); // 'tracker' | 'grid'
-  const [selectedTracks, setSelectedTracks] = useState(() => initialPrefs?.selectedTracks || []); // [] = All tracks; otherwise: 'case' | 'hackathon' | 'writing' | 'quiz' | 'simulation' | 'debate'
-  const [selectedSubTracks, setSelectedSubTracks] = useState(() => initialPrefs?.selectedSubTracks || []);
-  const [selectedPlatforms, setSelectedPlatforms] = useState(() => initialPrefs?.selectedPlatforms || []);
-  const [teamFilter, setTeamFilter] = useState(() => initialPrefs?.teamFilter || 'all'); // 'all' | 'solo' | 'team'
-  const [feeFilter, setFeeFilter] = useState(() => initialPrefs?.feeFilter || 'all'); // 'all' | 'free' | 'paid'
-  const [sortBy, setSortBy] = useState(() => externalSortBy || initialPrefs?.sortBy || 'closing-soonest'); // 'closing-soonest' | 'closing-latest' | 'title-asc' | 'title-desc' | 'prize-highest' | 'popular'
-
-  // Keep in sync with externalSortBy prop
-  useEffect(() => {
-    if (externalSortBy && externalSortBy !== sortBy) {
-      setSortBy(externalSortBy);
-    }
-  }, [externalSortBy]);
-
-  // Persist filter preferences whenever they change
-  useEffect(() => {
-    try {
-      const prefs = {
-        selectedCircuits,
-        selectedTracks,
-        selectedSubTracks,
-        selectedPlatforms,
-        teamFilter,
-        feeFilter,
-        sortBy,
-      };
-      const userKey = user?.email ? `${FILTER_PREFS_KEY}_${user.email.toLowerCase()}` : null;
-      if (userKey) {
-        localStorage.setItem(userKey, JSON.stringify(prefs));
-      }
-      localStorage.setItem(FILTER_PREFS_KEY, JSON.stringify(prefs));
-      if (onSortChange) {
-        onSortChange(sortBy);
-      }
-      if (onFilterPrefsChange) {
-        onFilterPrefsChange(prefs);
-      }
-    } catch (err) {
-      console.error('Error saving filter preferences:', err);
-    }
-  }, [selectedCircuits, selectedTracks, selectedSubTracks, selectedPlatforms, teamFilter, feeFilter, sortBy, user?.email, onSortChange, onFilterPrefsChange]);
-
-  // Sync saved filter preferences when user signs in
-  useEffect(() => {
-    if (!user?.email) return;
-    const userPrefs = loadSavedFilterPrefs(user.email);
-    if (userPrefs) {
-      if (Array.isArray(userPrefs.selectedCircuits)) setSelectedCircuits(userPrefs.selectedCircuits);
-      if (Array.isArray(userPrefs.selectedTracks)) setSelectedTracks(userPrefs.selectedTracks);
-      if (Array.isArray(userPrefs.selectedSubTracks)) setSelectedSubTracks(userPrefs.selectedSubTracks);
-      if (Array.isArray(userPrefs.selectedPlatforms)) setSelectedPlatforms(userPrefs.selectedPlatforms);
-      if (userPrefs.teamFilter) setTeamFilter(userPrefs.teamFilter);
-      if (userPrefs.feeFilter) setFeeFilter(userPrefs.feeFilter);
-      if (userPrefs.sortBy) setSortBy(userPrefs.sortBy);
-    }
-  }, [user?.email]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [showFetchingScreen, setShowFetchingScreen] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [openSections, setOpenSections] = useState({
-    circuits: true,
-    tracks: true,
-    platforms: true,
-    format: true,
-    fee: true,
-  });
+  const [openSections, setOpenSections] = useState({ circuits: true, tracks: true, platforms: true });
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const sentinelRef = useRef(null);
+  const copiedTimerRef = useRef(null);
 
-  // Debounced search query telemetry
+  const { selectedCircuits, selectedTracks, selectedSubTracks, selectedPlatforms, teamFilter, feeFilter, sortBy } = prefs;
+  const updatePrefs = useCallback((patch) => {
+    setPrefs(prev => sanitizePrefs({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }));
+  }, []);
+
+  // Browse owns the saved filter: persist it and let App/Home mirror it
+  const firstPrefsRun = useRef(true);
   useEffect(() => {
-    if (!searchQuery || searchQuery.trim().length < 2) return;
-    const timer = setTimeout(() => {
-      trackCaseCompsEvent('search', {
-        query: searchQuery.trim(),
-        length: searchQuery.trim().length,
-      });
-    }, 1000);
+    savePrefs(prefs);
+    if (onFilterPrefsChange) onFilterPrefsChange(prefs);
+    if (firstPrefsRun.current) {
+      firstPrefsRun.current = false;
+      return;
+    }
+    trackEvent('browse_filters_changed', {
+      circuits: prefs.selectedCircuits.join(','),
+      tracks: prefs.selectedTracks.join(','),
+      sub_tracks: prefs.selectedSubTracks.join(','),
+      platforms: prefs.selectedPlatforms.join(','),
+      team: prefs.teamFilter,
+      fee: prefs.feeFilter,
+      sort: prefs.sortBy,
+    });
+  }, [prefs, onFilterPrefsChange]);
+
+  // Debounced search analytics
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return;
+    const timer = setTimeout(() => trackEvent('browse_search', { query: q, length: q.length }), 1000);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Bookmarks fallback when no bookmarks prop is passed (in memory only; the DB is the source of truth)
-  const [internalBookmarkedIds, setInternalBookmarkedIds] = useState([]);
-
-  const bookmarkedIds = useMemo(() => {
-    if (!user) return [];
-    if (propBookmarks !== undefined) {
-      return (propBookmarks || []).map(String);
-    }
-    return internalBookmarkedIds;
-  }, [user, propBookmarks, internalBookmarkedIds]);
-
-  // Hydrate from cloud metadata when user logs in
+  // Live countdowns
   useEffect(() => {
-    if (!user || propBookmarks !== undefined) return;
-    const cloudBookmarks = user.user_metadata?.case_comp_bookmarks;
-    if (Array.isArray(cloudBookmarks)) {
-      setInternalBookmarkedIds(cloudBookmarks.map(String));
-    }
-  }, [user, propBookmarks]);
-
-  // Toggle bookmark handler
-  const toggleBookmark = useCallback((id, e) => {
-    if (e?.stopPropagation) e.stopPropagation();
-    if (e?.preventDefault) e.preventDefault();
-    const sId = String(id);
-
-    if (!user) {
-      if (showToast) showToast('Please sign up to bookmark competitions.');
-      try {
-        sessionStorage.setItem('onestop_pending_bookmark_after_auth', sId);
-      } catch (err) {}
-      if (openAuthModal) {
-        openAuthModal({
-          title: 'Sign Up to Bookmark Competitions',
-          subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
-          initialTab: 'signup',
-          postLoginAction: () => {
-            if (propToggleBookmark) {
-              propToggleBookmark(sId);
-            }
-          }
-        });
-      }
-      return;
-    }
-
-    if (propToggleBookmark) {
-      propToggleBookmark(sId);
-      return;
-    }
-    setInternalBookmarkedIds((prev) => {
-      const willAdd = !prev.includes(sId);
-      trackCaseCompsEvent(willAdd ? 'bookmark_added' : 'bookmark_removed', { comp_id: sId });
-      return willAdd ? [...prev, sId] : prev.filter((item) => item !== sId);
-    });
-  }, [user, propToggleBookmark, openAuthModal, showToast]);
-
-  useEffect(() => {
-    // Tick every 30 seconds for live countdown accuracy
-    const timer = setInterval(() => {
-      setNowMs(Date.now());
-    }, 30000);
+    const timer = setInterval(() => setNowMs(Date.now()), 30000);
     return () => clearInterval(timer);
   }, []);
 
-  const fetchOpportunities = useCallback(async (isManualTrigger = false) => {
-    setLoading(true);
-    if (isManualTrigger) {
-      setShowFetchingScreen(true);
-    }
-    setFetchError(null);
+  useEffect(() => () => clearTimeout(copiedTimerRef.current), []);
 
-    try {
-      const res = await fetch('/api/competitions');
-      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch live competitions`);
-      const data = await res.json();
-      if (data.success && Array.isArray(data.data)) {
-        let sanitized = data.data.map((c) => ({
-          ...c,
-          prizes: c.prizes ? c.prizes.replace(/Cash Pool/gi, 'Prize Pool') : c.prizes,
-          isUndergradEligible: c.isUndergradEligible !== false && isEligibleForUndergrad(c),
-          isPGOnly: Boolean(c.isPGOnly) || !isEligibleForUndergrad(c),
-          isMBAorPG: Boolean(c.isMBAorPG) || !isEligibleForUndergrad(c),
-          targetLevel: (!isEligibleForUndergrad(c) || c.isPGOnly) ? 'pg' : (c.targetLevel || 'ug')
-        }));
-        if (!effectiveIsPostgraduate) {
-          sanitized = sanitized.filter(isEligibleForUndergrad);
-        }
-        setCompetitions(sanitized);
-        if (onCountUpdate) onCountUpdate(sanitized.length);
-        setLastUpdated(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      } else {
-        throw new Error(data.error || 'Empty response received');
-      }
-    } catch (err) {
-      console.error('Error fetching live competitions:', err);
-      setFetchError(err.message || 'Unable to load real-time competitions.');
-      setCompetitions([]);
-      if (onCountUpdate) onCountUpdate(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [onCountUpdate, effectiveIsPostgraduate]);
-
-  // Sync initialCompetitions from parent if updated
+  // Mobile filter drawer: lock the page behind it and close on Escape
   useEffect(() => {
-    if (Array.isArray(initialCompetitions) && initialCompetitions.length > 0) {
-      setCompetitions(initialCompetitions);
-      setLoading(false);
-      if (onCountUpdate) onCountUpdate(initialCompetitions.length);
-    } else {
-      // Only fetch if parent did not provide competitions
-      fetchOpportunities();
-    }
-  }, [initialCompetitions, fetchOpportunities, onCountUpdate]);
+    if (!isMobileFiltersOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e) => { if (e.key === 'Escape') setIsMobileFiltersOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [isMobileFiltersOpen]);
 
-  const handleShare = (comp, e) => {
-    e.stopPropagation();
-    trackCaseCompsEvent('share_clicked', { comp_id: comp.id, title: comp.title });
+  const bookmarkedIds = useMemo(() => new Set((bookmarks || []).map(String)), [bookmarks]);
+
+  // Platforms with nothing listed are hidden (unless already selected)
+  const platformOptions = useMemo(() => {
+    const present = new Set(competitions.map(getPlatformKey));
+    return PLATFORM_OPTIONS.filter(opt => present.has(opt.id) || selectedPlatforms.includes(opt.id));
+  }, [competitions, selectedPlatforms]);
+
+  const filterOpts = useMemo(() => ({
+    isPostgrad: isPostgraduate,
+    search: searchQuery,
+    now: nowMs,
+    platformCount: platformOptions.length,
+  }), [isPostgraduate, searchQuery, nowMs, platformOptions.length]);
+
+  const filteredCompetitions = useMemo(
+    () => sortCompetitions(filterCompetitions(competitions, prefs, filterOpts), sortBy),
+    [competitions, prefs, filterOpts, sortBy]
+  );
+  const counts = useMemo(() => facetCounts(competitions, prefs, filterOpts), [competitions, prefs, filterOpts]);
+
+  // Back to the first batch whenever the result set changes
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [prefs, searchQuery]);
+
+  const hasMore = visibleCount < filteredCompetitions.length;
+  const visibleCompetitions = useMemo(() => filteredCompetitions.slice(0, visibleCount), [filteredCompetitions, visibleCount]);
+  const showMore = useCallback(() => setVisibleCount(c => c + PAGE_SIZE), []);
+
+  // Load the next batch as the bottom of the list scrolls into view
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !hasMore || typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some(e => e.isIntersecting)) showMore();
+    }, { rootMargin: '600px 0px' });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, showMore, visibleCount]);
+
+  const handleLoadingComplete = useCallback(() => setShowFetchingScreen(false), []);
+
+  const handleShare = useCallback(async (comp) => {
+    trackEvent('competition_shared', { competition_id: comp.id, title: comp.title });
     const details = [
-      comp.title || 'Case Competition',
+      comp.title || 'Competition',
       comp.orgName ? `Organized by: ${comp.orgName}` : null,
       comp.prizes ? `Prizes: ${comp.prizes}` : null,
       comp.teamSizeDisplay ? `Format: ${comp.teamSizeDisplay}` : null,
       comp.remainDaysText ? `Deadline: ${comp.remainDaysText}` : null,
-      `Apply: ${comp.unstopUrl}`,
+      `Apply: ${safeExternalUrl(comp.unstopUrl)}`,
     ].filter(Boolean).join('\n');
-
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(details);
-      setCopiedId(comp.id);
-      if (showToast) showToast('Competition details copied to clipboard!');
-      setTimeout(() => setCopiedId(null), 2000);
-    }
-  };
-
-  const handleFindTeammates = (comp, e) => {
-    if (e?.stopPropagation) e.stopPropagation();
-    trackCaseCompsEvent('find_teammates_clicked', { comp_id: comp.id, title: comp.title });
-    const teamSize = Math.max(2, Math.min(5, comp.maxTeam || 4));
-    const orgSuffix = comp.orgName ? ` (${comp.orgName})` : '';
-    const prefill = {
-      competition_name: comp.title || '',
-      organizer: comp.orgName || '',
-      competition_link: comp.unstopUrl || '',
-      title: `Team for ${comp.title || 'Case Competition'}`,
-      description: `Building a squad for ${comp.title || 'Case Competition'}${orgSuffix}`,
-      total_members: teamSize,
-      spots_left: Math.max(1, teamSize - 1),
-    };
-
     try {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('comp_team_prefill', JSON.stringify(prefill));
-        sessionStorage.setItem('sscbs_team_finder_prefill', JSON.stringify(prefill));
-      }
+      await navigator.clipboard.writeText(details);
+      setCopiedId(comp.id);
+      if (latest.current.showToast) latest.current.showToast('Competition details copied to clipboard!');
+      clearTimeout(copiedTimerRef.current);
+      copiedTimerRef.current = setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
-      console.warn('Could not cache prefill in sessionStorage', err);
-    }
-
-    if (onFindTeammates) {
-      onFindTeammates(comp);
-    } else if (onNavigate) {
-      onNavigate('teams');
-    } else if (onNavigateToSquads) {
-      onNavigateToSquads();
-    }
-  };
-
-  // Metrics computation from 100% real Unstop competitions
-  const metrics = useMemo(() => {
-    const total = competitions.length;
-    const du = competitions.filter((c) => getCompCircuitKey(c) === 'du').length;
-    const iimIitPremier = competitions.filter((c) => getCompCircuitKey(c) === 'iim-iit-premier').length;
-    const corporateGlobal = competitions.filter((c) => getCompCircuitKey(c) === 'corporate-global').length;
-    const others = competitions.filter((c) => getCompCircuitKey(c) === 'others').length;
-    const bookmarked = competitions.filter((c) => bookmarkedIds.includes(String(c.id))).length;
-    const cases = competitions.filter((c) => c.category === 'case').length;
-    const hackathons = competitions.filter((c) => c.category === 'hackathon').length;
-    const writing = competitions.filter((c) => c.category === 'writing').length;
-    const quizzes = competitions.filter((c) => c.category === 'quiz').length;
-    const simulations = competitions.filter((c) => c.category === 'simulation').length;
-    const debates = competitions.filter((c) => c.category === 'debate').length;
-
-    // Platform metrics
-    const unstop = competitions.filter((c) => (c.sourcePlatform || 'unstop') === 'unstop').length;
-    const corporate = competitions.filter((c) => c.sourcePlatform === 'corporate').length;
-    const inside_campus = competitions.filter((c) => c.sourcePlatform === 'inside_campus' || c.sourcePlatform === 'inside_iim').length;
-    const devpost = competitions.filter((c) => c.sourcePlatform === 'devpost').length;
-    const institutional = competitions.filter((c) => c.sourcePlatform === 'institutional' || c.sourcePlatform === 'campus_direct').length;
-
-    return {
-      total,
-      du,
-      iimIitPremier,
-      iimIitBschools: iimIitPremier,
-      corporateGlobal,
-      others,
-      bookmarked,
-      cases,
-      hackathons,
-      writing,
-      quizzes,
-      simulations,
-      debates,
-      unstop,
-      corporate,
-      inside_campus,
-      devpost,
-      institutional,
-    };
-  }, [competitions, bookmarkedIds]);
-
-  const scrollToRepository = useCallback(() => {
-    const el = document.getElementById('repository');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (latest.current.showToast) latest.current.showToast('Could not copy. Your browser blocked clipboard access.');
     }
   }, []);
 
-  const handleSelectCircuit = useCallback((circuitKey) => {
-    setSelectedCircuits([circuitKey]);
-    scrollToRepository();
-  }, [scrollToRepository]);
+  const handleApply = useCallback((comp) => {
+    trackEvent('competition_outbound_clicked', { competition_id: comp.id, title: comp.title, source: 'browse_card' });
+  }, []);
 
-  const handleSelectTrack = useCallback((trackKey) => {
-    setSelectedTracks([trackKey]);
-    scrollToRepository();
-  }, [scrollToRepository]);
+  // Parent callbacks change identity on every App render; cards get stable wrappers so memo() holds
+  const latest = useRef({});
+  latest.current = { onToggleBookmark, onFindTeammates, onOpenDetail, showToast };
 
-  const toggleSection = (sectionKey) => {
-    setOpenSections((prev) => ({
-      ...prev,
-      [sectionKey]: !prev[sectionKey],
-    }));
-  };
+  const handleToggleBookmark = useCallback((id) => {
+    if (latest.current.onToggleBookmark) latest.current.onToggleBookmark(String(id));
+  }, []);
 
-  const toggleCircuit = (circuitKey) => {
-    if (circuitKey === 'all') {
-      setSelectedCircuits([]);
-      return;
-    }
-    setSelectedCircuits((prev) => {
-      if (prev.includes(circuitKey)) {
-        return prev.filter((k) => k !== circuitKey);
-      }
-      return [...prev, circuitKey];
-    });
-  };
+  const handleFindTeammates = useCallback((comp) => {
+    if (latest.current.onFindTeammates) latest.current.onFindTeammates(comp);
+  }, []);
+
+  const handleOpenDetail = useCallback((id) => {
+    if (latest.current.onOpenDetail) latest.current.onOpenDetail(id);
+  }, []);
+
+  // ---------- filter actions ----------
+
+  const toggleIn = (list, id) => (list.includes(id) ? list.filter(x => x !== id) : [...list, id]);
+  const toggleSection = (key) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  const toggleCircuit = (id) => updatePrefs(p => ({ selectedCircuits: toggleIn(p.selectedCircuits, id) }));
+  const toggleTrack = (id) => updatePrefs(p => ({
+    selectedTracks: toggleIn(p.selectedTracks, id),
+    // unticking a category also drops its sub-tracks
+    selectedSubTracks: p.selectedTracks.includes(id)
+      ? p.selectedSubTracks.filter(st => !(SUBTRACK_MAP[id] || []).some(s => s.id === st))
+      : p.selectedSubTracks,
+  }));
+  const toggleSubTrack = (id) => updatePrefs(p => ({ selectedSubTracks: toggleIn(p.selectedSubTracks, id) }));
+  const togglePlatform = (id) => updatePrefs(p => ({ selectedPlatforms: toggleIn(p.selectedPlatforms, id) }));
 
   const isAllCircuitsSelected = selectedCircuits.length === CIRCUIT_OPTIONS.length;
-  const handleToggleAllCircuits = () => {
-    if (isAllCircuitsSelected) {
-      setSelectedCircuits([]);
-    } else {
-      setSelectedCircuits(CIRCUIT_OPTIONS.map((c) => c.id));
-    }
-  };
-
-  const toggleTrack = (trackKey) => {
-    if (trackKey === 'all') {
-      setSelectedTracks([]);
-      setSelectedSubTracks([]);
-      return;
-    }
-    setSelectedTracks((prev) => {
-      if (prev.includes(trackKey)) {
-        // Also remove any active subtracks belonging to this category
-        const subIds = (SUBTRACK_MAP[trackKey] || []).map((s) => s.id);
-        setSelectedSubTracks((subPrev) => subPrev.filter((id) => !subIds.includes(id)));
-        return prev.filter((k) => k !== trackKey);
-      }
-      return [...prev, trackKey];
-    });
-  };
-
   const isAllTracksSelected = selectedTracks.length === TRACK_OPTIONS.length;
-  const handleToggleAllTracks = () => {
-    if (isAllTracksSelected) {
-      setSelectedTracks([]);
-      setSelectedSubTracks([]);
-    } else {
-      setSelectedTracks(TRACK_OPTIONS.map((t) => t.id));
-    }
-  };
+  const isAllPlatformsSelected = platformOptions.length > 0 && platformOptions.every(p => selectedPlatforms.includes(p.id));
 
-  const toggleSubTrack = (subTrackId) => {
-    setSelectedSubTracks((prev) => {
-      if (prev.includes(subTrackId)) {
-        return prev.filter((id) => id !== subTrackId);
-      }
-      return [...prev, subTrackId];
-    });
-  };
-
-  const togglePlatform = (platformKey) => {
-    if (platformKey === 'all') {
-      setSelectedPlatforms([]);
-      return;
-    }
-    setSelectedPlatforms((prev) => {
-      if (prev.includes(platformKey)) {
-        return prev.filter((k) => k !== platformKey);
-      }
-      return [...prev, platformKey];
-    });
-  };
-
-  const availablePlatformOptions = useMemo(() => {
-    return PLATFORM_OPTIONS.filter((opt) => {
-      if (opt.id === 'inside_campus' && !effectiveIsPostgraduate && (metrics[opt.countKey] || 0) === 0) {
-        return false;
-      }
-      return true;
-    });
-  }, [effectiveIsPostgraduate, metrics]);
-
-  const isAllPlatformsSelected = selectedPlatforms.length === availablePlatformOptions.length && availablePlatformOptions.length > 0;
-  const handleToggleAllPlatforms = () => {
-    if (isAllPlatformsSelected) {
-      setSelectedPlatforms([]);
-    } else {
-      setSelectedPlatforms(availablePlatformOptions.map((p) => p.id));
-    }
-  };
-
-  const getCircuitLabel = (id) => {
-    const found = CIRCUIT_OPTIONS.find((c) => c.id === id);
-    return found ? found.label : id;
-  };
-
-  const getTrackLabel = (id) => {
-    const found = TRACK_OPTIONS.find((t) => t.id === id);
-    return found ? found.label : id;
-  };
-
-  const getPlatformLabel = (id) => {
-    const found = PLATFORM_OPTIONS.find((p) => p.id === id);
-    return found ? found.label : id;
-  };
-
-  const getSubTrackLabel = (id) => {
-    for (const cat of Object.keys(SUBTRACK_MAP)) {
-      const match = SUBTRACK_MAP[cat].find((st) => st.id === id);
-      if (match) return match.label;
-    }
-    return id;
-  };
+  const circuitsActive = selectedCircuits.length > 0 && !isAllCircuitsSelected;
+  const tracksActive = selectedTracks.length > 0 && !isAllTracksSelected;
+  const platformsActive = selectedPlatforms.length > 0 && !isAllPlatformsSelected;
 
   const activeFilterCount =
-    (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length ? selectedCircuits.length : 0) +
-    (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length ? selectedTracks.length : 0) +
-    (selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length ? selectedPlatforms.length : 0) +
+    (circuitsActive ? selectedCircuits.length : 0) +
+    (tracksActive ? selectedTracks.length : 0) +
+    (platformsActive ? selectedPlatforms.length : 0) +
     selectedSubTracks.length +
     (teamFilter !== 'all' ? 1 : 0) +
     (feeFilter !== 'all' ? 1 : 0);
 
-  const hasActiveFilters =
-    searchQuery.trim() !== '' ||
-    (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length) ||
-    (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length) ||
-    (selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length) ||
-    selectedSubTracks.length > 0 ||
-    teamFilter !== 'all' ||
-    feeFilter !== 'all' ||
-    sortBy !== 'closing-soonest';
+  const sortChanged = sortBy !== DEFAULT_PREFS.sortBy;
+  const hasActiveFilters = searchQuery.trim() !== '' || activeFilterCount > 0 || sortChanged;
 
   const handleResetFilters = useCallback(() => {
     setSearchQuery('');
-    setSelectedCircuits([]);
-    setSelectedTracks([]);
-    setSelectedSubTracks([]);
-    setSelectedPlatforms([]);
-    setTeamFilter('all');
-    setFeeFilter('all');
-    setSortBy('closing-soonest');
-    try {
-      const userKey = user?.email ? `${FILTER_PREFS_KEY}_${user.email.toLowerCase()}` : null;
-      if (userKey) localStorage.removeItem(userKey);
-      localStorage.removeItem(FILTER_PREFS_KEY);
-    } catch (err) {
-      console.error('Error clearing filter preferences:', err);
-    }
-  }, [user?.email]);
+    setPrefs({ ...DEFAULT_PREFS });
+  }, []);
 
-  // Filtering & Sorting
-  const filteredCompetitions = useMemo(() => {
-    const result = competitions.filter((comp) => {
-      // Search match
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesTitle = comp.title?.toLowerCase().includes(q);
-        const matchesOrg = comp.orgName?.toLowerCase().includes(q);
-        const matchesPrize = comp.prizes?.toLowerCase().includes(q);
-        const matchesCat = comp.categoryLabel?.toLowerCase().includes(q);
-        const matchesSource = comp.sourceLabel?.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesOrg && !matchesPrize && !matchesCat && !matchesSource) return false;
-      }
+  const labelOf = (options, id) => options.find(o => o.id === id)?.label || id;
+  const subTrackLabel = (id) => Object.values(SUBTRACK_MAP).flat().find(s => s.id === id)?.label || id;
 
-      // Circuit filter (multi-select)
-      if (selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length) {
-        const compCircuit = getCompCircuitKey(comp);
-        const matchesCircuit = selectedCircuits.some(
-          (c) => c === compCircuit || (c === 'iim-iit-bschool' && compCircuit === 'iim-iit-premier')
-        );
-        if (!matchesCircuit) return false;
-      }
-
-      // Bookmarked filter
-      if (bookmarkedOnly) {
-        if (!bookmarkedIds.includes(String(comp.id))) return false;
-      }
-
-      // Discipline track filter (multi-select)
-      if (selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length) {
-        if (!selectedTracks.includes(comp.category)) return false;
-      }
-
-      // Granular Sub-Track filter (multi-select)
-      if (selectedSubTracks.length > 0) {
-        const compSubTracks = comp.subTracks || [];
-        const matchesSubTrack = selectedSubTracks.some((st) => compSubTracks.includes(st));
-        if (!matchesSubTrack) return false;
-      }
-
-      // Sourcing Platform filter (multi-select)
-      if (selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length) {
-        const compPlatform = comp.sourcePlatform || 'unstop';
-        const matchesPlatform = selectedPlatforms.some((p) => {
-          if (p === 'institutional' || p === 'campus_direct') {
-            return compPlatform === 'institutional' || compPlatform === 'campus_direct';
-          }
-          return p === compPlatform;
-        });
-        if (!matchesPlatform) return false;
-      }
-
-      // Team filter
-      if (teamFilter === 'solo' && comp.maxTeam > 1) return false;
-      if (teamFilter === 'team' && comp.maxTeam <= 1) return false;
-
-      // Fee filter
-      if (feeFilter === 'free' && !comp.isFree) return false;
-      if (feeFilter === 'paid' && comp.isFree) return false;
-
-      // Undergraduate eligibility check
-      if (!effectiveIsPostgraduate) {
-        if (!isEligibleForUndergrad(comp)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    function getDeadlineTimestamp(comp) {
-      if (!comp || !comp.deadline) return Infinity;
-      const t = new Date(comp.deadline).getTime();
-      return isNaN(t) ? Infinity : t;
-    }
-
-    // Sort order
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'title-asc':
-          return (a.title || '').localeCompare(b.title || '', undefined, { sensitivity: 'base' });
-        case 'title-desc':
-          return (b.title || '').localeCompare(a.title || '', undefined, { sensitivity: 'base' });
-        case 'closing-soonest': {
-          const now = Date.now();
-          const timeA = getDeadlineTimestamp(a);
-          const timeB = getDeadlineTimestamp(b);
-          const isPastA = timeA !== Infinity && timeA < now;
-          const isPastB = timeB !== Infinity && timeB < now;
-          if (!isPastA && !isPastB) {
-            if (timeA !== timeB) return timeA - timeB;
-          } else if (!isPastA && isPastB) {
-            return -1;
-          } else if (isPastA && !isPastB) {
-            return 1;
-          } else {
-            if (timeA !== timeB) return timeB - timeA;
-          }
-          return (b.registeredCount || 0) - (a.registeredCount || 0);
-        }
-        case 'closing-latest': {
-          const timeA = getDeadlineTimestamp(a);
-          const timeB = getDeadlineTimestamp(b);
-          if (timeA === Infinity && timeB === Infinity) return 0;
-          if (timeA === Infinity) return 1;
-          if (timeB === Infinity) return -1;
-          if (timeA !== timeB) return timeB - timeA;
-          return (b.registeredCount || 0) - (a.registeredCount || 0);
-        }
-        case 'prize-highest': {
-          const prizeA = parsePrizeAmount(a.prizes || a.prize);
-          const prizeB = parsePrizeAmount(b.prizes || b.prize);
-          if (prizeA !== prizeB) return prizeB - prizeA;
-          return (b.registeredCount || 0) - (a.registeredCount || 0);
-        }
-        case 'popular':
-          return (b.registeredCount || 0) - (a.registeredCount || 0);
-        default:
-          return 0;
-      }
-    });
-
-    return result;
-  }, [competitions, searchQuery, selectedCircuits, bookmarkedOnly, selectedTracks, selectedSubTracks, selectedPlatforms, teamFilter, feeFilter, sortBy, bookmarkedIds]);
+  const isLoadingView = showFetchingScreen || loading;
 
   return (
     <div className="case-comps-standalone-page">
       <div className="case-comps-container">
-        {/* Top Header */}
         <header className="cc-header">
           <div className="cc-header-left">
             {onBack && (
@@ -1222,759 +550,398 @@ export default function CompetitionsPage({
             )}
             <div className="cc-header-info">
               <div className="cc-title-row">
-                <h1 className="cc-title">{bookmarkedOnly ? 'Bookmarked' : 'Competitions'}</h1>
+                <h1 className="cc-title">Competitions</h1>
                 <div className="cc-unstop-pill-badge" title="Live synced across collegiate, corporate, and national competition portals.">
                   <span className="cc-unstop-pulse-dot" />
                   <span className="cc-unstop-pill-text">MULTI-SOURCE LIVE</span>
                 </div>
               </div>
               <p className="cc-subtitle">
-                {bookmarkedOnly
-                  ? 'All your saved competitions in one place. Synced and updated live.'
-                  : 'Discover top competitions, hackathons, and challenges right here, synced live across collegiate, corporate, and national portals.'}
+                Discover top competitions, hackathons, and challenges right here, synced live across collegiate, corporate, and national portals.
               </p>
             </div>
           </div>
-          {headerAction && (
-            <div className="cc-header-right">
-              {headerAction}
-            </div>
-          )}
+          {headerAction && <div className="cc-header-right">{headerAction}</div>}
         </header>
 
-        {/* ── Multi-Platform Notice Banner ── */}
         <div className="cc-unstop-notice-banner">
           <span className="cc-unstop-notice-tag">MULTI-PLATFORM</span>
           <span className="cc-unstop-notice-text">
-            <strong>Direct Sourcing:</strong> Sourced live from premier competition platforms, corporate challenges, and verified campus portals.
+            <strong>Direct Sourcing:</strong> Sourced live from Unstop, InsideKampus, Devpost and official corporate challenge pages.
           </span>
         </div>
 
-        {/* ── Two-Column Layout (Left: Accordion Filters, Right: Listings) ── */}
         <div className="cc-layout-wrapper">
-        {/* ── Filter Sidebar (Card-based Accordions matching reference image) ── */}
-        <aside className={`cc-filter-sidebar ${isMobileFiltersOpen ? 'mobile-open' : ''}`}>
-          {/* Mobile Drawer Header */}
-          <div className="cc-mobile-filter-header">
-            <div className="cc-mobile-filter-title">
-              <FilterIcon size={16} />
-              <span>Filters {activeFilterCount > 0 && `(${activeFilterCount})`}</span>
-            </div>
-            <div className="cc-mobile-filter-actions">
-              {hasActiveFilters && (
-                <button type="button" className="cc-filter-reset-link" onClick={handleResetFilters}>
-                  Reset All
+          <aside className={`cc-filter-sidebar ${isMobileFiltersOpen ? 'mobile-open' : ''}`} aria-label="Filters">
+            <div className="cc-mobile-filter-header">
+              <div className="cc-mobile-filter-title">
+                <FilterIcon size={16} />
+                <span>Filters {activeFilterCount > 0 && `(${activeFilterCount})`}</span>
+              </div>
+              <div className="cc-mobile-filter-actions">
+                {hasActiveFilters && (
+                  <button type="button" className="cc-filter-reset-link" onClick={handleResetFilters}>Reset All</button>
+                )}
+                <button type="button" className="cc-mobile-filter-close" onClick={() => setIsMobileFiltersOpen(false)} aria-label="Close filters">
+                  <XCloseIcon size={16} />
                 </button>
-              )}
-              <button
-                type="button"
-                className="cc-mobile-filter-close"
-                onClick={() => setIsMobileFiltersOpen(false)}
-                aria-label="Close filters"
-              >
-                <XCloseIcon size={16} />
-              </button>
+              </div>
             </div>
-          </div>
 
-          {/* Unified Filter Card  -  All filters visible without scrolling */}
-          <div className="cc-filter-card cc-unified-filter-card">
-            {/* Header: Title & Reset All */}
-            <div className="cc-filter-card-header">
-              <div className="cc-card-heading-group">
-                <span className="cc-card-heading">Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="cc-active-count-badge">{activeFilterCount}</span>
+            <div className="cc-filter-card cc-unified-filter-card">
+              <div className="cc-filter-card-header">
+                <div className="cc-card-heading-group">
+                  <span className="cc-card-heading">Filters</span>
+                  {activeFilterCount > 0 && <span className="cc-active-count-badge">{activeFilterCount}</span>}
+                </div>
+                {hasActiveFilters && (
+                  <button type="button" className="cc-filter-reset-link" onClick={handleResetFilters} title="Reset all filters">Reset All</button>
                 )}
               </div>
-              {hasActiveFilters && (
-                <button
-                  type="button"
-                  className="cc-filter-reset-link"
-                  onClick={handleResetFilters}
-                  title="Reset all filters"
-                >
-                  Reset All
-                </button>
-              )}
-            </div>
 
-            {/* Section 1: Target Circuits */}
-            <div className="cc-filter-subgroup">
-              <div className="cc-subgroup-header-row">
-                <button
-                  type="button"
-                  className={`cc-accordion-header ${openSections.circuits ? 'open' : ''}`}
-                  onClick={() => toggleSection('circuits')}
-                  aria-expanded={openSections.circuits}
-                >
-                  <div className="cc-accordion-header-left">
-                    <ChevronDownIcon size={13} className="cc-accordion-chevron" />
-                    <span className="cc-accordion-title">Circuits</span>
+              {/* Circuits */}
+              <div className="cc-filter-subgroup">
+                <AccordionHeader
+                  title="Circuits"
+                  noun="circuits"
+                  open={openSections.circuits}
+                  onToggle={() => toggleSection('circuits')}
+                  activeCount={circuitsActive ? selectedCircuits.length : 0}
+                  allSelected={isAllCircuitsSelected}
+                  onToggleAll={() => updatePrefs({ selectedCircuits: isAllCircuitsSelected ? [] : CIRCUIT_OPTIONS.map(c => c.id) })}
+                />
+                {openSections.circuits && (
+                  <div className="cc-accordion-content">
+                    <div className="cc-checkbox-list">
+                      {CIRCUIT_OPTIONS.map(opt => (
+                        <FilterCheckboxRow
+                          key={opt.id}
+                          checked={selectedCircuits.includes(opt.id)}
+                          label={opt.label}
+                          count={counts.circuits[opt.id]}
+                          onChange={() => toggleCircuit(opt.id)}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  {selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length && (
-                    <span className="cc-active-count-badge">{selectedCircuits.length}</span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className="cc-mini-select-all"
-                  onClick={handleToggleAllCircuits}
-                  title={isAllCircuitsSelected ? "Deselect all circuits" : "Select all circuits"}
-                >
-                  {isAllCircuitsSelected ? "Clear" : "All"}
-                </button>
+                )}
               </div>
 
-              {openSections.circuits && (
-                <div className="cc-accordion-content">
-                  <div className="cc-checkbox-list">
-                    {CIRCUIT_OPTIONS.map((opt) => {
-                      const isChecked = selectedCircuits.includes(opt.id);
-                      return (
-                        <label key={opt.id} className="cc-filter-checkbox-row">
-                          <input
-                            type="checkbox"
-                            className="cc-filter-checkbox-input"
-                            checked={isChecked}
-                            onChange={() => toggleCircuit(opt.id)}
-                          />
-                          <span className="cc-custom-checkbox">
-                            {isChecked && <CheckIcon size={10} />}
-                          </span>
-                          <span className="cc-checkbox-label-text">{opt.label}</span>
-                          <span className="cc-filter-num">({metrics[opt.countKey] || 0})</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Section 2: Categories */}
-            <div className="cc-filter-subgroup">
-              <div className="cc-subgroup-header-row">
-                <button
-                  type="button"
-                  className={`cc-accordion-header ${openSections.tracks ? 'open' : ''}`}
-                  onClick={() => toggleSection('tracks')}
-                  aria-expanded={openSections.tracks}
-                >
-                  <div className="cc-accordion-header-left">
-                    <ChevronDownIcon size={13} className="cc-accordion-chevron" />
-                    <span className="cc-accordion-title">Categories</span>
-                  </div>
-                  {selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length && (
-                    <span className="cc-active-count-badge">{selectedTracks.length}</span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className="cc-mini-select-all"
-                  onClick={handleToggleAllTracks}
-                  title={isAllTracksSelected ? "Deselect all categories" : "Select all categories"}
-                >
-                  {isAllTracksSelected ? "Clear" : "All"}
-                </button>
-              </div>
-
-              {openSections.tracks && (
-                <div className="cc-accordion-content">
-                  <div className="cc-checkbox-list">
-                    {TRACK_OPTIONS.map((opt) => {
-                      const isChecked = selectedTracks.includes(opt.id);
-                      const subTracksForCategory = SUBTRACK_MAP[opt.id] || [];
-                      return (
-                        <div key={opt.id} className="cc-filter-track-block">
-                          <label className="cc-filter-checkbox-row">
-                            <input
-                              type="checkbox"
-                              className="cc-filter-checkbox-input"
+              {/* Categories + sub-tracks */}
+              <div className="cc-filter-subgroup">
+                <AccordionHeader
+                  title="Categories"
+                  noun="categories"
+                  open={openSections.tracks}
+                  onToggle={() => toggleSection('tracks')}
+                  activeCount={tracksActive ? selectedTracks.length : 0}
+                  allSelected={isAllTracksSelected}
+                  onToggleAll={() => updatePrefs({ selectedTracks: isAllTracksSelected ? [] : TRACK_OPTIONS.map(t => t.id), selectedSubTracks: isAllTracksSelected ? [] : selectedSubTracks })}
+                />
+                {openSections.tracks && (
+                  <div className="cc-accordion-content">
+                    <div className="cc-checkbox-list">
+                      {TRACK_OPTIONS.map(opt => {
+                        const isChecked = selectedTracks.includes(opt.id);
+                        const subs = (SUBTRACK_MAP[opt.id] || []).filter(s => (counts.subTracks[s.id] || 0) > 0 || selectedSubTracks.includes(s.id));
+                        return (
+                          <div key={opt.id} className="cc-filter-track-block">
+                            <FilterCheckboxRow
                               checked={isChecked}
+                              label={opt.label}
+                              count={counts.tracks[opt.id]}
                               onChange={() => toggleTrack(opt.id)}
                             />
-                            <span className="cc-custom-checkbox">
-                              {isChecked && <CheckIcon size={10} />}
-                            </span>
-                            <span className="cc-checkbox-label-text">
-                              {opt.label}
-                            </span>
-                            <span className="cc-filter-num">({metrics[opt.countKey] || 0})</span>
-                          </label>
-
-                          {/* Contextual dynamic sub-pills expanding directly under active category */}
-                          {isChecked && subTracksForCategory.length > 0 && (
-                            <div className="cc-subtrack-pills-tray">
-                              {subTracksForCategory.map((sub) => {
-                                const isSubActive = selectedSubTracks.includes(sub.id);
-                                return (
-                                  <button
-                                    key={sub.id}
-                                    type="button"
-                                    className={`cc-subtrack-pill ${isSubActive ? 'active' : ''}`}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      toggleSubTrack(sub.id);
-                                    }}
-                                  >
-                                    <span>{sub.label}</span>
-                                    {isSubActive && <span className="cc-subtrack-check">✓</span>}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            {isChecked && subs.length > 0 && (
+                              <div className="cc-subtrack-pills-tray">
+                                {subs.map(sub => {
+                                  const isSubActive = selectedSubTracks.includes(sub.id);
+                                  return (
+                                    <button
+                                      key={sub.id}
+                                      type="button"
+                                      className={`cc-subtrack-pill ${isSubActive ? 'active' : ''}`}
+                                      onClick={() => toggleSubTrack(sub.id)}
+                                      aria-pressed={isSubActive}
+                                    >
+                                      <span>{sub.label}</span>
+                                      <span className="cc-subtrack-count">{counts.subTracks[sub.id] || 0}</span>
+                                      {isSubActive && <span className="cc-subtrack-check">✓</span>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Section 3: Sourcing Platforms */}
-            <div className="cc-filter-subgroup">
-              <div className="cc-subgroup-header-row">
-                <button
-                  type="button"
-                  className={`cc-accordion-header ${openSections.platforms ? 'open' : ''}`}
-                  onClick={() => toggleSection('platforms')}
-                  aria-expanded={openSections.platforms}
-                >
-                  <div className="cc-accordion-header-left">
-                    <ChevronDownIcon size={13} className="cc-accordion-chevron" />
-                    <span className="cc-accordion-title">Platforms</span>
-                  </div>
-                  {selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length && (
-                    <span className="cc-active-count-badge">{selectedPlatforms.length}</span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className="cc-mini-select-all"
-                  onClick={handleToggleAllPlatforms}
-                  title={isAllPlatformsSelected ? "Deselect all platforms" : "Select all platforms"}
-                >
-                  {isAllPlatformsSelected ? "Clear" : "All"}
-                </button>
-              </div>
-
-              {openSections.platforms && (
-                <div className="cc-accordion-content">
-                  <div className="cc-checkbox-list">
-                    {availablePlatformOptions.map((opt) => {
-                      const isChecked = selectedPlatforms.includes(opt.id);
-                      return (
-                        <label key={opt.id} className="cc-filter-checkbox-row">
-                          <input
-                            type="checkbox"
-                            className="cc-filter-checkbox-input"
-                            checked={isChecked}
-                            onChange={() => togglePlatform(opt.id)}
-                          />
-                          <span className="cc-custom-checkbox">
-                            {isChecked && <CheckIcon size={10} />}
-                          </span>
-                          <span className="cc-checkbox-label-text">{opt.label}</span>
-                          <span className="cc-filter-num">({metrics[opt.countKey] || 0})</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Section 3: Format (Compact Segmented Toggle) */}
-            <div className="cc-filter-subgroup cc-segmented-subgroup">
-              <span className="cc-subgroup-label">Participation</span>
-              <div className="cc-segmented-bar">
-                <button
-                  type="button"
-                  className={`cc-seg-btn ${teamFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setTeamFilter('all')}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className={`cc-seg-btn ${teamFilter === 'solo' ? 'active' : ''}`}
-                  onClick={() => setTeamFilter((prev) => (prev === 'solo' ? 'all' : 'solo'))}
-                >
-                  Solo
-                </button>
-                <button
-                  type="button"
-                  className={`cc-seg-btn ${teamFilter === 'team' ? 'active' : ''}`}
-                  onClick={() => setTeamFilter((prev) => (prev === 'team' ? 'all' : 'team'))}
-                >
-                  Teams (2+)
-                </button>
-              </div>
-            </div>
-
-            {/* Section 4: Registration Fee (Compact Segmented Toggle) */}
-            <div className="cc-filter-subgroup cc-segmented-subgroup">
-              <span className="cc-subgroup-label">Entry Fee</span>
-              <div className="cc-segmented-bar">
-                <button
-                  type="button"
-                  className={`cc-seg-btn ${feeFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setFeeFilter('all')}
-                >
-                  All
-                </button>
-                <button
-                  type="button"
-                  className={`cc-seg-btn ${feeFilter === 'free' ? 'active' : ''}`}
-                  onClick={() => setFeeFilter((prev) => (prev === 'free' ? 'all' : 'free'))}
-                >
-                  Free
-                </button>
-                <button
-                  type="button"
-                  className={`cc-seg-btn ${feeFilter === 'paid' ? 'active' : ''}`}
-                  onClick={() => setFeeFilter((prev) => (prev === 'paid' ? 'all' : 'paid'))}
-                >
-                  Paid
-                </button>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* Backdrop for mobile drawer */}
-        {isMobileFiltersOpen && (
-          <div
-            className="cc-filter-backdrop"
-            onClick={() => setIsMobileFiltersOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-
-        {/* ── Main Content Area ── */}
-        <main className="cc-main-content">
-          {/* Top Search & Toolbar */}
-          <div className="cc-content-top-bar">
-            <div className="cc-search-wrapper">
-              <SearchIcon size={16} className="cc-search-icon" />
-              <input
-                type="text"
-                className="cc-search-input"
-                placeholder={bookmarkedOnly ? "Search your bookmarked competitions..." : "Search competitions, colleges, prizes"}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button
-                  className="cc-clear-search"
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear search"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            <div className="cc-top-actions">
-              {/* Mobile Filter Trigger Button */}
-              <button
-                type="button"
-                className={`cc-mobile-filter-trigger ${activeFilterCount > 0 ? 'active' : ''}`}
-                onClick={() => setIsMobileFiltersOpen(true)}
-                aria-label="Filters"
-              >
-                <FilterIcon size={17} />
-                <span className="cc-mobile-filter-text">Filters</span>
-                {activeFilterCount > 0 && (
-                  <span className="cc-filter-badge-count">{activeFilterCount}</span>
                 )}
-              </button>
+              </div>
 
-              {/* Desktop Sort Selector */}
-              <div className="cc-sort-box cc-sort-box-desktop">
-                <ArrowUpDownIcon size={13} className="cc-sort-icon" />
-                <label htmlFor="cc-sort-select" className="cc-sort-label">Sort:</label>
-                <div className="cc-sort-select-wrapper">
-                  <select
-                    id="cc-sort-select"
-                    className="cc-sort-select"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+              {/* Platforms */}
+              <div className="cc-filter-subgroup">
+                <AccordionHeader
+                  title="Platforms"
+                  noun="platforms"
+                  open={openSections.platforms}
+                  onToggle={() => toggleSection('platforms')}
+                  activeCount={platformsActive ? selectedPlatforms.length : 0}
+                  allSelected={isAllPlatformsSelected}
+                  onToggleAll={() => updatePrefs({ selectedPlatforms: isAllPlatformsSelected ? [] : platformOptions.map(p => p.id) })}
+                />
+                {openSections.platforms && (
+                  <div className="cc-accordion-content">
+                    <div className="cc-checkbox-list">
+                      {platformOptions.map(opt => (
+                        <FilterCheckboxRow
+                          key={opt.id}
+                          checked={selectedPlatforms.includes(opt.id)}
+                          label={opt.label}
+                          count={counts.platforms[opt.id]}
+                          onChange={() => togglePlatform(opt.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Participation */}
+              <div className="cc-filter-subgroup cc-segmented-subgroup">
+                <span className="cc-subgroup-label">Participation</span>
+                <div className="cc-segmented-bar">
+                  <button type="button" className={`cc-seg-btn ${teamFilter === 'all' ? 'active' : ''}`} onClick={() => updatePrefs({ teamFilter: 'all' })}>All</button>
+                  <button
+                    type="button"
+                    className={`cc-seg-btn ${teamFilter === 'solo' ? 'active' : ''}`}
+                    onClick={() => updatePrefs(p => ({ teamFilter: p.teamFilter === 'solo' ? 'all' : 'solo' }))}
+                    title={`Competitions you can enter alone (${counts.team.solo})`}
                   >
-                    <option value="closing-soonest">Closing soonest</option>
-                    <option value="closing-latest">Closing latest</option>
-                    <option value="title-asc">Title: A → Z</option>
-                    <option value="title-desc">Title: Z → A</option>
-                    <option value="prize-highest">Highest prize pool</option>
-                    <option value="popular">Most registered</option>
-                  </select>
-                  <ChevronDownIcon size={11} className="cc-sort-chevron" />
+                    Solo OK
+                  </button>
+                  <button
+                    type="button"
+                    className={`cc-seg-btn ${teamFilter === 'team' ? 'active' : ''}`}
+                    onClick={() => updatePrefs(p => ({ teamFilter: p.teamFilter === 'team' ? 'all' : 'team' }))}
+                    title={`Competitions that allow teams of 2+ (${counts.team.team})`}
+                  >
+                    Team
+                  </button>
+                </div>
+              </div>
+
+              {/* Entry fee */}
+              <div className="cc-filter-subgroup cc-segmented-subgroup">
+                <span className="cc-subgroup-label">Entry Fee</span>
+                <div className="cc-segmented-bar">
+                  <button type="button" className={`cc-seg-btn ${feeFilter === 'all' ? 'active' : ''}`} onClick={() => updatePrefs({ feeFilter: 'all' })}>All</button>
+                  <button
+                    type="button"
+                    className={`cc-seg-btn ${feeFilter === 'free' ? 'active' : ''}`}
+                    onClick={() => updatePrefs(p => ({ feeFilter: p.feeFilter === 'free' ? 'all' : 'free' }))}
+                    title={`${counts.fee.free} free`}
+                  >
+                    Free
+                  </button>
+                  <button
+                    type="button"
+                    className={`cc-seg-btn ${feeFilter === 'paid' ? 'active' : ''}`}
+                    onClick={() => updatePrefs(p => ({ feeFilter: p.feeFilter === 'paid' ? 'all' : 'paid' }))}
+                    title={`${counts.fee.paid} paid`}
+                  >
+                    Paid
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
+          </aside>
 
-          {/* Results Status Bar: Inline Count & Active Filters */}
-          {!loading && !fetchError && (
-            <div className="cc-results-status-bar">
-              <div className="cc-count-sort-row">
-                <div className="cc-inline-count">
-                  <span className="cc-pulse-dot" title="Live sync active"></span>
-                  <span>
-                    <strong>{filteredCompetitions.length}</strong>{' '}
-                    {filteredCompetitions.length === 1 ? 'competition' : 'competitions'}
-                  </span>
-                </div>
+          {isMobileFiltersOpen && (
+            <div className="cc-filter-backdrop" onClick={() => setIsMobileFiltersOpen(false)} aria-hidden="true" />
+          )}
 
-                {/* Mobile Sort Selector */}
-                <div className="cc-sort-box cc-sort-box-mobile">
+          <main className="cc-main-content">
+            <div className="cc-content-top-bar">
+              <div className="cc-search-wrapper">
+                <SearchIcon size={16} className="cc-search-icon" />
+                <input
+                  type="text"
+                  className="cc-search-input"
+                  placeholder="Search competitions, colleges, prizes"
+                  aria-label="Search competitions"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button className="cc-clear-search" onClick={() => setSearchQuery('')} aria-label="Clear search">✕</button>
+                )}
+              </div>
+
+              <div className="cc-top-actions">
+                <button
+                  type="button"
+                  className={`cc-mobile-filter-trigger ${activeFilterCount > 0 ? 'active' : ''}`}
+                  onClick={() => setIsMobileFiltersOpen(true)}
+                  aria-label="Filters"
+                >
+                  <FilterIcon size={17} />
+                  <span className="cc-mobile-filter-text">Filters</span>
+                  {activeFilterCount > 0 && <span className="cc-filter-badge-count">{activeFilterCount}</span>}
+                </button>
+
+                <div className="cc-sort-box cc-sort-box-desktop">
                   <ArrowUpDownIcon size={13} className="cc-sort-icon" />
+                  <label htmlFor="cc-sort-select" className="cc-sort-label">Sort:</label>
                   <div className="cc-sort-select-wrapper">
-                    <select
-                      className="cc-sort-select"
-                      value={sortBy}
-                      aria-label="Sort competitions"
-                      onChange={(e) => setSortBy(e.target.value)}
-                    >
-                      <option value="closing-soonest">Closing soonest</option>
-                      <option value="closing-latest">Closing latest</option>
-                      <option value="title-asc">Title: A → Z</option>
-                      <option value="title-desc">Title: Z → A</option>
-                      <option value="prize-highest">Highest prize pool</option>
-                      <option value="popular">Most registered</option>
+                    <select id="cc-sort-select" className="cc-sort-select" value={sortBy} onChange={(e) => updatePrefs({ sortBy: e.target.value })}>
+                      {SORT_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
                     </select>
                     <ChevronDownIcon size={11} className="cc-sort-chevron" />
                   </div>
                 </div>
               </div>
-
-              {bookmarkedOnly && filteredCompetitions.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-                  <button
-                    type="button"
-                    onClick={() => setSavedViewMode('tracker')}
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      padding: '5px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--line)',
-                      background: savedViewMode === 'tracker' ? 'var(--ink)' : 'var(--surface)',
-                      color: savedViewMode === 'tracker' ? 'var(--surface)' : 'var(--ink-secondary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
-                  >
-                    <span>🎯</span>
-                    <span>Timeline Tracker</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSavedViewMode('grid')}
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      padding: '5px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--line)',
-                      background: savedViewMode === 'grid' ? 'var(--ink)' : 'var(--surface)',
-                      color: savedViewMode === 'grid' ? 'var(--surface)' : 'var(--ink-secondary)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px'
-                    }}
-                  >
-                    <span>🗂️</span>
-                    <span>Card Grid</span>
-                  </button>
-                </div>
-              )}
-
-              {hasActiveFilters && (
-                <div className="cc-inline-active-filters">
-                  <div className="cc-active-pills-list">
-                    {searchQuery.trim() && (
-                      <span className="cc-active-pill pill-search">
-                        "{searchQuery.trim()}"
-                        <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search query">✕</button>
-                      </span>
-                    )}
-                    {selectedCircuits.length > 0 && selectedCircuits.length < CIRCUIT_OPTIONS.length && selectedCircuits.map((circuitKey) => (
-                      <span key={circuitKey} className="cc-active-pill pill-circuit">
-                        {getCircuitLabel(circuitKey)}
-                        <button type="button" onClick={() => toggleCircuit(circuitKey)} aria-label={`Remove ${getCircuitLabel(circuitKey)} filter`}>✕</button>
-                      </span>
-                    ))}
-                    {selectedTracks.length > 0 && selectedTracks.length < TRACK_OPTIONS.length && selectedTracks.map((trackKey) => (
-                      <span key={trackKey} className="cc-active-pill pill-track">
-                        {getTrackLabel(trackKey)}
-                        <button type="button" onClick={() => toggleTrack(trackKey)} aria-label={`Remove ${getTrackLabel(trackKey)} filter`}>✕</button>
-                      </span>
-                    ))}
-                    {selectedPlatforms.length > 0 && selectedPlatforms.length < availablePlatformOptions.length && selectedPlatforms.map((platformKey) => (
-                      <span key={platformKey} className="cc-active-pill pill-platform">
-                        {getPlatformLabel(platformKey)}
-                        <button type="button" onClick={() => togglePlatform(platformKey)} aria-label={`Remove ${getPlatformLabel(platformKey)} filter`}>✕</button>
-                      </span>
-                    ))}
-                    {selectedSubTracks.length > 0 && selectedSubTracks.map((subTrackId) => (
-                      <span key={subTrackId} className="cc-active-pill pill-subtrack">
-                        {getSubTrackLabel(subTrackId)}
-                        <button type="button" onClick={() => toggleSubTrack(subTrackId)} aria-label={`Remove ${getSubTrackLabel(subTrackId)} filter`}>✕</button>
-                      </span>
-                    ))}
-                    {teamFilter !== 'all' && (
-                      <span className="cc-active-pill pill-format">
-                        {teamFilter === 'solo' ? 'Solo' : 'Teams (2+)'}
-                        <button type="button" onClick={() => setTeamFilter('all')} aria-label="Remove format filter">✕</button>
-                      </span>
-                    )}
-                    {feeFilter !== 'all' && (
-                      <span className="cc-active-pill pill-fee">
-                        {feeFilter === 'free' ? 'Free entry' : 'Paid entry'}
-                        <button type="button" onClick={() => setFeeFilter('all')} aria-label="Remove fee filter">✕</button>
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      className="cc-clear-all-pill-btn"
-                      onClick={handleResetFilters}
-                      title="Clear all active filters"
-                    >
-                      Clear all
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
-          )}
 
-      {/* ── Competitions Section Loading: Redesigned minimalist loading card ── */}
-      {(showFetchingScreen || loading) ? (
-        <SectionLoadingWidget
-          headline={bookmarkedOnly ? 'Syncing your saved competitions...' : 'Fetching live competitions...'}
-          subtitle={bookmarkedOnly ? 'Checking deadlines on everything you bookmarked' : 'Pulling direct listings across DU, IIMs, IITs & premier colleges'}
-          customPuns={BROWSE_PUNS}
-          minDurationMs={1500}
-          maxDurationMs={3000}
-          isReady={!loading}
-          onComplete={() => setShowFetchingScreen(false)}
-        />
-      ) : fetchError ? (
-        <div className="cc-empty-state error">
-          <div className="cc-empty-icon">
-            <TrophyIcon size={36} />
-          </div>
-          <h3 className="cc-empty-title">Could not load live competitions</h3>
-          <p className="cc-empty-desc">{fetchError}</p>
-          <button className="cc-empty-btn" onClick={() => fetchOpportunities(true)}>
-            Retry Connection
-          </button>
-        </div>
-      ) : filteredCompetitions.length === 0 ? (
-        <div className="cc-empty-state">
-          <div className="cc-empty-icon">
-            {bookmarkedOnly ? <BookmarkIcon size={36} filled={false} /> : <TrophyIcon size={36} />}
-          </div>
-          <h3 className="cc-empty-title">
-            {bookmarkedOnly
-              ? (!user ? 'Sign Up to Bookmark Competitions' : (bookmarkedIds.length === 0 ? 'No bookmarked competitions yet' : 'No bookmarked competitions match'))
-              : 'No competitions match your filter'}
-          </h3>
-          <p className="cc-empty-desc">
-            {bookmarkedOnly
-              ? (!user
-                  ? 'Create your account to bookmark competitions, track round deadlines, and sync across devices.'
-                  : (bookmarkedIds.length === 0
-                      ? "You haven't bookmarked any competitions yet. Discover competitions in Browse and bookmark them to keep track of deadlines!"
-                      : 'No saved competitions match these specific filters. Clear some filters to see the rest of your bookmarks.'))
-              : 'Try searching a different keyword, selecting additional filters, or resetting criteria.'}
-          </p>
-          <button
-            className="cc-empty-btn"
-            onClick={bookmarkedOnly && !user ? () => openAuthModal && openAuthModal({
-              title: 'Sign Up to Bookmark Competitions',
-              subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
-              initialTab: 'signup',
-            }) : (bookmarkedOnly && bookmarkedIds.length === 0 ? () => onNavigate && onNavigate('browse') : handleResetFilters)}
-          >
-            {bookmarkedOnly ? (!user ? 'Sign Up to Bookmark' : (bookmarkedIds.length === 0 ? 'Browse Competitions' : 'Clear All Filters')) : 'Clear All Filters'}
-          </button>
-        </div>
-      ) : bookmarkedOnly && savedViewMode === 'tracker' ? (
-        <CompetitionRoundsTracker
-          competitions={filteredCompetitions}
-          onToggleBookmark={toggleBookmark}
-          onFindTeammates={onFindTeammates}
-          onOpenDetail={onOpenDetail}
-          showToast={showToast}
-        />
-      ) : (
-        <div className="cc-grid">
-          {filteredCompetitions.map((comp) => {
-            const circuit = getCardCircuit(comp);
-            const countdown = getCountdownDetails(comp.deadline, comp.remainDaysText, nowMs);
-            const isSolo = comp.maxTeam === 1 || (comp.teamSizeDisplay && comp.teamSizeDisplay.toLowerCase().startsWith('solo'));
-            const isBookmarked = bookmarkedIds.includes(String(comp.id));
-
-            return (
-              <article
-                key={comp.id}
-                className={`cc-card cc-card-${circuit.type} ${isBookmarked ? 'is-bookmarked' : ''}`}
-                onClick={() => onOpenDetail && onOpenDetail(comp.id)}
-                style={{ cursor: onOpenDetail ? 'pointer' : 'default' }}
-              >
-                <div className="cc-card-inner">
-                  {/* Top Bar: Host Profile & Bookmark Button */}
-                  <div className="cc-card-top-bar">
-                    <div className="cc-host-identity">
-                      <InstitutionLogo
-                        logo={comp.orgLogo || comp.logo || comp.bannerUrl}
-                        name={comp.orgName || comp.host}
-                        size={36}
-                        borderRadius={8}
-                        fontSize={12}
-                      />
-                      <div className="cc-host-meta">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span className="cc-host-name" title={comp.orgName || 'Academic Host'}>
-                            {comp.orgName || 'Academic Host'}
-                          </span>
-                          {comp.sourcePlatform && comp.sourcePlatform !== 'unstop' && (
-                            <span style={{
-                              fontSize: '10px',
-                              fontWeight: 600,
-                              padding: '1px 6px',
-                              borderRadius: '4px',
-                              background: 'rgba(15, 63, 254, 0.08)',
-                              color: 'var(--brand-primary, #0F3FFE)',
-                              border: '1px solid rgba(15, 63, 254, 0.18)',
-                              display: 'inline-block'
-                            }}>
-                              {comp.sourcePlatform === 'inside_campus' ? 'InsideKampus' :
-                               comp.sourcePlatform === 'devpost' ? 'Devpost' :
-                               comp.sourcePlatform === 'corporate' ? 'Corporate' : 'Campus Direct'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className={`cc-card-bookmark-btn ${isBookmarked ? 'active' : ''}`}
-                      onClick={(e) => toggleBookmark(comp.id, e)}
-                      title={isBookmarked ? 'Remove bookmark' : 'Bookmark this competition'}
-                      aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark this competition'}
-                    >
-                      <BookmarkIcon size={16} filled={isBookmarked} />
-                    </button>
-                  </div>
-
-                  {/* Competition Title */}
-                  <h2 className="cc-card-title" title={comp.title || 'Case Competition'}>
-                    {comp.title || 'Case Competition'}
-                  </h2>
-
-                  {/* Featured Prize & Entry Bar */}
-                  <div className="cc-prize-bar">
-                    <div className="cc-prize-left">
-                      <TrophyIcon size={14} className="cc-prize-trophy" />
-                      <span className="cc-prize-text" title={(comp.prizes || comp.prize || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool')}>
-                        {(comp.prizes || comp.prize || 'Certificates & Recognition').replace(/Cash Pool/gi, 'Prize Pool')}
-                      </span>
-                    </div>
-                    <span className={`cc-entry-tag ${comp.isFree ? 'free' : 'paid'}`}>
-                      {comp.isFree ? 'Free Entry' : 'Paid'}
+            {!isLoadingView && !error && (
+              <div className="cc-results-status-bar">
+                <div className="cc-count-sort-row">
+                  <div className="cc-inline-count">
+                    <span className="cc-pulse-dot" title="Live sync active"></span>
+                    <span>
+                      <strong>{filteredCompetitions.length}</strong>{' '}
+                      {filteredCompetitions.length === 1 ? 'competition' : 'competitions'}
                     </span>
                   </div>
 
-                  {/* Metadata: Format & Exact Deadline */}
-                  <div className="cc-specs-row">
-                    <div className="cc-spec-item" title={comp.teamSizeDisplay || 'Solo / Team'}>
-                      <UsersIcon size={13} />
-                      <span>{comp.teamSizeDisplay || 'Solo / Team'}</span>
+                  <div className="cc-sort-box cc-sort-box-mobile">
+                    <ArrowUpDownIcon size={13} className="cc-sort-icon" />
+                    <div className="cc-sort-select-wrapper">
+                      <select className="cc-sort-select" value={sortBy} aria-label="Sort competitions" onChange={(e) => updatePrefs({ sortBy: e.target.value })}>
+                        {SORT_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
+                      </select>
+                      <ChevronDownIcon size={11} className="cc-sort-chevron" />
                     </div>
-                    <div className="cc-spec-dot" />
-                    <div className="cc-spec-item" title={`Exact Deadline: ${countdown.exactDateStr}`}>
-                      <CalendarIcon size={13} />
-                      <span>Ends {countdown.exactDateStr}</span>
-                    </div>
-                  </div>
-
-                  {/* Social Proof + Deadline Status */}
-                  <div className="cc-card-footer-metric">
-                    <div className="cc-footer-metric-left">
-                      {Number(comp.registeredCount || 0) > 0 ? (
-                        <span className="cc-reg-count">
-                          <FlameIcon size={12} className="cc-reg-icon" />
-                          <strong>{Number(comp.registeredCount).toLocaleString()}</strong> registrations
-                        </span>
-                      ) : (
-                        <span className="cc-meta-fresh">Recently Listed</span>
-                      )}
-                    </div>
-
-                    <span
-                      className={`cc-countdown-chip ${countdown.urgencyClass}`}
-                      title={`Exact Deadline: ${countdown.exactDateStr}`}
-                    >
-                      <span className="cc-status-dot" />
-                      <ClockIcon size={12} className="cc-timer-icon" />
-                      <span>{countdown.text}</span>
-                    </span>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="cc-card-actions">
-                    <a
-                      href={safeExternalUrl(comp.unstopUrl)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cc-action-btn cc-btn-apply"
-                      onClick={() => trackCaseCompsEvent('apply_clicked', { comp_id: comp.id, title: comp.title, url: comp.unstopUrl })}
-                    >
-                      <span>Apply</span>
-                      <ExternalLinkIcon size={12} />
-                    </a>
-
-                    {!isSolo && (
-                      <button
-                        type="button"
-                        className="cc-action-btn cc-btn-team"
-                        onClick={(e) => handleFindTeammates(comp, e)}
-                        title="Find batchmates on Team Finder"
-                      >
-                        <UsersIcon size={13} />
-                        <span>Find Teammates</span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      className={`cc-share-icon-btn ${copiedId === comp.id ? 'copied' : ''}`}
-                      onClick={(e) => handleShare(comp, e)}
-                      title={copiedId === comp.id ? 'Details copied!' : 'Copy competition details & link'}
-                      aria-label="Copy competition details and link"
-                    >
-                      {copiedId === comp.id ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
-                    </button>
                   </div>
                 </div>
-              </article>
-            );
-          })}
+
+                {hasActiveFilters && (
+                  <div className="cc-inline-active-filters">
+                    <div className="cc-active-pills-list">
+                      {searchQuery.trim() && (
+                        <span className="cc-active-pill pill-search">
+                          "{searchQuery.trim()}"
+                          <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search query">✕</button>
+                        </span>
+                      )}
+                      {circuitsActive && selectedCircuits.map(id => (
+                        <span key={id} className="cc-active-pill pill-circuit">
+                          {labelOf(CIRCUIT_OPTIONS, id)}
+                          <button type="button" onClick={() => toggleCircuit(id)} aria-label={`Remove ${labelOf(CIRCUIT_OPTIONS, id)} filter`}>✕</button>
+                        </span>
+                      ))}
+                      {tracksActive && selectedTracks.map(id => (
+                        <span key={id} className="cc-active-pill pill-track">
+                          {labelOf(TRACK_OPTIONS, id)}
+                          <button type="button" onClick={() => toggleTrack(id)} aria-label={`Remove ${labelOf(TRACK_OPTIONS, id)} filter`}>✕</button>
+                        </span>
+                      ))}
+                      {platformsActive && selectedPlatforms.map(id => (
+                        <span key={id} className="cc-active-pill pill-platform">
+                          {labelOf(PLATFORM_OPTIONS, id)}
+                          <button type="button" onClick={() => togglePlatform(id)} aria-label={`Remove ${labelOf(PLATFORM_OPTIONS, id)} filter`}>✕</button>
+                        </span>
+                      ))}
+                      {selectedSubTracks.map(id => (
+                        <span key={id} className="cc-active-pill pill-subtrack">
+                          {subTrackLabel(id)}
+                          <button type="button" onClick={() => toggleSubTrack(id)} aria-label={`Remove ${subTrackLabel(id)} filter`}>✕</button>
+                        </span>
+                      ))}
+                      {teamFilter !== 'all' && (
+                        <span className="cc-active-pill pill-format">
+                          {teamFilter === 'solo' ? 'Solo OK' : 'Team'}
+                          <button type="button" onClick={() => updatePrefs({ teamFilter: 'all' })} aria-label="Remove participation filter">✕</button>
+                        </span>
+                      )}
+                      {feeFilter !== 'all' && (
+                        <span className="cc-active-pill pill-fee">
+                          {feeFilter === 'free' ? 'Free entry' : 'Paid entry'}
+                          <button type="button" onClick={() => updatePrefs({ feeFilter: 'all' })} aria-label="Remove fee filter">✕</button>
+                        </span>
+                      )}
+                      {sortChanged && (
+                        <span className="cc-active-pill pill-sort">
+                          Sorted: {SORT_LABEL[sortBy]}
+                          <button type="button" onClick={() => updatePrefs({ sortBy: DEFAULT_PREFS.sortBy })} aria-label="Reset sort order">✕</button>
+                        </span>
+                      )}
+                      <button type="button" className="cc-clear-all-pill-btn" onClick={handleResetFilters} title="Clear all active filters">
+                        Clear all
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isLoadingView ? (
+              <SectionLoadingWidget
+                headline="Fetching live competitions..."
+                subtitle="Pulling direct listings across DU, IIMs, IITs & premier colleges"
+                customPuns={BROWSE_PUNS}
+                minDurationMs={MIN_LOADING_MS}
+                maxDurationMs={8000}
+                isReady={!loading}
+                onComplete={handleLoadingComplete}
+              />
+            ) : error && competitions.length === 0 ? (
+              <div className="cc-empty-state error">
+                <div className="cc-empty-icon"><TrophyIcon size={36} /></div>
+                <h3 className="cc-empty-title">Could not load live competitions</h3>
+                <p className="cc-empty-desc">{error}</p>
+                {onRetry && <button className="cc-empty-btn" onClick={onRetry}>Retry Connection</button>}
+              </div>
+            ) : filteredCompetitions.length === 0 ? (
+              <div className="cc-empty-state">
+                <div className="cc-empty-icon"><TrophyIcon size={36} /></div>
+                <h3 className="cc-empty-title">No competitions match your filter</h3>
+                <p className="cc-empty-desc">Try searching a different keyword, selecting additional filters, or resetting criteria.</p>
+                <button className="cc-empty-btn" onClick={handleResetFilters}>Clear All Filters</button>
+              </div>
+            ) : (
+              <>
+                <div className="cc-grid">
+                  {visibleCompetitions.map(comp => (
+                    <CompCard
+                      key={comp.id}
+                      comp={comp}
+                      isBookmarked={bookmarkedIds.has(String(comp.id))}
+                      isCopied={copiedId === comp.id}
+                      nowMs={nowMs}
+                      onOpenDetail={handleOpenDetail}
+                      onToggleBookmark={handleToggleBookmark}
+                      onFindTeammates={handleFindTeammates}
+                      onShare={handleShare}
+                      onApply={handleApply}
+                    />
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="cc-load-more" ref={sentinelRef}>
+                    <button type="button" className="cc-empty-btn cc-show-more-btn" onClick={showMore}>
+                      Show more ({filteredCompetitions.length - visibleCount} left)
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
         </div>
-      )}
-        </main>
       </div>
+      <Footer />
     </div>
-    <Footer />
-  </div>
-);
+  );
 }
+

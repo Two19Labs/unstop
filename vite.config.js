@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
 function devApiPlugin() {
@@ -40,13 +40,22 @@ function devApiPlugin() {
     }
   };
 
+  // The API handlers run in Node and read process.env, like Vercel functions: load .env for them
+  const exposeEnv = (mode) => {
+    for (const [key, value] of Object.entries(loadEnv(mode, process.cwd(), ''))) {
+      if (process.env[key] === undefined) process.env[key] = value;
+    }
+  };
+
   return {
     name: 'dev-api-competitions',
     configureServer(server) {
+      exposeEnv(server.config.mode);
       server.middlewares.use('/api/competitions', compHandler);
       server.middlewares.use('/api/rounds', roundsHandler);
     },
     configurePreviewServer(server) {
+      exposeEnv(server.config.mode);
       server.middlewares.use('/api/competitions', compHandler);
       server.middlewares.use('/api/rounds', roundsHandler);
     },
