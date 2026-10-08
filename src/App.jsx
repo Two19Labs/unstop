@@ -1276,7 +1276,13 @@ function OneStopInner() {
           />
         </Suspense>
       ) : (
-        <main className={screen === 'home' ? "onestop-main onestop-main-home" : "onestop-main"}>
+        <main
+          className={
+            screen === 'home' ? "onestop-main onestop-main-home"
+              : screen === 'contact' ? "onestop-main onestop-main-contact"
+              : "onestop-main"
+          }
+        >
           {/* Top-Right Notification Center (for screens that don't embed it in their header) */}
           {screen !== 'teams' && screen !== 'home' && (
             <div className="onestop-top-actions">
@@ -1374,13 +1380,13 @@ function OneStopInner() {
 
             {screen === 'about' && (
               <Suspense fallback={null}>
-                <AboutScreen onNavigate={handleNavigate} />
+                <AboutScreen />
               </Suspense>
             )}
 
             {screen === 'contact' && (
               <Suspense fallback={null}>
-                <ContactScreen profileName={profile.name} />
+                <ContactScreen />
               </Suspense>
             )}
           </div>
