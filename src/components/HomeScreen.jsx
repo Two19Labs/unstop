@@ -1184,7 +1184,11 @@ export default function HomeScreen({
                       borderRadius={9}
                       fontSize={12}
                     />
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink-secondary)', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty' }}>
+                    {/* Long college names stop at two lines so every card keeps the same height */}
+                    <span
+                      title={c.host}
+                      style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink-secondary)', lineHeight: 1.35, paddingTop: '2px', textWrap: 'pretty', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'anywhere' }}
+                    >
                       {c.host}
                     </span>
                     <button
