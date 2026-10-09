@@ -430,7 +430,12 @@ export default function CompetitionsPage({
     () => sortCompetitions(filterCompetitions(competitions, prefs, filterOpts), sortBy),
     [competitions, prefs, filterOpts, sortBy]
   );
-  const counts = useMemo(() => facetCounts(competitions, prefs, filterOpts), [competitions, prefs, filterOpts]);
+  // Option counts are fixed totals (all open listings), not affected by other filters or search;
+  // the live result count sits under the search bar
+  const counts = useMemo(
+    () => facetCounts(competitions, DEFAULT_PREFS, { isPostgrad: isPostgraduate, now: nowMs, platformCount: platformOptions.length }),
+    [competitions, isPostgraduate, nowMs, platformOptions.length]
+  );
 
   // Back to the first batch whenever the result set changes
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [prefs, searchQuery]);

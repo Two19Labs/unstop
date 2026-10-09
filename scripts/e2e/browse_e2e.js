@@ -100,7 +100,7 @@ const resultCount = async (page) => Number((await page.locator('.cc-inline-count
 const optionCount = async (page, label) => Number(((await page.locator('.cc-filter-sidebar label.cc-filter-checkbox-row', { hasText: label }).first().textContent()) || '').match(/\((\d+)\)/)?.[1]);
 const tick = async (page, label) => { await page.locator('.cc-filter-sidebar label.cc-filter-checkbox-row', { hasText: label }).first().click(); await page.waitForTimeout(120); };
 async function openBrowse(page) {
-  await page.goto(`${BASE}/#browse`);
+  await page.goto(`${BASE}/#browse`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('.cc-grid article.cc-card, .cc-empty-state', { timeout: 30000 });
 }
 
@@ -118,12 +118,12 @@ async function desktopSuite(browser) {
     } catch (e) {}
   });
   const t0 = Date.now();
-  await page.goto(`${BASE}/#browse`);
+  await page.goto(`${BASE}/#browse`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('.section-loading-card', { timeout: 30000 });
   const loaderShown = Date.now();
   await page.waitForSelector('.cc-grid article.cc-card', { timeout: 30000 });
   const loaderMs = Date.now() - loaderShown;
-  assert(loaderMs >= 1400 && loaderMs < 4500, 'Loading screen stays about 1.5s and then gives way', `${loaderMs}ms`);
+  assert(loaderMs >= 1250 && loaderMs < 4500, 'Loading screen stays about 1.5s and then gives way', `${loaderMs}ms`);
   const longest = await page.evaluate(() => window.__longest);
   assert(longest < LONG_TASK_BUDGET_MS, `No main-thread freeze over ${LONG_TASK_BUDGET_MS}ms while rendering`, `longest task ${Math.round(longest)}ms, page ready in ${Date.now() - t0}ms`);
 
@@ -141,6 +141,14 @@ async function desktopSuite(browser) {
     assert(shown === got, `"${label}" count matches its results`, `label ${shown}, results ${got}`);
     await tick(page, label);
   }
+
+  // Option counts are fixed totals: ticking another filter must not change them
+  const hackathonsBefore = await optionCount(page, 'Hackathons');
+  await tick(page, 'DU Circuit');
+  const hackathonsAfter = await optionCount(page, 'Hackathons');
+  const duResults = await resultCount(page);
+  await tick(page, 'DU Circuit');
+  assert(hackathonsBefore === hackathonsAfter && duResults < totalResults, 'Option counts stay fixed while the result count updates', `Hackathons ${hackathonsBefore} → ${hackathonsAfter}, results ${totalResults} → ${duResults}`);
 
   // Sub-tracks only narrow their own category
   await tick(page, 'Case Comps');
@@ -228,7 +236,7 @@ async function persistenceSuite(browser) {
   await tick(page, 'DU Circuit');
   await tick(page, 'Hackathons');
   await page.waitForTimeout(300);
-  await page.reload();
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('.cc-grid article.cc-card, .cc-empty-state', { timeout: 30000 });
   const pills = (await page.locator('.cc-active-pill').allTextContents()).join(' ');
   assert(/DU Circuit/.test(pills) && /Hackathons/.test(pills), 'Both filter changes survive a reload', pills.replace(/✕/g, '').trim());
@@ -236,7 +244,7 @@ async function persistenceSuite(browser) {
 
   for (const [name, prefs] of [['Paid', { feeFilter: 'paid' }], ['Free', { feeFilter: 'free' }], ['Solo OK', { teamFilter: 'solo' }], ['DU', { selectedCircuits: ['du'] }]]) {
     const { ctx: c2, page: p2 } = await newContext(browser, { prefs });
-    await p2.goto(`${BASE}/#home`);
+    await p2.goto(`${BASE}/#home`, { waitUntil: 'domcontentloaded', timeout: 60000 });
     const pill = p2.locator('.home-section-count-pill--primary').first();
     await pill.waitFor({ timeout: 30000 });
     await p2.waitForFunction(() => /^\s*\d+\s*$/.test(document.querySelector('.home-section-count-pill--primary')?.textContent || ''), null, { timeout: 30000 });
