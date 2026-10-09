@@ -7,6 +7,8 @@ export const SCREEN_LABELS = {
   teams: 'Squad Finder',
   requests: 'Inbox & Requests',
   profile: 'Profile & Settings',
+  about: 'About',
+  contact: 'Contact & Support',
   admin: 'Admin Console'
 };
 
@@ -16,11 +18,17 @@ export const SCREEN_COLORS = {
   teams: { bg: 'rgba(245, 158, 11, 0.12)', color: '#D97706', border: 'rgba(245, 158, 11, 0.3)' },
   requests: { bg: 'rgba(139, 92, 246, 0.12)', color: '#7C3AED', border: 'rgba(139, 92, 246, 0.3)' },
   profile: { bg: 'rgba(20, 184, 166, 0.12)', color: '#0D9488', border: 'rgba(20, 184, 166, 0.3)' },
+  about: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.3)' },
+  contact: { bg: 'rgba(100, 116, 139, 0.12)', color: '#475569', border: 'rgba(100, 116, 139, 0.3)' },
   admin: { bg: 'rgba(220, 38, 38, 0.12)', color: '#DC2626', border: 'rgba(220, 38, 38, 0.3)' }
 };
 
-const PRESENCE_TTL_MS = 60000; // 60 seconds TTL before considering a session inactive
-const HEARTBEAT_INTERVAL_MS = 15000; // 15 seconds heartbeat for real-time responsiveness
+// Supabase drops a session from the channel as soon as its connection closes, so the
+// channel itself is the list of who is online. No client timestamps are compared:
+// a visitor's device clock can be minutes off, which used to hide them entirely.
+// This timer only re-tracks a session the channel lost (e.g. after a reconnect);
+// it sends nothing while the session is listed.
+const ENSURE_TRACKED_INTERVAL_MS = 30000;
 
 let tabSessionId = null;
 export function getTabSessionId() {
@@ -65,6 +73,13 @@ let globalCurrentUser = null;
 let globalCurrentProfile = null;
 let globalCurrentScreen = 'home';
 let lastPresencePingAt = 0;
+// sessionId -> { signature, seenAt }: when this tab last saw each session change,
+// measured on this device's own clock
+const sessionActivity = new Map();
+
+function isTabVisible() {
+  return typeof document === 'undefined' || document.visibilityState !== 'hidden';
+}
 
 // The presence channel is readable by anyone holding the public anon key, so the
 // payload carries no personal data. The admin console resolves userId -> profile
@@ -77,7 +92,7 @@ function buildPresencePayload() {
     userId: isAuth ? globalCurrentUser.id : sid,
     currentScreen: (globalCurrentScreen || 'home').toLowerCase(),
     device: getDeviceType(),
-    lastPing: Date.now(),
+    visible: isTabVisible(),
     isRegistered: isAuth,
   };
 }
@@ -86,7 +101,7 @@ export function computeConsolidatedPresence() {
   const now = Date.now();
   const merged = {};
 
-  // 1. Realtime WebSocket channel presence
+  // 1. Everyone connected to the presence channel
   if (activeChannel && typeof activeChannel.presenceState === 'function') {
     try {
       const state = activeChannel.presenceState();
@@ -97,15 +112,8 @@ export function computeConsolidatedPresence() {
             presences.forEach((p) => {
               if (p && typeof p === 'object') {
                 const sid = p.sessionId || stateKey;
-                const pingTime = Number(p.lastPing) || now;
-                // Only consider sessions active within PRESENCE_TTL_MS
-                if (Math.abs(now - pingTime) <= PRESENCE_TTL_MS) {
-                  merged[sid] = {
-                    ...p,
-                    sessionId: sid,
-                    lastPing: pingTime
-                  };
-                }
+                // Tabs still running an older build send no `visible`: treat them as active
+                merged[sid] = { ...p, sessionId: sid, visible: p.visible !== false };
               }
             });
           }
@@ -116,21 +124,35 @@ export function computeConsolidatedPresence() {
     }
   }
 
-  // 2. Always ensure the current client tab's own presence is included
+  // 2. Always include this tab, even before its own join has synced
   const currentTabPayload = buildPresencePayload();
   if (currentTabPayload && currentTabPayload.sessionId) {
-    merged[currentTabPayload.sessionId] = currentTabPayload;
+    merged[currentTabPayload.sessionId] = { ...currentTabPayload, isSelf: true };
   }
 
-  // 3. Deduplicate: one card per registered student (by user id) or per guest session
+  // 3. When did each session last change (screen, visibility, sign-in)? Local clock only.
+  Object.values(merged).forEach((p) => {
+    const signature = `${p.currentScreen}|${p.visible}|${p.userId}`;
+    const prev = sessionActivity.get(p.sessionId);
+    if (!prev || prev.signature !== signature) sessionActivity.set(p.sessionId, { signature, seenAt: now });
+    p.lastActiveAt = sessionActivity.get(p.sessionId).seenAt;
+  });
+  [...sessionActivity.keys()].forEach((sid) => { if (!merged[sid]) sessionActivity.delete(sid); });
+
+  // 4. Deduplicate: one row per signed-in person (several tabs or devices) or per guest tab,
+  //    preferring a tab in the foreground, then the most recently active one
+  const rank = (p) => (p.visible ? 1 : 0) * 1e15 + (p.lastActiveAt || 0);
   const uniqueUsers = {};
   Object.values(merged).forEach((p) => {
     if (!p) return;
     const dedupeKey = p.isRegistered ? (p.userId || p.sessionId) : (p.sessionId || p.userId);
 
     const existing = uniqueUsers[dedupeKey];
-    if (!existing || (Number(p.lastPing) || 0) >= (Number(existing.lastPing) || 0)) {
-      uniqueUsers[dedupeKey] = p;
+    const isSelf = Boolean(p.isSelf || existing?.isSelf);
+    if (!existing || rank(p) >= rank(existing)) {
+      uniqueUsers[dedupeKey] = { ...p, isSelf };
+    } else if (isSelf) {
+      existing.isSelf = true;
     }
   });
 
@@ -217,11 +239,13 @@ export function initGlobalPresence(user, profile, screen) {
       .on('presence', { event: 'join' }, handleSync)
       .on('presence', { event: 'leave' }, handleSync);
 
-    activeChannel.subscribe((status, err) => {
+    const channel = activeChannel;
+    channel.subscribe((status, err) => {
+      if (channel !== activeChannel) return; // a replaced channel
       if (status === 'SUBSCRIBED') {
         isReconnecting = false;
         const payload = buildPresencePayload();
-        activeChannel.track(payload).then(() => {
+        channel.track(payload).then(() => {
           computeConsolidatedPresence();
         }).catch(() => {});
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -233,27 +257,29 @@ export function initGlobalPresence(user, profile, screen) {
               try { supabase.removeChannel(activeChannel); } catch (e) {}
               activeChannel = null;
             }
-            initGlobalPresence();
+            // Rejoin as the same person: no arguments here would report a signed-in user as a guest
+            initGlobalPresence(globalCurrentUser, globalCurrentProfile, globalCurrentScreen);
           }, 3500);
         }
       }
     });
 
-    // Start 15-second heartbeat for continuous live sync
+    // Re-track only if the channel no longer lists this tab (e.g. its connection dropped and came back)
     if (!heartbeatTimer) {
       heartbeatTimer = setInterval(() => {
-        sendPresencePing(null, null, null, true);
-      }, HEARTBEAT_INTERVAL_MS);
+        if (!activeChannel || typeof activeChannel.presenceState !== 'function') return;
+        if (activeChannel.state !== 'joined') return;
+        const state = activeChannel.presenceState() || {};
+        if (!state[getTabSessionId()]) sendPresencePing(null, null, null, true);
+      }, ENSURE_TRACKED_INTERVAL_MS);
     }
 
     if (typeof window !== 'undefined' && !isListenersAttached) {
       isListenersAttached = true;
 
-      // On tab focus or visibility change, ping immediately
+      // Report foreground / background so the admin console can tell active from idle tabs
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-          sendPresencePing(null, null, null, true);
-        }
+        sendPresencePing(null, null, null, true);
       });
       window.addEventListener('focus', () => {
         sendPresencePing(null, null, null, true);

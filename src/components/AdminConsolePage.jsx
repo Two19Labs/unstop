@@ -50,7 +50,8 @@ function AdminConsoleContent({ onBack, user, profile }) {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState([]);
   const [onlinePresence, setOnlinePresence] = useState([]);
-  const [squadEngagement, setSquadEngagement] = useState({ posts: 0, applications: 0 });
+  const [squadEngagement, setSquadEngagement] = useState({ posts: 0, open: 0, applications: 0 });
+  const [platformStats, setPlatformStats] = useState(null);
   const [tickerNow, setTickerNow] = useState(Date.now());
   const [selectedStudentForInspect, setSelectedStudentForInspect] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState('');
@@ -82,30 +83,45 @@ function AdminConsoleContent({ onBack, user, profile }) {
     setLoading(true);
     try {
       if (hasValidCredentials && supabase) {
-        // 1. Fetch real profiles
-        const { data: dbProfiles, error: profileErr } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, college, year, phone, bio, avatar_url, education_level, skills, created_at, updated_at, profile_last_updated_at')
-          .order('created_at', { ascending: false });
-
-        if (!profileErr && Array.isArray(dbProfiles)) {
-          setStudents(dbProfiles);
+        // 1. Every profile, a page at a time (the API returns at most 1,000 rows per request)
+        const PAGE = 1000;
+        const allProfiles = [];
+        let profileErr = null;
+        for (let from = 0; ; from += PAGE) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, email, full_name, college, year, phone, bio, avatar_url, education_level, skills, created_at, updated_at, profile_last_updated_at')
+            .order('created_at', { ascending: false })
+            .range(from, from + PAGE - 1);
+          if (error || !Array.isArray(data)) { profileErr = error; break; }
+          allProfiles.push(...data);
+          if (data.length < PAGE) break;
         }
 
-        // 2. Fetch real squad posts count
-        const { count: postCount } = await supabase
-          .from('squad_posts')
-          .select('*', { count: 'exact', head: true });
+        if (!profileErr) {
+          setStudents(allProfiles);
+        }
 
-        // 3. Fetch real squad applications count
-        const { count: appCount } = await supabase
-          .from('squad_applications')
-          .select('*', { count: 'exact', head: true });
+        // 2. Squad posts: all time, and those still open to applicants
+        const [{ count: postCount }, { count: openCount }, { count: appCount }] = await Promise.all([
+          supabase.from('squad_posts').select('id', { count: 'exact', head: true }),
+          supabase.from('squad_posts').select('id', { count: 'exact', head: true })
+            .eq('is_open', true)
+            .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`),
+          // 3. Squad applications
+          supabase.from('squad_applications').select('id', { count: 'exact', head: true }),
+        ]);
 
         setSquadEngagement({
           posts: postCount || 0,
+          open: openCount || 0,
           applications: appCount || 0
         });
+
+        // 4. Platform-wide totals (ADMIN_STATS_MIGRATION.sql). Until that's run, the cards
+        //    fall back to what the queries above can see.
+        const { data: stats, error: statsErr } = await supabase.rpc('admin_platform_stats');
+        setPlatformStats(!statsErr && stats ? stats : null);
       }
     } catch (err) {
       console.warn('Error fetching real admin demographics:', err);
@@ -154,9 +170,21 @@ function AdminConsoleContent({ onBack, user, profile }) {
 
   // 100% Real Aggregated Metrics
   const totalUsers = students.length;
-  const onlineCount = onlinePresence.length;
-  const ugCount = students.filter(s => (s.education_level || '').toLowerCase().includes('under') || (s.year || '').startsWith('UG')).length;
-  const pgCount = totalUsers - ugCount;
+  // Everyone else with OneStop open (this admin tab is listed in the roster, not counted)
+  const othersOnline = onlinePresence.filter(p => !p.isSelf);
+  const onlineCount = othersOnline.length;
+  const onlineSignedIn = othersOnline.filter(p => p.isRegistered).length;
+  const onlineGuests = onlineCount - onlineSignedIn;
+  const onlineInBackground = othersOnline.filter(p => p.visible === false).length;
+  const isPgStudent = (s) => (s.year || '').startsWith('PG') || (s.education_level || '').toLowerCase().includes('post');
+  const isUgStudent = (s) => !isPgStudent(s) && ((s.year || '').startsWith('UG') || (s.education_level || '').toLowerCase().includes('under'));
+  const ugCount = students.filter(isUgStudent).length;
+  const pgCount = students.filter(isPgStudent).length;
+  const levelUnsetCount = totalUsers - ugCount - pgCount;
+  const dayAgo = tickerNow - 24 * 60 * 60 * 1000;
+  const weekAgo = tickerNow - 7 * 24 * 60 * 60 * 1000;
+  const newToday = platformStats?.accounts_new_24h ?? students.filter(s => new Date(s.created_at).getTime() > dayAgo).length;
+  const newThisWeek = platformStats?.accounts_new_7d ?? students.filter(s => new Date(s.created_at).getTime() > weekAgo).length;
   const whatsappCount = students.filter(s => Boolean(s.phone && String(s.phone).trim())).length;
   const whatsappPct = totalUsers > 0 ? Math.round((whatsappCount / totalUsers) * 100) : 0;
 
@@ -170,7 +198,10 @@ function AdminConsoleContent({ onBack, user, profile }) {
     });
 
     const palette = ['#0F3FFE', '#10B981', '#8B5CF6', '#EC4899', '#F59E0B', '#06B6D4', '#64748B'];
-    const entries = Object.entries(map).sort((a, b) => b[1] - a[1]);
+    const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
+    // Top 6 colleges, the rest grouped (the palette has 7 colours)
+    const rest = sorted.slice(6).reduce((sum, [, count]) => sum + count, 0);
+    const entries = rest > 0 ? [...sorted.slice(0, 6), [`Other colleges (${sorted.length - 6})`, rest]] : sorted;
     const total = students.length || 1;
 
     let accumulatedPct = 0;
@@ -261,14 +292,17 @@ function AdminConsoleContent({ onBack, user, profile }) {
       sanitizeCsvCell(s.created_at || '')
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    // A Blob, not a data: URL (a "#" anywhere in the data cut the file short there);
+    // the BOM makes Excel read names in Indian scripts as UTF-8
+    const csvContent = '﻿' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
+    const url = URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute('download', `onestop_students_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handleCopyText = (text, label) => {
@@ -341,14 +375,20 @@ function AdminConsoleContent({ onBack, user, profile }) {
             <div className="card-icon">🟢</div>
             <h4>Online Right Now</h4>
             <p className="stat-number">{onlineCount}</p>
-            <p className="stat-subtitle">Students active on OneStop platform</p>
+            <p className="stat-subtitle">
+              {onlineSignedIn} signed in · {onlineGuests} {onlineGuests === 1 ? 'guest' : 'guests'}
+              {onlineInBackground > 0 ? ` · ${onlineInBackground} in background` : ''} (not counting you)
+            </p>
           </div>
 
           <div className="stat-card-admin">
             <div className="card-icon">👥</div>
             <h4>Total Registered</h4>
-            <p className="stat-number">{totalUsers}</p>
-            <p className="stat-subtitle">Verified student collegiate profiles</p>
+            <p className="stat-number">{platformStats?.accounts_total ?? totalUsers}</p>
+            <p className="stat-subtitle">
+              +{newToday} today · +{newThisWeek} this week
+              {platformStats ? ` · ${platformStats.accounts_total - platformStats.accounts_confirmed} email not confirmed` : ''}
+            </p>
           </div>
 
           <div className="stat-card-admin">
@@ -359,12 +399,13 @@ function AdminConsoleContent({ onBack, user, profile }) {
             </p>
             <p className="stat-subtitle">
               {Math.round((ugCount / Math.max(1, totalUsers)) * 100)}% Undergraduate · {Math.round((pgCount / Math.max(1, totalUsers)) * 100)}% Postgraduate
+              {levelUnsetCount > 0 ? ` · ${levelUnsetCount} not set` : ''}
             </p>
           </div>
 
           <div className="stat-card-admin">
             <div className="card-icon">📱</div>
-            <h4>WhatsApp Verified</h4>
+            <h4>WhatsApp Added</h4>
             <p className="stat-number">
               {whatsappCount} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>({whatsappPct}%)</span>
             </p>
@@ -377,7 +418,12 @@ function AdminConsoleContent({ onBack, user, profile }) {
             <p className="stat-number">
               {squadEngagement.posts} <span style={{ fontSize: '1.1rem', color: 'var(--ink-muted)', fontWeight: 500 }}>posts</span>
             </p>
-            <p className="stat-subtitle">{squadEngagement.applications} teammate applications submitted</p>
+            <p className="stat-subtitle">
+              {squadEngagement.open} open now ·{' '}
+              {platformStats
+                ? `${platformStats.applications_total} join requests (${platformStats.applications_accepted} accepted, ${platformStats.applications_pending} pending)`
+                : `${squadEngagement.applications} join requests on your squads`}
+            </p>
           </div>
         </section>
 
@@ -413,24 +459,25 @@ function AdminConsoleContent({ onBack, user, profile }) {
                     <th>College &amp; Standing</th>
                     <th>Active Screen / Feature</th>
                     <th>Device</th>
-                    <th>Last Ping</th>
+                    <th>Activity</th>
                     <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[...onlinePresence]
-                    .sort((a, b) => (b.lastPing || 0) - (a.lastPing || 0))
+                    .sort((a, b) => (Number(b.visible) - Number(a.visible)) || ((b.lastActiveAt || 0) - (a.lastActiveAt || 0)))
                     .map((item) => {
-                      const pingSec = Math.max(0, Math.floor((tickerNow - (item.lastPing || tickerNow)) / 1000));
+                      const sinceSec = Math.max(0, Math.floor((tickerNow - (item.lastActiveAt || tickerNow)) / 1000));
+                      const since = sinceSec < 60 ? `${sinceSec}s` : sinceSec < 3600 ? `${Math.floor(sinceSec / 60)}m` : `${Math.floor(sinceSec / 3600)}h`;
                       const scrKey = (item.currentScreen || 'home').toLowerCase();
                       const chipStyle = SCREEN_COLORS[scrKey] || SCREEN_COLORS.home;
 
                       // Find profile for this user if registered
                       const matchedProfile = item.isRegistered ? students.find(s => s.id === item.userId) : null;
                       const isGuest = !item.isRegistered;
-                      const displayName = isGuest
+                      const displayName = (isGuest
                         ? `Guest Visitor (${item.device || 'Web'})`
-                        : (matchedProfile?.full_name || 'Anonymous Student');
+                        : (matchedProfile?.full_name || 'Anonymous Student')) + (item.isSelf ? ' (you)' : '');
                       const displayEmail = isGuest ? 'Browsing OneStop · Unregistered' : (matchedProfile?.email || '');
                       const displayCollege = isGuest
                         ? 'Visiting OneStop'
@@ -482,8 +529,8 @@ function AdminConsoleContent({ onBack, user, profile }) {
                             <span className="device-chip">{item.device || 'Desktop'}</span>
                           </td>
                           <td>
-                            <span className="ping-time-chip">
-                              {pingSec <= 3 ? 'Live (Just now)' : `${pingSec}s ago`}
+                            <span className="ping-time-chip" title="How long since this tab last changed screen or came to the foreground">
+                              {item.visible === false ? `In background · ${since}` : `Active · ${since} on this screen`}
                             </span>
                           </td>
                           <td style={{ textAlign: 'right' }}>
