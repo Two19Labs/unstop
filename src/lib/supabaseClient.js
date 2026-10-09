@@ -31,3 +31,20 @@ export const supabase = hasValidCredentials
       },
     })
   : null;
+
+// Online presence gets its own connection that never signs in, so every tab joins
+// the presence channel the same way a guest does. On the shared connection,
+// signed-in tabs were dropped from the channel once their user token was applied.
+// The presence payload carries only ids, so it needs no session. The worker keeps
+// heartbeats going in background tabs, where browsers throttle timers.
+export const presenceClient = hasValidCredentials
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: 'onestop-presence',
+      },
+      realtime: { worker: true },
+    })
+  : null;

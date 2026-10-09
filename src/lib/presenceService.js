@@ -1,5 +1,5 @@
 // src/lib/presenceService.js
-import { supabase, hasValidCredentials } from './supabaseClient.js';
+import { presenceClient, hasValidCredentials } from './supabaseClient.js';
 
 export const SCREEN_LABELS = {
   home: 'Home Dashboard',
@@ -26,9 +26,11 @@ export const SCREEN_COLORS = {
 // Supabase drops a session from the channel as soon as its connection closes, so the
 // channel itself is the list of who is online. No client timestamps are compared:
 // a visitor's device clock can be minutes off, which used to hide them entirely.
-// This timer only re-tracks a session the channel lost (e.g. after a reconnect);
-// it sends nothing while the session is listed.
-const ENSURE_TRACKED_INTERVAL_MS = 30000;
+// This timer re-tracks a session the channel lost (e.g. after a reconnect) and
+// rebuilds a channel that has stopped being joined; it sends nothing while the
+// session is listed.
+const ENSURE_TRACKED_INTERVAL_MS = 15000;
+const REJOIN_DELAY_MS = 3500;
 
 let tabSessionId = null;
 export function getTabSessionId() {
@@ -68,6 +70,7 @@ let latestPresenceMap = {};
 let heartbeatTimer = null;
 let isListenersAttached = false;
 let isReconnecting = false;
+let missedJoinChecks = 0;
 
 let globalCurrentUser = null;
 let globalCurrentProfile = null;
@@ -213,7 +216,7 @@ export function initGlobalPresence(user, profile, screen) {
   if (profile) globalCurrentProfile = profile;
   if (screen) globalCurrentScreen = screen;
 
-  if (!hasValidCredentials || !supabase) {
+  if (!hasValidCredentials || !presenceClient) {
     computeConsolidatedPresence();
     return;
   }
@@ -226,7 +229,8 @@ export function initGlobalPresence(user, profile, screen) {
 
   try {
     const sid = getTabSessionId();
-    activeChannel = supabase.channel('onestop-online-presence-v1', {
+    missedJoinChecks = 0;
+    activeChannel = presenceClient.channel('onestop-online-presence-v1', {
       config: { presence: { key: sid } }
     });
 
@@ -244,31 +248,28 @@ export function initGlobalPresence(user, profile, screen) {
       if (channel !== activeChannel) return; // a replaced channel
       if (status === 'SUBSCRIBED') {
         isReconnecting = false;
+        missedJoinChecks = 0;
         const payload = buildPresencePayload();
         channel.track(payload).then(() => {
           computeConsolidatedPresence();
         }).catch(() => {});
-      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        console.warn(`[Presence] Channel error (${status}), will attempt reconnect:`, err);
-        if (!isReconnecting) {
-          isReconnecting = true;
-          setTimeout(() => {
-            if (activeChannel) {
-              try { supabase.removeChannel(activeChannel); } catch (e) {}
-              activeChannel = null;
-            }
-            // Rejoin as the same person: no arguments here would report a signed-in user as a guest
-            initGlobalPresence(globalCurrentUser, globalCurrentProfile, globalCurrentScreen);
-          }, 3500);
-        }
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.warn(`[Presence] Channel ${status}, will rejoin:`, err);
+        rebuildChannel(REJOIN_DELAY_MS);
       }
     });
 
-    // Re-track only if the channel no longer lists this tab (e.g. its connection dropped and came back)
+    // Rebuild a channel that has stopped being joined, and re-track if the channel
+    // no longer lists this tab (e.g. its connection dropped and came back)
     if (!heartbeatTimer) {
       heartbeatTimer = setInterval(() => {
         if (!activeChannel || typeof activeChannel.presenceState !== 'function') return;
-        if (activeChannel.state !== 'joined') return;
+        if (activeChannel.state !== 'joined') {
+          missedJoinChecks += 1;
+          if (missedJoinChecks >= 2) rebuildChannel(0);
+          return;
+        }
+        missedJoinChecks = 0;
         const state = activeChannel.presenceState() || {};
         if (!state[getTabSessionId()]) sendPresencePing(null, null, null, true);
       }, ENSURE_TRACKED_INTERVAL_MS);
@@ -277,12 +278,20 @@ export function initGlobalPresence(user, profile, screen) {
     if (typeof window !== 'undefined' && !isListenersAttached) {
       isListenersAttached = true;
 
-      // Report foreground / background so the admin console can tell active from idle tabs
-      document.addEventListener('visibilitychange', () => {
-        sendPresencePing(null, null, null, true);
-      });
-      window.addEventListener('focus', () => {
-        sendPresencePing(null, null, null, true);
+      // Report foreground / background so the admin console can tell active from idle tabs.
+      // A tab coming back to the foreground with a dead channel rejoins right away.
+      const onForeground = () => {
+        if (activeChannel && activeChannel.state !== 'joined' && activeChannel.state !== 'joining') {
+          rebuildChannel(0);
+        } else {
+          sendPresencePing(null, null, null, true);
+        }
+      };
+      document.addEventListener('visibilitychange', onForeground);
+      window.addEventListener('focus', onForeground);
+      // Restored from the back/forward cache after pagehide untracked it
+      window.addEventListener('pageshow', (e) => {
+        if (e.persisted) sendPresencePing(null, null, null, true);
       });
 
       // Untrack presence cleanly on tab close or page navigation
@@ -305,6 +314,23 @@ export function initGlobalPresence(user, profile, screen) {
   } catch (err) {
     console.warn('[Presence] Realtime presence init error:', err);
   }
+}
+
+// Drop the current channel and join again. Every failure schedules another try:
+// a rejoin that fails must not leave the tab off the channel for good.
+function rebuildChannel(delayMs) {
+  if (isReconnecting) return;
+  isReconnecting = true;
+  setTimeout(() => {
+    isReconnecting = false;
+    if (activeChannel) {
+      const old = activeChannel;
+      activeChannel = null; // set first, so the old channel's CLOSED status is ignored
+      try { presenceClient.removeChannel(old); } catch (e) {}
+    }
+    // Rejoin as the same person: no arguments here would report a signed-in user as a guest
+    initGlobalPresence(globalCurrentUser, globalCurrentProfile, globalCurrentScreen);
+  }, delayMs);
 }
 
 /**
