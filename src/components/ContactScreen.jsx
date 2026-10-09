@@ -65,7 +65,22 @@ export default function ContactScreen() {
   const body = lines.join('\n');
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(body)}`;
-  const emailUrl = `mailto:${EMAIL}?subject=${encodeURIComponent(`OneStop · ${topic.label}`)}&body=${encodeURIComponent(body)}`;
+  const subject = encodeURIComponent(`OneStop · ${topic.label}`);
+  // Phones open their mail app from mailto:. Most laptops have no mail app set up (students
+  // use Gmail in the browser), where mailto: does nothing, so desktop opens Gmail's composer.
+  const isPhone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+  const emailUrl = isPhone
+    ? `mailto:${EMAIL}?subject=${subject}&body=${encodeURIComponent(body)}`
+    : `https://mail.google.com/mail/?view=cm&fs=1&to=${EMAIL}&su=${subject}&body=${encodeURIComponent(body)}`;
+
+  const [copied, setCopied] = useState(false);
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(EMAIL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {}
+  };
 
   const note = !canSend
     ? 'Write a message to send.'
@@ -75,7 +90,7 @@ export default function ContactScreen() {
 
   // Anchors can't be disabled, so block them until there's a message
   const sendProps = (href) => (canSend
-    ? { href, target: '_blank', rel: 'noopener noreferrer' }
+    ? (href.startsWith('mailto:') ? { href } : { href, target: '_blank', rel: 'noopener noreferrer' })
     : { 'aria-disabled': true, tabIndex: -1, role: 'link' });
 
   return (
@@ -145,9 +160,17 @@ export default function ContactScreen() {
             Send on WhatsApp
           </a>
           <a className={`t19-btn t19-btn--outline${canSend ? '' : ' is-disabled'}`} {...sendProps(emailUrl)}>
-            Email
+            {isPhone ? 'Email' : 'Email via Gmail'}
           </a>
-          <span className="t19-send-note">{note}</span>
+          <span className="t19-send-note">
+            {note}
+            <span className="t19-send-alt">
+              Other email app? Write to {EMAIL}{' '}
+              <button type="button" className="t19-copy-btn" onClick={copyEmail}>
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+            </span>
+          </span>
         </div>
       </div>
     </div>

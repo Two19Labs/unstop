@@ -826,6 +826,22 @@
   font-size: 12.5px;
   color: var(--t19-gray-dark);
   white-space: nowrap;
+  text-align: right;
+}
+
+.t19-send-alt {
+  display: block;
+  margin-top: 3px;
+}
+
+.t19-copy-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--t19-blue, #0F3FFE);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Single screen, no scrolling (desktop / tablet). Mobile flows normally above the bottom nav. */
@@ -877,6 +893,7 @@
   .t19-send-note {
     margin-left: 0;
     white-space: normal;
+    text-align: left;
   }
 
   .t19-iq-tile--wide {
