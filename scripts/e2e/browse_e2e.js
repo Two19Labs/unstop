@@ -83,9 +83,16 @@ async function newContext(browser, { viewport = { width: 1440, height: 900 }, pr
       return route.fulfill({ status: req.method() === 'POST' ? 201 : 204, body: '' });
     }
     if (url.includes('/rest/v1/profiles')) {
-      const p = { id: UID, full_name: 'E2E Tester', college: 'Test College', year: 'UG 2nd Year', phone: '9876543210', skills: [] };
+      const p = { id: UID, full_name: 'E2E Tester', college: 'Test College', year: 'UG 2nd Year', phone: '9876543210', skills: [], ...(supabase.profile || {}) };
+      if (req.method() === 'PATCH' || req.method() === 'POST') {
+        const body = JSON.parse(req.postData() || '{}');
+        writes.push(`${req.method()} profiles ${JSON.stringify(body)}`);
+        supabase.profile = { ...(supabase.profile || {}), ...body, onboarding_completed_at: new Date().toISOString() };
+        Object.assign(p, supabase.profile);
+      }
       return json(wantsObject ? p : [p]);
     }
+    if (url.includes('/rest/v1/squad_posts') && req.method() === 'GET') return json(supabase.posts || []);
     return wantsObject ? json(null, 406) : json([]);
   });
   const page = await ctx.newPage();
@@ -303,6 +310,101 @@ async function signInBookmarkSuite(browser) {
   await ctx.close();
 }
 
+// Accounts without a WhatsApp number: no blocking popup, sent to Profile once after a plain
+// sign-in, Save needs a valid number, and squads ask for it only when hosting/joining on WhatsApp
+async function profileNumberSuite(browser) {
+  console.log('\n📱 WhatsApp number on Profile (Supabase mocked)');
+  const signIn = async (page) => {
+    await page.waitForSelector('.onestop-auth-segmented', { timeout: 10000 });
+    await page.locator('.onestop-auth-seg-btn', { hasText: 'Sign in' }).click();
+    await page.fill('input[type="email"]', 'e2e@example.com');
+    await page.fill('input[type="password"]', 'password123');
+    await page.locator('button[type="submit"]').click();
+    await page.waitForTimeout(3500);
+  };
+  const noNumber = () => ({ bookmarks: [], profile: { phone: '', onboarding_completed_at: null } });
+  const hash = (page) => page.evaluate(() => location.hash);
+  const openHomeAndSignIn = async (page) => {
+    await page.goto(BASE + '/', { waitUntil: 'networkidle' });
+    await page.locator('button', { hasText: /Sign up to bookmark/i }).first().click();
+    await signIn(page);
+  };
+
+  // 1. Plain sign-in from Home -> Profile, no popup
+  let account = noNumber();
+  let { ctx, page } = await newContext(browser, { supabase: account });
+  await openHomeAndSignIn(page);
+  assert((await hash(page)) === '#profile', 'Plain sign-in of a new account without a number goes to Profile', await hash(page));
+  assert((await page.locator('[role="dialog"]', { hasText: 'Add your WhatsApp number' }).count()) === 0, 'No blocking WhatsApp popup');
+  assert(await page.locator('.profile-welcome-banner').isVisible(), 'Profile shows the finish-your-profile banner');
+  assert(/mandatory/i.test(await page.locator('#profile-phone-help').innerText()), 'Number field says it is mandatory');
+  assert(/is-required/.test(await page.locator('#profile-phone-help').getAttribute('class')), 'Mandatory note is in the red required style');
+
+  // 2. Save needs a valid number
+  const save = page.locator('.profile-sticky-save-btn');
+  await page.fill('#profile-phone-input', '98765');
+  assert(await save.isDisabled(), 'Save is disabled with an incomplete number');
+  assert(/10 digits/.test(await page.locator('#profile-phone-help').innerText()), 'Incomplete number shows the 10-digit error');
+  await page.fill('#profile-phone-input', '9876543210');
+  assert(await save.isEnabled(), 'Save is enabled once the number is valid');
+  await save.click();
+  await page.waitForTimeout(1500);
+  assert(page.supabaseWrites.some(w => w.startsWith('PATCH profiles') && w.includes('9876543210')), 'Saving sends the number', page.supabaseWrites.join(' | '));
+  assert(!(await page.locator('.profile-welcome-banner').isVisible().catch(() => false)), 'Banner goes away once the number is saved');
+  assert(page.errors.length === 0, 'No JavaScript errors', page.errors.slice(0, 3).join(' | '));
+  await ctx.close();
+
+  // 3. Skipping it: only one redirect per account, then a Home reminder
+  account = noNumber();
+  ({ ctx, page } = await newContext(browser, { supabase: account }));
+  await openHomeAndSignIn(page);
+  await page.goto(BASE + '/#home', { waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(2500);
+  assert((await hash(page)) !== '#profile', 'Not sent to Profile a second time', await hash(page));
+  assert(await page.locator('.home-phone-reminder').isVisible(), 'Home shows the add-your-number reminder');
+  await ctx.close();
+
+  // 4. Sign-in started by an action (bookmark): the action finishes, no redirect
+  account = noNumber();
+  ({ ctx, page } = await newContext(browser, { supabase: account }));
+  await openBrowse(page);
+  await cards(page).first().locator('.cc-card-bookmark-btn').click();
+  await signIn(page);
+  assert((await hash(page)) === '#browse', 'Bookmark sign-in stays on Browse', await hash(page));
+  assert(page.supabaseWrites.some(w => w.startsWith('POST') && w.includes('bookmarks')), 'The bookmark is still saved', page.supabaseWrites.join(' | '));
+  await ctx.close();
+
+  // 5. Joining a WhatsApp squad without a number asks for it, with a way to Profile
+  account = noNumber();
+  account.profile.onboarding_completed_at = new Date().toISOString(); // no redirect in this run
+  const comp = snapshot.find(x => Number(x.maxTeam) > 1) || snapshot[0];
+  account.posts = [{
+    id: '99999999-0000-0000-0000-000000000001', user_id: '22222222-0000-0000-0000-000000000002', created_by_name: 'Priya Host',
+    competition_name: comp.title, competition_id: String(comp.id), organizer: comp.host || '', competition_link: comp.unstopUrl || '',
+    title: `Squad for ${comp.title}`, description: 'Looking for a designer', skills_have: [], skills_looking_for: ['All skills welcome'],
+    total_members: 4, spots_left: 2, initial_open_spots: 2, is_open: true, college: 'Test College', year: 'UG 2nd Year',
+    accepted_emails: [], accepted_count: 0, comm_method: 'whatsapp', is_custom: false, phone_number: '', created_by_email: '',
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString(), expires_at: new Date(Date.now() + 5 * 864e5).toISOString(),
+  }];
+  ({ ctx, page } = await newContext(browser, { supabase: account }));
+  await openHomeAndSignIn(page);
+  await page.goto(BASE + '/#teams', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(2000);
+  const join = page.locator('.tf-join-btn').first();
+  assert((await join.count()) > 0, 'Mocked WhatsApp squad shows a "Request to join" button');
+  if (await join.count()) {
+    await join.click();
+    await page.waitForTimeout(500);
+    assert(await page.getByText('Add your WhatsApp number first').isVisible(), 'Joining a WhatsApp squad asks for the number instead of the form');
+    await page.getByRole('button', { name: 'Go to profile' }).click();
+    await page.waitForTimeout(800);
+    assert((await hash(page)) === '#profile', '"Go to profile" opens Profile', await hash(page));
+  }
+  assert(page.errors.length === 0, 'No JavaScript errors', page.errors.slice(0, 3).join(' | '));
+  await ctx.close();
+}
+
 async function main() {
   // Supabase is mocked at the network layer, but the app only uses it when configured: CI has no .env
   process.env.VITE_SUPABASE_URL ||= 'https://e2e-mock.supabase.co';
@@ -315,6 +417,7 @@ async function main() {
     await persistenceSuite(browser);
     await mobileSuite(browser);
     await signInBookmarkSuite(browser);
+    await profileNumberSuite(browser);
   } catch (err) {
     failed++;
     console.error('  ❌ Suite crashed:', err.message);

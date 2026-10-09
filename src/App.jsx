@@ -11,7 +11,6 @@ import ApplyModal from './components/ApplyModal';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
 import SetNewPasswordModal from './components/SetNewPasswordModal';
-import WhatsAppNumberPrompt from './components/WhatsAppNumberPrompt';
 import ChatHost from './components/ChatHost';
 import OneStopLogo from './components/OneStopLogo';
 import Footer from './components/Footer';
@@ -161,7 +160,9 @@ function OneStopInner() {
     signOut,
     changePassword,
     resetPassword,
-    deleteAccount
+    deleteAccount,
+    needsWhatsAppNumber,
+    lastAuthWasActionRef
   } = useAuth();
 
   // Screen State: 'home' | 'browse' | 'saved' | 'teams' | 'requests' | 'profile'
@@ -401,6 +402,31 @@ function OneStopInner() {
       setProfile(initial);
     }
   }, [authProfile, user]);
+
+  // Finish-your-profile nudge, once per account on this device, for accounts without a
+  // WhatsApp number that never saved their profile. A brand-new account from a plain sign-up
+  // (Log in button, Profile tab, email confirmation link) goes to Profile. A sign-up started
+  // by an action (join, post, bookmark) finishes that action and gets a toast instead, as do
+  // older accounts. The Home banner keeps reminding until the number is added.
+  useEffect(() => {
+    if (!user || !authProfile || !needsWhatsAppNumber || authProfile.onboarding_completed_at) return;
+    const key = `onestop_profile_nudge_${user.id}`;
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+    } catch (e) {
+      return;
+    }
+    const isNewAccount = Date.now() - new Date(user.created_at || 0).getTime() < 24 * 60 * 60 * 1000;
+    if (isNewAccount && !lastAuthWasActionRef?.current) {
+      handleNavigate('profile');
+      trackEvent('profile_completion_nudged', { via: 'redirect' });
+    } else {
+      flash('Welcome to OneStop! Add your WhatsApp number in Profile to host or join squads.');
+      trackEvent('profile_completion_nudged', { via: 'toast' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authProfile, needsWhatsAppNumber]);
 
   // Live Online Presence tracking for all active sessions & devices
   useEffect(() => {
@@ -1294,6 +1320,7 @@ function OneStopInner() {
         profile={profile}
         onSubmitPost={handleSubmitPost}
         onDeletePost={handleDeleteSquadPost}
+        onGoToProfile={() => handleNavigate('profile')}
       />
 
       {/* Request to Join Modal */}
@@ -1307,6 +1334,7 @@ function OneStopInner() {
         competition={applyTargetPost ? competitions.find(c => c.id === applyTargetPost.compId) : null}
         profile={profile}
         onSubmitApply={handleSubmitApply}
+        onGoToProfile={() => handleNavigate('profile')}
       />
 
       {/* Universal Mobile Bottom Navigation Bar */}
@@ -1333,9 +1361,6 @@ function OneStopInner() {
 
       {/* Set New Password Modal (for password recovery email links) */}
       <SetNewPasswordModal />
-
-      {/* Required WhatsApp number (accounts without a valid one, e.g. Google sign-ups) */}
-      <WhatsAppNumberPrompt />
 
       {/* The one chat window (Inbox, Team Finder, bell, browser alerts) */}
       <ChatHost posts={posts} applications={applications} showToast={flash} />

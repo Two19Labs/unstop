@@ -72,7 +72,8 @@ export default function Sidebar({
         openAuthModal({
           title: 'Create your account',
           subtitle: 'Bookmark competitions, track every round, and find a squad.',
-          initialTab: 'signup'
+          initialTab: 'signup',
+          plain: true
         });
       }
       onNavigate('profile');

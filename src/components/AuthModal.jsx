@@ -1,6 +1,6 @@
 // src/components/AuthModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth, cleanPhoneInput, phoneValidationError } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { CloseIcon, CheckIcon, AlertCircleIcon } from './icons';
 import OneStopLogo from './OneStopLogo';
 import WhatIsOneStopTour from './WhatIsOneStopTour';
@@ -29,7 +29,6 @@ export default function AuthModal() {
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [college, setCollege] = useState('');
-  const [phone, setPhone] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -156,15 +155,12 @@ export default function AuthModal() {
           }
         }, 500);
       } else if (mode === 'signup') {
-        const phoneError = phoneValidationError(phone);
-        if (phoneError) throw new Error(phoneError);
-
+        // The WhatsApp number is added on the Profile page after sign-up
         const res = await signUpWithPassword({
           email,
           password,
           fullName,
-          college,
-          phone
+          college
         });
 
         if (res?.user && res?.session) {
@@ -337,31 +333,14 @@ export default function AuthModal() {
                   />
                 </div>
 
-                <div className="onestop-auth-grid-2">
-                  <div className="onestop-auth-field">
-                    <label htmlFor="auth-college">College</label>
-                    <SearchableCollegeSelect
-                      id="auth-college"
-                      value={college}
-                      onChange={setCollege}
-                      placeholder="Search SRCC, IIT Delhi..."
-                    />
-                  </div>
-
-                  <div className="onestop-auth-field">
-                    <label htmlFor="auth-phone">WhatsApp number</label>
-                    <input
-                      id="auth-phone"
-                      type="tel"
-                      className="onestop-auth-input"
-                      inputMode="numeric"
-                      autoComplete="tel-national"
-                      placeholder="9876543210"
-                      value={phone}
-                      onChange={(e) => setPhone(cleanPhoneInput(e.target.value))}
-                      required
-                    />
-                  </div>
+                <div className="onestop-auth-field">
+                  <label htmlFor="auth-college">College</label>
+                  <SearchableCollegeSelect
+                    id="auth-college"
+                    value={college}
+                    onChange={setCollege}
+                    placeholder="Search SRCC, IIT Delhi..."
+                  />
                 </div>
               </>
             )}

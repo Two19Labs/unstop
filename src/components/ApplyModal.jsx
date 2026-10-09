@@ -1,5 +1,7 @@
 // src/components/ApplyModal.jsx
 import React, { useState, useEffect } from 'react';
+import { isValidIndianPhone } from '../utils/phoneUtils';
+import { trackEvent } from '../lib/posthog';
 
 export default function ApplyModal({
   isOpen,
@@ -7,7 +9,8 @@ export default function ApplyModal({
   post,
   competition = null,
   profile = null,
-  onSubmitApply
+  onSubmitApply,
+  onGoToProfile
 }) {
   const [pitch, setPitch] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -25,6 +28,12 @@ export default function ApplyModal({
     if (isOpen) window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  // The host of a WhatsApp squad reaches people on the number on their profile
+  const needsNumber = Boolean(post) && post.comm_method !== 'chat' && !isValidIndianPhone(profile?.phone);
+  useEffect(() => {
+    if (isOpen && needsNumber) trackEvent('whatsapp_number_required_shown', { where: 'join_squad' });
+  }, [isOpen, needsNumber]);
 
   if (!isOpen || !post) return null;
 
@@ -139,7 +148,37 @@ export default function ApplyModal({
           </div>
         )}
 
-        {/* Form Body */}
+        {needsNumber ? (
+          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>
+              Add your WhatsApp number first
+            </p>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
+              You haven't added your WhatsApp number to your profile yet. {leadName.split(' ')[0]} coordinates
+              this squad on WhatsApp, so they'll need it to reach you. It's only shared with hosts of squads you ask to join.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                if (onGoToProfile) onGoToProfile();
+              }}
+              style={{
+                marginTop: '4px',
+                border: '1px solid var(--primary)',
+                borderRadius: '9px',
+                background: 'var(--primary)',
+                color: '#FFFFFF',
+                padding: '13px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600
+              }}
+            >
+              Go to profile
+            </button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {/* Target Competition Card */}
           <div style={{ background: 'var(--surface-sunken)', padding: '12px 14px', borderRadius: '9px', border: '1px solid var(--line)' }}>
@@ -268,6 +307,7 @@ export default function ApplyModal({
             Send request to {leadName.split(' ')[0]}
           </button>
         </form>
+        )}
       </div>
     </div>
   );

@@ -307,7 +307,7 @@ export default function HomeScreen({
   onOpenWhatsApp,
   headerAction = null,
 }) {
-  const { openAuthModal } = useAuth();
+  const { openAuthModal, needsWhatsAppNumber } = useAuth();
   const rawFirst = typeof profile?.name === 'string' && profile.name.trim()
     ? profile.name.trim().split(/\s+/)[0]
     : (profile?.full_name?.trim() ? profile.full_name.trim().split(/\s+/)[0] : (user?.email ? user.email.split('@')[0] : ''));
@@ -833,6 +833,17 @@ export default function HomeScreen({
         )}
       </div>
 
+      {/* Reminder until the account has a WhatsApp number (needed to host or join squads) */}
+      {user && needsWhatsAppNumber && (
+        <button type="button" className="home-phone-reminder" onClick={() => handleNavigate('profile')}>
+          <span className="home-phone-reminder-text">
+            <strong>Add your WhatsApp number</strong>
+            <span>You'll need it to host a squad or ask to join one.</span>
+          </span>
+          <span className="home-phone-reminder-cta">Go to profile →</span>
+        </button>
+      )}
+
       {/* ── 2. Bookmarks Rail: Compact Carousel of ALL Bookmarks ── */}
       <section className="home-section">
         <div className="home-section-header home-bookmarks-header">
@@ -880,6 +891,7 @@ export default function HomeScreen({
                   title: 'Sign Up to Bookmark Competitions',
                   subtitle: 'Create your collegiate account to bookmark competitions, track round deadlines, and sync across devices.',
                   initialTab: 'signup',
+                  plain: true,
                 })}
                 style={{
                   border: 0,

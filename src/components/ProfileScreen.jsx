@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { SKILLS, initialsOf } from '../data/initialData';
 import SearchableCollegeSelect from './SearchableCollegeSelect';
-import { sanitizeIndianPhone, cleanPhoneInput, phoneValidationError } from '../context/AuthContext';
+import { sanitizeIndianPhone, cleanPhoneInput, phoneValidationError, isValidIndianPhone } from '../context/AuthContext';
 import {
   WhatsAppIcon,
   CheckIcon,
@@ -219,6 +219,10 @@ function ProfileScreenContent({
     const savedSkillsStr = [...savedSnapshot.skills].sort().join('|');
     return currentSkillsStr !== savedSkillsStr;
   }, [name, college, level, yearNum, phone, skills, savedSnapshot]);
+
+  // The WhatsApp number is required: the profile can't be saved without a valid one
+  const phoneIsValid = isValidIndianPhone(phone);
+  const savedPhoneMissing = !isValidIndianPhone(savedSnapshot.phone);
 
   // Level switch: validate yearNum against valid options for new level
   const handleLevelChange = (valOrEvent) => {
@@ -457,6 +461,13 @@ function ProfileScreenContent({
 
         {/* Right Column (<form>) */}
         <form onSubmit={handleSubmit} className="profile-form-column">
+          {savedPhoneMissing && (
+            <div className="profile-welcome-banner" role="status">
+              <strong>Welcome to OneStop! Finish your profile.</strong>
+              <span>Add your WhatsApp number below and save. You'll need it to host a squad or ask to join one.</span>
+            </div>
+          )}
+
           {/* 24-Hour Cooldown Banner: only displayed when user attempts to update within 24 hours */}
           {showCooldownNotice && cooldown?.isLocked && (
             <div className="profile-cooldown-banner" role="alert">
@@ -514,7 +525,7 @@ function ProfileScreenContent({
             <div className="profile-fields-row">
               <div className="profile-field-group">
                 <label className="profile-field-label" htmlFor="profile-phone-input">
-                  WhatsApp Number <span style={{ color: 'var(--primary)', fontWeight: 600 }}>*</span>
+                  WhatsApp Number <span className="profile-required-tag">Required</span>
                 </label>
                 <input
                   id="profile-phone-input"
@@ -524,13 +535,17 @@ function ProfileScreenContent({
                   className="profile-input profile-phone-input"
                   value={phone}
                   onChange={(e) => setPhone(cleanPhoneInput(e.target.value))}
-                  placeholder="9876543210"
+                  placeholder="10-digit number"
                   required
+                  aria-invalid={!phoneIsValid}
+                  aria-describedby="profile-phone-help"
                 />
-                <span className="profile-field-help">
+                <span id="profile-phone-help" className={`profile-field-help${phoneIsValid ? '' : ' is-required'}`}>
                   {phone && phoneValidationError(phone)
                     ? phoneValidationError(phone)
-                    : '10-digit number, no country code. Only shared with hosts of WhatsApp squads you request to join, or people contacting your WhatsApp squads.'}
+                    : phoneIsValid
+                      ? '10-digit number, no country code. Only shared when you choose to: when you host a WhatsApp squad or ask to join one.'
+                      : "This field is mandatory. It's only shared when you choose to: when you host a WhatsApp squad or ask to join one."}
                 </span>
               </div>
 
@@ -650,7 +665,7 @@ function ProfileScreenContent({
                   </span>
                 ) : (
                   <span className="profile-sticky-bar-dirty-text">
-                    You have unsaved changes
+                    {phoneIsValid ? 'You have unsaved changes' : 'Add your WhatsApp number to save'}
                   </span>
                 )}
               </div>
@@ -670,7 +685,8 @@ function ProfileScreenContent({
                   <button
                     type="submit"
                     className="profile-sticky-save-btn"
-                    disabled={showCooldownNotice && cooldown?.isLocked}
+                    disabled={(showCooldownNotice && cooldown?.isLocked) || !phoneIsValid}
+                    title={phoneIsValid ? undefined : 'Add a valid 10-digit WhatsApp number to save'}
                   >
                     {showCooldownNotice && cooldown?.isLocked ? 'Edit Locked' : 'Save changes'}
                   </button>

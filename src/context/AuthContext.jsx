@@ -104,6 +104,9 @@ export function AuthProvider({ children }) {
     initialTab: 'signin', // 'signin' | 'signup'
     postLoginAction: null,
   });
+  // Was the last sign-in/sign-up opened by an action (join, post, bookmark...) or plainly
+  // (Log in button, Profile tab)? After a plain sign-up, new users go to Profile.
+  const lastAuthWasActionRef = useRef(false);
 
   // Profile Settings Modal State
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -166,7 +169,7 @@ export function AuthProvider({ children }) {
   // Private squad details used to merge realtime post updates
   const postContactsRef = useRef(new Map());
   const SQUAD_APPS_SELECT = 'id, post_id, applicant_id, applicant_name, applicant_email, applicant_college, applicant_year, pitch_note, highlighted_skills, status, comm_method, created_at, updated_at';
-  const PROFILE_SELECT = 'id, email, full_name, college, year, phone, bio, education_level, skills, profile_last_updated_at';
+  const PROFILE_SELECT = 'id, email, full_name, college, year, phone, bio, education_level, skills, profile_last_updated_at, onboarding_completed_at';
 
   // In-flight request caching & deduplication to eliminate duplicate parallel calls
   const squadDataInFlightRef = useRef(null);
@@ -767,6 +770,7 @@ export function AuthProvider({ children }) {
 
   // Modal Open/Close Controls
   const openAuthModal = (options = {}) => {
+    lastAuthWasActionRef.current = Boolean(options.postLoginAction || (options.title && !options.plain));
     setAuthModalConfig({
       title: options.title || 'Create your account',
       subtitle: options.subtitle || 'Bookmark competitions, track every round, and find a squad.',
@@ -840,9 +844,12 @@ export function AuthProvider({ children }) {
     if (!supabase) {
       throw new Error('Sign-in is temporarily unavailable. Please try again in a few minutes.');
     }
+    // The WhatsApp number is added on the Profile page after sign-up, not here
     const cleanPhone = sanitizeIndianPhone(phone);
-    const phoneError = phoneValidationError(cleanPhone);
-    if (phoneError) throw new Error(phoneError);
+    if (cleanPhone) {
+      const phoneError = phoneValidationError(cleanPhone);
+      if (phoneError) throw new Error(phoneError);
+    }
     trackEvent('auth_sign_up_attempted', { college });
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -860,7 +867,7 @@ export function AuthProvider({ children }) {
       trackEvent('auth_sign_up_failed', { error: error.message });
       throw error;
     }
-    trackEvent('auth_sign_up_success', { college, hasPhone: true });
+    trackEvent('auth_sign_up_success', { college, hasPhone: Boolean(cleanPhone) });
     return data;
   };
 
@@ -1144,44 +1151,10 @@ export function AuthProvider({ children }) {
       hasBio: Boolean(trimmedBio),
       hasPhone: Boolean(cleanPhone),
     });
+    if (!isValidIndianPhone(prevPhone) && isValidIndianPhone(cleanPhone)) {
+      trackEvent('profile_phone_added');
+    }
     return merged;
-  };
-
-  // Adds a missing WhatsApp number (the required-number prompt). The database lets
-  // this through without starting the 24-hour profile cooldown.
-  const saveWhatsAppNumber = async (rawPhone) => {
-    if (!user || !supabase) throw new Error('You must be signed in.');
-    const cleanPhone = sanitizeIndianPhone(rawPhone);
-    const phoneError = phoneValidationError(cleanPhone);
-    if (phoneError) throw new Error(phoneError);
-
-    let { data: saved, error } = await supabase
-      .from('profiles')
-      .update({ phone: cleanPhone })
-      .eq('id', user.id)
-      .select(PROFILE_SELECT)
-      .maybeSingle();
-
-    if (!error && !saved) {
-      ({ data: saved, error } = await supabase
-        .from('profiles')
-        .insert({ id: user.id, email: user.email, phone: cleanPhone })
-        .select(PROFILE_SELECT)
-        .single());
-    }
-
-    if (error) {
-      if (error.hint === 'PROFILE_COOLDOWN') {
-        throw new Error('Your profile was edited in the last 24 hours. Please try again later.');
-      }
-      throw new Error(error.hint === 'INVALID_PHONE'
-        ? 'Please enter a valid 10-digit WhatsApp number.'
-        : (error.message || 'Could not save your number. Please try again.'));
-    }
-
-    setProfile(prev => ({ ...(prev || {}), ...(saved || {}), phone: cleanPhone }));
-    trackEvent('profile_phone_added');
-    return cleanPhone;
   };
 
   // Host's WhatsApp number for a WhatsApp-mode squad (signed-in users only)
@@ -1893,8 +1866,8 @@ export function AuthProvider({ children }) {
         respondToChatRequest,
         cancelChatRequest,
         getHostWhatsApp,
-        saveWhatsAppNumber,
         needsWhatsAppNumber: Boolean(user && profile && !isValidIndianPhone(profile.phone)),
+        lastAuthWasActionRef,
         createSquadPost,
         editSquadPost,
         applyToSquad,

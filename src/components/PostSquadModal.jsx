@@ -30,7 +30,8 @@ export default function PostSquadModal({
   profile = null,
   onSubmitPost,
   onSuccess,
-  onDeletePost
+  onDeletePost,
+  onGoToProfile
 }) {
   const [custom, setCustom] = useState(false);
   const [compQ, setCompQ] = useState('');
@@ -230,7 +231,7 @@ export default function PostSquadModal({
 
     // WhatsApp mode uses the number on the host's profile (never typed in here)
     if (commMethod === 'whatsapp' && !validProfilePhone) {
-      setFormError('Add a WhatsApp number to your profile first, or choose OneStop Chat.');
+      setFormError("You haven't added your WhatsApp number to your profile yet. Add it there first, or choose OneStop Chat.");
       return;
     }
 
@@ -842,7 +843,23 @@ export default function PostSquadModal({
               </button>
             </div>
 
-            {commMethod === 'whatsapp' ? (
+            {commMethod === 'whatsapp' && !validProfilePhone ? (
+              <div style={{ padding: '10px 12px', background: 'rgba(220, 38, 38, 0.08)', borderRadius: '8px', border: '1px solid rgba(220, 38, 38, 0.30)', fontSize: '12px', color: 'var(--ink-secondary, #55534D)', lineHeight: 1.45, marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                <span>
+                  <strong style={{ color: 'var(--urgency-red, #DC2626)' }}>You haven't added your WhatsApp number yet.</strong>{' '}
+                  Add it to your profile to host on WhatsApp, or choose OneStop Chat to post without one.
+                </span>
+                {onGoToProfile && (
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); onGoToProfile(); }}
+                    style={{ border: '1px solid var(--primary, #0F3FFE)', borderRadius: '7px', background: 'var(--primary, #0F3FFE)', color: '#FFFFFF', padding: '6px 12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Go to profile
+                  </button>
+                )}
+              </div>
+            ) : commMethod === 'whatsapp' ? (
               <div style={{ padding: '8px 12px', background: 'rgba(37, 211, 102, 0.08)', borderRadius: '8px', border: '1px solid rgba(37, 211, 102, 0.30)', fontSize: '12px', color: 'var(--ink-secondary, #55534D)', lineHeight: 1.45, marginTop: '4px' }}>
                 Signed-in users can message you on the WhatsApp number on your profile{validProfilePhone ? ` (${profilePhone})` : ''}. You'll also see the number of everyone who requests to join. No in-app chat.
               </div>

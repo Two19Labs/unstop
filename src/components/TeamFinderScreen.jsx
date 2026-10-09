@@ -2294,6 +2294,7 @@ export default function TeamFinderScreen({
         competitions={competitions}
         editingPost={editingPostData}
         profile={profile}
+        onGoToProfile={() => onNavigate && onNavigate('profile')}
         onSubmitPost={(draft) => {
           if (onSubmitPost) {
             onSubmitPost(draft);
@@ -2318,6 +2319,7 @@ export default function TeamFinderScreen({
         post={applyTargetPost}
         competition={applyTargetPost?.comp || (applyTargetPost ? competitions.find(c => String(c.id) === String(applyTargetPost.compId)) : null)}
         profile={profile}
+        onGoToProfile={() => onNavigate && onNavigate('profile')}
         onSubmitApply={(targetPost, pitch, highlightedSkills, applicantPhone) => {
           if (onOpenApply) {
             onOpenApply(targetPost.rawPost || targetPost);
