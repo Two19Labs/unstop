@@ -153,6 +153,11 @@
   width: 4px;
 }
 
+/* Mobile drawer CTA: shown by the max-width: 960px rule above */
+.tf-mobile-filter-footer {
+  display: none;
+}
+
 .tf-sidebar::-webkit-scrollbar-thumb {
   background: var(--border, #E7E6E2);
   border-radius: 4px;

@@ -1,6 +1,6 @@
 // public/sw.js - OneStop Service Worker with PWA Offline Caching & Push Notifications
 
-const SW_VERSION = 'v1.2.0';
+const SW_VERSION = 'v1.3.0';
 const CACHE_NAME = `onestop-static-${SW_VERSION}`;
 
 // Precache essential application shell assets
@@ -48,14 +48,9 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (req.method !== 'GET') return;
 
-  // Skip dynamic API requests, Supabase, PostHog, or external origins
-  if (
-    url.pathname.startsWith('/api/') ||
-    url.hostname.includes('supabase.co') ||
-    url.hostname.includes('posthog.com') ||
-    url.hostname.includes('unstop.com') ||
-    url.hostname.includes('googleapis.com')
-  ) {
+  // Only handle our own files. A fetch() made here falls under the page CSP's connect-src,
+  // which blocks other origins (Google Fonts, organiser logos), so leave those to the browser.
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) {
     return; // Direct network
   }
 

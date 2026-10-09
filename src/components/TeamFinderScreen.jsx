@@ -1237,11 +1237,6 @@ export default function TeamFinderScreen({
                 </div>
               </div>
 
-              {/* Sidebar bottom indicator */}
-              <div className="tf-sidebar-footer-count">
-                Show {totalCardsShown} Squad{totalCardsShown === 1 ? '' : 's'}
-              </div>
-
             </div>
 
             {/* Mobile Drawer Bottom Apply CTA */}

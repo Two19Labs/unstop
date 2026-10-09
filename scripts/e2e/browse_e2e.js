@@ -304,6 +304,9 @@ async function signInBookmarkSuite(browser) {
 }
 
 async function main() {
+  // Supabase is mocked at the network layer, but the app only uses it when configured: CI has no .env
+  process.env.VITE_SUPABASE_URL ||= 'https://e2e-mock.supabase.co';
+  process.env.VITE_SUPABASE_ANON_KEY ||= 'e2e-mock-anon-key';
   const server = await createServer({ root: ROOT, logLevel: 'error', server: { port: PORT, strictPort: true } });
   await server.listen();
   const browser = await chromium.launch(process.env.CHROME_PATH ? { executablePath: process.env.CHROME_PATH } : { channel: 'chrome' });
