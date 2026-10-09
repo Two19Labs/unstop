@@ -1592,8 +1592,7 @@ export default function HomeScreen({
               const isMine = Boolean(
                 s.mine ||
                 (user && s.user_id && s.user_id === user.id) ||
-                (user && s.created_by_email && s.created_by_email.toLowerCase() === (user.email || '').toLowerCase()) ||
-                (profile?.name && leadName.toLowerCase() === profile.name.toLowerCase())
+                (user && s.created_by_email && s.created_by_email.toLowerCase() === (user.email || '').toLowerCase())
               );
 
               const userApp = applications.find(a =>

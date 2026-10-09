@@ -321,8 +321,7 @@ export default function TeamFinderScreen({
       const isMine = Boolean(
         p.mine ||
         (user && p.user_id && p.user_id === user.id) ||
-        (user && p.created_by_email && p.created_by_email.toLowerCase() === (user.email || '').toLowerCase()) ||
-        (userName && (p.created_by_name || p.lead || '').toLowerCase() === userName.toLowerCase())
+        (user && p.created_by_email && p.created_by_email.toLowerCase() === (user.email || '').toLowerCase())
       );
 
       const want = Array.isArray(p.skills_looking_for) ? p.skills_looking_for : (Array.isArray(p.want) ? p.want : []);
