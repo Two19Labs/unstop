@@ -2895,3 +2895,38 @@
 .cc-show-more-btn {
   margin-top: 0;
 }
+
+/* ── "Posted 3h ago" pill (New for you page only) ── */
+.cc-host-meta:has(.cc-posted-ago) {
+  height: auto;
+  gap: 5px;
+}
+
+.cc-posted-ago {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  padding: 2px 8px 2px 6px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  color: var(--ink-dim);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+}
+
+.cc-posted-ago svg {
+  flex: none;
+  opacity: 0.8;
+}
+
+/* Posted in the last 24 hours */
+.cc-posted-ago.is-fresh {
+  color: var(--primary, #0F3FFE);
+  background: var(--primary-tint-8, rgba(15, 63, 254, 0.08));
+  border-color: var(--primary-tint-18, rgba(15, 63, 254, 0.18));
+}

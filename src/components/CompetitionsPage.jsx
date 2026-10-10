@@ -175,7 +175,7 @@ export function competitionShareText(comp) {
 }
 
 // postedLabel ("Posted 3h ago") is only passed by the New for you page
-export const CompCard = memo(function CompCard({ comp, isBookmarked, isCopied, nowMs, postedLabel = '', onOpenDetail, onToggleBookmark, onFindTeammates, onShare, onApply }) {
+export const CompCard = memo(function CompCard({ comp, isBookmarked, isCopied, nowMs, postedLabel = '', postedFresh = false, onOpenDetail, onToggleBookmark, onFindTeammates, onShare, onApply }) {
   const circuitClass = CARD_CIRCUIT_CLASS[getCircuitKey(comp)] || 'others';
   const countdown = getCountdownDetails(comp.deadline, comp.remainDaysText, nowMs);
   const canTeamUp = isTeamOk(comp);
@@ -207,7 +207,12 @@ export const CompCard = memo(function CompCard({ comp, isBookmarked, isCopied, n
                 </span>
                 {badge && <span className="cc-source-badge">{badge}</span>}
               </div>
-              {postedLabel && <span className="cc-posted-ago">{postedLabel}</span>}
+              {postedLabel && (
+                <span className={`cc-posted-ago ${postedFresh ? 'is-fresh' : ''}`}>
+                  <ClockIcon size={11} />
+                  <span>{postedLabel}</span>
+                </span>
+              )}
             </div>
           </div>
 

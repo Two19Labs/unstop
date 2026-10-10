@@ -6,7 +6,7 @@ import { CompCard, competitionShareText } from './CompetitionsPage';
 import { trackEvent } from '../lib/posthog';
 import {
   CIRCUIT_OPTIONS, TRACK_OPTIONS, PLATFORM_OPTIONS, SUBTRACK_MAP,
-  sanitizePrefs, getNewForYou, formatPostedAgo,
+  sanitizePrefs, getNewForYou, formatPostedAgo, getPostedMs,
 } from '../utils/competitionFilters';
 import './NewForYouPage.css';
 
@@ -139,6 +139,7 @@ export default function NewForYouPage({
               isCopied={copiedId === comp.id}
               nowMs={nowMs}
               postedLabel={formatPostedAgo(comp, nowMs)}
+              postedFresh={nowMs - (getPostedMs(comp) ?? 0) < 24 * 60 * 60 * 1000}
               onOpenDetail={handleOpenDetail}
               onToggleBookmark={handleToggleBookmark}
               onFindTeammates={handleFindTeammates}
