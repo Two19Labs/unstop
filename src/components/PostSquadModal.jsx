@@ -229,6 +229,8 @@ export default function PostSquadModal({
       finalCompId = editingPost?.compId || `custom_${Date.now()}`;
     }
 
+    if (profileIncomplete) return;
+
     // WhatsApp mode uses the number on the host's profile (never typed in here)
     if (commMethod === 'whatsapp' && !validProfilePhone) {
       setFormError("You haven't added your WhatsApp number to your profile yet. Add it there first, or choose OneStop Chat.");
@@ -284,6 +286,13 @@ export default function PostSquadModal({
   const userName = profile?.name || 'Collegiate Lead';
   const userCollege = profile?.college || '';
   const userYear = normalizeYear(profile?.year || profile?.batch || '');
+
+  // A squad card shows the host's college and year, so new squads need both on the profile
+  const missingProfileFields = [
+    !userCollege.trim() && 'college',
+    !userYear && 'year'
+  ].filter(Boolean);
+  const profileIncomplete = !editingPost && missingProfileFields.length > 0;
 
   return (
     <div
@@ -371,6 +380,35 @@ export default function PostSquadModal({
           </button>
         </div>
 
+        {profileIncomplete ? (
+          <div style={{ padding: '20px 20px calc(20px + var(--sab, 0px))', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--ink, #1A1A19)' }}>
+              Finish your profile to host a squad
+            </p>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-secondary, #55534D)', lineHeight: 1.5 }}>
+              You haven't added your {missingProfileFields.join(' and ')} yet. Your squad card shows them so people
+              know who they're teaming up with. Set up your profile, then come back and post.
+            </p>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+              <button
+                type="button"
+                onClick={onClose}
+                style={{ flex: 1, border: '1px solid var(--line, #E7E6E2)', borderRadius: '9px', background: 'var(--surface, #FFFFFF)', color: 'var(--ink, #1A1A19)', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Not now
+              </button>
+              {onGoToProfile && (
+                <button
+                  type="button"
+                  onClick={() => { onClose(); onGoToProfile(); }}
+                  style={{ flex: 2, border: '1px solid var(--primary, #0F3FFE)', borderRadius: '9px', background: 'var(--primary, #0F3FFE)', color: '#FFFFFF', padding: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Set up profile
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (<>
         {/* Scrollable Body */}
         <div
           style={{
@@ -989,6 +1027,7 @@ export default function PostSquadModal({
             {editingPost ? 'Save changes' : 'Post squad'}
           </button>
         </div>
+        </>)}
       </div>
     </div>
   );

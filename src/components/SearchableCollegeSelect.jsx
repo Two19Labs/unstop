@@ -90,6 +90,9 @@ export default function SearchableCollegeSelect({
       }
     } else if (e.key === 'Enter') {
       e.preventDefault();
+      // With nothing typed the list is just the directory's first entries (SSCBS on top),
+      // so Enter must not pick one on the user's behalf
+      if (!query.trim()) return;
       if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
         handleSelect(filteredOptions[highlightedIndex].name);
       }
