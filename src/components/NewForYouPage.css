@@ -1,0 +1,61 @@
+/* New for you this week: header and filter summary; cards reuse the Browse card styles */
+.nfy-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.nfy-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.nfy-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nfy-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nfy-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-dim);
+  margin-right: 2px;
+}
+
+.nfy-chip {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.nfy-edit-btn {
+  border: 0;
+  background: transparent;
+  color: var(--primary, #0F3FFE);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 4px;
+}
+
+.nfy-edit-btn:hover {
+  text-decoration: underline;
+}

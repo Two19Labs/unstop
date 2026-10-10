@@ -19,7 +19,7 @@ import { compareCompetitionDeadlines } from '../utils/roundDeadlineUtils';
 import { isEligibleForUndergrad, checkIsPostgraduate } from '../utils/eligibilityUtils';
 import { useAuth } from '../context/AuthContext';
 import { safeExternalUrl } from '../lib/safeUrl';
-import { matchesFilters, sortCompetitions, loadPrefs, isFreeComp } from '../utils/competitionFilters';
+import { matchesFilters, sortCompetitions, loadPrefs, isFreeComp, getNewForYou } from '../utils/competitionFilters';
 import './HomeScreen.css';
 import './SectionLoadingWidget.css';
 
@@ -35,6 +35,7 @@ export const SORT_LABELS = {
   'popular': 'Most registered (popular)',
   'title-asc': 'Title: A → Z',
   'title-desc': 'Title: Z → A',
+  'newest': 'Newest first',
 };
 
 export function matchCompetition(comp, f = {}, isViewerPostgrad = false) {
@@ -305,6 +306,7 @@ export default function HomeScreen({
   onNavigate,
   onRequestJoin,
   onOpenWhatsApp,
+  onShowNewest,
   headerAction = null,
 }) {
   const { openAuthModal, needsWhatsAppNumber } = useAuth();
@@ -338,62 +340,22 @@ export default function HomeScreen({
 
   const showRailLoading = isHomeLoading || competitionsLoading;
 
-  // KPI 1: Competitions matching Browse filter listed in the last 24h
-  const [firstSeenMap, setFirstSeenMap] = useState(() => {
-    try {
-      const raw = localStorage.getItem('onestop_comp_first_seen');
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  useEffect(() => {
-    if (!Array.isArray(competitions) || competitions.length === 0) return;
-    const now = Date.now();
-    let updated = false;
-    let nextMap = { ...(firstSeenMap || {}) };
-
-    if (!firstSeenMap) {
-      // First visit: seed silently with past timestamps so existing competitions don't all show as "new today"
-      const seededPast = now - 25 * 60 * 60 * 1000;
-      competitions.forEach(c => {
-        nextMap[String(c.id)] = seededPast;
-      });
-      updated = true;
-    } else {
-      competitions.forEach(c => {
-        const sId = String(c.id);
-        if (!nextMap[sId]) {
-          nextMap[sId] = now;
-          updated = true;
-        }
-      });
-    }
-
-    if (updated) {
-      setFirstSeenMap(nextMap);
-      try {
-        localStorage.setItem('onestop_comp_first_seen', JSON.stringify(nextMap));
-      } catch {}
-    }
-  }, [competitions, firstSeenMap]);
-
   // Last chosen Browse filter preferences (from props or localStorage fallback)
   const effectiveFilter = savedFilter || loadPrefs();
 
-  const newForYouCount = useMemo(() => {
-    const now = Date.now();
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    return competitions.filter(c => {
-      if (!matchCompetition(c, effectiveFilter || {}, isPostgraduate)) return false;
-      const startTimestamp = c.startDate ? new Date(c.startDate).getTime() : 0;
-      const isNewByStartDate = startTimestamp > 0 && (now - startTimestamp <= oneDayMs);
-      const seenAt = firstSeenMap ? firstSeenMap[String(c.id)] : null;
-      const isNewByFirstSeen = seenAt && (now - seenAt <= oneDayMs);
-      return isNewByStartDate || isNewByFirstSeen;
-    }).length;
-  }, [competitions, firstSeenMap, effectiveFilter, isPostgraduate]);
+  // KPI 1: listings matching the Browse filter that were posted in the last 7 days
+  const [kpiNowMs, setKpiNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setKpiNowMs(Date.now()), 60000);
+    // The old per-device "first seen" map is no longer used
+    try { localStorage.removeItem('onestop_comp_first_seen'); } catch {}
+    return () => clearInterval(timer);
+  }, []);
+
+  const newForYouCount = useMemo(
+    () => getNewForYou(competitions, effectiveFilter, { isPostgrad: isPostgraduate, now: kpiNowMs }).length,
+    [competitions, effectiveFilter, isPostgraduate, kpiNowMs]
+  );
 
   // KPI 2: Open squads looking for skills on user profile
   const userSkills = useMemo(() => {
@@ -571,8 +533,7 @@ export default function HomeScreen({
     'most-registered': 'Most registered',
     'prize-highest': 'Highest prize',
     'highest-prize': 'Highest prize',
-    'new': 'Recently added',
-    'recent': 'Recently added',
+    'newest': 'Newest first',
     'closing-latest': 'Closing latest',
     'title-asc': 'A → Z',
     'title-desc': 'Z → A'
@@ -759,12 +720,17 @@ export default function HomeScreen({
 
         {/* 3 KPI Buttons */}
         <div className="home-header-kpis">
-          {/* KPI 1: New for you today */}
+          {/* KPI 1: New for you this week */}
           <button
             type="button"
             className="home-kpi-item"
-            title="Competitions matching your Browse filter, listed in the last 24 hours"
-            onClick={() => handleNavigate('browse')}
+            title={newForYouCount > 0
+              ? 'Opportunities matching your Browse filters, posted in the last 7 days'
+              : 'Nothing new matches your filters this week. Click to see the newest listings in Browse'}
+            onClick={() => {
+              if (newForYouCount > 0 || !onShowNewest) handleNavigate('new');
+              else onShowNewest();
+            }}
           >
             <span
               className="home-kpi-number"
@@ -773,8 +739,8 @@ export default function HomeScreen({
               {showRailLoading ? '–' : newForYouCount}
             </span>
             <span className="home-kpi-label">
-              <span className="home-kpi-label-mobile">new today</span>
-              <span className="home-kpi-label-desktop">New for you today</span>
+              <span className="home-kpi-label-mobile">new this week</span>
+              <span className="home-kpi-label-desktop">New for you this week</span>
             </span>
           </button>
 

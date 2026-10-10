@@ -3,7 +3,7 @@
 
 import {
   filterCompetitions, facetCounts, sortCompetitions, sanitizePrefs, matchesSearch,
-  isSoloOk, isTeamOk, isFreeComp, DEFAULT_PREFS,
+  isSoloOk, isTeamOk, isFreeComp, DEFAULT_PREFS, getNewForYou, formatPostedAgo,
 } from '../src/utils/competitionFilters.js';
 
 let total = 0;
@@ -92,12 +92,36 @@ const sorted = sortCompetitions(run(DEFAULT_PREFS), 'popular');
 assert(sorted[0].id === 5, 'Most registered first');
 const titles = sortCompetitions([comp(1, { title: ' Zebra' }), comp(2, { title: 'apple' })], 'title-asc').map(c => c.id).join(',');
 assert(titles === '2,1', 'Title sort ignores stray spaces and case');
+const newest = sortCompetitions([
+  comp(1, { postedAt: inDays(-3) }), comp(2, {}), comp(3, { postedAt: inDays(-0.1) }), comp(4, { postedAt: 'garbage' }),
+], 'newest').map(c => c.id).join(',');
+assert(newest.startsWith('3,1,'), 'Newest first, listings without a post time last', newest);
+
+console.log('\n🆕 New for you this week');
+const fresh = [
+  comp(1, { postedAt: inDays(-0.5) }),
+  comp(2, { postedAt: inDays(-6.9) }),
+  comp(3, { postedAt: inDays(-7.1) }),                                // older than 7 days
+  comp(4, {}),                                                         // post time unknown
+  comp(5, { postedAt: inDays(-1), category: 'hackathon' }),
+  comp(6, { postedAt: inDays(-1), deadline: inDays(-0.01) }),         // already closed
+  comp(7, { postedAt: inDays(-2), isPGOnly: true }),
+];
+const nfy = (prefs, extra = {}) => getNewForYou(fresh, prefs, { now: NOW, ...extra }).map(c => c.id).join(',');
+assert(nfy(DEFAULT_PREFS) === '1,5,2', 'Last 7 days only, open listings only, newest first', nfy(DEFAULT_PREFS));
+assert(nfy({ selectedTracks: ['hackathon'] }) === '5', 'Follows the saved Browse filter');
+assert(nfy(DEFAULT_PREFS, { isPostgrad: true }).includes('7'), 'Postgraduates also see PG-only new listings');
+assert(getNewForYou(fresh, DEFAULT_PREFS, { now: NOW + 8 * DAY }).length === 0, 'Listings age out after 7 days');
+assert(formatPostedAgo(comp(0, { postedAt: inDays(-3 / 24) }), NOW) === 'Posted 3h ago', '"Posted 3h ago"');
+assert(formatPostedAgo(comp(0, { postedAt: inDays(-1.2) }), NOW) === 'Posted yesterday', '"Posted yesterday"');
+assert(formatPostedAgo(comp(0, {}), NOW) === '', 'No label when the post time is unknown');
 
 console.log('\n💾 Saved preferences');
 const legacy = sanitizePrefs({ circ: ['iim-iit-bschool'], disc: ['quiz'], team: 'solo', fee: 'free', sort: 'popular', selectedPlatforms: ['inside_iim', 'institutional'] });
 assert(legacy.selectedCircuits[0] === 'iim-iit-premier' && legacy.selectedTracks[0] === 'quiz' && legacy.teamFilter === 'solo' && legacy.sortBy === 'popular', 'Old saved formats are migrated');
 assert(legacy.selectedPlatforms.join(',') === 'inside_campus', 'Removed platform ids are dropped');
 assert(sanitizePrefs({ sortBy: 'nonsense', teamFilter: 'x' }).sortBy === 'closing-soonest', 'Unknown values fall back to defaults');
+assert(sanitizePrefs({ sortBy: 'newest' }).sortBy === 'newest', '"Newest first" is a saved sort');
 
 console.log(`\n${failed === 0 ? '🎉' : '⚠️'} Filters: ${total - failed}/${total} passed`);
 if (failed > 0) process.exit(1);

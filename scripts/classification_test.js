@@ -5,7 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { classifyOpportunity, extractSubTracks, normalizeTitle, makeSummary } from '../api/competitions.js';
+import { classifyOpportunity, extractSubTracks, normalizeTitle, makeSummary, parseUnstopDate } from '../api/competitions.js';
 import { classifyCircuit, matchesKeyword } from '../src/data/circuitKeywords.js';
 import { isEligibleForUndergrad } from '../src/utils/eligibilityUtils.js';
 
@@ -88,6 +88,10 @@ assert(normalizeTitle('CFA Institute Research Challenge 2026-2027') === normaliz
 assert(normalizeTitle('Robo Race') !== normalizeTitle('Robo Soccer'), 'Different events stay distinct');
 const summary = makeSummary('<p><strong>Round 1</strong>&nbsp;is online &amp; free.</p>' + ' word'.repeat(80));
 assert(summary.startsWith('Round 1 is online & free.') && summary.length <= 201 && summary.endsWith('…'), 'Summaries are plain text, decoded and trimmed to ~200 characters', summary);
+
+assert(parseUnstopDate('2026-10-09 12:37:52 GMT+0530') === '2026-10-09T07:07:52.000Z', 'Unstop approved_date (GMT+0530) parses to the right instant', parseUnstopDate('2026-10-09 12:37:52 GMT+0530'));
+assert(parseUnstopDate('2026-10-01T12:34:56.123456+00:00') === '2026-10-01T12:34:56.123Z', 'Supabase created_at parses');
+assert(parseUnstopDate(null) === null && parseUnstopDate('not a date') === null, 'Missing or bad post times become null');
 
 console.log(`\n${failed === 0 ? '🎉' : '⚠️'} Classification: ${total - failed}/${total} passed`);
 if (failed > 0) process.exit(1);

@@ -49,6 +49,14 @@ export function normalizeTitle(title) {
     .replace(/[^a-z]+/g, '');
 }
 
+// Unstop sends approved_date as "2026-10-09 12:37:52 GMT+0530", which Safari can't parse
+export function parseUnstopDate(value) {
+  if (!value) return null;
+  const m = String(value).trim().match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)\s*(?:GMT|UTC)?\s*([+-]\d{2}):?(\d{2})$/);
+  const ms = m ? Date.parse(`${m[1]}T${m[2]}${m[3]}:${m[4]}`) : Date.parse(value);
+  return Number.isNaN(ms) ? null : new Date(ms).toISOString();
+}
+
 // ---------- eligibility ----------
 
 // Check if a competition is strictly for school/K-12 students
@@ -366,6 +374,8 @@ function formatUnstopItem(item, now) {
     unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
     deadline: item.regnRequirements?.end_regn_dt || item.end_date,
     startDate: item.regnRequirements?.start_regn_dt || item.start_date || null,
+    // When Unstop made the listing public (edits don't move it)
+    postedAt: parseUnstopDate(item.approved_date),
     remainDaysText,
     daysRemainingNum,
     urgency: daysRemainingNum <= 2 ? 'high' : daysRemainingNum <= 5 ? 'medium' : 'normal',
@@ -481,6 +491,8 @@ function formatScrapedRow(r) {
     orgLogo: httpUrlOr(r.logo_url, null),
     deadline: r.deadline,
     startDate: r.start_date || null,
+    // First time the scraper saved it (upserts never overwrite created_at)
+    postedAt: parseUnstopDate(r.created_at),
     daysRemainingNum: daysLeft,
     remainDaysText: `${daysLeft} days left`,
     fee: isFree ? 'Free' : 'Paid',

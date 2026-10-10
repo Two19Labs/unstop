@@ -163,7 +163,19 @@ function getCountdownDetails(deadlineStr, fallbackRemainText, nowMs) {
   return { text, exactDateStr, urgencyClass };
 }
 
-const CompCard = memo(function CompCard({ comp, isBookmarked, isCopied, nowMs, onOpenDetail, onToggleBookmark, onFindTeammates, onShare, onApply }) {
+export function competitionShareText(comp) {
+  return [
+    comp.title || 'Competition',
+    comp.orgName ? `Organized by: ${comp.orgName}` : null,
+    comp.prizes ? `Prizes: ${comp.prizes}` : null,
+    comp.teamSizeDisplay ? `Format: ${comp.teamSizeDisplay}` : null,
+    comp.remainDaysText ? `Deadline: ${comp.remainDaysText}` : null,
+    `Apply: ${safeExternalUrl(comp.unstopUrl)}`,
+  ].filter(Boolean).join('\n');
+}
+
+// postedLabel ("Posted 3h ago") is only passed by the New for you page
+export const CompCard = memo(function CompCard({ comp, isBookmarked, isCopied, nowMs, postedLabel = '', onOpenDetail, onToggleBookmark, onFindTeammates, onShare, onApply }) {
   const circuitClass = CARD_CIRCUIT_CLASS[getCircuitKey(comp)] || 'others';
   const countdown = getCountdownDetails(comp.deadline, comp.remainDaysText, nowMs);
   const canTeamUp = isTeamOk(comp);
@@ -195,6 +207,7 @@ const CompCard = memo(function CompCard({ comp, isBookmarked, isCopied, nowMs, o
                 </span>
                 {badge && <span className="cc-source-badge">{badge}</span>}
               </div>
+              {postedLabel && <span className="cc-posted-ago">{postedLabel}</span>}
             </div>
           </div>
 
@@ -459,16 +472,8 @@ export default function CompetitionsPage({
 
   const handleShare = useCallback(async (comp) => {
     trackEvent('competition_shared', { competition_id: comp.id, title: comp.title });
-    const details = [
-      comp.title || 'Competition',
-      comp.orgName ? `Organized by: ${comp.orgName}` : null,
-      comp.prizes ? `Prizes: ${comp.prizes}` : null,
-      comp.teamSizeDisplay ? `Format: ${comp.teamSizeDisplay}` : null,
-      comp.remainDaysText ? `Deadline: ${comp.remainDaysText}` : null,
-      `Apply: ${safeExternalUrl(comp.unstopUrl)}`,
-    ].filter(Boolean).join('\n');
     try {
-      await navigator.clipboard.writeText(details);
+      await navigator.clipboard.writeText(competitionShareText(comp));
       setCopiedId(comp.id);
       if (latest.current.showToast) latest.current.showToast('Competition details copied to clipboard!');
       clearTimeout(copiedTimerRef.current);

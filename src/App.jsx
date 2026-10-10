@@ -4,6 +4,7 @@ import { AuthProvider, useAuth, formatWhatsAppUrl } from './context/AuthContext'
 import Sidebar from './components/Sidebar';
 import HomeScreen from './components/HomeScreen';
 import CompetitionsPage from './components/CompetitionsPage';
+import NewForYouPage from './components/NewForYouPage';
 import NotificationCenter from './components/NotificationCenter';
 import DetailDrawer from './components/DetailDrawer';
 import PostSquadModal from './components/PostSquadModal';
@@ -51,7 +52,7 @@ const EMPTY_PROFILE = {
   education_level: ''
 };
 
-const VALID_SCREENS = ['home', 'browse', 'teams', 'requests', 'profile', 'admin', 'about', 'contact'];
+const VALID_SCREENS = ['home', 'browse', 'new', 'teams', 'requests', 'profile', 'admin', 'about', 'contact'];
 
 function getInitialScreen() {
   try {
@@ -570,6 +571,18 @@ function OneStopInner() {
     loadCompetitions();
   }, [loadCompetitions]);
 
+  // A tab left open still picks up newly posted listings: refetch on return once the list is 15+ minutes old
+  useEffect(() => {
+    let lastFetch = Date.now();
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible' || Date.now() - lastFetch < 15 * 60 * 1000) return;
+      lastFetch = Date.now();
+      loadCompetitions();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [loadCompetitions]);
+
   const isPostgraduate = checkIsPostgraduate(profile);
 
   // Dynamic eligibility filtering based on profile education level
@@ -597,6 +610,14 @@ function OneStopInner() {
     }
     setDetailCompId(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // "New for you this week" is empty: open Browse sorted newest first (Browse reads the saved prefs on mount)
+  const handleShowNewest = () => {
+    const next = sanitizePrefs({ ...loadPrefs(), sortBy: 'newest' });
+    setBrowseFilters(next);
+    savePrefs(next);
+    handleNavigate('browse');
   };
 
   // Walkthrough completion & dismissal handlers
@@ -1075,7 +1096,7 @@ function OneStopInner() {
       {/* Sidebar (Desktop only) */}
       {!isStandaloneMode && (
         <Sidebar
-          screen={screen}
+          screen={screen === 'new' ? 'home' : screen}
           onNavigate={handleNavigate}
           totalNewAlerts={totalNewAlerts}
           bookmarksCount={bookmarks.length}
@@ -1220,6 +1241,7 @@ function OneStopInner() {
                 onNavigate={handleNavigate}
                 onRequestJoin={(post) => handleOpenApply(post)}
                 onOpenWhatsApp={handleOpenWhatsApp}
+                onShowNewest={handleShowNewest}
                 headerAction={
                   <div className="home-header-actions">
                     <NotificationCenter
@@ -1236,6 +1258,23 @@ function OneStopInner() {
                     />
                   </div>
                 }
+              />
+            )}
+
+            {screen === 'new' && (
+              <NewForYouPage
+                competitions={visibleCompetitions}
+                loading={competitionsLoading}
+                savedFilter={browseFilters}
+                isPostgraduate={isPostgraduate}
+                bookmarks={bookmarks}
+                onToggleBookmark={handleToggleBookmark}
+                onOpenDetail={(id) => setDetailCompId(id)}
+                onFindTeammates={handleFindTeammates}
+                onBack={() => handleNavigate('home')}
+                onEditFilters={() => handleNavigate('browse')}
+                onShowNewest={handleShowNewest}
+                showToast={flash}
               />
             )}
 
@@ -1339,7 +1378,7 @@ function OneStopInner() {
 
       {/* Universal Mobile Bottom Navigation Bar */}
       <MobileBottomNav
-        screen={screen}
+        screen={screen === 'new' ? 'home' : screen}
         onNavigate={handleNavigate}
         pendingInboxCount={pendingInboxCount}
         bookmarksCount={bookmarks.length}

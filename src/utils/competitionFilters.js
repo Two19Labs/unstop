@@ -72,6 +72,7 @@ const SUBTRACK_CATEGORY = Object.fromEntries(
 
 export const SORT_OPTIONS = [
   { id: 'closing-soonest', label: 'Closing soonest' },
+  { id: 'newest', label: 'Newest first' },
   { id: 'closing-latest', label: 'Closing latest' },
   { id: 'title-asc', label: 'Title: A → Z' },
   { id: 'title-desc', label: 'Title: Z → A' },
@@ -181,6 +182,38 @@ export function getDeadlineMs(comp) {
 export function isExpired(comp, nowMs = Date.now()) {
   const t = getDeadlineMs(comp);
   return t !== Infinity && t < nowMs;
+}
+
+// When the listing went public (Unstop approval, or first scrape for other sources); null if unknown
+export function getPostedMs(comp) {
+  if (!comp?.postedAt) return null;
+  const t = new Date(comp.postedAt).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+export const NEW_FOR_YOU_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+// "New for you this week": the saved Browse filter, posted in the last 7 days, newest first
+export function getNewForYou(list, prefs, opts = {}) {
+  const now = opts.now ?? Date.now();
+  const since = now - NEW_FOR_YOU_WINDOW_MS;
+  const fresh = filterCompetitions(list, prefs, { ...opts, now }).filter(c => {
+    const t = getPostedMs(c);
+    return t !== null && t >= since && t <= now;
+  });
+  return sortCompetitions(fresh, 'newest');
+}
+
+export function formatPostedAgo(comp, nowMs = Date.now()) {
+  const t = getPostedMs(comp);
+  if (t === null) return '';
+  const mins = Math.max(0, Math.floor((nowMs - t) / 60000));
+  if (mins < 1) return 'Posted just now';
+  if (mins < 60) return `Posted ${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `Posted ${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? 'Posted yesterday' : `Posted ${days}d ago`;
 }
 
 const CIRCUIT_LABEL = Object.fromEntries(CIRCUIT_OPTIONS.map(c => [c.id, c.label]));
@@ -337,6 +370,12 @@ export function sortCompetitions(list, sortBy = 'closing-soonest') {
       }
       case 'popular':
         return regs(b) - regs(a);
+      case 'newest': {
+        // Listings with no known post time go last
+        const pa = getPostedMs(a) ?? -Infinity, pb = getPostedMs(b) ?? -Infinity;
+        if (pa === pb) return regs(b) - regs(a);
+        return pb > pa ? 1 : -1;
+      }
       case 'closing-soonest':
       default: {
         const ta = getDeadlineMs(a), tb = getDeadlineMs(b);
