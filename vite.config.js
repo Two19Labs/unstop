@@ -87,7 +87,7 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/posthog-js')) {
             return 'vendor-posthog';
           }
-          if (id.includes('data/colleges.js') || id.includes('data/colleges')) {
+          if (id.includes('data/colleges')) {
             return 'colleges-data';
           }
         },

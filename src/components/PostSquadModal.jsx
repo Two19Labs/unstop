@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { SKILLS, initialsOf } from '../data/initialData';
 import { sanitizeIndianPhone, isValidIndianPhone } from '../context/AuthContext';
-import { normalizeYear } from '../data/colleges';
+import { normalizeYear } from '../data/years';
 import InstitutionLogo from './InstitutionLogo';
 import { isSoloCompetition } from '../utils/competitionUtils';
 

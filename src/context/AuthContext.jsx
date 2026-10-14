@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, hasValidCredentials, openedFromRecoveryLink } from '../lib/supabaseClient';
-import { normalizeYear } from '../data/colleges';
+import { normalizeYear } from '../data/years';
 import { isMockPost, isMockApp, isMockBookmark } from '../data/initialData';
 import { identifyUser, setPersonProperties, resetUser, trackEvent } from '../lib/posthog';
 import { purgeUserStorage } from '../lib/storage';

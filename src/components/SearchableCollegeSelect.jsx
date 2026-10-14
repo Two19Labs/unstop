@@ -1,6 +1,8 @@
 // src/components/SearchableCollegeSelect.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { searchColleges, COLLEGES_DATABASE } from '../data/colleges';
+// The directory is ~90KB: fetch it when a picker mounts, not with the app shell
+let collegesData = null;
+const loadColleges = () => import('../data/colleges').then((m) => (collegesData = m));
 import { SearchIcon, CheckIcon, CloseIcon, WhatsAppIcon } from './icons';
 import './SearchableCollegeSelect.css';
 
@@ -17,6 +19,11 @@ export default function SearchableCollegeSelect({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+  const [db, setDb] = useState(collegesData);
+
+  useEffect(() => {
+    if (!db) loadColleges().then(setDb).catch(() => {});
+  }, [db]);
 
   // Synchronize internal query state with external value changes
   useEffect(() => {
@@ -25,8 +32,8 @@ export default function SearchableCollegeSelect({
 
   // Compute live filtered options
   const filteredOptions = useMemo(() => {
-    return searchColleges(query, 12);
-  }, [query]);
+    return db ? db.searchColleges(query, 12) : [];
+  }, [db, query]);
 
   // Is exact match found in list?
   const isExactMatch = useMemo(() => {
@@ -56,7 +63,7 @@ export default function SearchableCollegeSelect({
     const handleOutsideClick = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsOpen(false);
-        const exact = COLLEGES_DATABASE.find(
+        const exact = (db?.COLLEGES_DATABASE || []).find(
           (c) => c.name.toLowerCase() === query.trim().toLowerCase()
         );
         if (exact) {
@@ -68,7 +75,7 @@ export default function SearchableCollegeSelect({
     };
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, [value, query]);
+  }, [db, value, query]);
 
   const handleKeyDown = (e) => {
     if (!isOpen) {

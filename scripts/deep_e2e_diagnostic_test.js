@@ -3,7 +3,7 @@
 // Covers: Profile Settings with Skills, Hosting, Team Finding, Filters, Review & Applications, and Chat
 
 import { SKILLS, SKILL_ALIASES, normalizeSkill, isMockPost, isMockApp } from '../src/data/initialData.js';
-import { normalizeYear, YEAR_OPTIONS } from '../src/data/colleges.js';
+import { normalizeYear, YEAR_OPTIONS } from '../src/data/years.js';
 import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN } from '../src/utils/eligibilityUtils.js';
 // Cooldown, Phone, WhatsApp, and Solo Competition logic tested directly
 import { PROFILE_COOLDOWN_MS, getProfileCooldown } from '../src/utils/profileCooldown.js';

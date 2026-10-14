@@ -13,7 +13,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { SKILLS, SKILL_ALIASES, normalizeSkill, isMockPost, isMockApp } from '../src/data/initialData.js';
-import { normalizeYear, YEAR_OPTIONS } from '../src/data/colleges.js';
+import { normalizeYear, YEAR_OPTIONS } from '../src/data/years.js';
 import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN, UG_AFFIRMATIVE_PATTERN } from '../src/utils/eligibilityUtils.js';
 import { sanitizeIndianPhone, isValidIndianPhone, cleanPhoneInput, phoneValidationError, formatWhatsAppUrl } from '../src/utils/phoneUtils.js';
 import { PROFILE_COOLDOWN_MS, getProfileCooldown } from '../src/utils/profileCooldown.js';

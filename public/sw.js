@@ -1,6 +1,6 @@
 // public/sw.js - OneStop Service Worker with PWA Offline Caching & Push Notifications
 
-const SW_VERSION = 'v1.3.0';
+const SW_VERSION = 'v1.3.1';
 const CACHE_NAME = `onestop-static-${SW_VERSION}`;
 
 // Precache essential application shell assets
@@ -39,6 +39,13 @@ self.addEventListener('activate', (event) => {
     }).then(() => self.clients.claim())
   );
 });
+
+// Every deploy adds new hashed bundles under /assets/: keep the newest ones, drop the rest
+const MAX_HASHED_ASSETS = 80;
+async function trimHashedAssets(cache) {
+  const keys = (await cache.keys()).filter((r) => new URL(r.url).pathname.startsWith('/assets/'));
+  await Promise.all(keys.slice(0, Math.max(0, keys.length - MAX_HASHED_ASSETS)).map((r) => cache.delete(r)));
+}
 
 // Fetch event listener: Network-first for navigation, stale-while-revalidate for static assets
 self.addEventListener('fetch', (event) => {
@@ -89,11 +96,15 @@ self.addEventListener('fetch', (event) => {
   if (isStaticAsset) {
     event.respondWith(
       caches.match(req).then((cachedRes) => {
+        // Hashed bundles never change: no need to download them again
+        if (cachedRes && url.pathname.startsWith('/assets/')) return cachedRes;
         const fetchPromise = fetch(req)
           .then((networkRes) => {
             if (networkRes.ok) {
               const resClone = networkRes.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone));
+              caches.open(CACHE_NAME)
+                .then((cache) => cache.put(req, resClone).then(() => trimHashedAssets(cache)))
+                .catch(() => {});
             }
             return networkRes;
           })

@@ -1,10 +1,22 @@
 // src/lib/posthog.js
-import posthog from 'posthog-js';
+// The SDK (~100KB gzipped) loads after first paint. Calls made before then are
+// queued and replayed once it is ready, so no events are lost.
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
 const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 
 let isInitialized = false;
+let posthog = null;
+let loadStarted = false;
+const pending = [];
+
+// Runs fn(posthog) now if the SDK is ready, or once it has loaded
+function withPostHog(fn) {
+  if (isInitialized) fn(posthog);
+  else if (loadStarted) pending.push(fn);
+}
+
+const hasValidKey = () => Boolean(POSTHOG_KEY) && !POSTHOG_KEY.includes('your-') && POSTHOG_KEY !== 'undefined';
 
 const URL_PROPERTIES = ['$current_url', '$referrer', '$initial_current_url', '$initial_referrer'];
 
@@ -35,9 +47,9 @@ function scrubUrlTokens(event) {
  * the SDK gracefully degrades and remains inactive without crashing.
  */
 export function initPostHog() {
-  if (isInitialized) return posthog;
+  if (loadStarted) return;
 
-  if (!POSTHOG_KEY || POSTHOG_KEY.includes('your-') || POSTHOG_KEY === 'undefined') {
+  if (!hasValidKey()) {
     if (import.meta.env.DEV) {
       console.info(
         '%c[PostHog]%c No valid VITE_POSTHOG_KEY found. Analytics running in dry-run mode (disabled). Add key to .env.local to activate.',
@@ -45,9 +57,22 @@ export function initPostHog() {
         'color: #666;'
       );
     }
-    return posthog;
+    return;
   }
 
+  loadStarted = true;
+  const load = () => import('posthog-js').then(({ default: sdk }) => {
+    posthog = sdk;
+    startPostHog();
+  }).catch((err) => {
+    pending.length = 0;
+    console.warn('[PostHog] Could not load SDK:', err);
+  });
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) window.requestIdleCallback(load, { timeout: 3000 });
+  else setTimeout(load, 1500);
+}
+
+function startPostHog() {
   try {
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
@@ -80,8 +105,8 @@ export function initPostHog() {
   } catch (err) {
     console.warn('[PostHog] Initialization error:', err);
   }
-
-  return posthog;
+  const queued = pending.splice(0);
+  if (isInitialized) queued.forEach((fn) => { try { fn(posthog); } catch (e) {} });
 }
 
 /**
@@ -91,11 +116,9 @@ export function initPostHog() {
  */
 export function trackEvent(eventName, properties = {}) {
   try {
-    if (isInitialized) {
-      posthog.capture(eventName, {
-        timestamp: new Date().toISOString(),
-        ...properties,
-      });
+    const payload = { timestamp: new Date().toISOString(), ...properties };
+    if (loadStarted) {
+      withPostHog((ph) => ph.capture(eventName, payload));
     } else if (import.meta.env.DEV) {
       console.debug(`[PostHog DRY-RUN] ${eventName}:`, properties);
     }
@@ -119,9 +142,11 @@ export function trackScreenView(screenName, properties = {}) {
       ...properties,
     };
 
-    if (isInitialized) {
-      posthog.capture('$pageview', payload);
-      posthog.capture('screen_view', payload);
+    if (loadStarted) {
+      withPostHog((ph) => {
+        ph.capture('$pageview', payload);
+        ph.capture('screen_view', payload);
+      });
     } else if (import.meta.env.DEV) {
       console.debug(`[PostHog DRY-RUN] screen_view: ${screenName}`, payload);
     }
@@ -139,8 +164,8 @@ export function identifyUser(userId, traits = {}) {
   try {
     if (!userId) return;
 
-    if (isInitialized) {
-      posthog.identify(userId, traits);
+    if (loadStarted) {
+      withPostHog((ph) => ph.identify(userId, traits));
     } else if (import.meta.env.DEV) {
       console.debug(`[PostHog DRY-RUN] identify (${userId}):`, traits);
     }
@@ -155,8 +180,8 @@ export function identifyUser(userId, traits = {}) {
  */
 export function setPersonProperties(traits = {}) {
   try {
-    if (isInitialized) {
-      posthog.setPersonProperties(traits);
+    if (loadStarted) {
+      withPostHog((ph) => ph.setPersonProperties(traits));
     } else if (import.meta.env.DEV) {
       console.debug('[PostHog DRY-RUN] setPersonProperties:', traits);
     }
@@ -170,8 +195,8 @@ export function setPersonProperties(traits = {}) {
  */
 export function resetUser() {
   try {
-    if (isInitialized) {
-      posthog.reset();
+    if (loadStarted) {
+      withPostHog((ph) => ph.reset());
     } else if (import.meta.env.DEV) {
       console.debug('[PostHog DRY-RUN] resetUser');
     }
@@ -187,8 +212,8 @@ export function resetUser() {
  */
 export function captureException(error, extra = {}) {
   try {
-    if (isInitialized) {
-      posthog.captureException(error, { extra });
+    if (loadStarted) {
+      withPostHog((ph) => ph.captureException(error, { extra }));
     } else if (import.meta.env.DEV) {
       console.error('[PostHog DRY-RUN] captureException:', error, extra);
     }
@@ -196,6 +221,3 @@ export function captureException(error, extra = {}) {
     console.warn('[PostHog] Error capturing exception:', err);
   }
 }
-
-export { posthog };
-export default posthog;

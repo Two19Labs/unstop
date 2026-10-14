@@ -4,8 +4,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { purgeLegacyPrivateStorage } from './lib/storage';
-import { initPostHog, posthog } from './lib/posthog';
-import { PostHogProvider } from 'posthog-js/react';
+import { initPostHog } from './lib/posthog';
 import { registerServiceWorker } from './lib/browserPushService';
 import './index.css';
 
@@ -30,9 +29,7 @@ initPostHog();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <PostHogProvider client={posthog}>
-        <App />
-      </PostHogProvider>
+      <App />
     </ErrorBoundary>
   </React.StrictMode>
 );

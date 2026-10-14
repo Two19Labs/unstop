@@ -1,7 +1,7 @@
 // scripts/e2e_team_finder_test.js
 // Automated End-to-End Test Suite for OneStop Team Finder Feature
 
-import { normalizeYear } from '../src/data/colleges.js';
+import { normalizeYear } from '../src/data/years.js';
 import { isEligibleForUndergrad, checkIsPostgraduate, MBA_EXCLUSION_PATTERN } from '../src/utils/eligibilityUtils.js';
 import { sanitizeIndianPhone, formatWhatsAppUrl } from '../src/utils/phoneUtils.js';
 
