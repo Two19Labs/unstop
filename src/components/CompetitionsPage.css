@@ -512,13 +512,33 @@
     background: var(--bg);
     border: 1px solid var(--border);
     color: var(--ink);
-    width: 30px;
-    height: 30px;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+  }
+
+  /* Finger-sized rows in the drawer (desktop sizes are ~23px tall) */
+  .cc-filter-sidebar .cc-filter-checkbox-row {
+    min-height: 36px;
+    font-size: 0.875rem;
+  }
+
+  .cc-filter-sidebar .cc-accordion-header {
+    min-height: 40px;
+  }
+
+  .cc-filter-sidebar .cc-seg-btn {
+    min-height: 34px;
+    font-size: 0.8rem;
+  }
+
+  .cc-filter-sidebar .cc-mini-select-all {
+    min-height: 32px;
+    padding: 0 8px;
   }
 }
 

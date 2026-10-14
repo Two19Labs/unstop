@@ -125,6 +125,8 @@
   .tf-body-grid {
     display: flex;
     flex-direction: column;
+    /* Stretch, not start: a start-aligned column grows to its widest nowrap line and overflows the screen */
+    align-items: stretch;
     gap: 16px;
   }
 }
@@ -788,6 +790,10 @@
   gap: 14px;
 }
 
+.tf-grid > * {
+  min-width: 0;
+}
+
 .tf-section {
   display: flex;
   flex-direction: column;
@@ -1236,9 +1242,23 @@
 /* Card Action Buttons */
 .tf-actions-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   width: 100%;
+}
+
+/* Owner row: the main action gets its own line, Edit / Close / Delete share the next one */
+.tf-actions-row > .tf-join-btn:has(~ .tf-btn-secondary) {
+  flex: 1 1 100% !important;
+}
+
+.tf-actions-row > .tf-btn-secondary {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tf-wa-btn {
@@ -1884,8 +1904,8 @@
   .tf-status-row {
     display: flex !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: 10px !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
     margin-top: 4px !important;
     margin-bottom: 6px !important;
   }
@@ -1925,8 +1945,15 @@
 
   /* Squad Cards */
   .tf-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 14px !important;
+  }
+
+  /* Large phones in landscape and small tablets have room for two cards */
+  @media (min-width: 600px) {
+    .tf-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
   }
 
   .tf-card {
@@ -1960,6 +1987,13 @@
   .tf-circuit-tag {
     font-size: 12px !important;
     font-weight: 500 !important;
+  }
+
+  /* Too narrow for category + circuit + deadline: keep the two that matter */
+  @media (max-width: 400px) {
+    .tf-circuit-tag {
+      display: none !important;
+    }
   }
 
   .tf-deadline-badge {
@@ -2116,6 +2150,7 @@
   /* Action buttons */
   .tf-actions-row {
     display: flex !important;
+    flex-wrap: wrap !important;
     align-items: center !important;
     gap: 8px !important;
     width: 100% !important;

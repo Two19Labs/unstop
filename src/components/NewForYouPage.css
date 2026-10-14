@@ -59,3 +59,15 @@
 .nfy-edit-btn:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 768px) {
+  .nfy-edit-btn {
+    position: relative;
+  }
+
+  .nfy-edit-btn::after {
+    content: '';
+    position: absolute;
+    inset: -12px -4px;
+  }
+}

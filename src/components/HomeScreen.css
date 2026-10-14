@@ -1201,3 +1201,18 @@
     gap: 6px;
   }
 }
+
+/* Bigger tap areas on phones without moving anything: an invisible hit box around small text buttons */
+@media (max-width: 768px) {
+  .home-kpi-item,
+  .home-subline-edit-btn {
+    position: relative;
+  }
+
+  .home-kpi-item::after,
+  .home-subline-edit-btn::after {
+    content: '';
+    position: absolute;
+    inset: -12px -4px;
+  }
+}
