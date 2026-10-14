@@ -14,12 +14,18 @@ This guide walks you through connecting **Supabase** for the backend database & 
    VITE_SUPABASE_ANON_KEY=your-anon-public-key
    ```
 4. In the Supabase Dashboard, open the **SQL Editor** tab from the left sidebar.
-5. Click **New Query**, open `supabase_master_migration.sql`, copy its entire contents, paste into the query window, and click **Run**. It is safe to run again.
-6. This creates every table (profiles, bookmarks, squads, applications, chat, notifications, competitions), the triggers that enforce the profile cooldown, squad rules and chat access, and strict row-level security.
-7. For an **existing** project, run `PROFILE_COOLDOWN_AND_PRIVACY_MIGRATION.sql` and then `SECURITY_HARDENING_MIGRATION.sql` instead.
+5. Click **New Query** and run these files **in this order**, one at a time (paste the whole file, click **Run**). The master file alone is not enough: squad chat, spam limits, the WhatsApp lookups and the admin console live in the later files.
+   1. `supabase_master_migration.sql`: tables, profile cooldown, squad rules, row-level security
+   2. `SQUAD_CONTACT_AND_CHAT_MIGRATION.sql`: private host contact, chat requests, 1:1 chat
+   3. `SQUAD_CHAT_HOTFIX.sql`
+   4. `CHAT_UPGRADE_MIGRATION.sql`: unread counts, block and report
+   5. `PLATFORM_FIXES_MIGRATION.sql`: spam limits, WhatsApp lookups
+   6. `ADMIN_ACCESS_FIX.sql`: admins by account ID, admin stats (edit the admin email inside first)
+6. **Re-running** `supabase_master_migration.sql` or `SECURITY_HARDENING_MIGRATION.sql` puts back the older email-based `is_admin()`. Always run `ADMIN_ACCESS_FIX.sql` again afterwards.
+7. For an **existing** project, only run the files added since your last update (see `git log -- '*.sql'`).
 8. Do not run anything in `sql_archive/`: those files are outdated and some reopen public access.
-9. The competition scraper (`npm run scan:institutional`) must use the **service_role** key (`SUPABASE_SERVICE_ROLE_KEY` in `.env`), because the competitions table is read-only for the public key.
-10. Admins are listed in the `app_admins` table: `insert into public.app_admins (email) values ('someone@college.edu');`
+9. The competition scraper (`npm run scan:institutional`) must use the **service_role** key (`SUPABASE_SERVICE_KEY` in `.env` and in the GitHub Actions secrets), because the competitions table is read-only for the public key.
+10. Admins are linked by account ID: sign up with the admin email first, then run `ADMIN_ACCESS_FIX.sql` with that email.
 
 ---
 
