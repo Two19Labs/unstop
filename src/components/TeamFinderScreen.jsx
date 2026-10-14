@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { SKILLS, initialsOf, isMockPost, isMockApp, normalizeSkill } from '../data/initialData';
 import { formatWhatsAppUrl, useAuth } from '../context/AuthContext';
-import { normalizeYear } from '../data/colleges';
+import { normalizeYear } from '../data/years';
+import { safeExternalUrl } from '../lib/safeUrl';
+import { getCircuitKey } from '../utils/competitionFilters';
 import PostSquadModal from './PostSquadModal';
 import ApplyModal from './ApplyModal';
 import SectionLoadingWidget from './SectionLoadingWidget';
@@ -13,6 +15,7 @@ import './TeamFinderScreen.css';
 
 const CATS = ['Case Comps', 'Hackathons', 'Writing & Research', 'Quizzes', 'Simulations', 'Debates'];
 const CIRCUITS = ['DU Circuit', 'IIMs, IITs & Premier', 'Corporate & Global', 'Others'];
+const CIRCUIT_LABEL_BY_KEY = { du: 'DU Circuit', 'iim-iit-premier': 'IIMs, IITs & Premier', 'corporate-global': 'Corporate & Global', others: 'Others' };
 
 const CAT_COLORS = {
   'Case Comps': '#0F3FFE',
@@ -247,10 +250,8 @@ export default function TeamFinderScreen({
       else if (catKey.includes('simul')) cat = 'Simulations';
       else if (catKey.includes('debat')) cat = 'Debates';
 
-      let circ = 'Others';
-      if (live.isDU || /sscbs|srcc|hindu|hansraj|lsr|kmc|ramjas|du/i.test(live.host || '')) circ = 'DU Circuit';
-      else if (live.isPremier || live.isIIMorIIT || /iim|iit|bits|fms|xlri/i.test(live.host || '')) circ = 'IIMs, IITs & Premier';
-      else if (live.isCorporate || /bain|l'oreal|mckinsey|tata|google/i.test(live.host || '')) circ = 'Corporate & Global';
+      // Same circuit Browse shows for this listing
+      const circ = CIRCUIT_LABEL_BY_KEY[getCircuitKey(live)] || 'Others';
 
       const dueInfo = formatDue(live.deadline || live.days || 10);
       return {
@@ -260,7 +261,7 @@ export default function TeamFinderScreen({
         logo: live.orgLogo || live.logo || live.bannerUrl || null,
         cat,
         circuit: circ,
-        url: live.unstopUrl || 'https://unstop.com',
+        url: safeExternalUrl(live.unstopUrl),
         dueText: dueInfo.text,
         dueColor: dueInfo.color,
         dueBg: dueInfo.bg,
@@ -281,7 +282,7 @@ export default function TeamFinderScreen({
     else if (titleLower.includes('debat') || titleLower.includes('mun')) cat = 'Debates';
 
     let circ = 'Others';
-    if (/sscbs|srcc|hindu|hansraj|lsr|kmc|ramjas|stephen|miranda|du/i.test(hostLower) || /\bdu\b/i.test(titleLower)) circ = 'DU Circuit';
+    if (/sscbs|srcc|\bhindu college|hansraj|\blsr\b|\bkmc\b|ramjas|st\.? stephen|miranda house|\bdu\b/i.test(hostLower) || /\bdu\b/i.test(titleLower)) circ = 'DU Circuit';
     else if (/iim|iit|bits|fms|xlri/i.test(hostLower) || /iim|iit|bits/i.test(titleLower)) circ = 'IIMs, IITs & Premier';
     else if (/bain|l'oreal|mckinsey|tata|google|boston|bcg/i.test(hostLower) || /corporate/i.test(titleLower)) circ = 'Corporate & Global';
 

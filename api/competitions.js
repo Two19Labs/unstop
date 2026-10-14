@@ -371,7 +371,7 @@ function formatUnstopItem(item, now) {
     orgLogo: orgLogoUrl || compLogoUrl || null,
     logo: orgLogoUrl || compLogoUrl || bannerImgUrl || null,
     bannerUrl: bannerImgUrl || compLogoUrl || null,
-    unstopUrl: item.seo_url || `https://unstop.com/o/${item.short_id || item.id}`,
+    unstopUrl: httpUrlOr(item.seo_url, `https://unstop.com/o/${encodeURIComponent(item.short_id || item.id)}`),
     deadline: item.regnRequirements?.end_regn_dt || item.end_date,
     startDate: item.regnRequirements?.start_regn_dt || item.start_date || null,
     // When Unstop made the listing public (edits don't move it)

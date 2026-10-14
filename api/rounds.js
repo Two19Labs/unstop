@@ -3,6 +3,14 @@
 
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15-minute in-memory server cache
 const roundsCache = new Map(); // compId -> { timestamp, data }
+const MAX_CACHED_COMPETITIONS = 1000;
+
+// Map keeps insertion order: past the cap, drop the oldest entries so random ids can't grow memory without bound
+function cacheRounds(compId, data) {
+  roundsCache.delete(compId);
+  roundsCache.set(compId, { timestamp: Date.now(), data });
+  while (roundsCache.size > MAX_CACHED_COMPETITIONS) roundsCache.delete(roundsCache.keys().next().value);
+}
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -89,7 +97,7 @@ export async function fetchRoundsForSingleCompetition(compId) {
             unstopUrl: httpUrlOr(item.apply_url || item.website_url),
             rounds
           };
-          roundsCache.set(String(compId), { timestamp: Date.now(), data: result });
+          cacheRounds(String(compId), result);
           return result;
         }
       }
@@ -287,7 +295,7 @@ export async function fetchRoundsForSingleCompetition(compId) {
     fetchedAt: new Date().toISOString()
   };
 
-  roundsCache.set(String(compId), { timestamp: Date.now(), data: normalized });
+  cacheRounds(String(compId), normalized);
   return normalized;
 }
 
