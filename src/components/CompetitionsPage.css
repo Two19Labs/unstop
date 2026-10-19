@@ -47,7 +47,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 1480px;
+  max-width: var(--max-content-width, 1560px);
   margin: 0 auto;
   padding: 0 0 32px;
   width: 100%;
@@ -1582,7 +1582,7 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   border-radius: 4px;
   width: fit-content;
@@ -1598,7 +1598,7 @@
 .cc-circuit-tag.general { color: var(--ink-dim); }
 
 .cc-circuit-icon {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1;
 }
 
@@ -1617,7 +1617,7 @@
   gap: 5px;
   padding: 2px 7px;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
@@ -1730,7 +1730,7 @@
 }
 
 .cc-entry-tag {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 5px;
@@ -2421,7 +2421,7 @@
   }
 
   .cc-top-actions {
-    order: 1 !important;
+    order: 2 !important;
     display: flex !important;
     align-items: center !important;
     flex-shrink: 0 !important;
@@ -2447,7 +2447,7 @@
   }
 
   .cc-search-wrapper {
-    order: 2 !important;
+    order: 1 !important;
     flex: 1 !important;
     min-width: 0 !important;
     max-width: none !important;
@@ -2661,6 +2661,12 @@
   .cc-grid {
     grid-template-columns: 1fr !important;
     gap: 14px !important;
+  }
+
+  @media (min-width: 600px) {
+    .cc-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
   }
 
   .cc-card {

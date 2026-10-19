@@ -10,7 +10,7 @@
 }
 
 .tf-container {
-  max-width: 1480px;
+  max-width: var(--max-content-width, 1560px);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -173,13 +173,15 @@
     width: 320px !important;
     max-width: 88vw !important;
     height: 100vh !important;
+    height: 100dvh !important;
     max-height: 100vh !important;
+    max-height: 100dvh !important;
     background: var(--surface, #FFFFFF) !important;
     z-index: 1000 !important;
     transform: translateX(-105%) !important;
     transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
     box-shadow: 6px 0 28px rgba(0, 0, 0, 0.2) !important;
-    padding: 18px 16px calc(36px + var(--sab, 0px)) !important;
+    padding: calc(18px + var(--sat, 0px)) 16px calc(36px + var(--sab, 0px)) !important;
     overflow-y: auto !important;
   }
 
@@ -755,6 +757,16 @@
   border-radius: 50%;
   background: #17A34A;
   flex: none;
+}
+
+.tf-status-left-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tf-mobile-sort-wrapper {
+  display: none;
 }
 
 .tf-status-text {
@@ -1746,7 +1758,7 @@
   }
 
   .tf-container {
-    padding: 0 14px 96px !important;
+    padding: 0 14px calc(var(--mobile-bottom-nav-height, 56px) + var(--sab, 0px) + 24px) !important;
   }
 
   .tf-body-grid {
@@ -1904,10 +1916,17 @@
   .tf-status-row {
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
     gap: 8px !important;
     margin-top: 4px !important;
     margin-bottom: 6px !important;
+  }
+
+  .tf-status-left-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
   }
 
   .tf-status-dot {
@@ -1922,11 +1941,45 @@
     color: #55534D !important;
   }
 
+  .tf-mobile-sort-wrapper {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    height: 30px !important;
+    padding: 0 8px 0 6px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E7E6E2 !important;
+    border-radius: 8px !important;
+    position: relative !important;
+    margin-left: auto !important;
+  }
+
+  .tf-mobile-sort-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    border: none !important;
+    background: transparent !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #1A1A19 !important;
+    padding-right: 14px !important;
+    cursor: pointer !important;
+    outline: none !important;
+    font-family: inherit !important;
+  }
+
+  .tf-mobile-sort-wrapper .tf-sort-chevron {
+    position: absolute !important;
+    right: 6px !important;
+    pointer-events: none !important;
+    color: #75736C !important;
+  }
+
   /* Floating Action Button */
   .tf-floating-post-btn {
     position: fixed !important;
     right: 14px !important;
-    bottom: 72px !important;
+    bottom: calc(var(--mobile-bottom-nav-height, 56px) + var(--sab, 0px) + 16px) !important;
     z-index: 44 !important;
     display: flex !important;
     align-items: center !important;

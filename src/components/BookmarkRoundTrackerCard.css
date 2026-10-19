@@ -73,8 +73,8 @@
 }
 
 .br-remove-btn {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,7 +182,7 @@
 }
 
 .br-stage-tag {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -194,7 +194,7 @@
   gap: 4px;
   padding: 2px 8px;
   border-radius: 9999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
   white-space: nowrap;
@@ -248,7 +248,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   margin-top: 1px;
 }
@@ -274,7 +274,7 @@
   display: flex;
   align-items: baseline;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--ink-muted, #6B7280);
   white-space: nowrap;
   overflow: hidden;
@@ -317,7 +317,7 @@
   width: 100%;
   height: 38px;
   border-radius: 10px;
-  background: #155EEF;
+  background: var(--primary, #0F3FFE);
   color: #FFFFFF !important;
   font-size: 13.5px;
   font-weight: 600;
@@ -329,15 +329,15 @@
 }
 
 .br-action-btn:hover {
-  background: #0E4ED3;
+  background: var(--primary-hover, #0C33CC);
   opacity: 0.95;
 }
 
 @media (max-width: 768px) {
   .br-card {
-    flex: 0 0 270px;
-    width: 270px;
-    border-radius: 14px;
+    flex: 0 0 min(268px, calc(100vw - 52px));
+    width: min(268px, calc(100vw - 52px));
+    border-radius: 12px !important;
     padding: 13px 13px 14px;
     gap: 9px;
   }
@@ -348,7 +348,7 @@
   }
 
   .br-action-btn {
-    height: 42px;
+    height: 44px;
     border-radius: 9px;
   }
 }

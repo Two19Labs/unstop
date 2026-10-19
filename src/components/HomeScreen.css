@@ -5,6 +5,8 @@
   flex-direction: column;
   gap: 26px;
   width: 100%;
+  max-width: var(--max-content-width, 1560px);
+  margin: 0 auto;
 }
 
 .home-section {
@@ -208,8 +210,8 @@
   border-radius: 7px;
   background: var(--surface-muted, #F3F4F6);
   color: var(--ink-muted, #6B7280);
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
@@ -259,7 +261,7 @@
   border-radius: 9999px;
   background: #ECFDF5;
   border: 1px solid rgba(16, 185, 129, 0.35);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #059669;
   white-space: nowrap;
@@ -269,7 +271,7 @@
 }
 
 .home-compact-prize-text {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #059669;
   white-space: nowrap;
@@ -282,7 +284,7 @@
   align-items: center;
   padding: 3px 8px;
   border-radius: 9999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
@@ -516,7 +518,7 @@
 .home-compact-btn-apply {
   border: none !important;
   border-radius: 10px;
-  background: #155EEF !important;
+  background: var(--primary) !important;
   color: #FFFFFF !important;
   height: 38px;
   width: 100%;
@@ -533,7 +535,7 @@
 }
 
 .home-compact-btn-apply:hover {
-  background: #0E4ED3 !important;
+  background: var(--primary-hover) !important;
   opacity: 0.95;
 }
 
@@ -594,7 +596,7 @@
 .home-applied-pref-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   border-radius: 999px;
   padding: 2.5px 9px;
@@ -628,7 +630,7 @@
   border: 1px solid var(--line, #E5E7EB);
   background: var(--surface, #FFFFFF);
   color: var(--ink-dim, #6B7280);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   padding: 2px 9px;
   border-radius: 999px;
@@ -1103,13 +1105,13 @@
     gap: 12px !important;
   }
   .rail > .home-rail-card:not(.home-rail-card--compact) {
-    flex: 0 0 318px !important;
-    width: 318px !important;
+    flex: 0 0 min(318px, calc(100vw - 44px)) !important;
+    width: min(318px, calc(100vw - 44px)) !important;
     border-radius: 12px !important;
   }
   .home-rail-card--compact {
-    flex: 0 0 268px !important;
-    width: 268px !important;
+    flex: 0 0 min(268px, calc(100vw - 52px)) !important;
+    width: min(268px, calc(100vw - 52px)) !important;
     padding: 13px 14px 14px !important;
     gap: 9px !important;
     border-radius: 12px !important;

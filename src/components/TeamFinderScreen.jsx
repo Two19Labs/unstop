@@ -1341,12 +1341,32 @@ export default function TeamFinderScreen({
 
             {/* Status Row + Removable Active Chips */}
             <div className="tf-status-row">
-              <span className="tf-status-dot"></span>
-              <span className="tf-status-text">
-                {tab === 'other'
-                  ? `Showing ${totalCardsShown} squad${totalCardsShown === 1 ? '' : 's'} looking for teammates`
-                  : `${totalCardsShown} listing${totalCardsShown === 1 ? '' : 's'} you lead or applied to`}
-              </span>
+              <div className="tf-status-left-meta">
+                <span className="tf-status-dot"></span>
+                <span className="tf-status-text">
+                  {tab === 'other'
+                    ? `Showing ${totalCardsShown} squad${totalCardsShown === 1 ? '' : 's'} looking for teammates`
+                    : `${totalCardsShown} listing${totalCardsShown === 1 ? '' : 's'} you lead or applied to`}
+                </span>
+              </div>
+              <div className="tf-mobile-sort-wrapper">
+                <ArrowUpDownIcon size={12} className="tf-sort-icon" />
+                <select
+                  aria-label="Sort squads"
+                  className="tf-mobile-sort-select"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                >
+                  <option value="newest">Newest</option>
+                  <option value="match">Best match</option>
+                  <option value="closing">Closing soon</option>
+                  <option value="closing-latest">Closing latest</option>
+                  <option value="spots">Most spots</option>
+                  <option value="almost-full">Almost full</option>
+                  <option value="title-asc">A → Z</option>
+                </select>
+                <ChevronDownIcon size={10} className="tf-sort-chevron" />
+              </div>
               {activeChips.map((c, idx) => (
                 <button key={idx} type="button" onClick={c.remove} className="tf-filter-chip">
                   <span>{c.label}</span>
